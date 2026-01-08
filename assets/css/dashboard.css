@@ -515,6 +515,8 @@ nav.navbar:hover {
         border-radius: 0;
         flex: 1;
         z-index: 1;
+        overflow-x: hidden;
+        overflow-y: hidden;
     }
 
     .chat-list-wrapper {
@@ -546,6 +548,7 @@ nav.navbar:hover {
         display: flex;
         flex-direction: column;
         z-index: 1;
+        position: relative;
     }
 
     .chat-messages {
@@ -556,6 +559,7 @@ nav.navbar:hover {
         -webkit-overflow-scrolling: touch;
         /* Smooth scrolling on iOS */
         z-index: 1;
+        position: relative;
     }
 
     .message {
@@ -569,8 +573,9 @@ nav.navbar:hover {
         height: auto;
         flex-shrink: 0;
         padding-bottom: 0;
-        z-index: 10;
+        z-index: 100;
         position: relative;
+        overflow: visible;
     }
 }
 
@@ -1746,23 +1751,45 @@ nav.navbar:hover {
 }
 /* Additional mobile z-index fixes */
 @media (max-width: 767.98px) {
-    /* Ensure search suggestions are always on top in mobile */
-    .search-suggestions {
-        position: fixed !important;
-        top: auto !important;
-        left: 1rem !important;
-        right: 1rem !important;
-        z-index: 9999 !important;
-        margin-top: 0.5rem;
+    /* Ensure search container and suggestions are above chat area */
+    .search-container {
+        position: relative;
+        z-index: 200 !important;
+        overflow: visible;
     }
     
-    /* Position suggestions relative to search input */
-    .search-container.suggestions-active .search-suggestions {
+    /* Ensure search suggestions are always on top in mobile */
+    .search-suggestions {
         position: absolute !important;
         top: 100% !important;
         left: 0 !important;
         right: 0 !important;
-        z-index: 9999 !important;
+        z-index: 10000 !important;
+        margin-top: 0;
+        max-height: 250px;
+    }
+    
+    /* Ensure sidebar doesn't clip suggestions */
+    .sidebar {
+        overflow: visible !important;
+    }
+    
+    /* Ensure chat-list-wrapper doesn't interfere with suggestions */
+    .chat-list-wrapper {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Ensure chat area stays below sidebar */
+    .chat-area {
+        z-index: 1;
+        position: relative;
+    }
+    
+    /* Ensure chat messages don't interfere */
+    .chat-messages {
+        z-index: 1;
+        position: relative;
     }
     
     /* Ensure chat input area doesn't interfere */
@@ -1776,16 +1803,5 @@ nav.navbar:hover {
         z-index: 50;
     }
     
-    /* Overlay for suggestions to prevent interaction with background */
-    .search-suggestions::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.1);
-        z-index: -1;
-        pointer-events: none;
-    }
+    /* Chat container overflow handled above in mobile section */
 }
