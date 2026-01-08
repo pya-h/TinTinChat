@@ -13,7 +13,7 @@ $user_id = $_SESSION['user_id'];
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MiniChat Dashboard</title>
+    <title>TinTinChat Dashboard</title>
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/dashboard.css" rel="stylesheet" />
@@ -22,7 +22,7 @@ $user_id = $_SESSION['user_id'];
 <body>
     <div id="app">
         <nav class="navbar navbar-expand-lg px-3">
-            <a class="navbar-brand" href="#">MiniChat</a>
+            <a class="navbar-brand" href="#">TinTinChat</a>
             <div class="ms-auto d-flex align-items-center">
                 <span class="me-3 logged-in-as">Logged in as <strong><?= htmlspecialchars($username) ?></strong></span>
                 <a href="api/logout.php" class="btn btn-logout btn-sm">

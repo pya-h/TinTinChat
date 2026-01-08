@@ -14,7 +14,7 @@ unset($_SESSION['login_error']);
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MiniChat Login</title>
+    <title>TinTinChat Login</title>
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/auth.css" rel="stylesheet" />
@@ -26,7 +26,7 @@ unset($_SESSION['login_error']);
             <div class="login-logo">
                 <i class="fas fa-comments"></i>
             </div>
-            <h1 class="login-title">MiniChat</h1>
+            <h1 class="login-title">TinTinChat</h1>
         </div>
 
         <?php if ($error): ?>

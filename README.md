@@ -1,4 +1,4 @@
-## 🛡️ MiniChat
+## 🛡️ TinTinChat
 
 * A lightweight, secure, responsive chat application built with native PHP and vanilla JavaScript, featuring client-side RSA end‑to‑end encryption and support for text, voice, and image messages.
 * Native PHP/Html/JS/Css Web App with no use of external packages/modules, runnable even on Limitted hosts/servers.
@@ -180,7 +180,7 @@ CREATE TABLE messages (
 
 ### Recent Improvements
 
-The MiniChat application has been significantly enhanced with modern UI/UX improvements:
+The TinTinChat application has been significantly enhanced with modern UI/UX improvements:
 
 #### ✨ **Enhanced Animations & Interactions**
 - **Smooth Transitions**: All elements now feature fluid animations using CSS cubic-bezier curves
