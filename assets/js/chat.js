@@ -7,7 +7,6 @@ const searchUserInput = document.getElementById("searchUser");
 const imageUploadInput = document.getElementById("imageUploadInput");
 const imageUploadBtn = document.getElementById("imageUploadBtn");
 
-// Search suggestions elements
 const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
 
@@ -17,9 +16,9 @@ const chatUsers = new Set();
 let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
+let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
 const MESSAGES_PER_PAGE = 20;
 
-// Search suggestions state
 let searchTimeout = null;
 let currentSuggestions = [];
 let selectedSuggestionIndex = -1;
@@ -34,20 +33,17 @@ let shouldSendRecording = true;
 let audioContext = null;
 let activeAnalyser = null;
 
-// Handle viewport height changes on mobile (keyboard appearance)
 let initialViewportHeight = window.innerHeight;
 
 window.addEventListener('resize', () => {
     if (window.innerWidth <= 767.98) {
         const heightDifference = initialViewportHeight - window.innerHeight;
         if (Math.abs(heightDifference) > 150) {
-            // Keyboard appeared/disappeared, adjust chat container
             const chatContainer = document.querySelector('.chat-container');
             if (chatContainer) {
                 chatContainer.style.height = `calc(100vh - 60px)`;
             }
 
-            // Re-scroll to bottom after a short delay
             setTimeout(() => {
                 if (chatMessagesElem) {
                     chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
@@ -57,7 +53,6 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Store initial viewport height
 window.addEventListener('load', () => {
     initialViewportHeight = window.innerHeight;
 });
@@ -109,10 +104,10 @@ function selectChatUser(username) {
     chatInput.value = "";
     chatMessagesElem.innerHTML = "";
 
-    // Reset pagination state
     messageOffset = 0;
     hasMoreMessages = true;
     isLoadingMessages = false;
+    hasLoadedMoreMessages = false; // Reset when selecting a new chat
 
     [...chatListElem.children].forEach((li) => {
         li.classList.toggle("active", li.textContent === username);
@@ -150,7 +145,6 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             return;
         }
 
-        // For initial load, check if we have new messages
         if (isInitialLoad && recentMessage?.created_at) {
             const lastMessage = data.messages[data.messages.length - 1];
             if (lastMessage) {
@@ -167,11 +161,9 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         hasMoreMessages = data.hasMore;
 
         if (isInitialLoad) {
-            // Clear messages and load fresh
             chatMessagesElem.innerHTML = "";
             messageOffset = MESSAGES_PER_PAGE;
         } else {
-            // Remove existing "Load More" button if present
             const existingLoadMore = document.getElementById('loadMoreBtn');
             if (existingLoadMore) {
                 existingLoadMore.remove();
@@ -179,40 +171,34 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             messageOffset += MESSAGES_PER_PAGE;
         }
 
-        // Add "Load More" button at the top if there are more messages
         if (hasMoreMessages && !isInitialLoad) {
             addLoadMoreButton();
         }
 
-        // Store scroll position for "load more" functionality
         const previousScrollHeight = chatMessagesElem.scrollHeight;
 
-        // Add messages to the chat
         for (const msg of data.messages) {
             await addMessageToChat(msg, !isInitialLoad); // prepend for "load more"
         }
 
         if (isInitialLoad) {
-            // For initial load, scroll to bottom
-            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+            requestAnimationFrame(() => {
+                chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+                removeGoToLatestButton();
+            });
             recentMessage = data.messages?.[data.messages.length - 1];
 
-            // Add "Load More" button at the top if there are more messages
             if (hasMoreMessages) {
                 addLoadMoreButton();
             }
         } else {
-            // For "load more", maintain scroll position
             const newScrollHeight = chatMessagesElem.scrollHeight;
             chatMessagesElem.scrollTop = newScrollHeight - previousScrollHeight;
+            
+            hasLoadedMoreMessages = true;
+            
+            updateGoToLatestButton();
         }
-
-        // Ensure proper scrolling on mobile devices
-        setTimeout(() => {
-            if (isInitialLoad) {
-                chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-            }
-        }, 100);
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
     } finally {
@@ -224,7 +210,6 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
     }
 }
 
-// Generate waveform bars for voice messages
 function generateWaveformBars() {
     const bars = [];
     const barCount = 30;
@@ -273,6 +258,8 @@ async function loadMoreMessages() {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Load More Messages';
     }
+    
+    updateGoToLatestButton();
 }
 
 async function addMessageToChat(msg, prepend = false) {
@@ -283,10 +270,8 @@ async function addMessageToChat(msg, prepend = false) {
     );
 
     if (msg.message_type === "voice" && msg.voice_file_path) {
-        // Add a special class for voice messages to customize the bubble
         div.classList.add("is-voice-message");
 
-        // The voice player itself will become the message bubble
         div.innerHTML = `
           <div class="voice-player-container">
             <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id
@@ -312,8 +297,6 @@ async function addMessageToChat(msg, prepend = false) {
                         onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
                 </a>
                 `;
-        // onload is a bit of a hack to scroll down once the image loads
-        // onerror provides fallback for failed image loads
     } else {
         let decryptedText = "[Unable to decrypt message]";
         try {
@@ -338,7 +321,6 @@ async function addMessageToChat(msg, prepend = false) {
     }
 
     if (prepend) {
-        // For "load more", add after the load more button (or at the beginning)
         const loadMoreBtn = document.getElementById('loadMoreBtn');
         if (loadMoreBtn) {
             chatMessagesElem.insertBefore(div, loadMoreBtn.nextSibling);
@@ -346,13 +328,68 @@ async function addMessageToChat(msg, prepend = false) {
             chatMessagesElem.insertBefore(div, chatMessagesElem.firstChild);
         }
     } else {
-        // For initial load and new messages, append at the end
         chatMessagesElem.appendChild(div);
     }
 }
 
-// Make loadMoreMessages available globally
 window.loadMoreMessages = loadMoreMessages;
+
+function addGoToLatestButton() {
+    const existingBtn = document.getElementById('goToLatestBtn');
+    if (existingBtn) return; // Don't add if already exists
+
+    const goToLatestBtn = document.createElement('div');
+    goToLatestBtn.id = 'goToLatestBtn';
+    goToLatestBtn.className = 'go-to-latest-container';
+    goToLatestBtn.innerHTML = `
+        <button class="btn btn-primary btn-sm go-to-latest-btn" onclick="scrollToLatest()">
+            <i class="fas fa-chevron-down me-1"></i>
+            Go to Latest
+        </button>
+    `;
+
+    chatMessagesElem.appendChild(goToLatestBtn);
+}
+
+function removeGoToLatestButton() {
+    const goToLatestBtn = document.getElementById('goToLatestBtn');
+    if (goToLatestBtn) {
+        goToLatestBtn.remove();
+    }
+}
+
+function updateGoToLatestButton() {
+    if (!hasLoadedMoreMessages) {
+        removeGoToLatestButton();
+        return;
+    }
+
+    const isNearBottom = chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >= chatMessagesElem.scrollHeight - 100;
+    
+    if (isNearBottom) {
+        removeGoToLatestButton();
+    } else {
+        addGoToLatestButton();
+    }
+}
+
+function scrollToLatest() {
+    chatMessagesElem.scrollTo({
+        top: chatMessagesElem.scrollHeight,
+        behavior: 'smooth'
+    });
+    setTimeout(() => {
+        removeGoToLatestButton();
+    }, 100);
+}
+
+window.scrollToLatest = scrollToLatest;
+
+chatMessagesElem.addEventListener('scroll', () => {
+    if (hasLoadedMoreMessages) {
+        updateGoToLatestButton();
+    }
+});
 
 window.playVoiceMessage = function (messageId) {
     const messageDiv = document.querySelector(
@@ -471,14 +508,12 @@ window.playVoiceMessage = function (messageId) {
         const barCount = bars.length;
 
         for (let i = 0; i < barCount; i++) {
-            // Scale the data to the bar height (0-100%)
             const barHeight = Math.pow(dataArray[i] / 255, 2) * 100;
             bars[i].style.height = `${Math.max(10, barHeight)}%`;
         }
     }
 
     if (audio.paused) {
-        // Pause all others
         document.querySelectorAll(".voice-play-btn.playing").forEach((btn) => {
             const audio = btn
                 .closest(".voice-player-container")
@@ -587,32 +622,27 @@ chatInput.addEventListener("input", () => {
     }
 });
 
-// Enhanced search functionality with suggestions
 searchUserInput.addEventListener("input", function () {
     const val = this.value.trim();
     const feedback = document.getElementById("searchUserFeedback");
 
     this.classList.remove("is-invalid", "is-valid");
 
-    // Clear previous timeout
     if (searchTimeout) {
         clearTimeout(searchTimeout);
     }
 
-    // Hide suggestions if input is too short
     if (val.length < 3) {
         hideSuggestions();
         if (feedback) feedback.style.display = "none";
         return;
     }
 
-    // Validate username format
     if (val && val !== CURRENT_USER) {
         if (/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
             this.classList.remove("is-invalid");
             if (feedback) feedback.style.display = "none";
 
-            // Search for suggestions after 300ms delay
             searchTimeout = setTimeout(() => {
                 searchUserSuggestions(val);
             }, 300);
@@ -627,7 +657,6 @@ searchUserInput.addEventListener("input", function () {
     }
 });
 
-// Handle keyboard navigation for suggestions
 searchUserInput.addEventListener("keydown", function (e) {
     if (!searchSuggestions.style.display || searchSuggestions.style.display === "none") {
         return;
@@ -662,19 +691,16 @@ searchUserInput.addEventListener("keydown", function (e) {
     }
 });
 
-// Hide suggestions when clicking outside
 document.addEventListener('click', function (e) {
     if (!e.target.closest('.search-container')) {
         hideSuggestions();
     }
 });
 
-// Legacy change event for direct username entry (fallback)
 searchUserInput.addEventListener("change", async () => {
     const val = searchUserInput.value.trim();
     if (!val || val === CURRENT_USER) return;
 
-    // If suggestions are visible, don't process as direct entry
     if (searchSuggestions.style.display !== "none") {
         return;
     }
@@ -724,14 +750,12 @@ searchUserInput.addEventListener("change", async () => {
     }
 });
 
-// Search suggestions functions
 async function searchUserSuggestions(query) {
     if (isSearching || query.length < 3) return;
 
     isSearching = true;
     showSearchLoading(true);
 
-    // Update search state if available
     if (window.updateSearchState) {
         window.updateSearchState('searching');
     }
@@ -744,7 +768,6 @@ async function searchUserSuggestions(query) {
             showSuggestions(data.users);
         } else {
             hideSuggestions();
-            // Update search state for no results
             if (window.updateSearchState) {
                 window.updateSearchState('no-results');
             }
@@ -804,7 +827,6 @@ function hideSuggestions() {
     selectedSuggestionIndex = -1;
     currentSuggestions = [];
 
-    // Update search state
     if (window.updateSearchState) {
         window.updateSearchState('idle');
     }
@@ -828,7 +850,6 @@ function selectSuggestion(username) {
     searchUserInput.value = '';
     hideSuggestions();
 
-    // Show success notification
     if (isANewUser && window.UIEnhancements) {
         window.UIEnhancements.showSearchNotification(`Started chat with ${username}`, 'success');
     }
@@ -868,9 +889,9 @@ async function loadChatList() {
 
 loadChatList();
 
-setInterval(() => {
+setInterval(async () => {
     if (!currentChatUser?.length) return;
-    loadMessages(currentChatUser, false, true); // Only check for new messages
+    await loadMessages(currentChatUser, false, true); // Only check for new messages
 }, 1000);
 
 setInterval(() => {
@@ -968,7 +989,6 @@ function addRecordingIndicator() {
     chatMessagesElem.appendChild(indicator);
     chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
 
-    // Ensure proper scrolling on mobile devices
     setTimeout(() => {
         chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
     }, 100);
@@ -1011,7 +1031,6 @@ async function sendVoiceMessage(audioBlob) {
         chatMessagesElem.appendChild(sendingIndicator);
         chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
 
-        // Ensure proper scrolling on mobile devices
         setTimeout(() => {
             chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
         }, 100);
@@ -1101,7 +1120,6 @@ async function sendImageMessage(imageFile) {
         chatMessagesElem.appendChild(sendingIndicator);
         chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
 
-        // Ensure proper scrolling on mobile devices
         setTimeout(() => {
             chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
         }, 100);
