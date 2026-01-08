@@ -46,7 +46,7 @@ window.addEventListener('resize', () => {
             if (chatContainer) {
                 chatContainer.style.height = `calc(100vh - 60px)`;
             }
-            
+
             // Re-scroll to bottom after a short delay
             setTimeout(() => {
                 if (chatMessagesElem) {
@@ -63,7 +63,7 @@ window.addEventListener('load', () => {
 });
 
 function addUserToChatList(username) {
-    if (chatUsers.has(username) || username === CURRENT_USER) return;
+    if (chatUsers.has(username) || username === CURRENT_USER) return false;
     chatUsers.add(username);
 
     const li = document.createElement("li");
@@ -81,6 +81,7 @@ function addUserToChatList(username) {
     li.classList.add("chat-user");
     li.addEventListener("click", () => selectChatUser(username));
     chatListElem.appendChild(li);
+    return true;
 }
 
 function updateLoadingSpinnerState(username, show = false) {
@@ -122,25 +123,25 @@ function selectChatUser(username) {
 
 async function loadMessages(username, showLoading = false, isInitialLoad = false) {
     if (isLoadingMessages) return;
-    
+
     try {
         isLoadingMessages = true;
         const loadingSpinnerElement = document.getElementById(
             `user_${username}_loading`
         );
-        
+
         if (showLoading) {
             loadingSpinnerElement.style = "display: inline";
         }
 
         const offset = isInitialLoad ? 0 : messageOffset;
-        
+
         const res = await fetch(
             `api/fetch_messages.php?with=${encodeURIComponent(username)}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
-        
+
         if (!data.messages.length && isInitialLoad) {
             chatMessagesElem.innerHTML = "";
             chatMessagesElem.textContent = "No messages yet.";
@@ -195,7 +196,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             // For initial load, scroll to bottom
             chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
             recentMessage = data.messages?.[data.messages.length - 1];
-            
+
             // Add "Load More" button at the top if there are more messages
             if (hasMoreMessages) {
                 addLoadMoreButton();
@@ -205,7 +206,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             const newScrollHeight = chatMessagesElem.scrollHeight;
             chatMessagesElem.scrollTop = newScrollHeight - previousScrollHeight;
         }
-        
+
         // Ensure proper scrolling on mobile devices
         setTimeout(() => {
             if (isInitialLoad) {
@@ -249,22 +250,22 @@ function addLoadMoreButton() {
             Load More Messages
         </button>
     `;
-    
+
     chatMessagesElem.insertBefore(loadMoreBtn, chatMessagesElem.firstChild);
 }
 
 async function loadMoreMessages() {
     if (!currentChatUser || isLoadingMessages || !hasMoreMessages) return;
-    
+
     const loadMoreBtn = document.getElementById('loadMoreBtn');
     if (loadMoreBtn) {
         const btn = loadMoreBtn.querySelector('button');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
     }
-    
+
     await loadMessages(currentChatUser, false, false);
-    
+
     if (loadMoreBtn && !hasMoreMessages) {
         loadMoreBtn.remove();
     } else if (loadMoreBtn) {
@@ -288,8 +289,7 @@ async function addMessageToChat(msg, prepend = false) {
         // The voice player itself will become the message bubble
         div.innerHTML = `
           <div class="voice-player-container">
-            <button class="voice-play-btn" onclick="playVoiceMessage(${
-                msg.id
+            <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id
             })">
               <i class="fas fa-play"></i>
             </button>
@@ -336,7 +336,7 @@ async function addMessageToChat(msg, prepend = false) {
             div.dir = "rtl";
         }
     }
-    
+
     if (prepend) {
         // For "load more", add after the load more button (or at the beginning)
         const loadMoreBtn = document.getElementById('loadMoreBtn');
@@ -611,7 +611,7 @@ searchUserInput.addEventListener("input", function () {
         if (/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
             this.classList.remove("is-invalid");
             if (feedback) feedback.style.display = "none";
-            
+
             // Search for suggestions after 300ms delay
             searchTimeout = setTimeout(() => {
                 searchUserSuggestions(val);
@@ -628,33 +628,33 @@ searchUserInput.addEventListener("input", function () {
 });
 
 // Handle keyboard navigation for suggestions
-searchUserInput.addEventListener("keydown", function(e) {
+searchUserInput.addEventListener("keydown", function (e) {
     if (!searchSuggestions.style.display || searchSuggestions.style.display === "none") {
         return;
     }
 
     const suggestions = searchSuggestions.querySelectorAll('.search-suggestion-item');
-    
-    switch(e.key) {
+
+    switch (e.key) {
         case 'ArrowDown':
             e.preventDefault();
             selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
             updateSuggestionSelection(suggestions);
             break;
-            
+
         case 'ArrowUp':
             e.preventDefault();
             selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
             updateSuggestionSelection(suggestions);
             break;
-            
+
         case 'Enter':
             e.preventDefault();
             if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
                 selectSuggestion(suggestions[selectedSuggestionIndex].dataset.username);
             }
             break;
-            
+
         case 'Escape':
             e.preventDefault();
             hideSuggestions();
@@ -663,7 +663,7 @@ searchUserInput.addEventListener("keydown", function(e) {
 });
 
 // Hide suggestions when clicking outside
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     if (!e.target.closest('.search-container')) {
         hideSuggestions();
     }
@@ -727,19 +727,19 @@ searchUserInput.addEventListener("change", async () => {
 // Search suggestions functions
 async function searchUserSuggestions(query) {
     if (isSearching || query.length < 3) return;
-    
+
     isSearching = true;
     showSearchLoading(true);
-    
+
     // Update search state if available
     if (window.updateSearchState) {
         window.updateSearchState('searching');
     }
-    
+
     try {
         const response = await fetch(`api/search_users.php?query=${encodeURIComponent(query)}`);
         const data = await response.json();
-        
+
         if (data.users && data.users.length > 0) {
             showSuggestions(data.users);
         } else {
@@ -764,38 +764,38 @@ async function searchUserSuggestions(query) {
 function showSuggestions(users) {
     currentSuggestions = users;
     selectedSuggestionIndex = -1;
-    
+
     searchSuggestions.innerHTML = '';
-    
+
     users.forEach((username, index) => {
         const item = document.createElement('div');
         item.className = 'search-suggestion-item';
         item.dataset.username = username;
         item.dataset.index = index;
-        
+
         const initials = username
             .split(" ")
             .map((n) => n[0])
             .join("")
             .toUpperCase();
-        
+
         item.innerHTML = `
             <div class="search-suggestion-avatar">${initials}</div>
             <div class="search-suggestion-username">${username}</div>
             <i class="fas fa-arrow-right search-suggestion-icon"></i>
         `;
-        
+
         item.addEventListener('click', () => selectSuggestion(username));
         item.addEventListener('mouseenter', () => {
             selectedSuggestionIndex = index;
             updateSuggestionSelection(searchSuggestions.querySelectorAll('.search-suggestion-item'));
         });
-        
+
         searchSuggestions.appendChild(item);
     });
-    
-    searchSuggestions.style.display = 'block';
-    searchUserInput.classList.add('suggestions-active');
+
+        searchSuggestions.style.display = 'block';
+        searchUserInput.classList.add('suggestions-active');
 }
 
 function hideSuggestions() {
@@ -803,7 +803,7 @@ function hideSuggestions() {
     searchUserInput.classList.remove('suggestions-active');
     selectedSuggestionIndex = -1;
     currentSuggestions = [];
-    
+
     // Update search state
     if (window.updateSearchState) {
         window.updateSearchState('idle');
@@ -823,13 +823,13 @@ function updateSuggestionSelection(suggestions) {
 }
 
 function selectSuggestion(username) {
-    addUserToChatList(username);
+    const isANewUser = addUserToChatList(username);
     selectChatUser(username);
     searchUserInput.value = '';
     hideSuggestions();
-    
+
     // Show success notification
-    if (window.UIEnhancements) {
+    if (isANewUser && window.UIEnhancements) {
         window.UIEnhancements.showSearchNotification(`Started chat with ${username}`, 'success');
     }
 }
@@ -967,7 +967,7 @@ function addRecordingIndicator() {
   `;
     chatMessagesElem.appendChild(indicator);
     chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-    
+
     // Ensure proper scrolling on mobile devices
     setTimeout(() => {
         chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
