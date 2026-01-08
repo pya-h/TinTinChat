@@ -10,6 +10,10 @@ const imageUploadBtn = document.getElementById("imageUploadBtn");
 let currentChatUser = null;
 let recentMessage = null;
 const chatUsers = new Set();
+let messageOffset = 0;
+let hasMoreMessages = true;
+let isLoadingMessages = false;
+const MESSAGES_PER_PAGE = 20;
 
 let mediaRecorder = null;
 let audioChunks = [];
@@ -94,27 +98,40 @@ function selectChatUser(username) {
     chatInput.value = "";
     chatMessagesElem.innerHTML = "";
 
+    // Reset pagination state
+    messageOffset = 0;
+    hasMoreMessages = true;
+    isLoadingMessages = false;
+
     [...chatListElem.children].forEach((li) => {
         li.classList.toggle("active", li.textContent === username);
     });
 
-    loadMessages(username, true);
+    loadMessages(username, true, true);
 }
 
-async function loadMessages(username, showLoading = false) {
+async function loadMessages(username, showLoading = false, isInitialLoad = false) {
+    if (isLoadingMessages) return;
+    
     try {
+        isLoadingMessages = true;
         const loadingSpinnerElement = document.getElementById(
             `user_${username}_loading`
         );
+        
         if (showLoading) {
             loadingSpinnerElement.style = "display: inline";
         }
+
+        const offset = isInitialLoad ? 0 : messageOffset;
+        
         const res = await fetch(
-            `api/fetch_messages.php?with=${encodeURIComponent(username)}`
+            `api/fetch_messages.php?with=${encodeURIComponent(username)}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
-        if (!data.messages.length) {
+        
+        if (!data.messages.length && isInitialLoad) {
             chatMessagesElem.innerHTML = "";
             chatMessagesElem.textContent = "No messages yet.";
             if (loadingSpinnerElement)
@@ -122,96 +139,78 @@ async function loadMessages(username, showLoading = false) {
             return;
         }
 
-        if (recentMessage?.created_at) {
+        // For initial load, check if we have new messages
+        if (isInitialLoad && recentMessage?.created_at) {
             const lastMessage = data.messages[data.messages.length - 1];
-            lastMessage.created_at = new Date(lastMessage.created_at);
-            if (lastMessage.created_at <= recentMessage.created_at) {
-                if (loadingSpinnerElement)
-                    loadingSpinnerElement.style = "display: none";
-                return;
+            if (lastMessage) {
+                lastMessage.created_at = new Date(lastMessage.created_at);
+                if (lastMessage.created_at <= recentMessage.created_at) {
+                    if (loadingSpinnerElement)
+                        loadingSpinnerElement.style = "display: none";
+                    isLoadingMessages = false;
+                    return;
+                }
             }
         }
 
-        chatMessagesElem.innerHTML = "";
+        hasMoreMessages = data.hasMore;
+
+        if (isInitialLoad) {
+            // Clear messages and load fresh
+            chatMessagesElem.innerHTML = "";
+            messageOffset = MESSAGES_PER_PAGE;
+        } else {
+            // Remove existing "Load More" button if present
+            const existingLoadMore = document.getElementById('loadMoreBtn');
+            if (existingLoadMore) {
+                existingLoadMore.remove();
+            }
+            messageOffset += MESSAGES_PER_PAGE;
+        }
+
+        // Add "Load More" button at the top if there are more messages
+        if (hasMoreMessages && !isInitialLoad) {
+            addLoadMoreButton();
+        }
+
+        // Store scroll position for "load more" functionality
+        const previousScrollHeight = chatMessagesElem.scrollHeight;
+
+        // Add messages to the chat
         for (const msg of data.messages) {
-            let div = document.createElement("div");
-            div.classList.add("message");
-            div.classList.add(
-                msg.sender_id == CURRENT_USER_ID ? "sent" : "received"
-            );
-
-            if (msg.message_type === "voice" && msg.voice_file_path) {
-                // Add a special class for voice messages to customize the bubble
-                div.classList.add("is-voice-message");
-
-                // The voice player itself will become the message bubble
-                div.innerHTML = `
-          <div class="voice-player-container">
-            <button class="voice-play-btn" onclick="playVoiceMessage(${
-                msg.id
-            })">
-              <i class="fas fa-play"></i>
-            </button>
-            <div class="voice-waveform">
-              <div class="waveform-bars">
-                ${generateWaveformBars()}
-              </div>
-            </div>
-            <div class="voice-duration-display">--:--</div>
-          </div>
-        `;
-                div.setAttribute("data-message-id", msg.id);
-            } else if (msg.message_type === "image" && msg.image_file_path) {
-                div.classList.add("is-image-message");
-
-                div.innerHTML = `
-                <a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
-                    <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
-                        onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
-                        onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
-                </a>
-                `;
-                // onload is a bit of a hack to scroll down once the image loads
-                // onerror provides fallback for failed image loads
-            } else {
-                let decryptedText = "[Unable to decrypt message]";
-                try {
-                    if (msg.sender_id == CURRENT_USER_ID) {
-                        decryptedText = await decryptMessage(
-                            msg.message_for_sender
-                        );
-                    } else {
-                        decryptedText = await decryptMessage(msg.message);
-                    }
-                } catch (e) {
-                    decryptedText = "[Unsupported message]";
-                }
-                div.textContent = decryptedText;
-                if (
-                    /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(
-                        decryptedText.trim()
-                    )
-                ) {
-                    div.dir = "rtl";
-                }
-            }
-            chatMessagesElem.appendChild(div);
+            await addMessageToChat(msg, !isInitialLoad); // prepend for "load more"
         }
 
-        chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-        recentMessage = data.messages?.[data.messages.length - 1];
+        if (isInitialLoad) {
+            // For initial load, scroll to bottom
+            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+            recentMessage = data.messages?.[data.messages.length - 1];
+            
+            // Add "Load More" button at the top if there are more messages
+            if (hasMoreMessages) {
+                addLoadMoreButton();
+            }
+        } else {
+            // For "load more", maintain scroll position
+            const newScrollHeight = chatMessagesElem.scrollHeight;
+            chatMessagesElem.scrollTop = newScrollHeight - previousScrollHeight;
+        }
         
         // Ensure proper scrolling on mobile devices
         setTimeout(() => {
-            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+            if (isInitialLoad) {
+                chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+            }
         }, 100);
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
+    } finally {
+        const loadingSpinnerElement = document.getElementById(
+            `user_${username}_loading`
+        );
+        if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
+        isLoadingMessages = false;
     }
-    const loadingSpinnerElement = document.getElementById(
-        `user_${username}_loading`
-    );
-    if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
 }
 
 // Generate waveform bars for voice messages
@@ -226,6 +225,124 @@ function generateWaveformBars() {
     }
     return bars.join("");
 }
+
+function addLoadMoreButton() {
+    const existingBtn = document.getElementById('loadMoreBtn');
+    if (existingBtn) return; // Don't add if already exists
+
+    const loadMoreBtn = document.createElement('div');
+    loadMoreBtn.id = 'loadMoreBtn';
+    loadMoreBtn.className = 'load-more-container';
+    loadMoreBtn.innerHTML = `
+        <button class="btn btn-outline-primary btn-sm load-more-btn" onclick="loadMoreMessages()">
+            <i class="fas fa-chevron-up me-1"></i>
+            Load More Messages
+        </button>
+    `;
+    
+    chatMessagesElem.insertBefore(loadMoreBtn, chatMessagesElem.firstChild);
+}
+
+async function loadMoreMessages() {
+    if (!currentChatUser || isLoadingMessages || !hasMoreMessages) return;
+    
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        const btn = loadMoreBtn.querySelector('button');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+    }
+    
+    await loadMessages(currentChatUser, false, false);
+    
+    if (loadMoreBtn && !hasMoreMessages) {
+        loadMoreBtn.remove();
+    } else if (loadMoreBtn) {
+        const btn = loadMoreBtn.querySelector('button');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Load More Messages';
+    }
+}
+
+async function addMessageToChat(msg, prepend = false) {
+    let div = document.createElement("div");
+    div.classList.add("message");
+    div.classList.add(
+        msg.sender_id == CURRENT_USER_ID ? "sent" : "received"
+    );
+
+    if (msg.message_type === "voice" && msg.voice_file_path) {
+        // Add a special class for voice messages to customize the bubble
+        div.classList.add("is-voice-message");
+
+        // The voice player itself will become the message bubble
+        div.innerHTML = `
+          <div class="voice-player-container">
+            <button class="voice-play-btn" onclick="playVoiceMessage(${
+                msg.id
+            })">
+              <i class="fas fa-play"></i>
+            </button>
+            <div class="voice-waveform">
+              <div class="waveform-bars">
+                ${generateWaveformBars()}
+              </div>
+            </div>
+            <div class="voice-duration-display">--:--</div>
+          </div>
+        `;
+        div.setAttribute("data-message-id", msg.id);
+    } else if (msg.message_type === "image" && msg.image_file_path) {
+        div.classList.add("is-image-message");
+
+        div.innerHTML = `
+                <a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
+                    <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
+                        onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
+                        onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
+                </a>
+                `;
+        // onload is a bit of a hack to scroll down once the image loads
+        // onerror provides fallback for failed image loads
+    } else {
+        let decryptedText = "[Unable to decrypt message]";
+        try {
+            if (msg.sender_id == CURRENT_USER_ID) {
+                decryptedText = await decryptMessage(
+                    msg.message_for_sender
+                );
+            } else {
+                decryptedText = await decryptMessage(msg.message);
+            }
+        } catch (e) {
+            decryptedText = "[Unsupported message]";
+        }
+        div.textContent = decryptedText;
+        if (
+            /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(
+                decryptedText.trim()
+            )
+        ) {
+            div.dir = "rtl";
+        }
+    }
+    
+    if (prepend) {
+        // For "load more", add after the load more button (or at the beginning)
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            chatMessagesElem.insertBefore(div, loadMoreBtn.nextSibling);
+        } else {
+            chatMessagesElem.insertBefore(div, chatMessagesElem.firstChild);
+        }
+    } else {
+        // For initial load and new messages, append at the end
+        chatMessagesElem.appendChild(div);
+    }
+}
+
+// Make loadMoreMessages available globally
+window.loadMoreMessages = loadMoreMessages;
 
 window.playVoiceMessage = function (messageId) {
     const messageDiv = document.querySelector(
@@ -424,7 +541,7 @@ const sendMessage = async () => {
 
         addUserToChatList(currentChatUser);
         chatInput.value = "";
-        loadMessages(currentChatUser);
+        loadMessages(currentChatUser, false, true);
     } catch (err) {
         showModal(
             "Send Error",
@@ -557,7 +674,7 @@ loadChatList();
 
 setInterval(() => {
     if (!currentChatUser?.length) return;
-    loadMessages(currentChatUser);
+    loadMessages(currentChatUser, false, true); // Only check for new messages
 }, 1000);
 
 setInterval(() => {
@@ -720,7 +837,7 @@ async function sendVoiceMessage(audioBlob) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        loadMessages(currentChatUser);
+        loadMessages(currentChatUser, false, true);
     } catch (err) {
         showModal(
             "Voice Send Error",
@@ -812,7 +929,7 @@ async function sendImageMessage(imageFile) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        loadMessages(currentChatUser);
+        loadMessages(currentChatUser, false, true);
     } catch (err) {
         showModal(
             "Image Send Error",

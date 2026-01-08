@@ -887,3 +887,61 @@ nav.navbar {
     color: #6c757d;
     font-size: 0.9rem;
 }
+
+/* Load More Button Styles */
+.load-more-container {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+    padding: 0.5rem;
+}
+
+.load-more-btn {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.5rem 1.25rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.load-more-btn:hover {
+    background: color-mix(in srgb, var(--primary-color) 10%, var(--surface-color));
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.load-more-btn:active {
+    transform: translateY(0);
+}
+
+.load-more-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.load-more-btn:disabled:hover {
+    background: var(--surface-color);
+    border-color: var(--border-color);
+    color: var(--text-color);
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 767.98px) {
+    .load-more-container {
+        margin: 0.75rem 0;
+        padding: 0.25rem;
+    }
+    
+    .load-more-btn {
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+    }
+}
