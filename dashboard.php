@@ -33,9 +33,15 @@ $user_id = $_SESSION['user_id'];
 
         <div class="chat-container">
             <aside class="sidebar">
-                <input type="text" id="searchUser" class="form-control mb-1" placeholder="Enter username to chat" />
-                <div id="searchUserFeedback" class="invalid-feedback" style="display: none; font-size: 0.875em;">
-                    Invalid username format
+                <div class="search-container">
+                    <input type="text" id="searchUser" class="form-control mb-1" placeholder="Enter username to chat" />
+                    <div id="searchUserFeedback" class="invalid-feedback" style="display: none; font-size: 0.875em;">
+                        Invalid username format
+                    </div>
+                    <div id="searchLoading" class="search-loading" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                    <div id="searchSuggestions" class="search-suggestions" style="display: none;"></div>
                 </div>
                 <div class="chat-list-wrapper">
                     <ul class="chat-list" id="chatList"></ul>

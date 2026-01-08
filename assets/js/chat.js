@@ -7,6 +7,10 @@ const searchUserInput = document.getElementById("searchUser");
 const imageUploadInput = document.getElementById("imageUploadInput");
 const imageUploadBtn = document.getElementById("imageUploadBtn");
 
+// Search suggestions elements
+const searchSuggestions = document.getElementById("searchSuggestions");
+const searchLoading = document.getElementById("searchLoading");
+
 let currentChatUser = null;
 let recentMessage = null;
 const chatUsers = new Set();
@@ -14,6 +18,12 @@ let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
 const MESSAGES_PER_PAGE = 20;
+
+// Search suggestions state
+let searchTimeout = null;
+let currentSuggestions = [];
+let selectedSuggestionIndex = -1;
+let isSearching = false;
 
 let mediaRecorder = null;
 let audioChunks = [];
@@ -577,9 +587,97 @@ chatInput.addEventListener("input", () => {
     }
 });
 
+// Enhanced search functionality with suggestions
+searchUserInput.addEventListener("input", function () {
+    const val = this.value.trim();
+    const feedback = document.getElementById("searchUserFeedback");
+
+    this.classList.remove("is-invalid", "is-valid");
+
+    // Clear previous timeout
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+
+    // Hide suggestions if input is too short
+    if (val.length < 3) {
+        hideSuggestions();
+        if (feedback) feedback.style.display = "none";
+        return;
+    }
+
+    // Validate username format
+    if (val && val !== CURRENT_USER) {
+        if (/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
+            this.classList.remove("is-invalid");
+            if (feedback) feedback.style.display = "none";
+            
+            // Search for suggestions after 300ms delay
+            searchTimeout = setTimeout(() => {
+                searchUserSuggestions(val);
+            }, 300);
+        } else {
+            this.classList.add("is-invalid");
+            if (feedback) feedback.style.display = "block";
+            hideSuggestions();
+        }
+    } else {
+        if (feedback) feedback.style.display = "none";
+        hideSuggestions();
+    }
+});
+
+// Handle keyboard navigation for suggestions
+searchUserInput.addEventListener("keydown", function(e) {
+    if (!searchSuggestions.style.display || searchSuggestions.style.display === "none") {
+        return;
+    }
+
+    const suggestions = searchSuggestions.querySelectorAll('.search-suggestion-item');
+    
+    switch(e.key) {
+        case 'ArrowDown':
+            e.preventDefault();
+            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+            updateSuggestionSelection(suggestions);
+            break;
+            
+        case 'ArrowUp':
+            e.preventDefault();
+            selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+            updateSuggestionSelection(suggestions);
+            break;
+            
+        case 'Enter':
+            e.preventDefault();
+            if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
+                selectSuggestion(suggestions[selectedSuggestionIndex].dataset.username);
+            }
+            break;
+            
+        case 'Escape':
+            e.preventDefault();
+            hideSuggestions();
+            break;
+    }
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-container')) {
+        hideSuggestions();
+    }
+});
+
+// Legacy change event for direct username entry (fallback)
 searchUserInput.addEventListener("change", async () => {
     const val = searchUserInput.value.trim();
     if (!val || val === CURRENT_USER) return;
+
+    // If suggestions are visible, don't process as direct entry
+    if (searchSuggestions.style.display !== "none") {
+        return;
+    }
 
     if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
         showModal(
@@ -603,6 +701,7 @@ searchUserInput.addEventListener("change", async () => {
 
         if (data.exists) {
             addUserToChatList(val);
+            selectChatUser(val);
             searchUserInput.value = "";
         } else {
             showModal(
@@ -625,24 +724,121 @@ searchUserInput.addEventListener("change", async () => {
     }
 });
 
-searchUserInput.addEventListener("input", function () {
-    const val = this.value.trim();
-    const feedback = document.getElementById("searchUserFeedback");
-
-    this.classList.remove("is-invalid", "is-valid");
-
-    if (val && val !== CURRENT_USER) {
-        if (/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
-            this.classList.remove("is-invalid");
-            if (feedback) feedback.style.display = "none";
-        } else {
-            this.classList.add("is-invalid");
-            if (feedback) feedback.style.display = "block";
-        }
-    } else {
-        if (feedback) feedback.style.display = "none";
+// Search suggestions functions
+async function searchUserSuggestions(query) {
+    if (isSearching || query.length < 3) return;
+    
+    isSearching = true;
+    showSearchLoading(true);
+    
+    // Update search state if available
+    if (window.updateSearchState) {
+        window.updateSearchState('searching');
     }
-});
+    
+    try {
+        const response = await fetch(`api/search_users.php?query=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.users && data.users.length > 0) {
+            showSuggestions(data.users);
+        } else {
+            hideSuggestions();
+            // Update search state for no results
+            if (window.updateSearchState) {
+                window.updateSearchState('no-results');
+            }
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+        hideSuggestions();
+        if (window.updateSearchState) {
+            window.updateSearchState('idle');
+        }
+    } finally {
+        isSearching = false;
+        showSearchLoading(false);
+    }
+}
+
+function showSuggestions(users) {
+    currentSuggestions = users;
+    selectedSuggestionIndex = -1;
+    
+    searchSuggestions.innerHTML = '';
+    
+    users.forEach((username, index) => {
+        const item = document.createElement('div');
+        item.className = 'search-suggestion-item';
+        item.dataset.username = username;
+        item.dataset.index = index;
+        
+        const initials = username
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase();
+        
+        item.innerHTML = `
+            <div class="search-suggestion-avatar">${initials}</div>
+            <div class="search-suggestion-username">${username}</div>
+            <i class="fas fa-arrow-right search-suggestion-icon"></i>
+        `;
+        
+        item.addEventListener('click', () => selectSuggestion(username));
+        item.addEventListener('mouseenter', () => {
+            selectedSuggestionIndex = index;
+            updateSuggestionSelection(searchSuggestions.querySelectorAll('.search-suggestion-item'));
+        });
+        
+        searchSuggestions.appendChild(item);
+    });
+    
+    searchSuggestions.style.display = 'block';
+    searchUserInput.classList.add('suggestions-active');
+}
+
+function hideSuggestions() {
+    searchSuggestions.style.display = 'none';
+    searchUserInput.classList.remove('suggestions-active');
+    selectedSuggestionIndex = -1;
+    currentSuggestions = [];
+    
+    // Update search state
+    if (window.updateSearchState) {
+        window.updateSearchState('idle');
+    }
+}
+
+function updateSuggestionSelection(suggestions) {
+    suggestions.forEach((item, index) => {
+        if (index === selectedSuggestionIndex) {
+            item.style.backgroundColor = 'color-mix(in srgb, var(--secondary-color) 15%, transparent)';
+            item.style.transform = 'translateX(4px)';
+        } else {
+            item.style.backgroundColor = '';
+            item.style.transform = '';
+        }
+    });
+}
+
+function selectSuggestion(username) {
+    addUserToChatList(username);
+    selectChatUser(username);
+    searchUserInput.value = '';
+    hideSuggestions();
+    
+    // Show success notification
+    if (window.UIEnhancements) {
+        window.UIEnhancements.showSearchNotification(`Started chat with ${username}`, 'success');
+    }
+}
+
+function showSearchLoading(show) {
+    if (searchLoading) {
+        searchLoading.style.display = show ? 'block' : 'none';
+    }
+}
 
 chatInput.disabled = true;
 chatInput.textContent = "Select someone to chat...";
