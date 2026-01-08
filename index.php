@@ -77,6 +77,7 @@ unset($_SESSION['login_error']);
     </div>
 
     <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/ui-enhancements.js"></script>
     <script>
         function isValidUsername(username) {
             return /^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(username);

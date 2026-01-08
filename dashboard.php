@@ -97,6 +97,8 @@ $user_id = $_SESSION['user_id'];
     </script>
     <script src="assets/js/modal.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/ui-enhancements.js"></script>
+    <script src="assets/js/performance.js"></script>
     <script src="assets/js/crypto.js"></script>
     <script src="assets/js/chat.js"></script>
 </body>
