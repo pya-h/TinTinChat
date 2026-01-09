@@ -35,6 +35,10 @@ let activeAnalyser = null;
 
 let initialViewportHeight = window.innerHeight;
 
+function isTextPersian(text) {
+    return /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(text);
+}
+
 window.addEventListener("resize", () => {
     if (window.innerWidth <= 767.98) {
         const heightDifference = initialViewportHeight - window.innerHeight;
@@ -292,8 +296,18 @@ async function addMessageToChat(msg, prepend = false) {
         } catch (e) {
             decryptedText = "[Unsupported message]";
         }
-        div.textContent = decryptedText;
-        if (/^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(decryptedText.trim())) {
+        const isPersian = isTextPersian(decryptedText.trim());
+        div.innerHTML = `<span>${decryptedText}</span><span class="mx-2 mt-3" style="font-size: 10px; float: ${
+            isPersian ? "left" : "right"
+        }">${new Date(msg.created_at).toLocaleString("default", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: false
+        })}</span>`;
+        if (isPersian) {
             div.dir = "rtl";
         }
     }
@@ -565,14 +579,7 @@ chatInput.addEventListener("keydown", (e) => {
 });
 
 chatInput.addEventListener("input", () => {
-    const text = chatInput.value;
-    const rtlRegex = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/;
-
-    if (rtlRegex.test(text)) {
-        chatInput.dir = "rtl";
-    } else {
-        chatInput.dir = "ltr";
-    }
+    chatInput.dir = isTextPersian(chatInput) ? "rtl" : "ltr";
 });
 
 searchUserInput.addEventListener("input", function () {
@@ -674,7 +681,7 @@ searchUserInput.addEventListener("keydown", function (e) {
             if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
                 selectSuggestion(suggestions[selectedSuggestionIndex].dataset.username);
             } else {
-                searchForUser(true)
+                searchForUser(true);
             }
             break;
 
@@ -831,7 +838,7 @@ loadChatList();
 let chatListTriggerTime = 0;
 
 setInterval(async () => {
-    if(!navigator.onLine) {
+    if (!navigator.onLine) {
         return;
     }
     if (currentChatUser?.length) {

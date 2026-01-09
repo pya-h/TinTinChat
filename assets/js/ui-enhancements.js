@@ -21,12 +21,10 @@ class UIEnhancements {
         this.setupSearchEnhancements();
     }
 
-    // Smooth scrolling for chat messages
     setupSmoothScrolling() {
         const chatMessages = document.getElementById('chatMessages');
         if (chatMessages) {
-            // Enhanced scroll to bottom with smooth animation
-            window.scrollToBottom = (smooth = true) => {
+            window.scrollToBottom = (smooth = false) => {
                 if (smooth) {
                     chatMessages.scrollTo({
                         top: chatMessages.scrollHeight,
@@ -37,14 +35,12 @@ class UIEnhancements {
                 }
             };
 
-            // Auto-scroll when new messages arrive
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                        // Check if user is near bottom before auto-scrolling
                         const isNearBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 100;
                         if (isNearBottom) {
-                            setTimeout(() => scrollToBottom(true), 100);
+                            setTimeout(() => scrollToBottom(false), 100);
                         }
                     }
                 });
@@ -54,7 +50,6 @@ class UIEnhancements {
         }
     }
 
-    // Add ripple effects to buttons
     setupRippleEffects() {
         const buttons = document.querySelectorAll('.btn, .chat-input button, .chat-list li');
         
@@ -80,7 +75,6 @@ class UIEnhancements {
         });
     }
 
-    // Scroll reveal animations
     setupScrollReveal() {
         const observerOptions = {
             threshold: 0.1,
@@ -95,7 +89,6 @@ class UIEnhancements {
             });
         }, observerOptions);
 
-        // Observe messages for scroll reveal
         const messages = document.querySelectorAll('.message');
         messages.forEach(message => {
             message.classList.add('scroll-reveal');
@@ -103,14 +96,12 @@ class UIEnhancements {
         });
     }
 
-    // Connection status indicator
     setupConnectionStatus() {
         const statusIndicator = document.createElement('div');
         statusIndicator.className = 'connection-status online';
         statusIndicator.textContent = 'Online';
         document.body.appendChild(statusIndicator);
 
-        // Monitor connection status
         const updateConnectionStatus = () => {
             if (navigator.onLine) {
                 statusIndicator.className = 'connection-status online';
@@ -124,7 +115,6 @@ class UIEnhancements {
         window.addEventListener('online', updateConnectionStatus);
         window.addEventListener('offline', updateConnectionStatus);
 
-        // Auto-hide after 3 seconds when online
         let hideTimeout;
         const resetHideTimeout = () => {
             clearTimeout(hideTimeout);
@@ -144,27 +134,21 @@ class UIEnhancements {
         });
     }
 
-    // Enhanced typing indicator
     setupTypingIndicator() {
         let typingTimeout;
         const chatInput = document.getElementById('chatInput');
         
         if (chatInput) {
             chatInput.addEventListener('input', () => {
-                // Show typing indicator logic here
                 clearTimeout(typingTimeout);
                 
-                // Hide typing indicator after 2 seconds of no typing
                 typingTimeout = setTimeout(() => {
-                    // Hide typing indicator logic here
                 }, 2000);
             });
         }
     }
 
-    // Enhanced interactions
     setupEnhancedInteractions() {
-        // Enhanced form focus states
         const inputs = document.querySelectorAll('input, textarea');
         inputs.forEach(input => {
             input.addEventListener('focus', () => {
@@ -176,7 +160,6 @@ class UIEnhancements {
             });
         });
 
-        // Enhanced button interactions
         const buttons = document.querySelectorAll('button');
         buttons.forEach(button => {
             button.addEventListener('mousedown', () => {
@@ -192,7 +175,6 @@ class UIEnhancements {
             });
         });
 
-        // Enhanced chat list interactions
         const chatItems = document.querySelectorAll('.chat-list li');
         chatItems.forEach((item, index) => {
             item.style.setProperty('--i', index);
@@ -209,10 +191,8 @@ class UIEnhancements {
         });
     }
 
-    // Mobile-specific optimizations
     setupMobileOptimizations() {
         if (window.innerWidth <= 768) {
-            // Enhanced touch interactions
             let touchStartY = 0;
             let touchEndY = 0;
             
@@ -230,15 +210,12 @@ class UIEnhancements {
                 const handleSwipe = () => {
                     const swipeDistance = touchStartY - touchEndY;
                     
-                    // Pull to refresh (swipe down at top)
                     if (swipeDistance < -100 && chatMessages.scrollTop === 0) {
-                        // Trigger refresh animation
                         this.showRefreshIndicator();
                     }
                 };
             }
 
-            // Prevent zoom on input focus (iOS)
             const viewport = document.querySelector('meta[name=viewport]');
             if (viewport) {
                 const inputs = document.querySelectorAll('input, textarea');
@@ -255,11 +232,8 @@ class UIEnhancements {
         }
     }
 
-    // Accessibility features
     setupAccessibilityFeatures() {
-        // Enhanced keyboard navigation
         document.addEventListener('keydown', (e) => {
-            // Escape key to close modals
             if (e.key === 'Escape') {
                 const modal = document.querySelector('.modal-overlay.visible');
                 if (modal && window.closeModal) {
@@ -267,7 +241,6 @@ class UIEnhancements {
                 }
             }
             
-            // Arrow keys for chat navigation
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 const chatItems = document.querySelectorAll('.chat-list li');
                 const activeItem = document.querySelector('.chat-list li.active');
@@ -288,7 +261,6 @@ class UIEnhancements {
             }
         });
 
-        // Focus management for modals
         const modals = document.querySelectorAll('.modal-container');
         modals.forEach(modal => {
             const focusableElements = modal.querySelectorAll(
@@ -318,28 +290,23 @@ class UIEnhancements {
         });
     }
 
-    // Enhanced search functionality integration
     setupSearchEnhancements() {
         const searchInput = document.getElementById('searchUser');
         const searchSuggestions = document.getElementById('searchSuggestions');
         
         if (searchInput && searchSuggestions) {
-            // Add search state management
             let searchState = 'idle'; // idle, searching, results, no-results
             
-            // Enhanced search input animations
             searchInput.addEventListener('focus', () => {
                 searchInput.parentElement.classList.add('search-focused');
             });
             
             searchInput.addEventListener('blur', () => {
-                // Delay to allow suggestion clicks
                 setTimeout(() => {
                     searchInput.parentElement.classList.remove('search-focused');
                 }, 200);
             });
             
-            // Search state indicator
             const updateSearchState = (state) => {
                 searchState = state;
                 searchInput.classList.remove('searching', 'has-results', 'no-results');
@@ -357,20 +324,16 @@ class UIEnhancements {
                 }
             };
             
-            // Expose state updater globally for chat.js to use
             window.updateSearchState = updateSearchState;
             
-            // Enhanced suggestion interactions
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'childList' && mutation.target === searchSuggestions) {
                         const suggestions = searchSuggestions.querySelectorAll('.search-suggestion-item');
                         
                         suggestions.forEach((suggestion, index) => {
-                            // Add staggered animation delay
                             suggestion.style.animationDelay = `${index * 50}ms`;
                             
-                            // Enhanced hover effects
                             suggestion.addEventListener('mouseenter', () => {
                                 suggestion.style.transform = 'translateX(6px) scale(1.02)';
                             });
@@ -380,7 +343,6 @@ class UIEnhancements {
                             });
                         });
                         
-                        // Update search state
                         if (suggestions.length > 0) {
                             updateSearchState('results');
                         }
@@ -392,7 +354,6 @@ class UIEnhancements {
         }
     }
 
-    // Show refresh indicator
     showRefreshIndicator() {
         const indicator = document.createElement('div');
         indicator.className = 'refresh-indicator';
@@ -404,7 +365,6 @@ class UIEnhancements {
             
             setTimeout(() => {
                 indicator.remove();
-                // Trigger actual refresh logic here
                 if (window.loadMessages && window.currentChatUser) {
                     window.loadMessages(window.currentChatUser, true, true);
                 }
@@ -412,7 +372,6 @@ class UIEnhancements {
         }
     }
 
-    // Notification system
     static showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
@@ -426,7 +385,6 @@ class UIEnhancements {
         }, duration);
     }
 
-    // Enhanced notification for search actions
     static showSearchNotification(message, type = 'success') {
         const notification = document.createElement('div');
         notification.className = `search-notification ${type}`;
@@ -446,7 +404,6 @@ class UIEnhancements {
         }
     }
 
-    // Enhanced loading states
     static showLoadingSkeleton(container, count = 3) {
         const skeletons = [];
         

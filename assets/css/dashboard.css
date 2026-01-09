@@ -513,7 +513,6 @@ nav.navbar:hover {
     .chat-container {
         flex-direction: column;
         height: calc(100vh - 60px);
-        /* Account for navbar height */
         margin: 0;
         width: 100%;
         border-radius: 0;
@@ -527,7 +526,6 @@ nav.navbar:hover {
         overflow-x: auto;
         padding-bottom: 1rem;
         scrollbar-width: none;
-        /* For Firefox */
     }
 
     .chat-list-wrapper::-webkit-scrollbar {
@@ -548,7 +546,6 @@ nav.navbar:hover {
     .chat-area {
         flex: 1;
         min-height: 0;
-        /* Important for flex child to shrink properly */
         display: flex;
         flex-direction: column;
         z-index: 1;
@@ -558,10 +555,8 @@ nav.navbar:hover {
     .chat-messages {
         flex: 1;
         min-height: 0;
-        /* Important for flex child to shrink properly */
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        /* Smooth scrolling on iOS */
         z-index: 1;
         position: relative;
     }
@@ -1158,10 +1153,6 @@ nav.navbar:hover {
     }
 }
 
-* {
-    scroll-behavior: smooth;
-}
-
 @media (max-width: 767.98px) {
 
     /* Improved touch targets */
@@ -1179,7 +1170,6 @@ nav.navbar:hover {
 
     .chat-input textarea {
         font-size: 16px;
-        /* Prevents zoom on iOS */
         padding: 1rem 1.2rem;
     }
 
@@ -1363,6 +1353,7 @@ nav.navbar:hover {
 
 #chatInput {
     transition: all 0.6s ease;
+    overflow: hidden;
 }
 
 .chat-list li .avatar {
