@@ -17,6 +17,7 @@ $user_id = $_SESSION['user_id'];
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/dashboard.css" rel="stylesheet" />
+    <link href="assets/css/style.css" rel="stylesheet" />
 </head>
 
 <body>

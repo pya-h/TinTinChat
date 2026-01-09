@@ -35,11 +35,11 @@ let activeAnalyser = null;
 
 let initialViewportHeight = window.innerHeight;
 
-window.addEventListener('resize', () => {
+window.addEventListener("resize", () => {
     if (window.innerWidth <= 767.98) {
         const heightDifference = initialViewportHeight - window.innerHeight;
         if (Math.abs(heightDifference) > 150) {
-            const chatContainer = document.querySelector('.chat-container');
+            const chatContainer = document.querySelector(".chat-container");
             if (chatContainer) {
                 chatContainer.style.height = `calc(100vh - 60px)`;
             }
@@ -53,7 +53,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-window.addEventListener('load', () => {
+window.addEventListener("load", () => {
     initialViewportHeight = window.innerHeight;
 });
 
@@ -80,9 +80,7 @@ function addUserToChatList(username) {
 }
 
 function updateLoadingSpinnerState(username, show = false) {
-    const loadingSpinnerElement = document.getElementById(
-        `user_${username}_loading`
-    );
+    const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
     loadingSpinnerElement.style = `display: ${show ? "inline" : "none"}`;
 }
 
@@ -92,13 +90,9 @@ function selectChatUser(username) {
         updateLoadingSpinnerState(currentChatUser, false);
     }
 
-    document
-        .getElementById(`user_${currentChatUser}`)
-        ?.classList.remove("selected-chat");
+    document.getElementById(`user_${currentChatUser}`)?.classList.remove("selected-chat");
     currentChatUser = username;
-    document
-        .getElementById(`user_${currentChatUser}`)
-        ?.classList.add("selected-chat");
+    document.getElementById(`user_${currentChatUser}`)?.classList.add("selected-chat");
     chatInput.disabled = false;
     chatWithElem.textContent = username;
     chatInput.value = "";
@@ -117,13 +111,12 @@ function selectChatUser(username) {
 }
 
 async function loadMessages(username, showLoading = false, isInitialLoad = false) {
+    console.log("Loading messages");
     if (isLoadingMessages) return;
 
     try {
         isLoadingMessages = true;
-        const loadingSpinnerElement = document.getElementById(
-            `user_${username}_loading`
-        );
+        const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
 
         if (showLoading) {
             loadingSpinnerElement.style = "display: inline";
@@ -140,8 +133,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         if (!data.messages.length && isInitialLoad) {
             chatMessagesElem.innerHTML = "";
             chatMessagesElem.textContent = "No messages yet.";
-            if (loadingSpinnerElement)
-                loadingSpinnerElement.style = "display: none";
+            if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
             return;
         }
 
@@ -150,8 +142,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             if (lastMessage) {
                 lastMessage.created_at = new Date(lastMessage.created_at);
                 if (lastMessage.created_at <= recentMessage.created_at) {
-                    if (loadingSpinnerElement)
-                        loadingSpinnerElement.style = "display: none";
+                    if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
                     isLoadingMessages = false;
                     return;
                 }
@@ -164,7 +155,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             chatMessagesElem.innerHTML = "";
             messageOffset = MESSAGES_PER_PAGE;
         } else {
-            const existingLoadMore = document.getElementById('loadMoreBtn');
+            const existingLoadMore = document.getElementById("loadMoreBtn");
             if (existingLoadMore) {
                 existingLoadMore.remove();
             }
@@ -194,17 +185,15 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         } else {
             const newScrollHeight = chatMessagesElem.scrollHeight;
             chatMessagesElem.scrollTop = newScrollHeight - previousScrollHeight;
-            
+
             hasLoadedMoreMessages = true;
-            
+
             updateGoToLatestButton();
         }
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
     } finally {
-        const loadingSpinnerElement = document.getElementById(
-            `user_${username}_loading`
-        );
+        const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
         if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
         isLoadingMessages = false;
     }
@@ -215,20 +204,18 @@ function generateWaveformBars() {
     const barCount = 30;
     for (let i = 0; i < barCount; i++) {
         const height = Math.random() * 60 + 15;
-        bars.push(
-            `<div class="waveform-bar" style="height: ${height}%"></div>`
-        );
+        bars.push(`<div class="waveform-bar" style="height: ${height}%"></div>`);
     }
     return bars.join("");
 }
 
 function addLoadMoreButton() {
-    const existingBtn = document.getElementById('loadMoreBtn');
+    const existingBtn = document.getElementById("loadMoreBtn");
     if (existingBtn) return; // Don't add if already exists
 
-    const loadMoreBtn = document.createElement('div');
-    loadMoreBtn.id = 'loadMoreBtn';
-    loadMoreBtn.className = 'load-more-container';
+    const loadMoreBtn = document.createElement("div");
+    loadMoreBtn.id = "loadMoreBtn";
+    loadMoreBtn.className = "load-more-container";
     loadMoreBtn.innerHTML = `
         <button class="btn btn-outline-primary btn-sm load-more-btn" onclick="loadMoreMessages()">
             <i class="fas fa-chevron-up me-1"></i>
@@ -242,9 +229,9 @@ function addLoadMoreButton() {
 async function loadMoreMessages() {
     if (!currentChatUser || isLoadingMessages || !hasMoreMessages) return;
 
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
     if (loadMoreBtn) {
-        const btn = loadMoreBtn.querySelector('button');
+        const btn = loadMoreBtn.querySelector("button");
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
     }
@@ -254,28 +241,25 @@ async function loadMoreMessages() {
     if (loadMoreBtn && !hasMoreMessages) {
         loadMoreBtn.remove();
     } else if (loadMoreBtn) {
-        const btn = loadMoreBtn.querySelector('button');
+        const btn = loadMoreBtn.querySelector("button");
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Load More Messages';
     }
-    
+
     updateGoToLatestButton();
 }
 
 async function addMessageToChat(msg, prepend = false) {
     let div = document.createElement("div");
     div.classList.add("message");
-    div.classList.add(
-        msg.sender_id == CURRENT_USER_ID ? "sent" : "received"
-    );
+    div.classList.add(msg.sender_id == CURRENT_USER_ID ? "sent" : "received");
 
     if (msg.message_type === "voice" && msg.voice_file_path) {
         div.classList.add("is-voice-message");
 
         div.innerHTML = `
           <div class="voice-player-container">
-            <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id
-            })">
+            <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id})">
               <i class="fas fa-play"></i>
             </button>
             <div class="voice-waveform">
@@ -301,9 +285,7 @@ async function addMessageToChat(msg, prepend = false) {
         let decryptedText = "[Unable to decrypt message]";
         try {
             if (msg.sender_id == CURRENT_USER_ID) {
-                decryptedText = await decryptMessage(
-                    msg.message_for_sender
-                );
+                decryptedText = await decryptMessage(msg.message_for_sender);
             } else {
                 decryptedText = await decryptMessage(msg.message);
             }
@@ -311,17 +293,13 @@ async function addMessageToChat(msg, prepend = false) {
             decryptedText = "[Unsupported message]";
         }
         div.textContent = decryptedText;
-        if (
-            /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(
-                decryptedText.trim()
-            )
-        ) {
+        if (/^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(decryptedText.trim())) {
             div.dir = "rtl";
         }
     }
 
     if (prepend) {
-        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const loadMoreBtn = document.getElementById("loadMoreBtn");
         if (loadMoreBtn) {
             chatMessagesElem.insertBefore(div, loadMoreBtn.nextSibling);
         } else {
@@ -335,12 +313,12 @@ async function addMessageToChat(msg, prepend = false) {
 window.loadMoreMessages = loadMoreMessages;
 
 function addGoToLatestButton() {
-    const existingBtn = document.getElementById('goToLatestBtn');
+    const existingBtn = document.getElementById("goToLatestBtn");
     if (existingBtn) return; // Don't add if already exists
 
-    const goToLatestBtn = document.createElement('div');
-    goToLatestBtn.id = 'goToLatestBtn';
-    goToLatestBtn.className = 'go-to-latest-container';
+    const goToLatestBtn = document.createElement("div");
+    goToLatestBtn.id = "goToLatestBtn";
+    goToLatestBtn.className = "go-to-latest-container";
     goToLatestBtn.innerHTML = `
         <button class="btn btn-primary btn-sm go-to-latest-btn" onclick="scrollToLatest()">
             <i class="fas fa-chevron-down me-1"></i>
@@ -352,7 +330,7 @@ function addGoToLatestButton() {
 }
 
 function removeGoToLatestButton() {
-    const goToLatestBtn = document.getElementById('goToLatestBtn');
+    const goToLatestBtn = document.getElementById("goToLatestBtn");
     if (goToLatestBtn) {
         goToLatestBtn.remove();
     }
@@ -364,8 +342,9 @@ function updateGoToLatestButton() {
         return;
     }
 
-    const isNearBottom = chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >= chatMessagesElem.scrollHeight - 100;
-    
+    const isNearBottom =
+        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >= chatMessagesElem.scrollHeight - 100;
+
     if (isNearBottom) {
         removeGoToLatestButton();
     } else {
@@ -376,7 +355,7 @@ function updateGoToLatestButton() {
 function scrollToLatest() {
     chatMessagesElem.scrollTo({
         top: chatMessagesElem.scrollHeight,
-        behavior: 'smooth'
+        behavior: "smooth",
     });
     setTimeout(() => {
         removeGoToLatestButton();
@@ -385,16 +364,14 @@ function scrollToLatest() {
 
 window.scrollToLatest = scrollToLatest;
 
-chatMessagesElem.addEventListener('scroll', () => {
+chatMessagesElem.addEventListener("scroll", () => {
     if (hasLoadedMoreMessages) {
         updateGoToLatestButton();
     }
 });
 
 window.playVoiceMessage = function (messageId) {
-    const messageDiv = document.querySelector(
-        `[data-message-id="${messageId}"]`
-    );
+    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
     if (!messageDiv) return;
 
     const playBtn = messageDiv.querySelector(".voice-play-btn");
@@ -403,8 +380,7 @@ window.playVoiceMessage = function (messageId) {
     let audio = messageDiv.querySelector("audio");
     if (!audio) {
         if (!audioContext) {
-            audioContext = new (window.AudioContext ||
-                window.webkitAudioContext)();
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
 
         audio = document.createElement("audio");
@@ -429,9 +405,7 @@ window.playVoiceMessage = function (messageId) {
                 const duration = Math.round(audio.duration);
                 const minutes = Math.floor(duration / 60);
                 const seconds = duration % 60;
-                durationDisplay.textContent = `${minutes}:${seconds
-                    .toString()
-                    .padStart(2, "0")}`;
+                durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
             } else {
                 durationDisplay.textContent = "??:??";
             }
@@ -442,16 +416,11 @@ window.playVoiceMessage = function (messageId) {
                 const current = Math.round(audio.currentTime);
                 const minutes = Math.floor(current / 60);
                 const seconds = current % 60;
-                durationDisplay.textContent = `${minutes}:${seconds
-                    .toString()
-                    .padStart(2, "0")}`;
+                durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
                 const progress = audio.currentTime / audio.duration;
-                const waveformBars =
-                    messageDiv.querySelectorAll(".waveform-bar");
-                const playedBarsCount = Math.floor(
-                    progress * waveformBars.length
-                );
+                const waveformBars = messageDiv.querySelectorAll(".waveform-bar");
+                const playedBarsCount = Math.floor(progress * waveformBars.length);
 
                 waveformBars.forEach((bar, index) => {
                     if (index < playedBarsCount) {
@@ -467,9 +436,7 @@ window.playVoiceMessage = function (messageId) {
             playBtn.innerHTML = `<i class="fas fa-play"></i>`;
             playBtn.classList.remove("playing");
 
-            messageDiv
-                .querySelectorAll(".waveform-bar")
-                .forEach((bar) => bar.classList.add("played"));
+            messageDiv.querySelectorAll(".waveform-bar").forEach((bar) => bar.classList.add("played"));
         });
 
         audio.addEventListener("error", function (e) {
@@ -515,9 +482,7 @@ window.playVoiceMessage = function (messageId) {
 
     if (audio.paused) {
         document.querySelectorAll(".voice-play-btn.playing").forEach((btn) => {
-            const audio = btn
-                .closest(".voice-player-container")
-                .querySelector("audio");
+            const audio = btn.closest(".voice-player-container").querySelector("audio");
             if (audio && !audio.paused) {
                 audio.pause();
             }
@@ -533,11 +498,7 @@ window.playVoiceMessage = function (messageId) {
 
         audio.play().catch(function (error) {
             console.error("Playback error:", error);
-            showModal(
-                "Playback Error",
-                "Unable to play voice message. Please try again.",
-                "error"
-            );
+            showModal("Playback Error", "Unable to play voice message. Please try again.", "error");
         });
         playBtn.classList.add("playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
@@ -551,11 +512,7 @@ window.playVoiceMessage = function (messageId) {
 
 const sendMessage = async () => {
     if (!currentChatUser) {
-        showModal(
-            "No Chat Selected",
-            "Select a user to chat with first",
-            "warning"
-        );
+        showModal("No Chat Selected", "Select a user to chat with first", "warning");
         return;
     }
     const text = chatInput.value.trim();
@@ -588,11 +545,7 @@ const sendMessage = async () => {
         chatInput.value = "";
         loadMessages(currentChatUser, false, true);
     } catch (err) {
-        showModal(
-            "Send Error",
-            "Encryption/send error: " + err.message,
-            "error"
-        );
+        showModal("Send Error", "Encryption/send error: " + err.message, "error");
     } finally {
         sendBtn.disabled = false;
         sendBtn.classList.remove("btn-pressed");
@@ -657,55 +610,11 @@ searchUserInput.addEventListener("input", function () {
     }
 });
 
-searchUserInput.addEventListener("keydown", function (e) {
-    if (!searchSuggestions.style.display || searchSuggestions.style.display === "none") {
-        return;
-    }
-
-    const suggestions = searchSuggestions.querySelectorAll('.search-suggestion-item');
-
-    switch (e.key) {
-        case 'ArrowDown':
-            e.preventDefault();
-            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
-            updateSuggestionSelection(suggestions);
-            break;
-
-        case 'ArrowUp':
-            e.preventDefault();
-            selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
-            updateSuggestionSelection(suggestions);
-            break;
-
-        case 'Enter':
-            e.preventDefault();
-            if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
-                selectSuggestion(suggestions[selectedSuggestionIndex].dataset.username);
-            }
-            break;
-
-        case 'Escape':
-            e.preventDefault();
-            hideSuggestions();
-            break;
-    }
-});
-
-document.addEventListener('click', function (e) {
-    if (!e.target.closest('.search-container')) {
-        hideSuggestions();
-    }
-});
-
-searchUserInput.addEventListener("change", async () => {
+async function searchForUser(selectUser = false) {
     const val = searchUserInput.value.trim();
     if (!val || val === CURRENT_USER) return;
 
-    if (searchSuggestions.style.display !== "none") {
-        return;
-    }
-
-    if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
+    if (selectUser && !/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(val)) {
         showModal(
             "Invalid Username",
             "Username must start with a letter and contain only letters, numbers, hyphens, and underscores.",
@@ -720,16 +629,15 @@ searchUserInput.addEventListener("change", async () => {
     searchUserInput.disabled = true;
 
     try {
-        const response = await fetch(
-            `api/check_user_exists.php?username=${encodeURIComponent(val)}`
-        );
+        const response = await fetch(`api/check_user_exists.php?username=${encodeURIComponent(val)}`);
         const data = await response.json();
 
         if (data.exists) {
             addUserToChatList(val);
             selectChatUser(val);
             searchUserInput.value = "";
-        } else {
+            hideSuggestions();
+        } else if (selectUser) {
             showModal(
                 "User Not Found",
                 `User "${val}" does not exist. Please check the username and try again.`,
@@ -738,17 +646,52 @@ searchUserInput.addEventListener("change", async () => {
             searchUserInput.value = "";
         }
     } catch (error) {
-        showModal(
-            "Connection Error",
-            "Error checking user existence. Please try again.",
-            "error"
-        );
+        showModal("Connection Error", "Error checking user existence. Please try again.", "error");
         searchUserInput.value = "";
     } finally {
         searchUserInput.placeholder = originalPlaceholder;
         searchUserInput.disabled = false;
     }
+}
+searchUserInput.addEventListener("keydown", function (e) {
+    const suggestions = searchSuggestions.querySelectorAll(".search-suggestion-item");
+
+    switch (e.key) {
+        case "ArrowDown":
+            e.preventDefault();
+            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+            updateSuggestionSelection(suggestions);
+            break;
+
+        case "ArrowUp":
+            e.preventDefault();
+            selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+            updateSuggestionSelection(suggestions);
+            break;
+
+        case "Enter":
+            e.preventDefault();
+            if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
+                selectSuggestion(suggestions[selectedSuggestionIndex].dataset.username);
+            } else {
+                searchForUser(true)
+            }
+            break;
+
+        case "Escape":
+            e.preventDefault();
+            hideSuggestions();
+            break;
+    }
 });
+
+document.addEventListener("click", function (e) {
+    if (!e.target.closest(".search-container")) {
+        hideSuggestions();
+    }
+});
+
+searchUserInput.addEventListener("change", () => searchForUser());
 
 async function searchUserSuggestions(query) {
     if (isSearching || query.length < 3) return;
@@ -757,7 +700,7 @@ async function searchUserSuggestions(query) {
     showSearchLoading(true);
 
     if (window.updateSearchState) {
-        window.updateSearchState('searching');
+        window.updateSearchState("searching");
     }
 
     try {
@@ -769,14 +712,14 @@ async function searchUserSuggestions(query) {
         } else {
             hideSuggestions();
             if (window.updateSearchState) {
-                window.updateSearchState('no-results');
+                window.updateSearchState("no-results");
             }
         }
     } catch (error) {
-        console.error('Search error:', error);
+        console.error("Search error:", error);
         hideSuggestions();
         if (window.updateSearchState) {
-            window.updateSearchState('idle');
+            window.updateSearchState("idle");
         }
     } finally {
         isSearching = false;
@@ -788,11 +731,11 @@ function showSuggestions(users) {
     currentSuggestions = users;
     selectedSuggestionIndex = -1;
 
-    searchSuggestions.innerHTML = '';
+    searchSuggestions.innerHTML = "";
 
     users.forEach((username, index) => {
-        const item = document.createElement('div');
-        item.className = 'search-suggestion-item';
+        const item = document.createElement("div");
+        item.className = "search-suggestion-item";
         item.dataset.username = username;
         item.dataset.index = index;
 
@@ -808,38 +751,38 @@ function showSuggestions(users) {
             <i class="fas fa-arrow-right search-suggestion-icon"></i>
         `;
 
-        item.addEventListener('click', () => selectSuggestion(username));
-        item.addEventListener('mouseenter', () => {
+        item.addEventListener("click", () => selectSuggestion(username));
+        item.addEventListener("mouseenter", () => {
             selectedSuggestionIndex = index;
-            updateSuggestionSelection(searchSuggestions.querySelectorAll('.search-suggestion-item'));
+            updateSuggestionSelection(searchSuggestions.querySelectorAll(".search-suggestion-item"));
         });
 
         searchSuggestions.appendChild(item);
     });
 
-        searchSuggestions.style.display = 'block';
-        searchUserInput.classList.add('suggestions-active');
+    searchSuggestions.style.display = "block";
+    searchUserInput.classList.add("suggestions-active");
 }
 
 function hideSuggestions() {
-    searchSuggestions.style.display = 'none';
-    searchUserInput.classList.remove('suggestions-active');
+    searchSuggestions.style.display = "none";
+    searchUserInput.classList.remove("suggestions-active");
     selectedSuggestionIndex = -1;
     currentSuggestions = [];
 
     if (window.updateSearchState) {
-        window.updateSearchState('idle');
+        window.updateSearchState("idle");
     }
 }
 
 function updateSuggestionSelection(suggestions) {
     suggestions.forEach((item, index) => {
         if (index === selectedSuggestionIndex) {
-            item.style.backgroundColor = 'color-mix(in srgb, var(--secondary-color) 15%, transparent)';
-            item.style.transform = 'translateX(4px)';
+            item.style.backgroundColor = "color-mix(in srgb, var(--secondary-color) 15%, transparent)";
+            item.style.transform = "translateX(4px)";
         } else {
-            item.style.backgroundColor = '';
-            item.style.transform = '';
+            item.style.backgroundColor = "";
+            item.style.transform = "";
         }
     });
 }
@@ -847,28 +790,24 @@ function updateSuggestionSelection(suggestions) {
 function selectSuggestion(username) {
     const isANewUser = addUserToChatList(username);
     selectChatUser(username);
-    searchUserInput.value = '';
+    searchUserInput.value = "";
     hideSuggestions();
 
     if (isANewUser && window.UIEnhancements) {
-        window.UIEnhancements.showSearchNotification(`Started chat with ${username}`, 'success');
+        window.UIEnhancements.showSearchNotification(`Started chat with ${username}`, "success");
     }
 }
 
 function showSearchLoading(show) {
     if (searchLoading) {
-        searchLoading.style.display = show ? 'block' : 'none';
+        searchLoading.style.display = show ? "block" : "none";
     }
 }
 
 chatInput.disabled = true;
 chatInput.textContent = "Select someone to chat...";
 fetchAndImportPrivateKey().catch((err) => {
-    showModal(
-        "Key Error",
-        "Error loading private key: " + err.message,
-        "error"
-    );
+    showModal("Key Error", "Error loading private key: " + err.message, "error");
 });
 
 async function loadChatList() {
@@ -889,22 +828,24 @@ async function loadChatList() {
 
 loadChatList();
 
-setInterval(async () => {
-    if (!currentChatUser?.length) return;
-    await loadMessages(currentChatUser, false, true); // Only check for new messages
-}, 1000);
+let chatListTriggerTime = 0;
 
-setInterval(() => {
-    loadChatList();
-}, 5000);
+setInterval(async () => {
+    if(!navigator.onLine) {
+        return;
+    }
+    if (currentChatUser?.length) {
+        await loadMessages(currentChatUser, false, true); // Only check for new messages
+    }
+    if (!(chatListTriggerTime % 10)) {
+        await loadChatList();
+    }
+    chatListTriggerTime = ++chatListTriggerTime % 10;
+}, 500);
 
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
-        showModal(
-            "No Chat Selected",
-            "Select a user to chat with first",
-            "warning"
-        );
+        showModal("No Chat Selected", "Select a user to chat with first", "warning");
         return;
     }
     if (!isRecording) {
@@ -939,11 +880,7 @@ voiceBtn.addEventListener("click", async () => {
 
             addRecordingIndicator();
         } catch (err) {
-            showModal(
-                "Microphone Error",
-                "Microphone access denied or not available.",
-                "error"
-            );
+            showModal("Microphone Error", "Microphone access denied or not available.", "error");
         }
     } else {
         stopRecording();
@@ -1054,11 +991,7 @@ async function sendVoiceMessage(audioBlob) {
         addUserToChatList(currentChatUser);
         loadMessages(currentChatUser, false, true);
     } catch (err) {
-        showModal(
-            "Voice Send Error",
-            "Voice message send error: " + err.message,
-            "error"
-        );
+        showModal("Voice Send Error", "Voice message send error: " + err.message, "error");
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
@@ -1067,11 +1000,7 @@ async function sendVoiceMessage(audioBlob) {
 
 imageUploadBtn.addEventListener("click", () => {
     if (!currentChatUser) {
-        showModal(
-            "No Chat Selected",
-            "Select a user to chat with first",
-            "warning"
-        );
+        showModal("No Chat Selected", "Select a user to chat with first", "warning");
         return;
     }
     imageUploadInput.click();
@@ -1081,22 +1010,14 @@ imageUploadInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
         if (!file.type.startsWith("image/")) {
-            showModal(
-                "Invalid File Type",
-                "Please select an image file.",
-                "warning"
-            );
+            showModal("Invalid File Type", "Please select an image file.", "warning");
             e.target.value = null;
             return;
         }
 
         const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-            showModal(
-                "File Too Large",
-                "Image file size must be less than 5MB.",
-                "warning"
-            );
+            showModal("File Too Large", "Image file size must be less than 5MB.", "warning");
             e.target.value = null;
             return;
         }
@@ -1145,11 +1066,7 @@ async function sendImageMessage(imageFile) {
         addUserToChatList(currentChatUser);
         loadMessages(currentChatUser, false, true);
     } catch (err) {
-        showModal(
-            "Image Send Error",
-            "Image send error: " + err.message,
-            "error"
-        );
+        showModal("Image Send Error", "Image send error: " + err.message, "error");
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
