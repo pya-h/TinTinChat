@@ -1327,6 +1327,10 @@ nav.navbar:hover {
         opacity: 0.6;
     }
 }
+* {
+    transition: width 0.5s;
+    -webkit-transition: width 0.5s;
+}
 
 .chat-messages::-webkit-scrollbar {
     width: 6px;
@@ -1355,6 +1359,10 @@ nav.navbar:hover {
 #searchUser:focus {
     transform: scale(1.02);
     box-shadow: 0 4px 12px rgba(37, 117, 252, 0.2);
+}
+
+#chatInput {
+    transition: all 0.6s ease;
 }
 
 .chat-list li .avatar {

@@ -120,6 +120,24 @@ $user_id = $_SESSION['user_id'];
                 }, 100); // Allowing the click event to happen if user selects a chat
             }
         });
+
+
+        const textMessageInput = document.getElementById('chatInput');
+        const imageMessageButton = document.getElementById('imageUploadBtn');
+        const voiceMessageButton = document.getElementById('voiceBtn');
+
+        textMessageInput.addEventListener('focus', function() {
+            if(isMobileDevice) {
+                imageMessageButton.style.display = 'none';
+                voiceMessageButton.style.display = 'none';
+            }
+        });
+        textMessageInput.addEventListener('blur', function() {
+            if(isMobileDevice) {
+                imageMessageButton.style.display = 'block';
+                voiceMessageButton.style.display = 'block';
+            }
+        });
     </script>
     <script src="assets/js/modal.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
