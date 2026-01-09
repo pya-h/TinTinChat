@@ -43,7 +43,7 @@ $user_id = $_SESSION['user_id'];
                     </div>
                     <div id="searchSuggestions" class="search-suggestions" style="display: none;"></div>
                 </div>
-                <div class="chat-list-wrapper">
+                <div id='chatListWrapper' class="chat-list-wrapper">
                     <ul class="chat-list" id="chatList"></ul>
                 </div>
             </aside>
@@ -100,6 +100,25 @@ $user_id = $_SESSION['user_id'];
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
+        
+        const searchUserElement = document.getElementById('searchUser');
+
+        let isMobileDevice = false;
+        const chatListWrapperElement = document.getElementById('chatListWrapper');
+
+        searchUserElement.addEventListener('focus', function() {
+            if(chatListWrapperElement.style.display !== 'block') {
+                chatListWrapperElement.style.display = 'block';
+                isMobileDevice = true;
+            }
+        });
+        searchUserElement.addEventListener('blur', function() {
+            if(isMobileDevice) {
+                setTimeout(() => {
+                    chatListWrapperElement.style.display = 'none';
+                }, 100); // Allowing the click event to happen if user selects a chat
+            }
+        });
     </script>
     <script src="assets/js/modal.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js"></script>

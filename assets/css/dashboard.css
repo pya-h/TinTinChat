@@ -160,6 +160,10 @@ nav.navbar:hover {
     margin-top: 1rem;
 }
 
+.chat-list-wrapper {
+    display: block;
+}
+
 .chat-list li {
     display: flex;
     align-items: center;
@@ -1826,6 +1830,7 @@ nav.navbar:hover {
     .chat-list-wrapper {
         position: relative;
         z-index: 1;
+        display: none;
     }
     
     /* Ensure chat area stays below sidebar */
