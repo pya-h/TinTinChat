@@ -1354,6 +1354,7 @@ nav.navbar:hover {
 #chatInput {
     transition: all 0.6s ease;
     overflow: hidden;
+    color: var(--text-color);
 }
 
 .chat-list li .avatar {
