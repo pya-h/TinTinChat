@@ -251,7 +251,6 @@ transform: translateY(-2px) scale(1.02);
 - Prevents zoom on input focus (iOS)
 - Enhanced touch interactions
 - Optimized for thumb navigation
-- Smooth scrolling with momentum
 
 ### Browser Support
 
