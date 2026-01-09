@@ -1316,30 +1316,6 @@ nav.navbar:hover {
     }
 }
 
-.connection-status {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    z-index: 1000;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-}
-
-.connection-status.online {
-    background: rgba(72, 187, 120, 0.9);
-    color: white;
-}
-
-.connection-status.offline {
-    background: rgba(245, 101, 101, 0.9);
-    color: white;
-    animation: connectionPulse 2s infinite;
-}
-
 @keyframes connectionPulse {
 
     0%,
