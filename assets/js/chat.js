@@ -579,7 +579,7 @@ chatInput.addEventListener("keydown", (e) => {
 });
 
 chatInput.addEventListener("input", () => {
-    chatInput.dir = isTextPersian(chatInput) ? "rtl" : "ltr";
+    chatInput.dir = isTextPersian(chatInput.value) ? "rtl" : "ltr";
 });
 
 searchUserInput.addEventListener("input", function () {
