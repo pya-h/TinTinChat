@@ -4,7 +4,6 @@ require_once '../includes/db.php';
 
 header('Content-Type: application/json');
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Not logged in']);
@@ -19,7 +18,6 @@ if (!$username) {
     exit;
 }
 
-// Validate username format
 if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/', $username)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid username format']);
@@ -27,7 +25,6 @@ if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/', $username)) {
 }
 
 try {
-    // Check if user exists
     $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
     $stmt->execute([$username]);
     $user = $stmt->fetch();

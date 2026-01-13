@@ -35,11 +35,11 @@ function loadPDO() {
 
 function logText($text) {
     $log_file = fopen("../log.fux", "a");
-    fwrite($log_file, json_encode($text) . "\n");
+    fwrite($log_file, date('Y-m-d H:i:s'). '\t' . json_encode($text) . "\n\n");
     fclose($log_file);
 }
 
-function updateLoginSession($user_id, $new_ident) {
+function updateLoginSession(int $user_id, string $new_ident) {
     global $pdo;
     $stmt = $pdo->prepare('UPDATE users SET last_login=?, ident=? WHERE id=?');
     $stmt->execute([date('Y-m-d H:i:s'), $new_ident, $user_id]);
@@ -52,5 +52,4 @@ function clearPossibleLoginSession() {
         $stmt->execute([$_SESSION['user_id']]);
     }
 }
-
 loadPDO();

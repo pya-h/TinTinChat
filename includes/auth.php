@@ -29,3 +29,15 @@ function createUser($username, $password)
 
     return $pdo->lastInsertId();
 }
+
+function logout(): void {
+    session_start();
+    clearPossibleLoginSession();
+    session_destroy();
+    echo <<<_END
+        <script>
+            localStorage.clear();
+            window.location.href = '/';
+        </script>
+    _END;
+}
