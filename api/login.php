@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once '../includes/db.php';
-require_once '../includes/session.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/session.php';
 
 function isValidUsername($username)
 {
@@ -64,7 +64,7 @@ if (!$user) {
 
     $user_id = $pdo->lastInsertId();
 
-    $new_ident = setSessionUser($user);
+    $new_ident = setSessionUser(['id' => $user_id, 'username' => $username]);
     if($new_ident) {
        updateLoginSession($user_id, $new_ident); 
     }

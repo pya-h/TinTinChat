@@ -24,7 +24,7 @@ function configSession()
         _END;
 }
 
-function setSessionUser(&$user) {
+function setSessionUser($user) {
     try {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];

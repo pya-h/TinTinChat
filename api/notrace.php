@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once '../includes/db.php';
-require_once '../includes/admin.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/admin.php';
 
 
 header('Content-Type: application/json');

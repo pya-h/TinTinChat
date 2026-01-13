@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
     http_response_code(400);
