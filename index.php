@@ -1,5 +1,7 @@
 <?php
-session_start();
+require_once './includes/session.php';
+configSession();
+
 if (isset($_SESSION['user_id'])) {
     header('Location: dashboard.php');
     exit;
@@ -19,6 +21,7 @@ unset($_SESSION['login_error']);
     <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/auth.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
+    <meta http-equiv="Set-Cookie" content="secure=1; HttpOnly">
 </head>
 
 <body>
