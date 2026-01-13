@@ -90,7 +90,7 @@ function updateLoadingSpinnerState(username, show = false) {
     loadingSpinnerElement.style = `display: ${show ? "inline" : "none"}`;
 }
 
-function selectChatUser(username) {
+async function selectChatUser(username) {
     recentMessage = null;
     if (currentChatUser?.length) {
         updateLoadingSpinnerState(currentChatUser, false);
@@ -117,7 +117,7 @@ function selectChatUser(username) {
         li.classList.toggle("active", li.textContent === username);
     });
 
-    loadMessages(username, true, true);
+    await loadMessages(username, true, true);
 }
 
 async function loadMessages(
@@ -694,7 +694,7 @@ async function searchForUser(selectUser = false) {
 
         if (data.exists) {
             addUserToChatList(val);
-            selectChatUser(val);
+            await selectChatUser(val);
             searchUserInput.value = "";
             hideSuggestions();
         } else if (selectUser) {
@@ -717,7 +717,7 @@ async function searchForUser(selectUser = false) {
         searchUserInput.disabled = false;
     }
 }
-searchUserInput.addEventListener("keydown", function (e) {
+searchUserInput.addEventListener("keydown", async function (e) {
     const suggestions = searchSuggestions.querySelectorAll(
         ".search-suggestion-item"
     );
@@ -744,11 +744,11 @@ searchUserInput.addEventListener("keydown", function (e) {
                 selectedSuggestionIndex >= 0 &&
                 suggestions[selectedSuggestionIndex]
             ) {
-                selectSuggestion(
+                await selectSuggestion(
                     suggestions[selectedSuggestionIndex].dataset.username
                 );
             } else {
-                searchForUser(true);
+                await searchForUser(true);
             }
             break;
 
@@ -866,9 +866,9 @@ function updateSuggestionSelection(suggestions) {
     });
 }
 
-function selectSuggestion(username) {
+async function selectSuggestion(username) {
     const isANewUser = addUserToChatList(username);
-    selectChatUser(username);
+    await selectChatUser(username);
     searchUserInput.value = "";
     hideSuggestions();
 
@@ -1174,7 +1174,7 @@ async function sendImageMessage(imageFile) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        loadMessages(currentChatUser, false, true);
+        await loadMessages(currentChatUser, false, true);
     } catch (err) {
         showModal(
             "Image Send Error",

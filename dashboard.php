@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 $username = $_SESSION['username'];
 $user_id = $_SESSION['user_id'];
+$user_ident = $_SESSION['ident'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -104,7 +105,10 @@ $user_id = $_SESSION['user_id'];
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
-        
+        const currentUserIdent = <?= json_encode($user_ident) ?>;
+        if(currentUserIdent?.length) {
+            localStorage.setItem('ident', currentUserIdent);
+        }
         const searchUserElement = document.getElementById('searchUser');
 
         let isMobileDevice = false;

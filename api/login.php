@@ -78,6 +78,6 @@ if (!password_verify($password, $user['password_hash'])) {
 
 $_SESSION['user_id'] = $user['id'];
 $_SESSION['username'] = $user['username'];
-
+$_SESSION['ident'] = uniqid(time() . '+', true);
 header('Location: ../dashboard.php');
 exit;
