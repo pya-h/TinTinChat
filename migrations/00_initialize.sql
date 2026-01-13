@@ -5,9 +5,6 @@ CREATE TABLE users (
   public_key TEXT,
   private_key TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  ident VARCHAR(128),
-  is_admin BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE messages (
