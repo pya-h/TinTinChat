@@ -84,9 +84,7 @@ function addUserToChatList(username) {
 }
 
 function updateLoadingSpinnerState(username, show = false) {
-    const loadingSpinnerElement = document.getElementById(
-        `user_${username}_loading`
-    );
+    const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
     loadingSpinnerElement.style = `display: ${show ? "inline" : "none"}`;
 }
 
@@ -96,13 +94,9 @@ async function selectChatUser(username) {
         updateLoadingSpinnerState(currentChatUser, false);
     }
 
-    document
-        .getElementById(`user_${currentChatUser}`)
-        ?.classList.remove("selected-chat");
+    document.getElementById(`user_${currentChatUser}`)?.classList.remove("selected-chat");
     currentChatUser = username;
-    document
-        .getElementById(`user_${currentChatUser}`)
-        ?.classList.add("selected-chat");
+    document.getElementById(`user_${currentChatUser}`)?.classList.add("selected-chat");
     chatInput.disabled = false;
     chatWithElem.textContent = username;
     chatInput.value = "";
@@ -120,19 +114,13 @@ async function selectChatUser(username) {
     await loadMessages(username, true, true);
 }
 
-async function loadMessages(
-    username,
-    showLoading = false,
-    isInitialLoad = false
-) {
+async function loadMessages(username, showLoading = false, isInitialLoad = false) {
     console.log("Loading messages");
     if (isLoadingMessages) return;
 
     try {
         isLoadingMessages = true;
-        const loadingSpinnerElement = document.getElementById(
-            `user_${username}_loading`
-        );
+        const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
 
         if (showLoading) {
             loadingSpinnerElement.style = "display: inline";
@@ -141,9 +129,7 @@ async function loadMessages(
         const offset = isInitialLoad ? 0 : messageOffset;
 
         const res = await fetch(
-            `api/fetch_messages.php?with=${encodeURIComponent(
-                username
-            )}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
+            `api/fetch_messages.php?with=${encodeURIComponent(username)}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
@@ -151,8 +137,7 @@ async function loadMessages(
         if (!data.messages.length && isInitialLoad) {
             chatMessagesElem.innerHTML = "";
             chatMessagesElem.textContent = "No messages yet.";
-            if (loadingSpinnerElement)
-                loadingSpinnerElement.style = "display: none";
+            if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
             return;
         }
 
@@ -161,8 +146,7 @@ async function loadMessages(
             if (lastMessage) {
                 lastMessage.created_at = new Date(lastMessage.created_at);
                 if (lastMessage.created_at <= recentMessage.created_at) {
-                    if (loadingSpinnerElement)
-                        loadingSpinnerElement.style = "display: none";
+                    if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
                     isLoadingMessages = false;
                     return;
                 }
@@ -213,11 +197,8 @@ async function loadMessages(
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
     } finally {
-        const loadingSpinnerElement = document.getElementById(
-            `user_${username}_loading`
-        );
-        if (loadingSpinnerElement)
-            loadingSpinnerElement.style = "display: none";
+        const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
+        if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
         isLoadingMessages = false;
     }
 }
@@ -227,9 +208,7 @@ function generateWaveformBars() {
     const barCount = 30;
     for (let i = 0; i < barCount; i++) {
         const height = Math.random() * 60 + 15;
-        bars.push(
-            `<div class="waveform-bar" style="height: ${height}%"></div>`
-        );
+        bars.push(`<div class="waveform-bar" style="height: ${height}%"></div>`);
     }
     return bars.join("");
 }
@@ -268,8 +247,7 @@ async function loadMoreMessages() {
     } else if (loadMoreBtn) {
         const btn = loadMoreBtn.querySelector("button");
         btn.disabled = false;
-        btn.innerHTML =
-            '<i class="fas fa-chevron-up me-1"></i>Load More Messages';
+        btn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Load More Messages';
     }
 
     updateGoToLatestButton();
@@ -285,9 +263,7 @@ async function addMessageToChat(msg, prepend = false) {
 
         div.innerHTML = `
           <div class="voice-player-container">
-            <button class="voice-play-btn" onclick="playVoiceMessage(${
-                msg.id
-            })">
+            <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id})">
               <i class="fas fa-play"></i>
             </button>
             <div class="voice-waveform">
@@ -302,11 +278,12 @@ async function addMessageToChat(msg, prepend = false) {
     } else if (msg.message_type === "image" && msg.image_file_path) {
         div.classList.add("is-image-message");
 
-        div.innerHTML = `<a id="imageMessageAnchor${msg.id}" href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
-                    <img id="imageMessage${msg.id}" src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
-                        // onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
+        div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
+                    <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
                         onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
                 </a>`;
+        // onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
+
         // showModal()
     } else {
         let decryptedText = "[Unable to decrypt message]";
@@ -380,8 +357,7 @@ function updateGoToLatestButton() {
     }
 
     const isNearBottom =
-        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >=
-        chatMessagesElem.scrollHeight - 100;
+        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >= chatMessagesElem.scrollHeight - 100;
 
     if (isNearBottom) {
         removeGoToLatestButton();
@@ -409,9 +385,7 @@ chatMessagesElem.addEventListener("scroll", () => {
 });
 
 window.playVoiceMessage = function (messageId) {
-    const messageDiv = document.querySelector(
-        `[data-message-id="${messageId}"]`
-    );
+    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
     if (!messageDiv) return;
 
     const playBtn = messageDiv.querySelector(".voice-play-btn");
@@ -420,8 +394,7 @@ window.playVoiceMessage = function (messageId) {
     let audio = messageDiv.querySelector("audio");
     if (!audio) {
         if (!audioContext) {
-            audioContext = new (window.AudioContext ||
-                window.webkitAudioContext)();
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
 
         audio = document.createElement("audio");
@@ -446,9 +419,7 @@ window.playVoiceMessage = function (messageId) {
                 const duration = Math.round(audio.duration);
                 const minutes = Math.floor(duration / 60);
                 const seconds = duration % 60;
-                durationDisplay.textContent = `${minutes}:${seconds
-                    .toString()
-                    .padStart(2, "0")}`;
+                durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
             } else {
                 durationDisplay.textContent = "??:??";
             }
@@ -459,16 +430,11 @@ window.playVoiceMessage = function (messageId) {
                 const current = Math.round(audio.currentTime);
                 const minutes = Math.floor(current / 60);
                 const seconds = current % 60;
-                durationDisplay.textContent = `${minutes}:${seconds
-                    .toString()
-                    .padStart(2, "0")}`;
+                durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
                 const progress = audio.currentTime / audio.duration;
-                const waveformBars =
-                    messageDiv.querySelectorAll(".waveform-bar");
-                const playedBarsCount = Math.floor(
-                    progress * waveformBars.length
-                );
+                const waveformBars = messageDiv.querySelectorAll(".waveform-bar");
+                const playedBarsCount = Math.floor(progress * waveformBars.length);
 
                 waveformBars.forEach((bar, index) => {
                     if (index < playedBarsCount) {
@@ -484,9 +450,7 @@ window.playVoiceMessage = function (messageId) {
             playBtn.innerHTML = `<i class="fas fa-play"></i>`;
             playBtn.classList.remove("playing");
 
-            messageDiv
-                .querySelectorAll(".waveform-bar")
-                .forEach((bar) => bar.classList.add("played"));
+            messageDiv.querySelectorAll(".waveform-bar").forEach((bar) => bar.classList.add("played"));
         });
 
         audio.addEventListener("error", function (e) {
@@ -532,9 +496,7 @@ window.playVoiceMessage = function (messageId) {
 
     if (audio.paused) {
         document.querySelectorAll(".voice-play-btn.playing").forEach((btn) => {
-            const audio = btn
-                .closest(".voice-player-container")
-                .querySelector("audio");
+            const audio = btn.closest(".voice-player-container").querySelector("audio");
             if (audio && !audio.paused) {
                 audio.pause();
             }
@@ -550,11 +512,7 @@ window.playVoiceMessage = function (messageId) {
 
         audio.play().catch(function (error) {
             console.error("Playback error:", error);
-            showModal(
-                "Playback Error",
-                "Unable to play voice message. Please try again.",
-                "error"
-            );
+            showModal("Playback Error", "Unable to play voice message. Please try again.", "error");
         });
         playBtn.classList.add("playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
@@ -568,11 +526,7 @@ window.playVoiceMessage = function (messageId) {
 
 const sendMessage = async () => {
     if (!currentChatUser) {
-        showModal(
-            "No Chat Selected",
-            "Select a user to chat with first",
-            "warning"
-        );
+        showModal("No Chat Selected", "Select a user to chat with first", "warning");
         return;
     }
     const text = chatInput.value.trim();
@@ -605,12 +559,8 @@ const sendMessage = async () => {
         chatInput.value = "";
         await loadMessages(currentChatUser, false, true);
     } catch (err) {
-        showModal(
-            "Send Error",
-            "Encryption/send error: " + err.message,
-            "error"
-        );
-        console.log(err)
+        showModal("Send Error", "Encryption/send error: " + err.message, "error");
+        console.log(err);
     } finally {
         sendBtn.disabled = false;
         sendBtn.classList.remove("btn-pressed");
@@ -687,9 +637,7 @@ async function searchForUser(selectUser = false) {
     searchUserInput.disabled = true;
 
     try {
-        const response = await fetch(
-            `api/check_user_exists.php?username=${encodeURIComponent(val)}`
-        );
+        const response = await fetch(`api/check_user_exists.php?username=${encodeURIComponent(val)}`);
         const data = await response.json();
 
         if (data.exists) {
@@ -706,11 +654,7 @@ async function searchForUser(selectUser = false) {
             searchUserInput.value = "";
         }
     } catch (error) {
-        showModal(
-            "Connection Error",
-            "Error checking user existence. Please try again.",
-            "error"
-        );
+        showModal("Connection Error", "Error checking user existence. Please try again.", "error");
         searchUserInput.value = "";
     } finally {
         searchUserInput.placeholder = originalPlaceholder;
@@ -718,17 +662,12 @@ async function searchForUser(selectUser = false) {
     }
 }
 searchUserInput.addEventListener("keydown", async function (e) {
-    const suggestions = searchSuggestions.querySelectorAll(
-        ".search-suggestion-item"
-    );
+    const suggestions = searchSuggestions.querySelectorAll(".search-suggestion-item");
 
     switch (e.key) {
         case "ArrowDown":
             e.preventDefault();
-            selectedSuggestionIndex = Math.min(
-                selectedSuggestionIndex + 1,
-                suggestions.length - 1
-            );
+            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
             updateSuggestionSelection(suggestions);
             break;
 
@@ -740,13 +679,8 @@ searchUserInput.addEventListener("keydown", async function (e) {
 
         case "Enter":
             e.preventDefault();
-            if (
-                selectedSuggestionIndex >= 0 &&
-                suggestions[selectedSuggestionIndex]
-            ) {
-                await selectSuggestion(
-                    suggestions[selectedSuggestionIndex].dataset.username
-                );
+            if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
+                await selectSuggestion(suggestions[selectedSuggestionIndex].dataset.username);
             } else {
                 await searchForUser(true);
             }
@@ -778,9 +712,7 @@ async function searchUserSuggestions(query) {
     }
 
     try {
-        const response = await fetch(
-            `api/search_users.php?query=${encodeURIComponent(query)}`
-        );
+        const response = await fetch(`api/search_users.php?query=${encodeURIComponent(query)}`);
         const data = await response.json();
 
         if (data.users && data.users.length > 0) {
@@ -830,9 +762,7 @@ function showSuggestions(users) {
         item.addEventListener("click", () => selectSuggestion(username));
         item.addEventListener("mouseenter", () => {
             selectedSuggestionIndex = index;
-            updateSuggestionSelection(
-                searchSuggestions.querySelectorAll(".search-suggestion-item")
-            );
+            updateSuggestionSelection(searchSuggestions.querySelectorAll(".search-suggestion-item"));
         });
 
         searchSuggestions.appendChild(item);
@@ -856,8 +786,7 @@ function hideSuggestions() {
 function updateSuggestionSelection(suggestions) {
     suggestions.forEach((item, index) => {
         if (index === selectedSuggestionIndex) {
-            item.style.backgroundColor =
-                "color-mix(in srgb, var(--secondary-color) 15%, transparent)";
+            item.style.backgroundColor = "color-mix(in srgb, var(--secondary-color) 15%, transparent)";
             item.style.transform = "translateX(4px)";
         } else {
             item.style.backgroundColor = "";
@@ -873,10 +802,7 @@ async function selectSuggestion(username) {
     hideSuggestions();
 
     if (isANewUser && window.UIEnhancements) {
-        window.UIEnhancements.showSearchNotification(
-            `Started chat with ${username}`,
-            "success"
-        );
+        window.UIEnhancements.showSearchNotification(`Started chat with ${username}`, "success");
     }
 }
 
@@ -889,11 +815,7 @@ function showSearchLoading(show) {
 chatInput.disabled = true;
 chatInput.textContent = "Select someone to chat...";
 fetchAndImportPrivateKey().catch((err) => {
-    showModal(
-        "Key Error",
-        "Error loading private key: " + err.message,
-        "error"
-    );
+    showModal("Key Error", "Error loading private key: " + err.message, "error");
 });
 
 async function loadChatList() {
@@ -931,11 +853,7 @@ setInterval(async () => {
 
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
-        showModal(
-            "No Chat Selected",
-            "Select a user to chat with first",
-            "warning"
-        );
+        showModal("No Chat Selected", "Select a user to chat with first", "warning");
         return;
     }
     if (!isRecording) {
@@ -970,11 +888,7 @@ voiceBtn.addEventListener("click", async () => {
 
             addRecordingIndicator();
         } catch (err) {
-            showModal(
-                "Microphone Error",
-                "Microphone access denied or not available.",
-                "error"
-            );
+            showModal("Microphone Error", "Microphone access denied or not available.", "error");
         }
     } else {
         stopRecording();
@@ -1085,11 +999,7 @@ async function sendVoiceMessage(audioBlob) {
         addUserToChatList(currentChatUser);
         loadMessages(currentChatUser, false, true);
     } catch (err) {
-        showModal(
-            "Voice Send Error",
-            "Voice message send error: " + err.message,
-            "error"
-        );
+        showModal("Voice Send Error", "Voice message send error: " + err.message, "error");
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
@@ -1098,11 +1008,7 @@ async function sendVoiceMessage(audioBlob) {
 
 imageUploadBtn.addEventListener("click", () => {
     if (!currentChatUser) {
-        showModal(
-            "No Chat Selected",
-            "Select a user to chat with first",
-            "warning"
-        );
+        showModal("No Chat Selected", "Select a user to chat with first", "warning");
         return;
     }
     imageUploadInput.click();
@@ -1112,22 +1018,14 @@ imageUploadInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
         if (!file.type.startsWith("image/")) {
-            showModal(
-                "Invalid File Type",
-                "Please select an image file.",
-                "warning"
-            );
+            showModal("Invalid File Type", "Please select an image file.", "warning");
             e.target.value = null;
             return;
         }
 
         const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-            showModal(
-                "File Too Large",
-                "Image file size must be less than 5MB.",
-                "warning"
-            );
+            showModal("File Too Large", "Image file size must be less than 5MB.", "warning");
             e.target.value = null;
             return;
         }
@@ -1176,11 +1074,7 @@ async function sendImageMessage(imageFile) {
         addUserToChatList(currentChatUser);
         await loadMessages(currentChatUser, false, true);
     } catch (err) {
-        showModal(
-            "Image Send Error",
-            "Image send error: " + err.message,
-            "error"
-        );
+        showModal("Image Send Error", "Image send error: " + err.message, "error");
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();

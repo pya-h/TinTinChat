@@ -10,7 +10,7 @@
             </button>
         </div>
         <div class="modal-body">
-            <p id="modalMessage"></p>
+            <p id="modalMessage">This is a modal message.</p>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-primary" onclick="closeModal()">OK</button>

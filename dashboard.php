@@ -21,7 +21,7 @@ $user_ident = $_SESSION['ident'];
     <link href="assets/css/ext/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/dashboard.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
-    <link href="assets/css/modal.css" rel="stylesheet" />
+    
 </head>
 
 <body>
@@ -82,7 +82,8 @@ $user_ident = $_SESSION['ident'];
     </div>
 
     <?php require_once __DIR__ . '/includes/modal.php' ?>
-
+    <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/ext/jquery-3.6.1.min.js"></script>
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
@@ -92,13 +93,12 @@ $user_ident = $_SESSION['ident'];
         }
         const searchUserElement = document.getElementById('searchUser');
 
-        const isMobileDevice = () => $(window).width() < 800;
+        let isMobileDevice = () => $(window).width() < 850
         const chatListWrapperElement = document.getElementById('chatListWrapper');
 
         searchUserElement.addEventListener('focus', function() {
             if(chatListWrapperElement.style.display !== 'block') {
                 chatListWrapperElement.style.display = 'block';
-                
             }
         });
         searchUserElement.addEventListener('blur', function() {
@@ -108,7 +108,6 @@ $user_ident = $_SESSION['ident'];
                 }, 100); // Allowing the click event to happen if user selects a chat
             }
         });
-
 
         const textMessageInput = document.getElementById('chatInput');
         const imageMessageButton = document.getElementById('imageUploadBtn');
@@ -127,9 +126,7 @@ $user_ident = $_SESSION['ident'];
             }
         });
     </script>
-    <script src="assets/js/modal.js"></script>
-    <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/ext/jquery-3.6.1.min.js"></script>
+
     <script src="assets/js/ui-enhancements.js"></script>
     <script src="assets/js/performance.js"></script>
     <script src="assets/js/crypto.js"></script>
