@@ -18,55 +18,59 @@ class PerformanceOptimizer {
     }
 
     setupLazyLoading() {
-        const imageObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    if (img.dataset.src) {
-                        img.src = img.dataset.src;
-                        img.classList.add('loaded');
-                        imageObserver.unobserve(img);
+        const imageObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            img.classList.add("loaded");
+                            imageObserver.unobserve(img);
+                        }
                     }
-                }
-            });
-        }, {
-            rootMargin: '50px'
-        });
+                });
+            },
+            {
+                rootMargin: "50px",
+            }
+        );
 
-        document.querySelectorAll('img[data-src]').forEach(img => {
+        document.querySelectorAll("img[data-src]").forEach((img) => {
             imageObserver.observe(img);
         });
     }
 
     setupImageOptimization() {
-        const images = document.querySelectorAll('.message-image');
+        const images = document.querySelectorAll(".message-image");
 
-        images.forEach(img => {
-            const placeholder = document.createElement('div');
-            placeholder.className = 'image-placeholder loading-skeleton';
-            placeholder.style.width = '200px';
-            placeholder.style.height = '150px';
-            placeholder.style.borderRadius = '12px';
+        images.forEach((img) => {
+            const placeholder = document.createElement("div");
+            placeholder.className = "image-placeholder loading-skeleton";
+            placeholder.style.width = "200px";
+            placeholder.style.height = "150px";
+            placeholder.style.borderRadius = "12px";
 
             img.parentNode.insertBefore(placeholder, img);
-            img.style.display = 'none';
+            img.style.display = "none";
 
-            img.addEventListener('load', () => {
+            img.addEventListener("load", () => {
                 placeholder.remove();
-                img.style.display = 'block';
-                img.classList.add('image-loaded');
+                img.style.display = "block";
+                img.classList.add("image-loaded");
             });
 
-            img.addEventListener('error', () => {
-                placeholder.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;"><i class="fas fa-image"></i> Image unavailable</div>';
-                placeholder.classList.remove('loading-skeleton');
-                placeholder.style.background = '#f0f0f0';
+            img.addEventListener("error", () => {
+                placeholder.innerHTML =
+                    '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;"><i class="fas fa-image"></i> Image unavailable</div>';
+                placeholder.classList.remove("loading-skeleton");
+                placeholder.style.background = "#f0f0f0";
             });
         });
     }
 
     setupVirtualScrolling() {
-        const chatMessages = document.getElementById('chatMessages');
+        const chatMessages = document.getElementById("chatMessages");
         if (!chatMessages) return;
 
         let isVirtualScrollEnabled = false;
@@ -75,7 +79,10 @@ class PerformanceOptimizer {
         const checkMessageCount = () => {
             const messageCount = chatMessages.children.length;
 
-            if (messageCount > VIRTUAL_SCROLL_THRESHOLD && !isVirtualScrollEnabled) {
+            if (
+                messageCount > VIRTUAL_SCROLL_THRESHOLD &&
+                !isVirtualScrollEnabled
+            ) {
                 this.enableVirtualScroll(chatMessages);
                 isVirtualScrollEnabled = true;
             }
@@ -94,65 +101,74 @@ class PerformanceOptimizer {
         const updateVisibleMessages = () => {
             messages.forEach((message, index) => {
                 if (index >= startIndex && index <= endIndex) {
-                    message.style.display = 'block';
+                    message.style.display = "block";
                 } else {
-                    message.style.display = 'none';
+                    message.style.display = "none";
                 }
             });
         };
 
-        container.addEventListener('scroll', this.throttle(() => {
-            const newScrollTop = container.scrollTop;
-            const messageHeight = 80;
+        container.addEventListener(
+            "scroll",
+            this.throttle(() => {
+                const newScrollTop = container.scrollTop;
+                const messageHeight = 80;
 
-            startIndex = Math.floor(newScrollTop / messageHeight);
-            endIndex = startIndex + VISIBLE_RANGE;
+                startIndex = Math.floor(newScrollTop / messageHeight);
+                endIndex = startIndex + VISIBLE_RANGE;
 
-            updateVisibleMessages();
-        }, 16)); // 60fps
+                updateVisibleMessages();
+            }, 16)
+        ); // 60fps
 
         updateVisibleMessages();
     }
 
     setupDebouncing() {
-        const searchInput = document.getElementById('searchUser');
+        const searchInput = document.getElementById("searchUser");
         if (searchInput) {
             const originalHandler = searchInput.onchange;
             searchInput.onchange = null;
 
-            searchInput.addEventListener('input', this.debounce((e) => {
-                if (originalHandler) {
-                    originalHandler.call(searchInput, e);
-                }
-            }, 300));
+            searchInput.addEventListener(
+                "input",
+                this.debounce((e) => {
+                    if (originalHandler) {
+                        originalHandler.call(searchInput, e);
+                    }
+                }, 300)
+            );
         }
 
-        const chatInput = document.getElementById('chatInput');
+        const chatInput = document.getElementById("chatInput");
         if (chatInput) {
             let typingTimeout;
 
-            chatInput.addEventListener('input', this.debounce(() => { }, 500));
+            chatInput.addEventListener(
+                "input",
+                this.debounce(() => {}, 500)
+            );
         }
     }
 
     setupPreloading() {
         const preloadImages = (urls) => {
-            urls.forEach(url => {
-                const link = document.createElement('link');
-                link.rel = 'prefetch';
+            urls.forEach((url) => {
+                const link = document.createElement("link");
+                link.rel = "prefetch";
                 link.href = url;
                 document.head.appendChild(link);
             });
         };
 
         const commonAssets = [
-            'assets/css/fontawesome.min.css',
-            'assets/js/crypto.js'
+            "assets/css/fontawesome.min.css",
+            "assets/js/crypto.js",
         ];
 
-        commonAssets.forEach(asset => {
-            const link = document.createElement('link');
-            link.rel = 'prefetch';
+        commonAssets.forEach((asset) => {
+            const link = document.createElement("link");
+            link.rel = "prefetch";
             link.href = asset;
             document.head.appendChild(link);
         });
@@ -167,7 +183,9 @@ class PerformanceOptimizer {
             frameCount++;
 
             if (currentTime - lastTime >= 1000) {
-                fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                fps = Math.round(
+                    (frameCount * 1000) / (currentTime - lastTime)
+                );
                 frameCount = 0;
                 lastTime = currentTime;
 
@@ -185,16 +203,20 @@ class PerformanceOptimizer {
             setInterval(() => {
                 const memoryInfo = performance.memory;
                 const usedMB = Math.round(memoryInfo.usedJSHeapSize / 1048576);
-                const totalMB = Math.round(memoryInfo.totalJSHeapSize / 1048576);
+                const totalMB = Math.round(
+                    memoryInfo.totalJSHeapSize / 1048576
+                );
 
                 if (usedMB > 0.5 * tot) {
-                    console.warn(`High memory usage: ${usedMB}MB / ${totalMB}MB! cleaning up...`);
+                    console.warn(
+                        `High memory usage: ${usedMB}MB / ${totalMB}MB! cleaning up...`
+                    );
                     this.cleanup();
                 }
             }, 600000); //10min
         }
 
-        if ('PerformanceObserver' in window) {
+        if ("PerformanceObserver" in window) {
             const observer = new PerformanceObserver((list) => {
                 list.getEntries().forEach((entry) => {
                     if (entry.duration > 50) {
@@ -203,7 +225,7 @@ class PerformanceOptimizer {
                 });
             });
 
-            observer.observe({ entryTypes: ['longtask'] });
+            observer.observe({ entryTypes: ["longtask"] });
         }
     }
 
@@ -227,7 +249,7 @@ class PerformanceOptimizer {
             if (!inThrottle) {
                 func.apply(context, args);
                 inThrottle = true;
-                setTimeout(() => inThrottle = false, limit);
+                setTimeout(() => (inThrottle = false), limit);
             }
         };
     }
@@ -294,15 +316,15 @@ const performanceStyles = `
 }
 `;
 
-const performanceStyleSheet = document.createElement('style');
+const performanceStyleSheet = document.createElement("style");
 performanceStyleSheet.textContent = performanceStyles;
 document.head.appendChild(performanceStyleSheet);
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     window.performanceOptimizer = new PerformanceOptimizer();
 });
 
-window.addEventListener('beforeunload', () => {
+window.addEventListener("beforeunload", () => {
     if (window.performanceOptimizer) {
         window.performanceOptimizer.cleanup();
     }

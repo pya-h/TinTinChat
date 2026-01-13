@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['user_id'])) {
-    header("Location: dashboard.php");
+    header('Location: dashboard.php');
     exit;
 }
 
@@ -121,7 +121,6 @@ unset($_SESSION['login_error']);
         const loginForm = document.getElementById('loginForm');
         const loginBtn = document.getElementById('loginBtn');
 
-        // Real-time username validation
         usernameInput.addEventListener('input', function() {
             const username = this.value.trim();
             if (username && !isValidUsername(username)) {
@@ -133,7 +132,6 @@ unset($_SESSION['login_error']);
             }
         });
 
-        // Real-time password validation
         passwordInput.addEventListener('input', function() {
             const password = this.value;
             
@@ -157,7 +155,6 @@ unset($_SESSION['login_error']);
             }
         });
 
-        // Form submission validation
         loginForm.addEventListener('submit', function(e) {
             const username = usernameInput.value.trim();
             const password = passwordInput.value;
@@ -185,13 +182,11 @@ unset($_SESSION['login_error']);
                     passwordInput.focus();
                 }
             } else {
-                // Show loading state
                 loginBtn.classList.add('btn-loading');
                 loginBtn.disabled = true;
             }
         });
 
-        // Add some interactive animations
         document.querySelectorAll('.form-control').forEach(input => {
             input.addEventListener('focus', function() {
                 this.parentElement.style.transform = 'scale(1.02)';
