@@ -326,8 +326,6 @@ class UIEnhancements {
         const searchSuggestions = document.getElementById("searchSuggestions");
 
         if (searchInput && searchSuggestions) {
-            let searchState = "idle"; // idle, searching, results, no-results
-
             searchInput.addEventListener("focus", () => {
                 searchInput.parentElement.classList.add("search-focused");
             });

@@ -81,27 +81,8 @@ $user_ident = $_SESSION['ident'];
         </div>
     </div>
 
-    <div id="modalOverlay" class="modal-overlay" style="display: none;">
-        <div id="modalContainer" class="modal-container">
-            <div class="modal-header">
-                <div class="modal-icon">
-                    <i id="modalIcon" class="fas fa-info-circle"></i>
-                </div>
-                <h4 id="modalTitle" class="modal-title">Information</h4>
-                <button type="button" class="modal-close" onclick="closeModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p id="modalMessage"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="closeModal()">OK</button>
-            </div>
-        </div>
-    </div>
+    <?php require_once __DIR__ . '/includes/modal.php' ?>
 
-    <link href="assets/css/modal.css" rel="stylesheet" />
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
@@ -111,17 +92,17 @@ $user_ident = $_SESSION['ident'];
         }
         const searchUserElement = document.getElementById('searchUser');
 
-        let isMobileDevice = false;
+        const isMobileDevice = () => $(window).width() < 800;
         const chatListWrapperElement = document.getElementById('chatListWrapper');
 
         searchUserElement.addEventListener('focus', function() {
             if(chatListWrapperElement.style.display !== 'block') {
                 chatListWrapperElement.style.display = 'block';
-                isMobileDevice = true;
+                
             }
         });
         searchUserElement.addEventListener('blur', function() {
-            if(isMobileDevice) {
+            if(isMobileDevice()) {
                 setTimeout(() => {
                     chatListWrapperElement.style.display = 'none';
                 }, 100); // Allowing the click event to happen if user selects a chat
@@ -134,13 +115,13 @@ $user_ident = $_SESSION['ident'];
         const voiceMessageButton = document.getElementById('voiceBtn');
 
         textMessageInput.addEventListener('focus', function() {
-            if(isMobileDevice) {
+            if(isMobileDevice()) {
                 imageMessageButton.style.display = 'none';
                 voiceMessageButton.style.display = 'none';
             }
         });
         textMessageInput.addEventListener('blur', function() {
-            if(isMobileDevice) {
+            if(isMobileDevice()) {
                 imageMessageButton.style.display = 'block';
                 voiceMessageButton.style.display = 'block';
             }
