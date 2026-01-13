@@ -312,9 +312,9 @@ async function addMessageToChat(msg, prepend = false) {
         let decryptedText = "[Unable to decrypt message]";
         try {
             if (msg.sender_id == CURRENT_USER_ID) {
-                decryptedText = await decryptMessage(msg.message_for_sender);
+                decryptedText = await decryptLongMessage(msg.message_for_sender);
             } else {
-                decryptedText = await decryptMessage(msg.message);
+                decryptedText = await decryptLongMessage(msg.message);
             }
         } catch (e) {
             decryptedText = "[Unsupported message]";
@@ -586,8 +586,8 @@ const sendMessage = async () => {
         const recipientKey = await getPublicKey(currentChatUser);
         const senderKey = await getPublicKey(CURRENT_USER);
 
-        const encryptedForRecipient = await encryptMessage(text, recipientKey);
-        const encryptedForSender = await encryptMessage(text, senderKey);
+        const encryptedForRecipient = await encryptLongMessage(text, recipientKey);
+        const encryptedForSender = await encryptLongMessage(text, senderKey);
 
         const formData = new FormData();
         formData.append("target", currentChatUser);
@@ -610,6 +610,7 @@ const sendMessage = async () => {
             "Encryption/send error: " + err.message,
             "error"
         );
+        console.log(err)
     } finally {
         sendBtn.disabled = false;
         sendBtn.classList.remove("btn-pressed");
