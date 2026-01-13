@@ -21,6 +21,7 @@ $user_ident = $_SESSION['ident'];
     <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/dashboard.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
+    <link href="assets/css/modal.css" rel="stylesheet" />
 </head>
 
 <body>

@@ -27,5 +27,5 @@ try {
 } catch(Exception $ex) {
     http_response_code(400);
     echo json_encode(['error' => $ex->getMessage()]);
-    exit;
 }
+exit;

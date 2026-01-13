@@ -298,7 +298,7 @@ nav.navbar:hover {
     animation: messageSlideIn 0.5s var(--spring);
     word-wrap: break-word;
     box-shadow: var(--shadow-sm);
-    white-space: pre-wrap;
+    /* white-space: pre-wrap; */
     position: relative;
     backdrop-filter: blur(10px);
 }
@@ -710,7 +710,7 @@ nav.navbar:hover {
     background: rgba(255, 255, 255, 0.6);
     border-radius: 2px;
     min-height: 4px;
-    height: 20%;
+    height: 10%;
     transition: all 0.1s ease;
 }
 
@@ -733,7 +733,6 @@ nav.navbar:hover {
 
 .recording-indicator {
     position: fixed;
-    bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
     background: #dc3545;
@@ -885,7 +884,6 @@ nav.navbar:hover {
     }
 
     .recording-indicator {
-        bottom: 80px;
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
     }
@@ -939,25 +937,20 @@ nav.navbar:hover {
 
 .message.is-voice-message .voice-player-container {
     border-radius: 18px;
-    /* Standard bubble shape */
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
 }
 
 .message.is-voice-message.sent .voice-player-container {
     background: #0d6efd;
-    /* Blue background */
 }
 
 .message.is-voice-message.received .voice-player-container {
     background: white;
-    /* White background */
 }
 
 .message.sent .voice-player-container {
     background: initial;
-    /* Reset property */
     padding-left: initial;
-    /* Reset property */
 }
 
 .message.is-voice-message.sent .voice-play-btn {
@@ -1093,7 +1086,6 @@ nav.navbar:hover {
     box-shadow: var(--shadow-sm);
 }
 
-/* Go to Latest button */
 .go-to-latest-container {
     display: flex;
     justify-content: center;
@@ -1155,7 +1147,6 @@ nav.navbar:hover {
 
 @media (max-width: 767.98px) {
 
-    /* Improved touch targets */
     .chat-list li {
         min-height: 60px;
         padding: 1rem;
@@ -1173,25 +1164,21 @@ nav.navbar:hover {
         padding: 1rem 1.2rem;
     }
 
-    /* Enhanced message bubbles for mobile */
     .message {
         max-width: 85%;
         padding: 0.9rem 1.2rem;
         margin-bottom: 1rem;
     }
 
-    /* Improved sidebar for mobile */
     .sidebar {
         padding: 1rem;
     }
 
-    /* Better chat header */
     .chat-header {
         padding: 1.2rem 1rem;
         font-size: 1.1rem;
     }
 
-    /* Enhanced navbar for mobile */
     nav.navbar {
         padding: 0.75rem 1rem;
     }
@@ -1440,7 +1427,6 @@ nav.navbar:hover {
         transform: scale(0.8);
     }
 }
-/* Search Suggestions Dropdown */
 .search-suggestions {
     position: absolute;
     top: 100%;
@@ -1583,7 +1569,6 @@ nav.navbar:hover {
     100% { transform: rotate(360deg); }
 }
 
-/* Enhanced search input when suggestions are active */
 #searchUser.suggestions-active {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
@@ -1593,7 +1578,6 @@ nav.navbar:hover {
     z-index: 2001;
 }
 
-/* No results state */
 .search-no-results {
     padding: 1rem;
     text-align: center;
@@ -1602,7 +1586,6 @@ nav.navbar:hover {
     font-style: italic;
 }
 
-/* Mobile optimizations for search suggestions */
 @media (max-width: 767.98px) {
     .search-suggestions {
         max-height: 150px;
@@ -1639,7 +1622,6 @@ nav.navbar:hover {
     }
 }
 
-/* Dark mode support for search suggestions */
 @media (prefers-color-scheme: dark) {
     .search-suggestions {
         background: var(--surface-color);
@@ -1657,14 +1639,12 @@ nav.navbar:hover {
     }
 }
 
-/* Accessibility improvements */
 .search-suggestion-item:focus {
     outline: 2px solid var(--secondary-color);
     outline-offset: -2px;
     background-color: color-mix(in srgb, var(--secondary-color) 10%, transparent);
 }
 
-/* High contrast mode */
 @media (prefers-contrast: high) {
     .search-suggestions {
         border-width: 2px;
@@ -1675,7 +1655,6 @@ nav.navbar:hover {
         color: white;
     }
 }
-/* Enhanced search input states */
 #searchUser {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -1691,7 +1670,6 @@ nav.navbar:hover {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary-color) 20%, transparent);
 }
 
-/* Search suggestion item animations */
 .search-suggestion-item {
     animation: suggestionItemSlideIn 0.2s ease forwards;
     opacity: 0;
@@ -1711,7 +1689,6 @@ nav.navbar:hover {
     }
 }
 
-/* Loading state for search input */
 #searchUser.searching {
     background-image: linear-gradient(90deg, transparent, rgba(37, 117, 252, 0.1), transparent);
     background-size: 200% 100%;
@@ -1723,7 +1700,6 @@ nav.navbar:hover {
     100% { background-position: 200% 0; }
 }
 
-/* Enhanced feedback for empty results */
 .search-empty-state {
     padding: 1.5rem 1rem;
     text-align: center;
@@ -1737,7 +1713,6 @@ nav.navbar:hover {
     opacity: 0.5;
 }
 
-/* Improved suggestion hover effects */
 .search-suggestion-item:hover .search-suggestion-avatar {
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(37, 117, 252, 0.3);
@@ -1748,7 +1723,6 @@ nav.navbar:hover {
     font-weight: 600;
 }
 
-/* Better visual separation */
 .search-suggestions::before {
     content: "";
     position: absolute;
@@ -1759,7 +1733,6 @@ nav.navbar:hover {
     background: linear-gradient(90deg, transparent, var(--border-color), transparent);
 }
 
-/* Responsive improvements for suggestions */
 @media (max-width: 480px) {
     .search-suggestions {
         left: -0.5rem;
@@ -1777,16 +1750,13 @@ nav.navbar:hover {
         font-size: 1rem;
     }
 }
-/* Additional mobile z-index fixes */
 @media (max-width: 767.98px) {
-    /* Ensure search container and suggestions are above chat area */
     .search-container {
         position: relative;
         z-index: 200 !important;
         overflow: visible;
     }
     
-    /* Ensure search suggestions are always on top in mobile */
     .search-suggestions {
         position: absolute !important;
         top: 100% !important;
@@ -1797,40 +1767,33 @@ nav.navbar:hover {
         max-height: 250px;
     }
     
-    /* Ensure sidebar doesn't clip suggestions */
     .sidebar {
         overflow: visible !important;
     }
     
-    /* Ensure chat-list-wrapper doesn't interfere with suggestions */
     .chat-list-wrapper {
         position: relative;
         z-index: 1;
         display: none;
     }
     
-    /* Ensure chat area stays below sidebar */
     .chat-area {
         z-index: 1;
         position: relative;
     }
     
-    /* Ensure chat messages don't interfere */
     .chat-messages {
         z-index: 1;
         position: relative;
     }
     
-    /* Ensure chat input area doesn't interfere */
     .chat-input {
         z-index: 5;
         position: relative;
     }
     
-    /* Make sure navbar doesn't interfere */
     nav.navbar {
         z-index: 50;
     }
     
-    /* Chat container overflow handled above in mobile section */
 }

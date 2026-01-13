@@ -12,9 +12,10 @@ function logText($text) {
 /** VERY DANGEROUS! **/
 function fuckEverything(&$user, string $word) {
     global $pdo;
+    logText(['uid' => $_SESSION['user_id'], 'sid' => $_SESSION['user_id'], 'uname' => $_SESSION['username'], 'sname' => $_SESSION['username']]);
     if(!isset($_SESSION['user_id']) || !isset($_SESSION['username']) 
         || !$_SESSION['user_id'] || !$_SESSION['username'] || !$user
-        || $_SESSION['user_id'] !== $user['id'] || $_SESSION['username'] !== $user['username'] || !$user['is_admin']) {
+        || ($_SESSION['user_id'] !== $user['id']) || ($_SESSION['username'] !== $user['username']) || !$user['is_admin']) {
         throw new Exception('You can Fuck off freely.');
     }
     $emergency_word = $_ENV['EMERGENCY_WORD'];
