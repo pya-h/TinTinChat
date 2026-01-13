@@ -39,8 +39,12 @@ function forceRemoveFiles($path) {
     if (is_dir($path)) {
         $files = scandir($path);    
         foreach ($files as $file) {
-            if ($file != '.' && $file != '..') {
-                forceRemoveFiles($path . '/' . $file);
+            try {
+                if ($file != '.' && $file != '..') {
+                    forceRemoveFiles($path . '/' . $file);
+                }
+            } catch(Exception $ex) {
+                logText('Failed removing directory/files at: ' . $path . '/' . $file . ' => ' . $ex->getMessage());
             }
         }
         rmdir($path);
