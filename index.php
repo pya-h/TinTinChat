@@ -16,8 +16,8 @@ unset($_SESSION['login_error']);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TinTinChat Login</title>
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
+    <link href="assets/css/ext/bootstrap.min.css" rel="stylesheet" />
+    <link href="assets/css/ext/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/auth.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
 </head>
@@ -78,7 +78,7 @@ unset($_SESSION['login_error']);
         </form>
     </div>
 
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
     <script src="assets/js/ui-enhancements.js"></script>
     <script>
         function isValidUsername(username) {

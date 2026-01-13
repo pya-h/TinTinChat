@@ -162,7 +162,7 @@ class PerformanceOptimizer {
         };
 
         const commonAssets = [
-            "assets/css/fontawesome.min.css",
+            "assets/css/ext/fontawesome.min.css",
             "assets/js/crypto.js",
         ];
 

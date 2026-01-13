@@ -302,13 +302,12 @@ async function addMessageToChat(msg, prepend = false) {
     } else if (msg.message_type === "image" && msg.image_file_path) {
         div.classList.add("is-image-message");
 
-        div.innerHTML = `
-                <a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
-                    <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
-                        onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
+        div.innerHTML = `<a id="imageMessageAnchor${msg.id}" href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
+                    <img id="imageMessage${msg.id}" src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
+                        // onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
                         onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
-                </a>
-                `;
+                </a>`;
+        // showModal()
     } else {
         let decryptedText = "[Unable to decrypt message]";
         try {

@@ -17,8 +17,8 @@ $user_ident = $_SESSION['ident'];
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TinTinChat Dashboard</title>
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
+    <link href="assets/css/ext/bootstrap.min.css" rel="stylesheet" />
+    <link href="assets/css/ext/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/dashboard.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/modal.css" rel="stylesheet" />
@@ -93,7 +93,7 @@ $user_ident = $_SESSION['ident'];
                 </button>
             </div>
             <div class="modal-body">
-                <p id="modalMessage">This is a modal message.</p>
+                <p id="modalMessage"></p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" onclick="closeModal()">OK</button>
@@ -147,7 +147,8 @@ $user_ident = $_SESSION['ident'];
         });
     </script>
     <script src="assets/js/modal.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/ext/jquery-3.6.1.min.js"></script>
     <script src="assets/js/ui-enhancements.js"></script>
     <script src="assets/js/performance.js"></script>
     <script src="assets/js/crypto.js"></script>
