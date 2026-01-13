@@ -4,14 +4,14 @@ require_once '../includes/db.php';
 
 header('Content-Type: application/json');
 
-$ident = trim($_GET['ident']);
+$ident = $_GET['ident'];
 $stmt = $pdo->prepare('SELECT id, username FROM users WHERE ident = ?');
 $stmt->execute([$ident]);
 $user = $stmt->fetch();
 
 try {
     if (!$user) {
-        throw new Exception('Invalid identification!');
+        throw new Exception($ident);
     }
     $generated_time = (int) explode('+', $ident)[0];
     if (time() - $generated_time > 48 * 60 * 60) {

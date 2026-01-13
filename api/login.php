@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+require_once '../includes/session.php';
 
 function isValidUsername($username)
 {
@@ -61,11 +62,12 @@ if (!$user) {
     $stmt = $pdo->prepare('INSERT INTO users (username, password_hash, public_key, private_key) VALUES (?, ?, ?, ?)');
     $stmt->execute([$username, $passwordHash, $publicPem, $privatePem]);
 
-    $userId = $pdo->lastInsertId();
+    $user_id = $pdo->lastInsertId();
 
-    $_SESSION['user_id'] = $userId;
-    $_SESSION['username'] = $username;
-
+    $new_ident = setSessionUser($user);
+    if($new_ident) {
+       updateLoginSession($user_id, $new_ident); 
+    }
     header('Location: ../dashboard.php');
     exit;
 }
@@ -76,8 +78,9 @@ if (!password_verify($password, $user['password_hash'])) {
     exit;
 }
 
-$_SESSION['user_id'] = $user['id'];
-$_SESSION['username'] = $user['username'];
-$_SESSION['ident'] = uniqid(time() . '+', true);
+$new_ident = setSessionUser($user);
+if($new_ident) {
+   updateLoginSession($user['id'], $new_ident); 
+}
 header('Location: ../dashboard.php');
 exit;

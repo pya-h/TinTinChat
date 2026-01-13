@@ -21,7 +21,6 @@ $user_ident = $_SESSION['ident'];
     <link href="assets/css/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/dashboard.css" rel="stylesheet" />
     <link href="assets/css/style.css" rel="stylesheet" />
-    <meta http-equiv="Set-Cookie" content="secure=1; HttpOnly">
 </head>
 
 <body>
