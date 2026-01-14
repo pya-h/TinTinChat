@@ -62,13 +62,14 @@ async function encryptMessage(message, recipientPublicKey) {
     return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
 }
 
-async function encryptLongMessage(message, recipientPublicKey) {
+async function encryptLongMessage(message, recipientPublicKey, isPersian = true) {
+    const actualLimit = isPersian ? (ENCRYPTION_CHARACTER_LIMIT / 2) | 0 : ENCRYPTION_CHARACTER_LIMIT; 
     const segments = await Promise.all(
-        Array(Math.ceil(message.length / ENCRYPTION_CHARACTER_LIMIT))
+        Array(Math.ceil(message.length / actualLimit))
             .fill(null)
             .map((_, idx) =>
                 encryptMessage(
-                    message.slice(idx * ENCRYPTION_CHARACTER_LIMIT, (idx + 1) * ENCRYPTION_CHARACTER_LIMIT),
+                    message.slice(idx * actualLimit, (idx + 1) * actualLimit),
                     recipientPublicKey
                 )
             )

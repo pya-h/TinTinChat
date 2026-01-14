@@ -115,7 +115,6 @@ async function selectChatUser(username) {
 }
 
 async function loadMessages(username, showLoading = false, isInitialLoad = false) {
-    console.log("Loading messages");
     if (isLoadingMessages) return;
 
     try {
@@ -278,7 +277,8 @@ async function addMessageToChat(msg, prepend = false) {
     } else if (msg.message_type === "image" && msg.image_file_path) {
         div.classList.add("is-image-message");
 
-        div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
+        // div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
+        div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" title="View full image">
                     <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
                         onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
                 </a>`;
@@ -540,8 +540,8 @@ const sendMessage = async () => {
         const recipientKey = await getPublicKey(currentChatUser);
         const senderKey = await getPublicKey(CURRENT_USER);
 
-        const encryptedForRecipient = await encryptLongMessage(text, recipientKey);
-        const encryptedForSender = await encryptLongMessage(text, senderKey);
+        const encryptedForRecipient = await encryptLongMessage(text, recipientKey, isTextPersian(text));
+        const encryptedForSender = await encryptLongMessage(text, senderKey, isTextPersian(text));
 
         const formData = new FormData();
         formData.append("target", currentChatUser);
@@ -560,7 +560,6 @@ const sendMessage = async () => {
         await loadMessages(currentChatUser, false, true);
     } catch (err) {
         showModal("Send Error", "Encryption/send error: " + err.message, "error");
-        console.log(err);
     } finally {
         sendBtn.disabled = false;
         sendBtn.classList.remove("btn-pressed");
