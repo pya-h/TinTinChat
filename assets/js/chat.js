@@ -136,7 +136,6 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
 
-        
         if (isInitialLoad) {
             if (!data.messages.length) {
                 chatMessagesElem.innerHTML = "";
@@ -170,13 +169,10 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
 
         const previousScrollHeight = chatMessagesElem.scrollHeight;
 
-        for (const msg of data.messages) {
-            await addMessageToChat(msg, !isInitialLoad); // prepend for "load more"
-
-            // FIXME: ***On loadMore the order should be reversed***
-        }
-
         if (isInitialLoad) {
+            for (const msg of data.messages) {
+                await addMessageToChat(msg);
+            }
             requestAnimationFrame(() => {
                 chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
                 removeGoToLatestButton();
@@ -186,6 +182,9 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
                 addLoadMoreButton();
             }
         } else {
+            for (let i = data.message.length - 1; i >= 0; i--) {
+                await addMessageToChat(data.messages[i], true);
+            }
             chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight - previousScrollHeight;
             hasLoadedMoreMessages = true;
             updateGoToLatestButton();
