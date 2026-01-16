@@ -11,13 +11,13 @@ const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
 
 let currentChatUser = null;
-let recentMessage = null;
+let currentChatRecentMessages = null;
 const chatUsers = new Set();
 let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
 let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
-const MESSAGES_PER_PAGE = 20;
+const MESSAGES_PER_PAGE = 40;
 
 let searchTimeout = null;
 let currentSuggestions = [];
@@ -89,13 +89,16 @@ function updateLoadingSpinnerState(username, show = false) {
 }
 
 async function selectChatUser(username) {
-    recentMessage = null;
+    if (username === currentChatUser) {
+        return;
+    }
     if (currentChatUser?.length) {
         updateLoadingSpinnerState(currentChatUser, false);
     }
 
     document.getElementById(`user_${currentChatUser}`)?.classList.remove("selected-chat");
     currentChatUser = username;
+    currentChatRecentMessages = null;
     document.getElementById(`user_${currentChatUser}`)?.classList.add("selected-chat");
     chatInput.disabled = false;
     chatWithElem.textContent = username;
@@ -117,9 +120,9 @@ async function selectChatUser(username) {
 async function loadMessages(username, showLoading = false, isInitialLoad = false) {
     if (isLoadingMessages) return;
 
+    const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
     try {
         isLoadingMessages = true;
-        const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
 
         if (showLoading) {
             loadingSpinnerElement.style = "display: inline";
@@ -133,37 +136,33 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
 
-        if (!data.messages.length && isInitialLoad) {
-            chatMessagesElem.innerHTML = "";
-            chatMessagesElem.textContent = "No messages yet.";
-            if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
-            return;
-        }
-
-        if (isInitialLoad && recentMessage?.created_at) {
-            const lastMessage = data.messages[data.messages.length - 1];
-            if (lastMessage) {
-                lastMessage.created_at = new Date(lastMessage.created_at);
-                if (lastMessage.created_at <= recentMessage.created_at) {
-                    if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
-                    isLoadingMessages = false;
+        
+        if (isInitialLoad) {
+            if (!data.messages.length) {
+                chatMessagesElem.innerHTML = "";
+                chatMessagesElem.textContent = "No messages yet.";
+                currentChatRecentMessages = [];
+                messageOffset = 0;
+                return;
+            }
+            if (currentChatRecentMessages?.length) {
+                const lastMessage = data.messages?.[data.messages.length - 1],
+                    previosLastMessageId = currentChatRecentMessages[currentChatRecentMessages.length - 1]?.id;
+                if (lastMessage && previosLastMessageId && lastMessage.id <= previosLastMessageId) {
                     return;
                 }
             }
-        }
-
-        hasMoreMessages = data.hasMore;
-
-        if (isInitialLoad) {
             chatMessagesElem.innerHTML = "";
-            messageOffset = MESSAGES_PER_PAGE;
+            messageOffset = 0;
+            currentChatRecentMessages = data?.messages ?? [];
         } else {
             const existingLoadMore = document.getElementById("loadMoreBtn");
             if (existingLoadMore) {
                 existingLoadMore.remove();
             }
-            messageOffset += MESSAGES_PER_PAGE;
         }
+        messageOffset += data.messages?.length ?? 0;
+        hasMoreMessages = data.hasMore;
 
         if (hasMoreMessages && !isInitialLoad) {
             addLoadMoreButton();
@@ -173,6 +172,8 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
 
         for (const msg of data.messages) {
             await addMessageToChat(msg, !isInitialLoad); // prepend for "load more"
+
+            // FIXME: ***On loadMore the order should be reversed***
         }
 
         if (isInitialLoad) {
@@ -180,26 +181,58 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
                 chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
                 removeGoToLatestButton();
             });
-            recentMessage = data.messages?.[data.messages.length - 1];
 
             if (hasMoreMessages) {
                 addLoadMoreButton();
             }
         } else {
-            const newScrollHeight = chatMessagesElem.scrollHeight;
-            chatMessagesElem.scrollTop = newScrollHeight - previousScrollHeight;
-
+            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight - previousScrollHeight;
             hasLoadedMoreMessages = true;
-
             updateGoToLatestButton();
         }
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
     } finally {
-        const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
         if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
         isLoadingMessages = false;
     }
+}
+
+async function loadCurrentChatsRecentMessages() {
+    if (isLoadingMessages) return;
+
+    try {
+        isLoadingMessages = true;
+        const res = await fetch(
+            `api/fetch_recent_messages.php?with=${encodeURIComponent(username)}&offsetMsgId=${
+                currentChatRecentMessages[currentChatRecentMessages.length - 1].id
+            }`
+        );
+        if (!res.ok) throw new Error("Failed to load messages");
+        const data = await res.json();
+        currentChatRecentMessages = data?.messages ?? [];
+
+        if (!currentChatRecentMessages.length) {
+            return;
+        }
+
+        messageOffset += currentChatRecentMessages?.length ?? 0;
+        for (const msg of currentChatRecentMessages) {
+            await addMessageToChat(msg);
+        }
+    } catch (err) {
+        isLoadingMessages = false;
+        await loadMessages(currentChatUser, false, !currentChatRecentMessages?.length);
+    } finally {
+        isLoadingMessages = false;
+    }
+}
+
+function syncCurrentChatMessages() {
+    if (!currentChatRecentMessages?.length) {
+        return loadMessages(currentChatUser, false, true);
+    }
+    return loadCurrentChatsRecentMessages();
 }
 
 function generateWaveformBars() {
@@ -842,7 +875,7 @@ setInterval(async () => {
         return;
     }
     if (currentChatUser?.length) {
-        await loadMessages(currentChatUser, false, true); // Only check for new messages
+        await syncCurrentChatMessages();
     }
     if (!(chatListTriggerTime % 5)) {
         await loadChatList();
