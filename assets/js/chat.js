@@ -146,7 +146,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             }
             if (currentChatRecentMessages?.length) {
                 const lastMessage = data.messages?.[data.messages.length - 1],
-                    previosLastMessageId = currentChatRecentMessages[currentChatRecentMessages.length - 1]?.id;
+                    previosLastMessageId = currentChatRecentMessages?.[currentChatRecentMessages.length - 1]?.id;
                 if (lastMessage && previosLastMessageId && lastMessage.id <= previosLastMessageId) {
                     return;
                 }
@@ -182,7 +182,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
                 addLoadMoreButton();
             }
         } else {
-            for (let i = data.message.length - 1; i >= 0; i--) {
+            for (let i = data.messages.length - 1; i >= 0; i--) {
                 await addMessageToChat(data.messages[i], true);
             }
             chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight - previousScrollHeight;
@@ -191,6 +191,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         }
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
+        console.error(err)
     } finally {
         if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
         isLoadingMessages = false;
@@ -203,21 +204,25 @@ async function loadCurrentChatsRecentMessages() {
     try {
         isLoadingMessages = true;
         const res = await fetch(
-            `api/fetch_recent_messages.php?with=${encodeURIComponent(username)}&offsetMsgId=${
+            `api/fetch_recent_messages.php?with=${encodeURIComponent(currentChatUser)}&offsetMsgId=${
                 currentChatRecentMessages[currentChatRecentMessages.length - 1].id
             }`
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
-        currentChatRecentMessages = data?.messages ?? [];
 
-        if (!currentChatRecentMessages.length) {
+        if (!data?.messages?.length) {
             return;
         }
-
+        currentChatRecentMessages = data.messages;
         messageOffset += currentChatRecentMessages?.length ?? 0;
         for (const msg of currentChatRecentMessages) {
             await addMessageToChat(msg);
+        }
+        if (!hasLoadedMoreMessages) {
+            requestAnimationFrame(() => {
+                chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+            });
         }
     } catch (err) {
         isLoadingMessages = false;
@@ -227,7 +232,7 @@ async function loadCurrentChatsRecentMessages() {
     }
 }
 
-function syncCurrentChatMessages() {
+function forceFetchCurrentChatMessages() {
     if (!currentChatRecentMessages?.length) {
         return loadMessages(currentChatUser, false, true);
     }
@@ -556,7 +561,7 @@ window.playVoiceMessage = function (messageId) {
     }
 };
 
-const sendMessage = async () => {
+const sendTextMessage = async () => {
     if (!currentChatUser) {
         showModal("No Chat Selected", "Select a user to chat with first", "warning");
         return;
@@ -589,7 +594,7 @@ const sendMessage = async () => {
 
         addUserToChatList(currentChatUser);
         chatInput.value = "";
-        await loadMessages(currentChatUser, false, true);
+        await loadCurrentChatsRecentMessages();
     } catch (err) {
         showModal("Send Error", "Encryption/send error: " + err.message, "error");
     } finally {
@@ -600,13 +605,13 @@ const sendMessage = async () => {
 
 chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    sendMessage();
+    await sendTextMessage();
 });
 
-chatInput.addEventListener("keydown", (e) => {
+chatInput.addEventListener("keydown", async (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        await sendTextMessage();
     }
 });
 
@@ -873,14 +878,12 @@ setInterval(async () => {
     if (!navigator.onLine) {
         return;
     }
-    if (currentChatUser?.length) {
-        await syncCurrentChatMessages();
-    }
-    if (!(chatListTriggerTime % 5)) {
-        await loadChatList();
-    }
-    chatListTriggerTime = ++chatListTriggerTime % 5;
-}, 1000);
+    await Promise.all([
+        currentChatUser?.length && loadCurrentChatsRecentMessages(),
+        !(chatListTriggerTime % 10) && loadChatList(),
+    ]);
+    chatListTriggerTime = ++chatListTriggerTime % 10;
+}, 500);
 
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
@@ -1028,7 +1031,7 @@ async function sendVoiceMessage(audioBlob) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        loadMessages(currentChatUser, false, true);
+        await loadCurrentChatsRecentMessages();
     } catch (err) {
         showModal("Voice Send Error", "Voice message send error: " + err.message, "error");
 
@@ -1103,7 +1106,7 @@ async function sendImageMessage(imageFile) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        await loadMessages(currentChatUser, false, true);
+        await loadCurrentChatsRecentMessages();
     } catch (err) {
         showModal("Image Send Error", "Image send error: " + err.message, "error");
 

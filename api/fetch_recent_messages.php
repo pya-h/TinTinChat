@@ -10,10 +10,10 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
-$userId = $_SESSION['user_id'];
-$otherUsername = $_GET['with'] ?? '';
+$user_id = $_SESSION['user_id'];
+$other_username = $_GET['with'] ?? '';
 
-if (!$otherUsername) {
+if (!$other_username) {
   http_response_code(400);
   echo json_encode(['error' => 'Missing target username!']);
   exit;
@@ -26,20 +26,20 @@ if(!isset($_GET['offsetMsgId'])) {
 }
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
-$stmt->execute([$otherUsername]);
-$otherUser = $stmt->fetch();
+$stmt->execute([$other_username]);
+$other_user = $stmt->fetch();
 
-if (!$otherUser) {
+if (!$other_user) {
   http_response_code(404);
   echo json_encode(['error' => 'Target user not found']);
   exit;
 }
-$otherUserId = $otherUser['id'];
+$other_user_id = $other_user['id'];
 $last_msg_id = (int)$_GET['offsetMsgId'];
 
 $stmt = $pdo->prepare("SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, created_at FROM messages 
-  WHERE ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) AND id > ?) ORDER BY created_at ASC");
-$stmt->execute([$userId, $otherUserId, $otherUserId, $userId, $last_msg_id]);
+  WHERE ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) AND id > ? ORDER BY created_at ASC");
+$stmt->execute([$user_id, $other_user_id, $other_user_id, $user_id, $last_msg_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 echo json_encode([
   'messages' => $messages,
