@@ -17,7 +17,7 @@ let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
 let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
-const MESSAGES_PER_PAGE = 40;
+const MESSAGES_PER_PAGE = 30;
 
 let searchTimeout = null;
 let currentSuggestions = [];
@@ -191,7 +191,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         }
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
-        console.error(err)
+        console.error(err);
     } finally {
         if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
         isLoadingMessages = false;
@@ -288,6 +288,18 @@ async function loadMoreMessages() {
 
     updateGoToLatestButton();
 }
+function newDateTag(msg, { atLeft = true, topSpace = 3, fontSize = 10, extraStyles = '' }) {
+    return `<span class="mx-2 mt-${topSpace}" style="font-size: ${fontSize}px; float: ${
+        atLeft ? "left" : "right"
+    };${extraStyles}">${new Date(msg.created_at).toLocaleString("default", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: false,
+    })}</span>`;
+}
 
 async function addMessageToChat(msg, prepend = false) {
     let div = document.createElement("div");
@@ -309,6 +321,7 @@ async function addMessageToChat(msg, prepend = false) {
             </div>
             <div class="voice-duration-display">--:--</div>
           </div>
+            ${newDateTag(msg, { atLeft: msg.sender_id == CURRENT_USER_ID, topSpace: 1, fontSize: 8.5, extraStyles: 'color: var(--text-color);' })}
         `;
         div.setAttribute("data-message-id", msg.id);
     } else if (msg.message_type === "image" && msg.image_file_path) {
@@ -318,7 +331,7 @@ async function addMessageToChat(msg, prepend = false) {
         div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" title="View full image">
                     <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
                         onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
-                </a>`;
+                </a>${newDateTag(msg, { atLeft: msg.sender_id == CURRENT_USER_ID, topSpace: 1, fontSize: 8.5, extraStyles: 'color: var(--text-color);' })}`;
         // onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
 
         // showModal()
@@ -334,16 +347,7 @@ async function addMessageToChat(msg, prepend = false) {
             decryptedText = "[Unsupported message]";
         }
         const isPersian = isTextPersian(decryptedText.trim());
-        div.innerHTML = `<span>${decryptedText}</span><span class="mx-2 mt-3" style="font-size: 10px; float: ${
-            isPersian ? "left" : "right"
-        }">${new Date(msg.created_at).toLocaleString("default", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-            hour12: false,
-        })}</span>`;
+        div.innerHTML = `<span>${decryptedText}</span>${newDateTag(msg, { atLeft: isPersian })}`;
         if (isPersian) {
             div.dir = "rtl";
         }

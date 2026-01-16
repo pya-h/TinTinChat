@@ -1093,7 +1093,6 @@ nav.navbar:hover {
     padding: 0.5rem;
     position: sticky;
     bottom: 0;
-    background: linear-gradient(to top, var(--background-color) 0%, transparent 100%);
     padding-top: 2rem;
     z-index: 10;
 }
