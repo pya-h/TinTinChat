@@ -884,10 +884,10 @@ setInterval(async () => {
     }
     await Promise.all([
         currentChatUser?.length && loadCurrentChatsRecentMessages(),
-        !(chatListTriggerTime % 10) && loadChatList(),
+        !(chatListTriggerTime % 5) && loadChatList(),
     ]);
-    chatListTriggerTime = ++chatListTriggerTime % 10;
-}, 500);
+    chatListTriggerTime = ++chatListTriggerTime % 5;
+}, 1000);
 
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
