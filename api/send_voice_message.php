@@ -90,13 +90,19 @@ if (!move_uploaded_file($voiceFile['tmp_name'], $uploadPath)) {
 }
 
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path) VALUES (?, ?, ?, ?, 'voice', ?)");
-$stmt->execute([
-    $userId,
-    $targetUser['id'],
-    $messageEncryptedForRecipient,
-    $messageEncryptedForSender,
-    $uniqueFilename,
-]);
+if (
+    !$stmt->execute([
+        $userId,
+        $targetUser['id'],
+        $messageEncryptedForRecipient,
+        $messageEncryptedForSender,
+        $uniqueFilename,
+    ])
+) {
+    http_response_code(409);
+    echo json_encode(['status' => 'failed', 'error' => 'Something went wrong while sending your message!']);
+    exit;
+}
 
 $messageId = $pdo->lastInsertId();
 

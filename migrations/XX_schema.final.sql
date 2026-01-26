@@ -20,6 +20,7 @@ CREATE TABLE messages (
   voice_file_path VARCHAR(255),
   image_file_path VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  seen_at TIMESTAMP DEFAULT NULL;
   FOREIGN KEY (sender_id) REFERENCES users(id),
   FOREIGN KEY (receiver_id) REFERENCES users(id)
 );

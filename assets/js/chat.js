@@ -117,6 +117,26 @@ async function selectChatUser(username) {
     await loadMessages(username, true, true);
 }
 
+async function updateMessagesStatus(messages) {
+    const messagesNewlySeen = messages
+        ?.filter((msg) => msg.receiver_id == CURRENT_USER_ID && !msg.seen_at)
+        .map((msg) => msg.id);
+    if (!messagesNewlySeen?.length) {
+        return false;
+    }
+    const body = new FormData();
+    body.append("messages", messagesNewlySeen);
+    res = await fetch("api/see_messages.php", {
+        method: "POST",
+        body,
+    });
+    const json = await res.json();
+    if (json.status !== "ok") {
+        throw new Error(json.error || "Failed marking new messages as seen");
+    }
+    return true;
+}
+
 async function loadMessages(username, showLoading = false, isInitialLoad = false) {
     if (isLoadingMessages) return;
 
@@ -131,7 +151,9 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         const offset = isInitialLoad ? 0 : messageOffset;
 
         const res = await fetch(
-            `api/fetch_messages.php?with=${encodeURIComponent(username)}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
+            `api/fetch_messages.php?with=${encodeURIComponent(
+                username
+            )}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
@@ -146,7 +168,8 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             }
             if (currentChatRecentMessages?.length) {
                 const lastMessage = data.messages?.[data.messages.length - 1],
-                    previosLastMessageId = currentChatRecentMessages?.[currentChatRecentMessages.length - 1]?.id;
+                    previosLastMessageId =
+                        currentChatRecentMessages?.[currentChatRecentMessages.length - 1]?.id;
                 if (lastMessage && previosLastMessageId && lastMessage.id <= previosLastMessageId) {
                     return;
                 }
@@ -189,6 +212,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             hasLoadedMoreMessages = true;
             updateGoToLatestButton();
         }
+        updateMessagesStatus(data.messages);
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
         console.error(err);
@@ -204,9 +228,9 @@ async function loadCurrentChatsRecentMessages() {
     try {
         isLoadingMessages = true;
         const res = await fetch(
-            `api/fetch_recent_messages.php?with=${encodeURIComponent(currentChatUser)}&offsetMsgId=${
-                currentChatRecentMessages[currentChatRecentMessages.length - 1].id
-            }`
+            `api/fetch_recent_messages.php?with=${encodeURIComponent(
+                currentChatUser
+            )}&offsetMsgId=${currentChatRecentMessages[currentChatRecentMessages.length - 1].id}`
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
@@ -219,6 +243,8 @@ async function loadCurrentChatsRecentMessages() {
         for (const msg of currentChatRecentMessages) {
             await addMessageToChat(msg);
         }
+        updateMessagesStatus(data.messages); // Mark as seen on the background
+
         if (!hasLoadedMoreMessages) {
             requestAnimationFrame(() => {
                 chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
@@ -288,7 +314,7 @@ async function loadMoreMessages() {
 
     updateGoToLatestButton();
 }
-function newDateTag(msg, { atLeft = true, topSpace = 3, fontSize = 10, extraStyles = '' }) {
+function newDateTag(msg, { atLeft = true, topSpace = 3, fontSize = 10, extraStyles = "" }) {
     return `<span class="mx-2 mt-${topSpace}" style="font-size: ${fontSize}px; float: ${
         atLeft ? "left" : "right"
     };${extraStyles}">${new Date(msg.created_at).toLocaleString("default", {
@@ -321,7 +347,12 @@ async function addMessageToChat(msg, prepend = false) {
             </div>
             <div class="voice-duration-display">--:--</div>
           </div>
-            ${newDateTag(msg, { atLeft: msg.sender_id == CURRENT_USER_ID, topSpace: 1, fontSize: 8.5, extraStyles: 'color: var(--text-color);' })}
+            ${newDateTag(msg, {
+                atLeft: msg.sender_id == CURRENT_USER_ID,
+                topSpace: 1,
+                fontSize: 8.5,
+                extraStyles: "color: var(--text-color);",
+            })}
         `;
         div.setAttribute("data-message-id", msg.id);
     } else if (msg.message_type === "image" && msg.image_file_path) {
@@ -329,9 +360,16 @@ async function addMessageToChat(msg, prepend = false) {
 
         // div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
         div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" title="View full image">
-                    <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
+                    <img src="api/get_image.php?id=${
+                        msg.id
+                    }" class="message-image" alt="Image from ${msg.sender_id}" 
                         onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
-                </a>${newDateTag(msg, { atLeft: msg.sender_id == CURRENT_USER_ID, topSpace: 1, fontSize: 8.5, extraStyles: 'color: var(--text-color);' })}`;
+                </a>${newDateTag(msg, {
+                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    topSpace: 1,
+                    fontSize: 8.5,
+                    extraStyles: "color: var(--text-color);",
+                })}`;
         // onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
 
         // showModal()
@@ -351,6 +389,10 @@ async function addMessageToChat(msg, prepend = false) {
         if (isPersian) {
             div.dir = "rtl";
         }
+    }
+
+    if (msg.seen_at) {
+        chatMessagesElem.innerHTML += '<span class="tick">✓</span><span class="tick">✓</span>';
     }
 
     if (prepend) {
@@ -398,7 +440,8 @@ function updateGoToLatestButton() {
     }
 
     const isNearBottom =
-        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >= chatMessagesElem.scrollHeight - 100;
+        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >=
+        chatMessagesElem.scrollHeight - 100;
 
     if (isNearBottom) {
         removeGoToLatestButton();
@@ -491,7 +534,9 @@ window.playVoiceMessage = function (messageId) {
             playBtn.innerHTML = `<i class="fas fa-play"></i>`;
             playBtn.classList.remove("playing");
 
-            messageDiv.querySelectorAll(".waveform-bar").forEach((bar) => bar.classList.add("played"));
+            messageDiv
+                .querySelectorAll(".waveform-bar")
+                .forEach((bar) => bar.classList.add("played"));
         });
 
         audio.addEventListener("error", function (e) {
@@ -581,7 +626,11 @@ const sendTextMessage = async () => {
         const recipientKey = await getPublicKey(currentChatUser);
         const senderKey = await getPublicKey(CURRENT_USER);
 
-        const encryptedForRecipient = await encryptLongMessage(text, recipientKey, isTextPersian(text));
+        const encryptedForRecipient = await encryptLongMessage(
+            text,
+            recipientKey,
+            isTextPersian(text)
+        );
         const encryptedForSender = await encryptLongMessage(text, senderKey, isTextPersian(text));
 
         const formData = new FormData();
@@ -677,7 +726,9 @@ async function searchForUser(selectUser = false) {
     searchUserInput.disabled = true;
 
     try {
-        const response = await fetch(`api/check_user_exists.php?username=${encodeURIComponent(val)}`);
+        const response = await fetch(
+            `api/check_user_exists.php?username=${encodeURIComponent(val)}`
+        );
         const data = await response.json();
 
         if (data.exists) {
@@ -802,7 +853,9 @@ function showSuggestions(users) {
         item.addEventListener("click", () => selectSuggestion(username));
         item.addEventListener("mouseenter", () => {
             selectedSuggestionIndex = index;
-            updateSuggestionSelection(searchSuggestions.querySelectorAll(".search-suggestion-item"));
+            updateSuggestionSelection(
+                searchSuggestions.querySelectorAll(".search-suggestion-item")
+            );
         });
 
         searchSuggestions.appendChild(item);
@@ -826,7 +879,8 @@ function hideSuggestions() {
 function updateSuggestionSelection(suggestions) {
     suggestions.forEach((item, index) => {
         if (index === selectedSuggestionIndex) {
-            item.style.backgroundColor = "color-mix(in srgb, var(--secondary-color) 15%, transparent)";
+            item.style.backgroundColor =
+                "color-mix(in srgb, var(--secondary-color) 15%, transparent)";
             item.style.transform = "translateX(4px)";
         } else {
             item.style.backgroundColor = "";

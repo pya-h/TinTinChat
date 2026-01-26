@@ -6,9 +6,11 @@ header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
-    echo json_encode(['error' => 'Not logged in']);
+    echo json_encode(['status' => 'failed', 'error' => 'Not logged in']);
     exit;
 }
+// FIXME: Checkout Post bodies on all endpoints
+// TODO: Also check all update/insert queries results and return error on failures.
 
 $userId = $_SESSION['user_id'];
 $target = $_POST['target'] ?? '';
@@ -17,7 +19,7 @@ $messageEncryptedForSender = $_POST['message_for_sender'] ?? '';
 
 if (!$target || !$messageEncryptedForRecipient || !$messageEncryptedForSender) {
     http_response_code(400);
-    echo json_encode(['error' => 'Missing parameters']);
+    echo json_encode(['status' => 'failed', 'error' => 'Missing parameters']);
     exit;
 }
 
@@ -27,17 +29,23 @@ $targetUser = $stmt->fetch();
 
 if (!$targetUser) {
     http_response_code(404);
-    echo json_encode(['error' => 'Target user not found']);
+    echo json_encode(['status' => 'failed', 'error' => 'Target user not found']);
     exit;
 }
 
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type) VALUES (?, ?, ?, ?, 'text')");
-$stmt->execute([
-    $userId,
-    $targetUser['id'],
-    $messageEncryptedForRecipient,
-    $messageEncryptedForSender,
-]);
+if (
+    !$stmt->execute([
+        $userId,
+        $targetUser['id'],
+        $messageEncryptedForRecipient,
+        $messageEncryptedForSender,
+    ])
+) {
+    http_response_code(409);
+    echo json_encode(['status' => 'failed', 'error' => 'Something went wrong while sending your message!']);
+    exit;
+}
 
 $messageId = $pdo->lastInsertId();
 

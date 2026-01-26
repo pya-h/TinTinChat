@@ -105,13 +105,19 @@ if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
             "INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type, image_file_path) 
              VALUES (?, ?, ?, ?, 'image', ?)"
         );
-        $stmt->execute([
-            $sender_id,
-            $receiver_id,
-            $message_for_recipient,
-            $message_for_sender,
-            'uploads/images/' . $unique_filename
-        ]);
+        if (
+            !$stmt->execute([
+                $sender_id,
+                $receiver_id,
+                $message_for_recipient,
+                $message_for_sender,
+                'uploads/images/' . $unique_filename
+            ])
+        ) {
+            http_response_code(409);
+            echo json_encode(['status' => 'failed', 'error' => 'Something went wrong while sending your message!']);
+            exit;
+        }
 
         echo json_encode(['status' => 'ok', 'message' => 'Image sent successfully']);
     } catch (PDOException $e) {
