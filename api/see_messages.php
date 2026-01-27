@@ -11,6 +11,11 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = $_SESSION['user_id'];
+if(!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(404);
+    echo json_encode(['status' => 'failed', 'error' => 'Invalid endpoint!']);
+    exit;
+}
 $messages_seen = $_POST['messages'] ?? null;
 
 if (!$messages_seen) {
