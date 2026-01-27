@@ -343,6 +343,27 @@ nav.navbar:hover {
     box-shadow: 0 8px 25px rgba(106, 17, 203, 0.4);
 }
 
+.just-sent-tick {
+    content: "✓";
+    font-size: 8px;
+    color: #009688;
+    line-height: 1;
+}
+
+.seen‑ticks {
+    display: flex;
+    gap: 1px;
+    justify-content: end;
+}
+
+.seen‑ticks::before,
+.seen‑ticks::after {
+    content: "✓";
+    font-size: 8px;
+    color: #009688;
+    line-height: 1;
+}
+
 .chat-input {
     display: flex;
     align-items: center;
@@ -1159,7 +1180,7 @@ nav.navbar:hover {
     }
 
     .chat-input textarea {
-        font-size: 16px;
+        font-size: 13px;
         padding: 1rem 1.2rem;
     }
 

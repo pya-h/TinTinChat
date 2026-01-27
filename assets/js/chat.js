@@ -370,9 +370,6 @@ async function addMessageToChat(msg, prepend = false) {
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color);",
                 })}`;
-        // onload="this.parentNode.parentNode.parentNode.scrollTop = this.parentNode.parentNode.parentNode.scrollHeight"
-
-        // showModal()
     } else {
         let decryptedText = "[Unable to decrypt message]";
         try {
@@ -391,10 +388,11 @@ async function addMessageToChat(msg, prepend = false) {
         }
     }
 
-    if (msg.seen_at) {
-        chatMessagesElem.innerHTML += '<span class="tick">✓</span><span class="tick">✓</span>';
+    if (msg.sender_id == CURRENT_USER_ID) {
+        chatMessagesElem.innerHTML += `<span class="${
+            msg.seen_at ? "seen-ticks" : "just-sent-tick"
+        }"></span>`; // TODO: Check if this comes out ok...
     }
-
     if (prepend) {
         const loadMoreBtn = document.getElementById("loadMoreBtn");
         if (loadMoreBtn) {
