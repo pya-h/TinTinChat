@@ -647,7 +647,7 @@ const sendTextMessage = async () => {
 
         addUserToChatList(currentChatUser);
         chatInput.value = "";
-        await loadCurrentChatsRecentMessages();
+        // await loadCurrentChatsRecentMessages(); TODO: Checkout if this slows down message sending. if yes, undo comment.
     } catch (err) {
         showModal("Send Error", "Encryption/send error: " + err.message, "error");
     } finally {
@@ -1089,7 +1089,7 @@ async function sendVoiceMessage(audioBlob) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        await loadCurrentChatsRecentMessages();
+        // await loadCurrentChatsRecentMessages(); TODO: Checkout if this slows down message sending. if yes, undo comment.
     } catch (err) {
         showModal("Voice Send Error", "Voice message send error: " + err.message, "error");
 
@@ -1164,7 +1164,7 @@ async function sendImageMessage(imageFile) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        await loadCurrentChatsRecentMessages();
+        // await loadCurrentChatsRecentMessages(); TODO: Checkout if this slows down message sending. if yes, undo comment.
     } catch (err) {
         showModal("Image Send Error", "Image send error: " + err.message, "error");
 
