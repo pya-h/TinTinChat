@@ -383,7 +383,6 @@ async function addMessageToChat(msg, prepend = false) {
 
     if (msg.sender_id == CURRENT_USER_ID) {
         const tickContainer = document.createElement("span");
-        console.log(msg)
         tickContainer.className = msg.seen_at ? "message-status-indicator seen-ticks" : "message-status-indicator just-sent-tick";
         div.appendChild(tickContainer);
     }

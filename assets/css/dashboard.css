@@ -322,7 +322,6 @@ nav.navbar:hover {
     background: var(--sent-bg);
     color: white;
     margin-left: auto;
-    border-bottom-right-radius: 6px;
     box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
 }
 
@@ -394,8 +393,8 @@ nav.navbar:hover {
 .seen-ticks::before,
 .seen-ticks::after {
     content: "✓";
-    font-size: 25px;
-    color: #28a745;
+    font-size: 22px;
+    color: blueviolet;
     font-weight: 700;
     line-height: 1;
     display: inline-block;
@@ -453,20 +452,12 @@ nav.navbar:hover {
 .message.sent.is-voice-message .message-status-indicator,
 .message.sent.is-image-message .message-status-indicator {
     position: absolute;
-    bottom: 0.3rem;
-    right: 0.5rem;
+    bottom: -0.4rem;
+    right: 1.3rem;
     margin: 0;
-    background: rgba(106, 17, 203, 0.35);
-    backdrop-filter: blur(6px);
     padding: 0.2rem 0.35rem;
     border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     z-index: 2;
-}
-
-.message.sent.is-image-message .message-status-indicator {
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
 }
 
 .chat-input {
@@ -997,6 +988,7 @@ nav.navbar:hover {
 
     .voice-player-container {
         gap: 0.5rem;
+        width: 100%;
         padding: 0.4rem;
     }
 
@@ -1152,7 +1144,7 @@ nav.navbar:hover {
 
 @media (max-width: 767.98px) {
     .message.is-image-message {
-        max-width: 70%;
+        max-width: 75%;
     }
 }
 
