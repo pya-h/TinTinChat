@@ -343,25 +343,135 @@ nav.navbar:hover {
     box-shadow: 0 8px 25px rgba(106, 17, 203, 0.4);
 }
 
+/* Message Status Indicators (Delivery Ticks) */
+.message-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    vertical-align: middle;
+    line-height: 1;
+    opacity: 0.85;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.message:hover .message-status-indicator {
+    opacity: 1;
+}
+
+/* Single tick for sent messages */
 .just-sent-tick {
-    content: "✓";
-    font-size: 8px;
-    color: #009688;
-    line-height: 1;
+    position: relative;
+    width: 16px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.25rem;
 }
 
-.seen‑ticks {
-    display: flex;
-    gap: 1px;
-    justify-content: end;
+.just-sent-tick::before {
+    content: "✓";
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 700;
+    line-height: 1;
+    display: inline-block;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    font-family: "Segoe UI", system-ui, sans-serif;
+    transition: color 0.2s ease;
 }
 
-.seen‑ticks::before,
-.seen‑ticks::after {
+.message:hover .just-sent-tick::before {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Double ticks for seen messages */
+.seen-ticks {
+    position: relative;
+    width: 22px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0px;
+    margin-left: 0.25rem;
+}
+
+.seen-ticks::before,
+.seen-ticks::after {
     content: "✓";
-    font-size: 8px;
-    color: #009688;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 1);
+    font-weight: 700;
     line-height: 1;
+    display: inline-block;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    font-family: "Segoe UI", system-ui, sans-serif;
+    transform: translateX(0);
+    transition: filter 0.2s ease;
+}
+
+.seen-ticks::before {
+    margin-right: -2px;
+    animation: tickAppear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.seen-ticks::after {
+    margin-left: -2px;
+    animation: tickAppear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+
+.message:hover .seen-ticks::before,
+.message:hover .seen-ticks::after {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+}
+
+@keyframes tickAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0.2) translateY(-4px) rotate(-15deg);
+    }
+    60% {
+        transform: scale(1.15) translateY(0) rotate(5deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0) rotate(0deg);
+    }
+}
+
+/* Position ticks correctly in sent messages - minimal changes to preserve layout */
+.message.sent .message-status-indicator {
+    display: inline-block;
+    vertical-align: bottom;
+    margin-left: 0.4rem;
+}
+
+/* RTL support for sent messages */
+.message.sent[dir="rtl"] .message-status-indicator {
+    margin-left: 0;
+    margin-right: 0.4rem;
+}
+
+/* For voice and image messages - position tick at bottom right */
+.message.sent.is-voice-message .message-status-indicator,
+.message.sent.is-image-message .message-status-indicator {
+    position: absolute;
+    bottom: 0.3rem;
+    right: 0.5rem;
+    margin: 0;
+    background: rgba(106, 17, 203, 0.35);
+    backdrop-filter: blur(6px);
+    padding: 0.2rem 0.35rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+}
+
+.message.sent.is-image-message .message-status-indicator {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
 }
 
 .chat-input {
@@ -1188,6 +1298,17 @@ nav.navbar:hover {
         max-width: 85%;
         padding: 0.9rem 1.2rem;
         margin-bottom: 1rem;
+    }
+
+    /* Ensure ticks are visible on mobile */
+    .message-status-indicator {
+        margin-left: 0.3rem !important;
+    }
+
+    .just-sent-tick::before,
+    .seen-ticks::before,
+    .seen-ticks::after {
+        font-size: 13px;
     }
 
     .sidebar {

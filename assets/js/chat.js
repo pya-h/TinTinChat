@@ -382,7 +382,10 @@ async function addMessageToChat(msg, prepend = false) {
     }
 
     if (msg.sender_id == CURRENT_USER_ID) {
-        chatMessagesElem.innerHTML += `<span class="${msg.seen_at ? "seen-ticks" : "just-sent-tick"}"></span>`; // TODO: Check if this comes out ok...
+        const tickContainer = document.createElement("span");
+        console.log(msg)
+        tickContainer.className = msg.seen_at ? "message-status-indicator seen-ticks" : "message-status-indicator just-sent-tick";
+        div.appendChild(tickContainer);
     }
     if (prepend) {
         const loadMoreBtn = document.getElementById("loadMoreBtn");
@@ -449,6 +452,25 @@ function scrollToLatest() {
 }
 
 window.scrollToLatest = scrollToLatest;
+
+// Function to update message tick status dynamically
+function updateMessageTickStatus(messageId, isSeen) {
+    const messageDiv = Array.from(chatMessagesElem.children).find(
+        (el) => el.getAttribute("data-message-id") == messageId || 
+                el.querySelector(`[data-message-id="${messageId}"]`)
+    );
+    
+    if (!messageDiv) return;
+    
+    const tickIndicator = messageDiv.querySelector(".message-status-indicator");
+    if (tickIndicator) {
+        tickIndicator.className = isSeen 
+            ? "message-status-indicator seen-ticks" 
+            : "message-status-indicator just-sent-tick";
+    }
+}
+
+window.updateMessageTickStatus = updateMessageTickStatus;
 
 chatMessagesElem.addEventListener("scroll", () => {
     if (hasLoadedMoreMessages) {
