@@ -3,3 +3,4 @@ uploads/
 test_*.html
 .prod.env
 .vscode
+*.fux

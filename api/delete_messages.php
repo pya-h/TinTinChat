@@ -31,8 +31,10 @@ if (!$messages) {
     exit;
 }
 
-$stmt = $pdo->prepare("DELETE FROM messages WHERE id IN ? AND (receiver_id=? OR sender_id=?)");
-if (!$stmt->execute([$messages, $userId, $userId])) {
+$str_messages = implode(',', $messages_seen);
+
+$stmt = $pdo->prepare("DELETE FROM messages WHERE id IN ($str_messages) AND (receiver_id=? OR sender_id=?)");
+if (!$stmt->execute([$userId, $userId])) {
     http_response_code(409);
     echo json_encode(['status' => 'failed', 'error' => 'Could not delete the messages!']);
     exit;
