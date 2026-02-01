@@ -343,23 +343,19 @@ nav.navbar:hover {
     box-shadow: 0 8px 25px rgba(106, 17, 203, 0.4);
 }
 
-/* Message Status Indicators (Delivery Ticks) */
 .message-status-indicator {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
+    display: inline-block;
     vertical-align: middle;
     line-height: 1;
     opacity: 0.85;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    flex-shrink: 0;
+    transition: opacity 0.2s ease;
+    margin-left: 0.35rem;
 }
 
 .message:hover .message-status-indicator {
     opacity: 1;
 }
 
-/* Single tick for sent messages */
 .just-sent-tick {
     position: relative;
     width: 16px;
@@ -367,26 +363,24 @@ nav.navbar:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-left: 0.25rem;
 }
 
 .just-sent-tick::before {
     content: "✓";
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 25px;
+    color: #000000;
     font-weight: 700;
     line-height: 1;
     display: inline-block;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
     font-family: "Segoe UI", system-ui, sans-serif;
     transition: color 0.2s ease;
 }
 
 .message:hover .just-sent-tick::before {
-    color: rgba(255, 255, 255, 0.95);
+    color: #000000;
 }
 
-/* Double ticks for seen messages */
 .seen-ticks {
     position: relative;
     width: 22px;
@@ -395,18 +389,17 @@ nav.navbar:hover {
     align-items: center;
     justify-content: center;
     gap: 0px;
-    margin-left: 0.25rem;
 }
 
 .seen-ticks::before,
 .seen-ticks::after {
     content: "✓";
-    font-size: 15px;
-    color: rgba(255, 255, 255, 1);
+    font-size: 25px;
+    color: #28a745;
     font-weight: 700;
     line-height: 1;
     display: inline-block;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
     font-family: "Segoe UI", system-ui, sans-serif;
     transform: translateX(0);
     transition: filter 0.2s ease;
@@ -424,7 +417,7 @@ nav.navbar:hover {
 
 .message:hover .seen-ticks::before,
 .message:hover .seen-ticks::after {
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 4px rgba(40, 167, 69, 0.4));
 }
 
 @keyframes tickAppear {
@@ -432,29 +425,31 @@ nav.navbar:hover {
         opacity: 0;
         transform: scale(0.2) translateY(-4px) rotate(-15deg);
     }
+
     60% {
         transform: scale(1.15) translateY(0) rotate(5deg);
     }
+
     100% {
         opacity: 1;
         transform: scale(1) translateY(0) rotate(0deg);
     }
 }
 
-/* Position ticks correctly in sent messages - minimal changes to preserve layout */
 .message.sent .message-status-indicator {
-    display: inline-block;
-    vertical-align: bottom;
-    margin-left: 0.4rem;
+    float: right;
+    clear: right;
+    margin-left: 0.35rem;
+    margin-top: 0.1rem;
 }
 
-/* RTL support for sent messages */
 .message.sent[dir="rtl"] .message-status-indicator {
+    float: left;
+    clear: left;
     margin-left: 0;
-    margin-right: 0.4rem;
+    margin-right: 0.35rem;
 }
 
-/* For voice and image messages - position tick at bottom right */
 .message.sent.is-voice-message .message-status-indicator,
 .message.sent.is-image-message .message-status-indicator {
     position: absolute;
@@ -1067,7 +1062,7 @@ nav.navbar:hover {
 }
 
 .message.is-voice-message .voice-player-container {
-    border-radius: 18px;
+    border-radius: var(--border-radius);
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
 }
 
@@ -1127,13 +1122,12 @@ nav.navbar:hover {
     background: transparent;
     padding: 0;
     box-shadow: none;
-    max-width: 45%;
     white-space: normal;
 }
 
 .message.is-image-message a {
     display: block;
-    border-radius: 18px;
+    border-radius: var(--border-radius);
     overflow: hidden;
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
     transition: box-shadow 0.2s ease;
@@ -1149,7 +1143,7 @@ nav.navbar:hover {
     height: auto;
     cursor: pointer;
     transition: transform 0.2s ease;
-    border-radius: 18px;
+    border-radius: var(--border-radius);
 }
 
 .message-image:hover {
@@ -1165,7 +1159,7 @@ nav.navbar:hover {
 .message.is-image-message .image-error {
     background: #f8f9fa;
     border: 1px solid #dee2e6;
-    border-radius: 18px;
+    border-radius: var(--border-radius);
     padding: 20px;
     text-align: center;
     color: #6c757d;
@@ -1262,7 +1256,7 @@ nav.navbar:hover {
         padding: 0.4rem 1rem;
         font-size: 0.8rem;
     }
-    
+
     .go-to-latest-container {
         margin: 0.75rem 0;
         padding: 0.25rem;
@@ -1300,7 +1294,6 @@ nav.navbar:hover {
         margin-bottom: 1rem;
     }
 
-    /* Ensure ticks are visible on mobile */
     .message-status-indicator {
         margin-left: 0.3rem !important;
     }
@@ -1445,6 +1438,7 @@ nav.navbar:hover {
         opacity: 0.6;
     }
 }
+
 * {
     transition: width 0.5s;
     -webkit-transition: width 0.5s;
@@ -1568,6 +1562,7 @@ nav.navbar:hover {
         transform: scale(0.8);
     }
 }
+
 .search-suggestions {
     position: absolute;
     top: 100%;
@@ -1576,7 +1571,7 @@ nav.navbar:hover {
     background: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: 
+    box-shadow:
         0 8px 25px rgba(0, 0, 0, 0.15),
         0 4px 12px rgba(0, 0, 0, 0.1),
         0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -1699,6 +1694,7 @@ nav.navbar:hover {
         opacity: 0;
         transform: translateY(-10px) scale(0.95);
     }
+
     100% {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -1706,8 +1702,13 @@ nav.navbar:hover {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 #searchUser.suggestions-active {
@@ -1732,32 +1733,32 @@ nav.navbar:hover {
         max-height: 150px;
         border-radius: 0 0 12px 12px;
         z-index: 3000;
-        box-shadow: 
+        box-shadow:
             0 12px 35px rgba(0, 0, 0, 0.2),
             0 6px 15px rgba(0, 0, 0, 0.15),
             0 0 0 1px rgba(255, 255, 255, 0.1);
     }
-    
+
     .search-suggestion-item {
         padding: 1rem 0.75rem;
         min-height: 56px;
         z-index: 3001;
     }
-    
+
     .search-suggestion-avatar {
         width: 36px;
         height: 36px;
         font-size: 0.9rem;
     }
-    
+
     .search-suggestion-username {
         font-size: 0.95rem;
     }
-    
+
     .search-container {
         z-index: 200;
     }
-    
+
     #searchUser.suggestions-active {
         z-index: 3001;
     }
@@ -1769,12 +1770,12 @@ nav.navbar:hover {
         border-color: var(--border-color);
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
-    
+
     .search-suggestion-item {
         border-bottom-color: rgba(255, 255, 255, 0.1);
         color: var(--text-color);
     }
-    
+
     .search-suggestion-item:hover {
         background-color: color-mix(in srgb, var(--secondary-color) 15%, transparent);
     }
@@ -1790,12 +1791,13 @@ nav.navbar:hover {
     .search-suggestions {
         border-width: 2px;
     }
-    
+
     .search-suggestion-item:hover {
         background-color: var(--secondary-color);
         color: white;
     }
 }
+
 #searchUser {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -1817,11 +1819,25 @@ nav.navbar:hover {
     transform: translateX(-10px);
 }
 
-.search-suggestion-item:nth-child(1) { animation-delay: 0ms; }
-.search-suggestion-item:nth-child(2) { animation-delay: 50ms; }
-.search-suggestion-item:nth-child(3) { animation-delay: 100ms; }
-.search-suggestion-item:nth-child(4) { animation-delay: 150ms; }
-.search-suggestion-item:nth-child(5) { animation-delay: 200ms; }
+.search-suggestion-item:nth-child(1) {
+    animation-delay: 0ms;
+}
+
+.search-suggestion-item:nth-child(2) {
+    animation-delay: 50ms;
+}
+
+.search-suggestion-item:nth-child(3) {
+    animation-delay: 100ms;
+}
+
+.search-suggestion-item:nth-child(4) {
+    animation-delay: 150ms;
+}
+
+.search-suggestion-item:nth-child(5) {
+    animation-delay: 200ms;
+}
 
 @keyframes suggestionItemSlideIn {
     to {
@@ -1837,8 +1853,13 @@ nav.navbar:hover {
 }
 
 @keyframes searchLoading {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
 }
 
 .search-empty-state {
@@ -1880,24 +1901,25 @@ nav.navbar:hover {
         right: -0.5rem;
         border-radius: 0 0 16px 16px;
     }
-    
+
     .search-suggestion-item {
         padding: 1rem;
     }
-    
+
     .search-suggestion-avatar {
         width: 40px;
         height: 40px;
         font-size: 1rem;
     }
 }
+
 @media (max-width: 767.98px) {
     .search-container {
         position: relative;
         z-index: 200 !important;
         overflow: visible;
     }
-    
+
     .search-suggestions {
         position: absolute !important;
         top: 100% !important;
@@ -1907,34 +1929,34 @@ nav.navbar:hover {
         margin-top: 0;
         max-height: 250px;
     }
-    
+
     .sidebar {
         overflow: visible !important;
     }
-    
+
     .chat-list-wrapper {
         position: relative;
         z-index: 1;
         display: none;
     }
-    
+
     .chat-area {
         z-index: 1;
         position: relative;
     }
-    
+
     .chat-messages {
         z-index: 1;
         position: relative;
     }
-    
+
     .chat-input {
         z-index: 5;
         position: relative;
     }
-    
+
     nav.navbar {
         z-index: 50;
     }
-    
+
 }
