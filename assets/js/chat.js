@@ -354,9 +354,9 @@ async function addMessageToChat(msg, prepend = false) {
     } else if (msg.message_type === "image" && msg.image_file_path) {
         div.classList.add("is-image-message");
 
-        // div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
-        div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" title="View full image">
-                <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
+        const imageUrl = `api/get_image.php?id=${msg.id}`;
+        div.innerHTML = `<a href="${imageUrl}" class="image-message-link" data-image-url="${imageUrl}" title="View full image">
+                <img src="${imageUrl}" class="message-image" alt="Image from ${msg.sender_id}" 
                     onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
                 </a>${newDateTag(msg, {
                     atLeft: msg.sender_id == CURRENT_USER_ID,
@@ -364,6 +364,14 @@ async function addMessageToChat(msg, prepend = false) {
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color); font-weight: 600;",
                 })}`;
+        
+        const imageLink = div.querySelector('.image-message-link');
+        if (imageLink) {
+            imageLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                openImageModal(imageUrl);
+            });
+        }
     } else {
         let decryptedText = "[Unable to decrypt message]";
         try {
@@ -471,6 +479,73 @@ function updateMessageTickStatus(messageId, isSeen) {
 }
 
 window.updateMessageTickStatus = updateMessageTickStatus;
+
+function openImageModal(imageUrl) {
+    const imageModalOverlay = document.getElementById("imageModalOverlay");
+    const imageModalImage = document.getElementById("imageModalImage");
+    const imageModalDownload = document.getElementById("imageModalDownload");
+    
+    if (!imageModalOverlay || !imageModalImage || !imageModalDownload) return;
+    
+    imageModalImage.src = imageUrl;
+    imageModalDownload.href = imageUrl;
+    imageModalDownload.download = `image_${Date.now()}.jpg`;
+    
+    imageModalOverlay.style.display = "flex";
+    setTimeout(() => {
+        imageModalOverlay.classList.add("visible");
+    }, 10);
+    
+    document.body.style.overflow = "hidden";
+}
+
+function closeImageModal() {
+    const imageModalOverlay = document.getElementById("imageModalOverlay");
+    if (!imageModalOverlay) return;
+    
+    imageModalOverlay.classList.remove("visible");
+    
+    setTimeout(() => {
+        if (!imageModalOverlay.classList.contains("visible")) {
+            imageModalOverlay.style.display = "none";
+            document.body.style.overflow = "";
+        }
+    }, 300);
+}
+
+function downloadImage(event) {
+    event.stopPropagation();
+}
+
+window.openImageModal = openImageModal;
+window.closeImageModal = closeImageModal;
+
+document.addEventListener("DOMContentLoaded", () => {
+    const imageModalOverlay = document.getElementById("imageModalOverlay");
+    
+    if (imageModalOverlay) {
+        imageModalOverlay.addEventListener("click", function (e) {
+            if (e.target === this) {
+                closeImageModal();
+            }
+        });
+        
+        const imageModalContent = imageModalOverlay.querySelector(".image-modal-content");
+        if (imageModalContent) {
+            imageModalContent.addEventListener("click", function (e) {
+                e.stopPropagation();
+            });
+        }
+        
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                if (imageModalOverlay.style.display !== "none" && imageModalOverlay.classList.contains("visible")) {
+                    closeImageModal();
+                }
+            }
+        });
+    }
+});
 
 chatMessagesElem.addEventListener("scroll", () => {
     if (hasLoadedMoreMessages) {
