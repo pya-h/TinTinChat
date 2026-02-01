@@ -329,7 +329,6 @@ nav.navbar:hover {
     background: var(--surface-color);
     color: var(--text-color);
     margin-right: auto;
-    border-bottom-left-radius: 6px;
     border: 1px solid var(--border-color);
 }
 
@@ -338,9 +337,6 @@ nav.navbar:hover {
     box-shadow: var(--shadow-md);
 }
 
-.message.sent:hover {
-    box-shadow: 0 8px 25px rgba(106, 17, 203, 0.4);
-}
 
 .message-status-indicator {
     display: inline-block;
@@ -1293,7 +1289,7 @@ nav.navbar:hover {
     .just-sent-tick::before,
     .seen-ticks::before,
     .seen-ticks::after {
-        font-size: 13px;
+        font-size: 18px;
     }
 
     .sidebar {

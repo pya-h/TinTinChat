@@ -17,7 +17,7 @@ let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
 let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
-const MESSAGES_PER_PAGE = 30;
+const MESSAGES_PER_PAGE = 50;
 
 let searchTimeout = null;
 let currentSuggestions = [];
@@ -309,8 +309,9 @@ async function loadMoreMessages() {
 
     updateGoToLatestButton();
 }
-function newDateTag(msg, { atLeft = true, topSpace = 3, fontSize = 10, extraStyles = "" }) {
-    return `<span class="mx-2 mt-${topSpace}" style="font-size: ${fontSize}px; float: ${
+function newDateTag(msg, { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "" }) {
+    const margins = strictMargins ? `mt-${topSpace}` : `mt-0 mt-lg-${topSpace} mt-md-${topSpace}`;
+    return `<span class="mx-2 ${margins}" style="font-size: ${fontSize}px; float: ${
         atLeft ? "left" : "right"
     };${extraStyles}">${new Date(msg.created_at).toLocaleString("default", {
         year: "numeric",
@@ -342,12 +343,12 @@ async function addMessageToChat(msg, prepend = false) {
             </div>
             <div class="voice-duration-display">--:--</div>
           </div>
-            ${newDateTag(msg, {
-                atLeft: msg.sender_id == CURRENT_USER_ID,
-                topSpace: 1,
-                fontSize: 8.5,
-                extraStyles: "color: var(--text-color);",
-            })}
+        ${newDateTag(msg, {
+            atLeft: msg.sender_id == CURRENT_USER_ID,
+            topSpace: 1,
+            fontSize: 8.5,
+            extraStyles: "color: var(--text-color); font-weight: 600;",
+        })}
         `;
         div.setAttribute("data-message-id", msg.id);
     } else if (msg.message_type === "image" && msg.image_file_path) {
@@ -355,13 +356,13 @@ async function addMessageToChat(msg, prepend = false) {
 
         // div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" target="_blank" title="View full image">
         div.innerHTML = `<a href="api/get_image.php?id=${msg.id}" title="View full image">
-                    <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
-                        onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
+                <img src="api/get_image.php?id=${msg.id}" class="message-image" alt="Image from ${msg.sender_id}" 
+                    onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
                 </a>${newDateTag(msg, {
                     atLeft: msg.sender_id == CURRENT_USER_ID,
                     topSpace: 1,
                     fontSize: 8.5,
-                    extraStyles: "color: var(--text-color);",
+                    extraStyles: "color: var(--text-color); font-weight: 600;",
                 })}`;
     } else {
         let decryptedText = "[Unable to decrypt message]";
@@ -375,7 +376,7 @@ async function addMessageToChat(msg, prepend = false) {
             decryptedText = "[Unsupported message]";
         }
         const isPersian = isTextPersian(decryptedText.trim());
-        div.innerHTML = `<span>${decryptedText}</span>${newDateTag(msg, { atLeft: isPersian })}`;
+        div.innerHTML = `<span>${decryptedText}</span>${newDateTag(msg, { atLeft: isPersian, strictMargins: true, topSpace: 3 })}`;
         if (isPersian) {
             div.dir = "rtl";
         }
