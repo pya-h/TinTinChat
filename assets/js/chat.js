@@ -35,6 +35,93 @@ let activeAnalyser = null;
 
 let initialViewportHeight = window.innerHeight;
 
+let notificationAudio = null;
+let customNotificationAudio = null;
+const NOTIFICATION_COOLDOWN = 500;
+const CUSTOM_SOUND_PATH = "assets/sounds/notification.mp3";
+
+async function loadCustomNotificationSound() {
+    try {
+        const response = await fetch(CUSTOM_SOUND_PATH);
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            customNotificationAudio = new Audio();
+            customNotificationAudio.src = url;
+            customNotificationAudio.volume = 0.7;
+            return true;
+        }
+    } catch (error) {
+        initNotificationSound();
+        createNotificationSound();
+    }
+    return false;
+}
+
+document.addEventListener("DOMContentLoaded", loadCustomNotificationSound);
+
+function createNotificationSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioContext.currentTime;
+
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(850, now);
+        osc.frequency.setValueAtTime(550, now + 0.12);
+
+        gain.gain.setValueAtTime(0.6, now);
+        gain.gain.exponentialRampToValueAtTime(0.05, now + 0.25);
+
+        osc.start(now);
+        osc.stop(now + 0.25);
+    } catch (error) {
+        initNotificationSound();
+    }
+}
+
+function initNotificationSound() {
+    if (!notificationAudio) {
+        notificationAudio = new Audio();
+        notificationAudio.src =
+            "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+        notificationAudio.volume = 0.7;
+    }
+}
+
+function playDefaultNotificationSound() {
+    if (!notificationAudio) {
+        initNotificationSound();
+    }
+    createNotificationSound();
+    return notificationAudio.cloneNode().play();
+}
+
+function setupNotificationSoundPlayer() {
+    if (customNotificationAudio) {
+        return () => {
+            return customNotificationAudio
+                .cloneNode()
+                .play()
+                .catch(() => playDefaultNotificationSound());
+        };
+    }
+    return () => {
+        createNotificationSound();
+        return notificationAudio
+            .cloneNode()
+            .play()
+            .catch(() => playDefaultNotificationSound());
+    };
+}
+
+const playNotificationSound = setupNotificationSoundPlayer();
+
 function isTextPersian(text) {
     return /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(text);
 }
@@ -149,7 +236,9 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         const offset = isInitialLoad ? 0 : messageOffset;
 
         const res = await fetch(
-            `api/fetch_messages.php?with=${encodeURIComponent(username)}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
+            `api/fetch_messages.php?with=${encodeURIComponent(
+                username
+            )}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
@@ -164,7 +253,8 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             }
             if (currentChatRecentMessages?.length) {
                 const lastMessage = data.messages?.[data.messages.length - 1],
-                    previosLastMessageId = currentChatRecentMessages?.[currentChatRecentMessages.length - 1]?.id;
+                    previosLastMessageId =
+                        currentChatRecentMessages?.[currentChatRecentMessages.length - 1]?.id;
                 if (lastMessage && previosLastMessageId && lastMessage.id <= previosLastMessageId) {
                     return;
                 }
@@ -222,9 +312,9 @@ async function loadCurrentChatsRecentMessages() {
     try {
         isLoadingMessages = true;
         const res = await fetch(
-            `api/fetch_recent_messages.php?with=${encodeURIComponent(currentChatUser)}&offsetMsgId=${
-                currentChatRecentMessages[currentChatRecentMessages.length - 1].id
-            }`
+            `api/fetch_recent_messages.php?with=${encodeURIComponent(
+                currentChatUser
+            )}&offsetMsgId=${currentChatRecentMessages[currentChatRecentMessages.length - 1].id}`
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
@@ -235,7 +325,15 @@ async function loadCurrentChatsRecentMessages() {
         currentChatRecentMessages = data.messages;
         messageOffset += currentChatRecentMessages?.length ?? 0;
         for (const msg of currentChatRecentMessages) {
-            await addMessageToChat(msg);
+            await addMessageToChat(msg, false, true);
+        }
+
+        if (
+            currentChatRecentMessages?.length &&
+            currentChatRecentMessages[currentChatRecentMessages.length - 1]?.sender_id !=
+                CURRENT_USER_ID
+        ) {
+            playNotificationSound();
         }
         updateMessagesStatus(data.messages); // Mark as seen on the background
 
@@ -308,7 +406,10 @@ async function loadMoreMessages() {
 
     updateGoToLatestButton();
 }
-function newDateTag(msg, { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "" }) {
+function newDateTag(
+    msg,
+    { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "" }
+) {
     const margins = strictMargins ? `mt-${topSpace}` : `mt-0 mt-lg-${topSpace} mt-md-${topSpace}`;
     return `<span class="mx-2 ${margins}" style="font-size: ${fontSize}px; float: ${
         atLeft ? "left" : "right"
@@ -363,10 +464,10 @@ async function addMessageToChat(msg, prepend = false) {
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color); font-weight: 600;",
                 })}`;
-        
-        const imageLink = div.querySelector('.image-message-link');
+
+        const imageLink = div.querySelector(".image-message-link");
         if (imageLink) {
-            imageLink.addEventListener('click', (e) => {
+            imageLink.addEventListener("click", (e) => {
                 e.preventDefault();
                 openImageModal(imageUrl);
             });
@@ -376,30 +477,32 @@ async function addMessageToChat(msg, prepend = false) {
 
         const fileUrl = `api/get_file_message.php?id=${msg.id}`;
         let fileName = msg.any_file_path;
-        if (fileName.includes('_')) {
-            const parts = fileName.split('_');
+        if (fileName.includes("_")) {
+            const parts = fileName.split("_");
             if (parts.length > 2) {
-                fileName = parts.slice(2).join('_');
+                fileName = parts.slice(2).join("_");
             } else {
                 fileName = parts[parts.length - 1];
             }
         }
-        const fileSize = msg.file_size ? formatFileSize(msg.file_size) : '';
-        const escapedFileName = fileName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        
+        const fileSize = msg.file_size ? formatFileSize(msg.file_size) : "";
+        const escapedFileName = fileName.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
         const isDownloaded = await isFileDownloaded(msg.id);
-        const downloadIconClass = isDownloaded ? 'fa-check-circle' : 'fa-download';
-        const downloadIconColor = isDownloaded ? 'color: var(--primary-color);' : '';
-        const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : '';
-        
+        const downloadIconClass = isDownloaded ? "fa-check-circle" : "fa-download";
+        const downloadIconColor = isDownloaded ? "color: var(--primary-color);" : "";
+        const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
+
         div.innerHTML = `
-          <div class="file-message-container" data-file-msg-id="${msg.id}" onclick="downloadAndOpenFile(${msg.id}, '${escapedFileName}')" ${cacheTitle}>
+          <div class="file-message-container" data-file-msg-id="${
+              msg.id
+          }" onclick="downloadAndOpenFile(${msg.id}, '${escapedFileName}')" ${cacheTitle}>
             <div class="file-icon">
               <i class="fas fa-file"></i>
             </div>
             <div class="file-info">
               <div class="file-name">${fileName}</div>
-              ${fileSize ? `<div class="file-size">${fileSize}</div>` : ''}
+              ${fileSize ? `<div class="file-size">${fileSize}</div>` : ""}
             </div>
             <div class="file-download-icon">
               <i class="fas ${downloadIconClass}" style="${downloadIconColor}"></i>
@@ -425,7 +528,11 @@ async function addMessageToChat(msg, prepend = false) {
             decryptedText = "[Unsupported message]";
         }
         const isPersian = isTextPersian(decryptedText.trim());
-        div.innerHTML = `<span>${decryptedText}</span>${newDateTag(msg, { atLeft: isPersian, strictMargins: true, topSpace: 3 })}`;
+        div.innerHTML = `<span>${decryptedText}</span>${newDateTag(msg, {
+            atLeft: isPersian,
+            strictMargins: true,
+            topSpace: 3,
+        })}`;
         if (isPersian) {
             div.dir = "rtl";
         }
@@ -433,7 +540,9 @@ async function addMessageToChat(msg, prepend = false) {
 
     if (msg.sender_id == CURRENT_USER_ID) {
         const tickContainer = document.createElement("span");
-        tickContainer.className = msg.seen_at ? "message-status-indicator seen-ticks" : "message-status-indicator just-sent-tick";
+        tickContainer.className = msg.seen_at
+            ? "message-status-indicator seen-ticks"
+            : "message-status-indicator just-sent-tick";
         div.appendChild(tickContainer);
     }
     if (prepend) {
@@ -481,7 +590,8 @@ function updateGoToLatestButton() {
     }
 
     const isNearBottom =
-        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >= chatMessagesElem.scrollHeight - 100;
+        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >=
+        chatMessagesElem.scrollHeight - 100;
 
     if (isNearBottom) {
         removeGoToLatestButton();
@@ -504,16 +614,17 @@ window.scrollToLatest = scrollToLatest;
 
 function updateMessageTickStatus(messageId, isSeen) {
     const messageDiv = Array.from(chatMessagesElem.children).find(
-        (el) => el.getAttribute("data-message-id") == messageId || 
-                el.querySelector(`[data-message-id="${messageId}"]`)
+        (el) =>
+            el.getAttribute("data-message-id") == messageId ||
+            el.querySelector(`[data-message-id="${messageId}"]`)
     );
-    
+
     if (!messageDiv) return;
-    
+
     const tickIndicator = messageDiv.querySelector(".message-status-indicator");
     if (tickIndicator) {
-        tickIndicator.className = isSeen 
-            ? "message-status-indicator seen-ticks" 
+        tickIndicator.className = isSeen
+            ? "message-status-indicator seen-ticks"
             : "message-status-indicator just-sent-tick";
     }
 }
@@ -524,27 +635,27 @@ function openImageModal(imageUrl) {
     const imageModalOverlay = document.getElementById("imageModalOverlay");
     const imageModalImage = document.getElementById("imageModalImage");
     const imageModalDownload = document.getElementById("imageModalDownload");
-    
+
     if (!imageModalOverlay || !imageModalImage || !imageModalDownload) return;
-    
+
     imageModalImage.src = imageUrl;
     imageModalDownload.href = imageUrl;
     imageModalDownload.download = `image_${Date.now()}.jpg`;
-    
+
     imageModalOverlay.style.display = "flex";
     setTimeout(() => {
         imageModalOverlay.classList.add("visible");
     }, 10);
-    
+
     document.body.style.overflow = "hidden";
 }
 
 function closeImageModal() {
     const imageModalOverlay = document.getElementById("imageModalOverlay");
     if (!imageModalOverlay) return;
-    
+
     imageModalOverlay.classList.remove("visible");
-    
+
     setTimeout(() => {
         if (!imageModalOverlay.classList.contains("visible")) {
             imageModalOverlay.style.display = "none";
@@ -561,34 +672,40 @@ window.openImageModal = openImageModal;
 window.closeImageModal = closeImageModal;
 
 function formatFileSize(bytes) {
-    if (!bytes) return '';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+    if (!bytes) return "";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + " GB";
 }
 
-const FILE_CACHE_DB = 'TinTinChatFileCache';
-const FILE_CACHE_STORE = 'downloadedFiles';
+const FILE_CACHE_DB = "TinTinChatFileCache";
+const FILE_CACHE_STORE = "downloadedFiles";
 
 async function initFileCache() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(FILE_CACHE_DB, 1);
-        
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
             const db = request.result;
             if (!db.objectStoreNames.contains(FILE_CACHE_STORE)) {
-                const objectStore = db.createObjectStore(FILE_CACHE_STORE, { keyPath: 'messageId' });
-                objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+                const objectStore = db.createObjectStore(FILE_CACHE_STORE, {
+                    keyPath: "messageId",
+                });
+                objectStore.createIndex("timestamp", "timestamp", {
+                    unique: false,
+                });
             }
             resolve(db);
         };
-        
+
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(FILE_CACHE_STORE)) {
-                db.createObjectStore(FILE_CACHE_STORE, { keyPath: 'messageId' });
+                db.createObjectStore(FILE_CACHE_STORE, {
+                    keyPath: "messageId",
+                });
             }
         };
     });
@@ -597,38 +714,38 @@ async function initFileCache() {
 async function saveDownloadedFile(messageId, fileName, fileBlob) {
     try {
         const db = await initFileCache();
-        const transaction = db.transaction([FILE_CACHE_STORE], 'readwrite');
+        const transaction = db.transaction([FILE_CACHE_STORE], "readwrite");
         const objectStore = transaction.objectStore(FILE_CACHE_STORE);
-        
+
         const fileData = {
             messageId: messageId,
             fileName: fileName,
             fileBlob: fileBlob,
             timestamp: Date.now(),
-            size: fileBlob.size
+            size: fileBlob.size,
         };
-        
+
         return new Promise((resolve, reject) => {
             const request = objectStore.put(fileData);
             request.onerror = () => reject(request.error);
             request.onsuccess = () => resolve(fileData);
         });
-    } catch (error) { }
+    } catch (error) {}
     return null;
 }
 
 async function getDownloadedFile(messageId) {
     try {
         const db = await initFileCache();
-        const transaction = db.transaction([FILE_CACHE_STORE], 'readonly');
+        const transaction = db.transaction([FILE_CACHE_STORE], "readonly");
         const objectStore = transaction.objectStore(FILE_CACHE_STORE);
-        
+
         return new Promise((resolve, reject) => {
             const request = objectStore.get(messageId);
             request.onerror = () => reject(request.error);
             request.onsuccess = () => resolve(request.result);
         });
-    } catch (error) { }
+    } catch (error) {}
     return null;
 }
 
@@ -639,34 +756,34 @@ async function isFileDownloaded(messageId) {
 
 async function getDownloadDirectory() {
     try {
-        if (!('showDirectoryPicker' in window)) {
+        if (!("showDirectoryPicker" in window)) {
             return null;
         }
-        
+
         const dirHandle = await (async () => {
             try {
-                const stored = localStorage.getItem('tintinchat_download_dir');
+                const stored = localStorage.getItem("tintinchat_download_dir");
                 if (stored) {
                     return JSON.parse(stored);
                 }
             } catch (e) {
-                localStorage.removeItem('tintinchat_download_dir');
+                localStorage.removeItem("tintinchat_download_dir");
             }
             return null;
         })();
-        
+
         if (dirHandle) return dirHandle;
-        
+
         const handle = await window.showDirectoryPicker({
-            id: 'tintinchat-downloads',
-            mode: 'readwrite',
-            startIn: 'downloads'
+            id: "tintinchat-downloads",
+            mode: "readwrite",
+            startIn: "downloads",
         });
-        
-        localStorage.setItem('tintinchat_download_dir', JSON.stringify(handle));
+
+        localStorage.setItem("tintinchat_download_dir", JSON.stringify(handle));
         return handle;
     } catch (error) {
-        console.warn('File System Access API not available or permission denied:', error);
+        console.warn("File System Access API not available or permission denied:", error);
     }
     return null;
 }
@@ -674,24 +791,30 @@ async function getDownloadDirectory() {
 async function openCachedFile(messageId, fileName) {
     const cachedFile = await getDownloadedFile(messageId);
     if (!cachedFile) return false;
-    
+
     try {
         const dirHandle = await getDownloadDirectory();
         if (dirHandle) {
             try {
-                const fileHandle = await dirHandle.getFileHandle(cachedFile.fileName, { create: true });
+                const fileHandle = await dirHandle.getFileHandle(cachedFile.fileName, {
+                    create: true,
+                });
                 const writable = await fileHandle.createWritable();
                 await writable.write(cachedFile.fileBlob);
                 await writable.close();
-                
-                if ('launchQueue' in window) {
+
+                if ("launchQueue" in window) {
                     window.open(fileHandle);
                 } else {
-                    showModal('File Saved', `File saved to your downloads folder:\n${cachedFile.fileName}`, 'success');
+                    showModal(
+                        "File Saved",
+                        `File saved to your downloads folder:\n${cachedFile.fileName}`,
+                        "success"
+                    );
                 }
                 return true;
             } catch (fsError) {
-                console.warn('File System Access error:', fsError);
+                console.warn("File System Access error:", fsError);
                 return await openCachedFileBlob(cachedFile);
             }
         } else {
@@ -705,7 +828,7 @@ async function openCachedFile(messageId, fileName) {
 async function openCachedFileBlob(cachedFile) {
     try {
         const url = URL.createObjectURL(cachedFile.fileBlob);
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = url;
         link.download = cachedFile.fileName;
         document.body.appendChild(link);
@@ -721,54 +844,58 @@ async function openCachedFileBlob(cachedFile) {
 async function downloadAndOpenFile(messageId, fileName) {
     // Check if file was previously downloaded
     const fileDownloaded = await isFileDownloaded(messageId);
-    const fileIcon = document.querySelector(`[data-file-msg-id="${messageId}"] .file-download-icon i`);
+    const fileIcon = document.querySelector(
+        `[data-file-msg-id="${messageId}"] .file-download-icon i`
+    );
     const container = document.querySelector(`[data-file-msg-id="${messageId}"]`);
-    
+
     if (fileDownloaded) {
         if (fileIcon) {
-            fileIcon.classList.add('fa-check-circle');
-            fileIcon.classList.remove('fa-download');
+            fileIcon.classList.add("fa-check-circle");
+            fileIcon.classList.remove("fa-download");
         }
-        
+
         const opened = await openCachedFile(messageId, fileName);
         if (opened) {
             return;
         }
     }
-    
+
     // File not cached or failed to open cache - download fresh
     if (container) {
-        container.style.opacity = '0.6';
+        container.style.opacity = "0.6";
     }
     if (fileIcon) {
-        fileIcon.classList.add('fa-spinner', 'fa-spin');
-        fileIcon.classList.remove('fa-download');
+        fileIcon.classList.add("fa-spinner", "fa-spin");
+        fileIcon.classList.remove("fa-download");
     }
-    
+
     try {
         const fileUrl = `api/get_file_message.php?id=${messageId}`;
         const response = await fetch(fileUrl);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const fileBlob = await response.blob();
-        
+
         await saveDownloadedFile(messageId, fileName, fileBlob);
-        
+
         const dirHandle = await getDownloadDirectory();
-        
+
         if (dirHandle) {
             try {
-                const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+                const fileHandle = await dirHandle.getFileHandle(fileName, {
+                    create: true,
+                });
                 const writable = await fileHandle.createWritable();
                 await writable.write(fileBlob);
-                await writable.close();                
+                await writable.close();
             } catch (fsError) {
-                console.warn('File System Access error:', fsError);
+                console.warn("File System Access error:", fsError);
                 const url = URL.createObjectURL(fileBlob);
-                const link = document.createElement('a');
+                const link = document.createElement("a");
                 link.href = url;
                 link.download = fileName;
                 document.body.appendChild(link);
@@ -778,7 +905,7 @@ async function downloadAndOpenFile(messageId, fileName) {
             }
         } else {
             const url = URL.createObjectURL(fileBlob);
-            const link = document.createElement('a');
+            const link = document.createElement("a");
             link.href = url;
             link.download = fileName;
             document.body.appendChild(link);
@@ -787,14 +914,14 @@ async function downloadAndOpenFile(messageId, fileName) {
             URL.revokeObjectURL(url);
         }
     } catch (error) {
-        showModal('Download Error', 'Failed to download file: ' + error.message, 'error');
+        showModal("Download Error", "Failed to download file: " + error.message, "error");
     } finally {
         if (container) {
-            container.style.opacity = '1';
+            container.style.opacity = "1";
         }
         if (fileIcon) {
-            fileIcon.classList.remove('fa-spinner', 'fa-spin');
-            fileIcon.classList.add('fa-download');
+            fileIcon.classList.remove("fa-spinner", "fa-spin");
+            fileIcon.classList.add("fa-download");
         }
     }
 }
@@ -803,24 +930,27 @@ window.downloadAndOpenFile = downloadAndOpenFile;
 
 document.addEventListener("DOMContentLoaded", () => {
     const imageModalOverlay = document.getElementById("imageModalOverlay");
-    
+
     if (imageModalOverlay) {
         imageModalOverlay.addEventListener("click", function (e) {
             if (e.target === this) {
                 closeImageModal();
             }
         });
-        
+
         const imageModalContent = imageModalOverlay.querySelector(".image-modal-content");
         if (imageModalContent) {
             imageModalContent.addEventListener("click", function (e) {
                 e.stopPropagation();
             });
         }
-        
+
         document.addEventListener("keydown", function (e) {
             if (e.key === "Escape") {
-                if (imageModalOverlay.style.display !== "none" && imageModalOverlay.classList.contains("visible")) {
+                if (
+                    imageModalOverlay.style.display !== "none" &&
+                    imageModalOverlay.classList.contains("visible")
+                ) {
                     closeImageModal();
                 }
             }
@@ -900,7 +1030,9 @@ window.playVoiceMessage = function (messageId) {
             playBtn.innerHTML = `<i class="fas fa-play"></i>`;
             playBtn.classList.remove("playing");
 
-            messageDiv.querySelectorAll(".waveform-bar").forEach((bar) => bar.classList.add("played"));
+            messageDiv
+                .querySelectorAll(".waveform-bar")
+                .forEach((bar) => bar.classList.add("played"));
         });
 
         audio.addEventListener("error", function (e) {
@@ -988,7 +1120,11 @@ const sendTextMessage = async () => {
         const recipientKey = await getPublicKey(currentChatUser);
         const senderKey = await getPublicKey(CURRENT_USER);
 
-        const encryptedForRecipient = await encryptLongMessage(text, recipientKey, isTextPersian(text));
+        const encryptedForRecipient = await encryptLongMessage(
+            text,
+            recipientKey,
+            isTextPersian(text)
+        );
         const encryptedForSender = await encryptLongMessage(text, senderKey, isTextPersian(text));
 
         const formData = new FormData();
@@ -1069,33 +1205,33 @@ fileUploadInput.addEventListener("change", (e) => {
     if (!btn) return;
     const icon = btn.querySelector("i");
     if (!icon) return;
-    
+
     const defaultIcon = "fa-paper-plane";
     const fileIcon = "fa-file";
-    
+
     function changeIcon(fromIcon, toIcon, delay) {
         setTimeout(function () {
             icon.classList.add("icon-exit");
-            
+
             setTimeout(function () {
                 icon.classList.remove(fromIcon);
                 icon.classList.add(toIcon);
             }, 300); // Change icon at midpoint of animation
-            
+
             setTimeout(function () {
                 icon.classList.remove("icon-exit");
                 icon.classList.add("icon-enter");
             }, 300);
-            
+
             setTimeout(function () {
                 icon.classList.remove("icon-enter");
             }, 900);
         }, delay);
     }
-    
+
     // First change: Send -> File (after 3 seconds)
     changeIcon(defaultIcon, fileIcon, 3000);
-    
+
     // Second change: File -> Send (after 6 seconds)
     changeIcon(fileIcon, defaultIcon, 6000);
 })();
@@ -1170,7 +1306,9 @@ async function searchForUser(selectUser = false) {
     searchUserInput.disabled = true;
 
     try {
-        const response = await fetch(`api/check_user_exists.php?username=${encodeURIComponent(val)}`);
+        const response = await fetch(
+            `api/check_user_exists.php?username=${encodeURIComponent(val)}`
+        );
         const data = await response.json();
 
         if (data.exists) {
@@ -1294,7 +1432,9 @@ function showSuggestions(users) {
         item.addEventListener("click", () => selectSuggestion(username));
         item.addEventListener("mouseenter", () => {
             selectedSuggestionIndex = index;
-            updateSuggestionSelection(searchSuggestions.querySelectorAll(".search-suggestion-item"));
+            updateSuggestionSelection(
+                searchSuggestions.querySelectorAll(".search-suggestion-item")
+            );
         });
 
         searchSuggestions.appendChild(item);
@@ -1318,7 +1458,8 @@ function hideSuggestions() {
 function updateSuggestionSelection(suggestions) {
     suggestions.forEach((item, index) => {
         if (index === selectedSuggestionIndex) {
-            item.style.backgroundColor = "color-mix(in srgb, var(--secondary-color) 15%, transparent)";
+            item.style.backgroundColor =
+                "color-mix(in srgb, var(--secondary-color) 15%, transparent)";
             item.style.transform = "translateX(4px)";
         } else {
             item.style.backgroundColor = "";
@@ -1361,8 +1502,7 @@ async function loadChatList() {
         if (data.chatUsers && Array.isArray(data.chatUsers)) {
             data.chatUsers.forEach(addUserToChatList);
         }
-    } catch (e) {
-    }
+    } catch (e) {}
 }
 
 loadChatList();
@@ -1375,9 +1515,9 @@ setInterval(async () => {
     }
     await Promise.all([
         currentChatUser?.length && loadCurrentChatsRecentMessages(),
-        !(chatListTriggerTime % 10) && loadChatList(),
+        !(chatListTriggerTime % 20) && loadChatList(),
     ]);
-    chatListTriggerTime = ++chatListTriggerTime % 10;
+    chatListTriggerTime = ++chatListTriggerTime % 20;
 }, 500);
 
 voiceBtn.addEventListener("click", async () => {
