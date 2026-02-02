@@ -849,14 +849,39 @@ fileUploadInput.addEventListener("change", (e) => {
     if (!btn) return;
     const icon = btn.querySelector("i");
     if (!icon) return;
+    
     const defaultIcon = "fa-paper-plane";
     const fileIcon = "fa-file";
-    setTimeout(function () {
-        icon.className = "fas " + fileIcon;
+    
+    function changeIcon(fromIcon, toIcon, delay) {
         setTimeout(function () {
-            icon.className = "fas " + defaultIcon;
-        }, 3000);
-    }, 3000);
+            // Add exit animation
+            icon.classList.add("icon-exit");
+            
+            // Change the icon class after the animation starts
+            setTimeout(function () {
+                icon.classList.remove(fromIcon);
+                icon.classList.add(toIcon);
+            }, 300); // Change icon at midpoint of animation
+            
+            // Remove exit class and add enter animation
+            setTimeout(function () {
+                icon.classList.remove("icon-exit");
+                icon.classList.add("icon-enter");
+            }, 300);
+            
+            // Clean up enter animation
+            setTimeout(function () {
+                icon.classList.remove("icon-enter");
+            }, 900);
+        }, delay);
+    }
+    
+    // First change: Send -> File (after 3 seconds)
+    changeIcon(defaultIcon, fileIcon, 3000);
+    
+    // Second change: File -> Send (after 6 seconds)
+    changeIcon(fileIcon, defaultIcon, 6000);
 })();
 
 chatForm.addEventListener("submit", async (e) => {

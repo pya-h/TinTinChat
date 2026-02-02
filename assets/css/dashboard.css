@@ -1881,6 +1881,55 @@ nav.navbar:hover {
     }
 }
 
+/* Icon transition animations */
+@keyframes iconFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1) rotateY(0deg);
+    }
+
+    50% {
+        opacity: 0;
+        transform: scale(0.7) rotateY(90deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.7) rotateY(90deg);
+    }
+}
+
+@keyframes iconFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.7) rotateY(-90deg);
+    }
+
+    50% {
+        opacity: 0;
+        transform: scale(0.7) rotateY(-90deg);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) rotateY(0deg);
+    }
+}
+
+#sendBtn i {
+    display: inline-block;
+    transition: all 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform-style: preserve-3d;
+}
+
+#sendBtn i.icon-exit {
+    animation: iconFadeOut 0.6s ease-in-out forwards;
+}
+
+#sendBtn i.icon-enter {
+    animation: iconFadeIn 0.6s ease-in-out forwards;
+}
+
 #searchUser.suggestions-active {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
