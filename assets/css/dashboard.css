@@ -1079,6 +1079,29 @@ nav.navbar:hover {
     color: #212529;
 }
 
+/* File download icon states */
+.file-download-icon i.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+.file-download-icon i.fa-check-circle {
+    animation: checkPulse 0.4s ease-out;
+}
+
+@keyframes checkPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 @media (prefers-color-scheme: dark) {
     .file-message-container,
     .message.sent .file-message-container {

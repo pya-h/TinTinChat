@@ -210,7 +210,6 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         updateMessagesStatus(data.messages);
     } catch (err) {
         chatMessagesElem.textContent = "Error loading messages";
-        console.error(err);
     } finally {
         if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
         isLoadingMessages = false;
@@ -388,8 +387,13 @@ async function addMessageToChat(msg, prepend = false) {
         const fileSize = msg.file_size ? formatFileSize(msg.file_size) : '';
         const escapedFileName = fileName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         
+        const isDownloaded = await isFileDownloaded(msg.id);
+        const downloadIconClass = isDownloaded ? 'fa-check-circle' : 'fa-download';
+        const downloadIconColor = isDownloaded ? 'color: var(--primary-color);' : '';
+        const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : '';
+        
         div.innerHTML = `
-          <div class="file-message-container" onclick="downloadAndOpenFile(${msg.id}, '${escapedFileName}')">
+          <div class="file-message-container" data-file-msg-id="${msg.id}" onclick="downloadAndOpenFile(${msg.id}, '${escapedFileName}')" ${cacheTitle}>
             <div class="file-icon">
               <i class="fas fa-file"></i>
             </div>
@@ -398,7 +402,7 @@ async function addMessageToChat(msg, prepend = false) {
               ${fileSize ? `<div class="file-size">${fileSize}</div>` : ''}
             </div>
             <div class="file-download-icon">
-              <i class="fas fa-download"></i>
+              <i class="fas ${downloadIconClass}" style="${downloadIconColor}"></i>
             </div>
           </div>
           ${newDateTag(msg, {
@@ -498,7 +502,6 @@ function scrollToLatest() {
 
 window.scrollToLatest = scrollToLatest;
 
-// Function to update message tick status dynamically
 function updateMessageTickStatus(messageId, isSeen) {
     const messageDiv = Array.from(chatMessagesElem.children).find(
         (el) => el.getAttribute("data-message-id") == messageId || 
@@ -565,15 +568,235 @@ function formatFileSize(bytes) {
     return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
 }
 
-function downloadAndOpenFile(messageId, fileName) {
-    const fileUrl = `api/get_file_message.php?id=${messageId}`;
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+const FILE_CACHE_DB = 'TinTinChatFileCache';
+const FILE_CACHE_STORE = 'downloadedFiles';
+
+async function initFileCache() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(FILE_CACHE_DB, 1);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(FILE_CACHE_STORE)) {
+                const objectStore = db.createObjectStore(FILE_CACHE_STORE, { keyPath: 'messageId' });
+                objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+            }
+            resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(FILE_CACHE_STORE)) {
+                db.createObjectStore(FILE_CACHE_STORE, { keyPath: 'messageId' });
+            }
+        };
+    });
+}
+
+async function saveDownloadedFile(messageId, fileName, fileBlob) {
+    try {
+        const db = await initFileCache();
+        const transaction = db.transaction([FILE_CACHE_STORE], 'readwrite');
+        const objectStore = transaction.objectStore(FILE_CACHE_STORE);
+        
+        const fileData = {
+            messageId: messageId,
+            fileName: fileName,
+            fileBlob: fileBlob,
+            timestamp: Date.now(),
+            size: fileBlob.size
+        };
+        
+        return new Promise((resolve, reject) => {
+            const request = objectStore.put(fileData);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(fileData);
+        });
+    } catch (error) { }
+    return null;
+}
+
+async function getDownloadedFile(messageId) {
+    try {
+        const db = await initFileCache();
+        const transaction = db.transaction([FILE_CACHE_STORE], 'readonly');
+        const objectStore = transaction.objectStore(FILE_CACHE_STORE);
+        
+        return new Promise((resolve, reject) => {
+            const request = objectStore.get(messageId);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+        });
+    } catch (error) { }
+    return null;
+}
+
+async function isFileDownloaded(messageId) {
+    const cachedFile = await getDownloadedFile(messageId);
+    return Boolean(cachedFile);
+}
+
+async function getDownloadDirectory() {
+    try {
+        if (!('showDirectoryPicker' in window)) {
+            return null;
+        }
+        
+        const dirHandle = await (async () => {
+            try {
+                const stored = localStorage.getItem('tintinchat_download_dir');
+                if (stored) {
+                    return JSON.parse(stored);
+                }
+            } catch (e) {
+                localStorage.removeItem('tintinchat_download_dir');
+            }
+            return null;
+        })();
+        
+        if (dirHandle) return dirHandle;
+        
+        const handle = await window.showDirectoryPicker({
+            id: 'tintinchat-downloads',
+            mode: 'readwrite',
+            startIn: 'downloads'
+        });
+        
+        localStorage.setItem('tintinchat_download_dir', JSON.stringify(handle));
+        return handle;
+    } catch (error) {
+        console.warn('File System Access API not available or permission denied:', error);
+    }
+    return null;
+}
+
+async function openCachedFile(messageId, fileName) {
+    const cachedFile = await getDownloadedFile(messageId);
+    if (!cachedFile) return false;
+    
+    try {
+        const dirHandle = await getDownloadDirectory();
+        if (dirHandle) {
+            try {
+                const fileHandle = await dirHandle.getFileHandle(cachedFile.fileName, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(cachedFile.fileBlob);
+                await writable.close();
+                
+                if ('launchQueue' in window) {
+                    window.open(fileHandle);
+                } else {
+                    showModal('File Saved', `File saved to your downloads folder:\n${cachedFile.fileName}`, 'success');
+                }
+                return true;
+            } catch (fsError) {
+                console.warn('File System Access error:', fsError);
+                return await openCachedFileBlob(cachedFile);
+            }
+        } else {
+            return await openCachedFileBlob(cachedFile);
+        }
+    } catch (error) {
+        return false;
+    }
+}
+
+async function openCachedFileBlob(cachedFile) {
+    try {
+        const url = URL.createObjectURL(cachedFile.fileBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = cachedFile.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function downloadAndOpenFile(messageId, fileName) {
+    // Check if file was previously downloaded
+    const fileDownloaded = await isFileDownloaded(messageId);
+    const fileIcon = document.querySelector(`[data-file-msg-id="${messageId}"] .file-download-icon i`);
+    const container = document.querySelector(`[data-file-msg-id="${messageId}"]`);
+    
+    if (fileDownloaded) {
+        if (fileIcon) {
+            fileIcon.classList.add('fa-check-circle');
+            fileIcon.classList.remove('fa-download');
+        }
+        
+        const opened = await openCachedFile(messageId, fileName);
+        if (opened) {
+            return;
+        }
+    }
+    
+    // File not cached or failed to open cache - download fresh
+    if (container) {
+        container.style.opacity = '0.6';
+    }
+    if (fileIcon) {
+        fileIcon.classList.add('fa-spinner', 'fa-spin');
+        fileIcon.classList.remove('fa-download');
+    }
+    
+    try {
+        const fileUrl = `api/get_file_message.php?id=${messageId}`;
+        const response = await fetch(fileUrl);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const fileBlob = await response.blob();
+        
+        await saveDownloadedFile(messageId, fileName, fileBlob);
+        
+        const dirHandle = await getDownloadDirectory();
+        
+        if (dirHandle) {
+            try {
+                const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(fileBlob);
+                await writable.close();                
+            } catch (fsError) {
+                console.warn('File System Access error:', fsError);
+                const url = URL.createObjectURL(fileBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+        } else {
+            const url = URL.createObjectURL(fileBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    } catch (error) {
+        showModal('Download Error', 'Failed to download file: ' + error.message, 'error');
+    } finally {
+        if (container) {
+            container.style.opacity = '1';
+        }
+        if (fileIcon) {
+            fileIcon.classList.remove('fa-spinner', 'fa-spin');
+            fileIcon.classList.add('fa-download');
+        }
+    }
 }
 
 window.downloadAndOpenFile = downloadAndOpenFile;
@@ -681,7 +904,6 @@ window.playVoiceMessage = function (messageId) {
         });
 
         audio.addEventListener("error", function (e) {
-            console.error("Audio error:", e);
             showModal(
                 "Audio Error",
                 "Unable to load voice message. The audio file may be missing or corrupted.",
@@ -738,7 +960,6 @@ window.playVoiceMessage = function (messageId) {
         }
 
         audio.play().catch(function (error) {
-            console.error("Playback error:", error);
             showModal("Playback Error", "Unable to play voice message. Please try again.", "error");
         });
         playBtn.classList.add("playing");
@@ -784,7 +1005,6 @@ const sendTextMessage = async () => {
 
         addUserToChatList(currentChatUser);
         chatInput.value = "";
-        // await loadCurrentChatsRecentMessages(); TODO: Checkout if this slows down message sending. if yes, undo comment.
     } catch (err) {
         showModal("Send Error", "Encryption/send error: " + err.message, "error");
     } finally {
@@ -855,22 +1075,18 @@ fileUploadInput.addEventListener("change", (e) => {
     
     function changeIcon(fromIcon, toIcon, delay) {
         setTimeout(function () {
-            // Add exit animation
             icon.classList.add("icon-exit");
             
-            // Change the icon class after the animation starts
             setTimeout(function () {
                 icon.classList.remove(fromIcon);
                 icon.classList.add(toIcon);
             }, 300); // Change icon at midpoint of animation
             
-            // Remove exit class and add enter animation
             setTimeout(function () {
                 icon.classList.remove("icon-exit");
                 icon.classList.add("icon-enter");
             }, 300);
             
-            // Clean up enter animation
             setTimeout(function () {
                 icon.classList.remove("icon-enter");
             }, 900);
@@ -1041,7 +1257,6 @@ async function searchUserSuggestions(query) {
             }
         }
     } catch (error) {
-        console.error("Search error:", error);
         hideSuggestions();
         if (window.updateSearchState) {
             window.updateSearchState("idle");
@@ -1147,7 +1362,6 @@ async function loadChatList() {
             data.chatUsers.forEach(addUserToChatList);
         }
     } catch (e) {
-        console.error("Error loading chat list:", e);
     }
 }
 
@@ -1312,7 +1526,6 @@ async function sendVoiceMessage(audioBlob) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        // await loadCurrentChatsRecentMessages(); TODO: Checkout if this slows down message sending. if yes, undo comment.
     } catch (err) {
         showModal("Voice Send Error", "Voice message send error: " + err.message, "error");
 
@@ -1387,7 +1600,6 @@ async function sendImageMessage(imageFile) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
-        // await loadCurrentChatsRecentMessages(); TODO: Checkout if this slows down message sending. if yes, undo comment.
     } catch (err) {
         showModal("Image Send Error", "Image send error: " + err.message, "error");
 
