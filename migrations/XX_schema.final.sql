@@ -19,6 +19,8 @@ CREATE TABLE messages (
   message_type ENUM('text', 'voice', 'image', 'video', 'file') DEFAULT 'text',
   voice_file_path VARCHAR(255),
   image_file_path VARCHAR(255),
+  any_file_path VARCHAR(255),
+  file_size BIGINT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   seen_at TIMESTAMP DEFAULT NULL;
   FOREIGN KEY (sender_id) REFERENCES users(id),

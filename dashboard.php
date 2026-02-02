@@ -63,6 +63,7 @@ $user_ident = $_SESSION['ident'];
                         <textarea id="chatInput" class="form-control" placeholder="Type a message..." rows="1"></textarea>
                         
                         <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
+                        <input type="file" id="fileUploadInput" style="display: none;">
 
                         <button type="button" id="imageUploadBtn" class="btn btn-secondary ms-2" title="Send an image">
                             <i class="fas fa-image"></i>
@@ -72,7 +73,7 @@ $user_ident = $_SESSION['ident'];
                             <i class="fas fa-microphone"></i>
                         </button>
 
-                        <button type="submit" class="btn btn-primary ms-2">
+                        <button type="submit" id="sendBtn" class="btn btn-primary ms-2" title="Send message (long press for file upload)">
                             <i class="fas fa-paper-plane"></i>
                         </button>
                 </form>

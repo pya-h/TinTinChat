@@ -946,6 +946,133 @@ nav.navbar:hover {
     opacity: 0.8;
 }
 
+.file-message-sending {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.message.is-file-message {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    white-space: normal;
+}
+
+.file-message-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
+}
+
+.message.sent .file-message-container {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.message.received .file-message-container {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.file-message-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+}
+
+.message.sent .file-message-container:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.message.received .file-message-container:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.file-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(106, 17, 203, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: rgba(106, 17, 203, 0.9);
+    flex-shrink: 0;
+}
+
+.message.received .file-icon {
+    background: rgba(0, 0, 0, 0.1);
+    color: #212529;
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.file-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.95);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message.received .file-name {
+    color: #212529;
+}
+
+.file-size {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+}
+
+.message.received .file-size {
+    color: #6c757d;
+}
+
+.file-download-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.message.received .file-download-icon {
+    background: rgba(0, 0, 0, 0.1);
+    color: #212529;
+}
+
+.file-message-container:hover .file-download-icon {
+    background: rgba(106, 17, 203, 0.3);
+    transform: scale(1.1);
+}
+
+.message.received .file-message-container:hover .file-download-icon {
+    background: rgba(0, 0, 0, 0.15);
+}
+
 #voiceBtn {
     transition: all 0.3s ease;
 }

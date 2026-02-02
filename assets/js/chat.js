@@ -372,6 +372,43 @@ async function addMessageToChat(msg, prepend = false) {
                 openImageModal(imageUrl);
             });
         }
+    } else if (msg.message_type === "file" && msg.any_file_path) {
+        div.classList.add("is-file-message");
+
+        const fileUrl = `api/get_file_message.php?id=${msg.id}`;
+        let fileName = msg.any_file_path;
+        if (fileName.includes('_')) {
+            const parts = fileName.split('_');
+            if (parts.length > 2) {
+                fileName = parts.slice(2).join('_');
+            } else {
+                fileName = parts[parts.length - 1];
+            }
+        }
+        const fileSize = msg.file_size ? formatFileSize(msg.file_size) : '';
+        const escapedFileName = fileName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
+        div.innerHTML = `
+          <div class="file-message-container" onclick="downloadAndOpenFile(${msg.id}, '${escapedFileName}')">
+            <div class="file-icon">
+              <i class="fas fa-file"></i>
+            </div>
+            <div class="file-info">
+              <div class="file-name">${fileName}</div>
+              ${fileSize ? `<div class="file-size">${fileSize}</div>` : ''}
+            </div>
+            <div class="file-download-icon">
+              <i class="fas fa-download"></i>
+            </div>
+          </div>
+          ${newDateTag(msg, {
+              atLeft: msg.sender_id == CURRENT_USER_ID,
+              topSpace: 1,
+              fontSize: 8.5,
+              extraStyles: "color: var(--text-color); font-weight: 600;",
+          })}
+        `;
+        div.setAttribute("data-message-id", msg.id);
     } else {
         let decryptedText = "[Unable to decrypt message]";
         try {
@@ -519,6 +556,27 @@ function downloadImage(event) {
 
 window.openImageModal = openImageModal;
 window.closeImageModal = closeImageModal;
+
+function formatFileSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+}
+
+function downloadAndOpenFile(messageId, fileName) {
+    const fileUrl = `api/get_file_message.php?id=${messageId}`;
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+window.downloadAndOpenFile = downloadAndOpenFile;
 
 document.addEventListener("DOMContentLoaded", () => {
     const imageModalOverlay = document.getElementById("imageModalOverlay");
@@ -734,6 +792,57 @@ const sendTextMessage = async () => {
         sendBtn.classList.remove("btn-pressed");
     }
 };
+
+const fileUploadInput = document.getElementById("fileUploadInput");
+const sendBtn = document.getElementById("sendBtn");
+
+let longPressTimer = null;
+const LONG_PRESS_DURATION = 500;
+
+sendBtn.addEventListener("mousedown", (e) => {
+    longPressTimer = setTimeout(() => {
+        e.preventDefault();
+        fileUploadInput.click();
+        longPressTimer = null;
+    }, LONG_PRESS_DURATION);
+});
+
+sendBtn.addEventListener("mouseup", () => {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+});
+
+sendBtn.addEventListener("mouseleave", () => {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+});
+
+sendBtn.addEventListener("touchstart", (e) => {
+    longPressTimer = setTimeout(() => {
+        e.preventDefault();
+        fileUploadInput.click();
+        longPressTimer = null;
+    }, LONG_PRESS_DURATION);
+});
+
+sendBtn.addEventListener("touchend", () => {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+});
+
+fileUploadInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        sendFileMessage(file);
+    }
+    e.target.value = null;
+});
 
 chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -1246,5 +1355,58 @@ async function sendImageMessage(imageFile) {
         if (sendingIndicator) sendingIndicator.remove();
     } finally {
         imageUploadBtn.disabled = false;
+    }
+}
+
+async function sendFileMessage(file) {
+    if (!currentChatUser) {
+        showModal("No Chat Selected", "Select a user to chat with first", "warning");
+        return;
+    }
+
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showModal("File Too Large", "File size must be less than 50MB.", "warning");
+        return;
+    }
+
+    try {
+        const sendingIndicator = document.createElement("div");
+        sendingIndicator.className = "message sent sending-indicator";
+        sendingIndicator.innerHTML = `
+      <div class="file-message-sending">
+        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+        <span>Sending file...</span>
+      </div>
+    `;
+        chatMessagesElem.appendChild(sendingIndicator);
+        chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+
+        setTimeout(() => {
+            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+        }, 100);
+
+        const formData = new FormData();
+        formData.append("target", currentChatUser);
+        formData.append("message", null);
+        formData.append("message_for_sender", null);
+        formData.append("file", file, file.name);
+
+        const res = await fetch("api/send_file_message.php", {
+            method: "POST",
+            body: formData,
+        });
+
+        const json = await res.json();
+        if (json.status !== "ok") throw new Error(json.error || "Send failed");
+
+        sendingIndicator.remove();
+
+        addUserToChatList(currentChatUser);
+    } catch (err) {
+        showModal("File Send Error", "File send error: " + err.message, "error");
+
+        const sendingIndicator = document.querySelector(".sending-indicator");
+        if (sendingIndicator) sendingIndicator.remove();
     }
 }
