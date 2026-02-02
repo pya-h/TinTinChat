@@ -844,6 +844,21 @@ fileUploadInput.addEventListener("change", (e) => {
     e.target.value = null;
 });
 
+(function sendButtonFileHintOnce() {
+    const btn = document.getElementById("sendBtn");
+    if (!btn) return;
+    const icon = btn.querySelector("i");
+    if (!icon) return;
+    const defaultIcon = "fa-paper-plane";
+    const fileIcon = "fa-file";
+    setTimeout(function () {
+        icon.className = "fas " + fileIcon;
+        setTimeout(function () {
+            icon.className = "fas " + defaultIcon;
+        }, 3000);
+    }, 3000);
+})();
+
 chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     await sendTextMessage();
