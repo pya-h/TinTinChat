@@ -1,7 +1,7 @@
 ## Priorities
 <ul>
     <li><b>[IMP]</b> Enhance Security</li>
-    <li><b>[ADD]</b> Play Sound on New Messages</li>
+    <li><del><b>[ADD]</b> Play Sound on New Messages</del></li>
     <li><del><b>[ADD]</b> File Upload Feature</del></li> 
     <li><b>[REFACTOR]</b> Create a APIService class in js</li> 
     <li><b>[ADD]</b> Implement Chat Model & Table</li>

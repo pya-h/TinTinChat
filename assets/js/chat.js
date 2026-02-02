@@ -111,6 +111,7 @@ function setupNotificationSoundPlayer() {
                 .catch(() => playDefaultNotificationSound());
         };
     }
+    initNotificationSound();
     return () => {
         createNotificationSound();
         return notificationAudio
@@ -322,18 +323,19 @@ async function loadCurrentChatsRecentMessages() {
         if (!data?.messages?.length) {
             return;
         }
+
+        if (data.messages[data.messages.length - 1]?.sender_id != CURRENT_USER_ID) {
+            try {
+
+                playNotificationSound()
+            } catch(ex) {
+                console.log(ex);
+            }
+        }
         currentChatRecentMessages = data.messages;
         messageOffset += currentChatRecentMessages?.length ?? 0;
         for (const msg of currentChatRecentMessages) {
             await addMessageToChat(msg, false, true);
-        }
-
-        if (
-            currentChatRecentMessages?.length &&
-            currentChatRecentMessages[currentChatRecentMessages.length - 1]?.sender_id !=
-                CURRENT_USER_ID
-        ) {
-            playNotificationSound();
         }
         updateMessagesStatus(data.messages); // Mark as seen on the background
 
