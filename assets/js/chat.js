@@ -344,9 +344,6 @@ async function loadCurrentChatsRecentMessages() {
                 chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
             });
         }
-    } catch (err) {
-        isLoadingMessages = false;
-        await loadMessages(currentChatUser, false, !currentChatRecentMessages?.length);
     } finally {
         isLoadingMessages = false;
     }
