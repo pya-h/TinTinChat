@@ -1514,10 +1514,10 @@ setInterval(async () => {
     }
     await Promise.all([
         currentChatUser?.length && loadCurrentChatsRecentMessages(),
-        !(chatListTriggerTime % 20) && loadChatList(),
+        !(chatListTriggerTime % 10) && loadChatList(),
     ]);
-    chatListTriggerTime = ++chatListTriggerTime % 20;
-}, 500);
+    chatListTriggerTime = ++chatListTriggerTime % 10;
+}, 1000);
 
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
@@ -1665,6 +1665,7 @@ async function sendVoiceMessage(audioBlob) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
+        loadCurrentChatsRecentMessages();
     } catch (err) {
         showModal("Voice Send Error", "Voice message send error: " + err.message, "error");
 
@@ -1690,9 +1691,9 @@ imageUploadInput.addEventListener("change", (e) => {
             return;
         }
 
-        const maxSize = 5 * 1024 * 1024; // 5MB
+        const maxSize = 10 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
-            showModal("File Too Large", "Image file size must be less than 5MB.", "warning");
+            showModal("File Too Large", "Image file size must be less than 10MB.", "warning");
             e.target.value = null;
             return;
         }
@@ -1739,6 +1740,7 @@ async function sendImageMessage(imageFile) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
+        loadCurrentChatsRecentMessages();
     } catch (err) {
         showModal("Image Send Error", "Image send error: " + err.message, "error");
 
@@ -1794,6 +1796,7 @@ async function sendFileMessage(file) {
         sendingIndicator.remove();
 
         addUserToChatList(currentChatUser);
+        loadCurrentChatsRecentMessages();
     } catch (err) {
         showModal("File Send Error", "File send error: " + err.message, "error");
 

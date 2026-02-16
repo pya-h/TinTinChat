@@ -4,3 +4,4 @@ test_*.html
 .prod.env
 .vscode
 *.fux
+*.zip

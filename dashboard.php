@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 $username = $_SESSION['username'];
 $user_id = $_SESSION['user_id'];
-$user_ident = $_SESSION['ident'];
+$user_ident = isset($_SESSION['ident']) ? $_SESSION['ident'] : null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
