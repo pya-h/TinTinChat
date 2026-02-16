@@ -30,10 +30,9 @@ if (!$otherUser) {
 }
 $otherUserId = $otherUser['id'];
 
-$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
 $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
 $last_msg_id = isset($_GET['lastMsg']) ? (int)$_GET['lastMsg'] : 0;
-$limit = max(1, min($limit, 100));
+$limit = max(1, isset($_GET['limit']) ? (int)$_GET['limit'] : 20);
 
 $count_query = $pdo->prepare('
     SELECT COUNT(*) as total
@@ -42,17 +41,23 @@ $count_query = $pdo->prepare('
 ');
 $count_query->execute([$userId, $otherUserId, $otherUserId, $userId]);
 $total_count = $count_query->fetch()['total'];
+$hasMore = ($offset + $limit) < $total_count;
+
+if($offset < $total_count) {
+  $offset = max(0, $total_count - $limit - $offset);
+}
+
+if(!$hasMore) {
+  $limit = $total_count;
+}
+
 $where_clause = $last_msg_id 
   ? "((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) AND id > $last_msg_id" 
   : '(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)';
 $stmt = $pdo->prepare("SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, any_file_path, file_size, created_at, seen_at
-    FROM messages WHERE $where_clause ORDER BY created_at DESC LIMIT $limit OFFSET $offset");
+    FROM messages WHERE $where_clause ORDER BY created_at ASC LIMIT $limit OFFSET $offset");
 $stmt->execute([$userId, $otherUserId, $otherUserId, $userId]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$messages = array_reverse($messages);
-
-$hasMore = ($offset + $limit) < $total_count;
 
 echo json_encode([
   'messages' => $messages,
