@@ -177,9 +177,6 @@ function updateLoadingSpinnerState(username, show = false) {
 }
 
 async function selectChatUser(username) {
-    if (username === currentChatUser) {
-        return;
-    }
     if (currentChatUser?.length) {
         updateLoadingSpinnerState(currentChatUser, false);
     }
