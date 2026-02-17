@@ -29,7 +29,8 @@ function loadPDO() {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $pdo;
     } catch (PDOException $e) {
-        die('DB connection failed: ' . $e->getMessage());
+        error_log('DB connection failed: ' . $e->getMessage());
+        die('Database connection error. Please try again later.');
     }
 }
 

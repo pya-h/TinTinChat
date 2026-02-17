@@ -127,6 +127,12 @@ function isTextPersian(text) {
     return /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(text);
 }
 
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
+}
+
 window.addEventListener("resize", () => {
     if (window.innerWidth <= 767.98) {
         const heightDifference = initialViewportHeight - window.innerHeight;
@@ -347,7 +353,7 @@ async function loadCurrentChatsRecentMessages() {
 }
 
 function forceFetchCurrentChatMessages() {
-    if (!currentChatRecentMessages?.length) {
+    if (currentChatRecentMessages == null) {
         return loadMessages(currentChatUser, false, true);
     }
     return loadCurrentChatsRecentMessages();
@@ -524,7 +530,8 @@ async function addMessageToChat(msg, prepend = false) {
             decryptedText = "[Unsupported message]";
         }
         const isPersian = isTextPersian(decryptedText.trim());
-        div.innerHTML = `<span>${decryptedText}</span>${newDateTag(msg, {
+        const safeText = escapeHtml(decryptedText);
+        div.innerHTML = `<span>${safeText}</span>${newDateTag(msg, {
             atLeft: isPersian,
             strictMargins: true,
             topSpace: 3,
@@ -1510,7 +1517,7 @@ setInterval(async () => {
         return;
     }
     await Promise.all([
-        currentChatUser?.length && loadCurrentChatsRecentMessages(),
+        currentChatUser?.length && forceFetchCurrentChatMessages(),
         !(chatListTriggerTime % 10) && loadChatList(),
     ]);
     chatListTriggerTime = ++chatListTriggerTime % 10;

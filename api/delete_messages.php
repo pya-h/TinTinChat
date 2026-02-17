@@ -23,18 +23,29 @@ if (!$raw_data) {
     exit;
 }
 
-$messages = json_decode($raw_data, true) ?? null;
+$data = json_decode($raw_data, true);
+$messages = isset($data['messages']) ? $data['messages'] : (is_array($data) ? $data : null);
 
-if (!$messages) {
+if (!$messages || !is_array($messages)) {
     http_response_code(400);
     echo json_encode(['status' => 'failed', 'error' => 'No messages specified!']);
     exit;
 }
 
-$str_messages = implode(',', $messages_seen);
+// Validate that all message IDs are integers
+$messages = array_filter($messages, 'is_numeric');
+$messages = array_map('intval', $messages);
 
-$stmt = $pdo->prepare("DELETE FROM messages WHERE id IN ($str_messages) AND (receiver_id=? OR sender_id=?)");
-if (!$stmt->execute([$userId, $userId])) {
+if (empty($messages)) {
+    http_response_code(400);
+    echo json_encode(['status' => 'failed', 'error' => 'No valid message IDs provided!']);
+    exit;
+}
+
+$placeholders = implode(',', array_fill(0, count($messages), '?'));
+$stmt = $pdo->prepare("DELETE FROM messages WHERE id IN ($placeholders) AND (receiver_id=? OR sender_id=?)");
+$params = array_merge($messages, [$userId, $userId]);
+if (!$stmt->execute($params)) {
     http_response_code(409);
     echo json_encode(['status' => 'failed', 'error' => 'Could not delete the messages!']);
     exit;

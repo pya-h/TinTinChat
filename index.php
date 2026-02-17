@@ -8,6 +8,7 @@ if (isset($_SESSION['user_id'])) {
 }
 $error = $_SESSION['login_error'] ?? '';
 unset($_SESSION['login_error']);
+$csrfToken = generateCsrfToken();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,6 +40,7 @@ unset($_SESSION['login_error']);
         <?php endif; ?>
 
         <form method="post" action="api/login.php" novalidate id="loginForm">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>" />
             <div class="form-group">
                 <label for="username" class="form-label">Username</label>
                 <input id="username" name="username" class="form-control" required placeholder="Enter your username" />

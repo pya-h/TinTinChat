@@ -30,18 +30,20 @@ if ($message['sender_id'] != $user_id && $message['receiver_id'] != $user_id) {
     exit('Access Denied: You do not have permission to view this image.');
 }
 
-$file_path = '../' . $message['image_file_path'];
+$file_path = __DIR__ . '/../' . $message['image_file_path'];
+$fullPath = realpath($file_path);
+$uploadsDir = realpath(__DIR__ . '/../uploads/images/');
 
-if (!file_exists($file_path)) {
+if (!$fullPath || !$uploadsDir || strpos($fullPath, $uploadsDir) !== 0 || !file_exists($fullPath)) {
     http_response_code(404);
     exit('Not Found: The image file is missing from the server.');
 }
 
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
-$mime_type = finfo_file($finfo, $file_path);
+$mime_type = finfo_file($finfo, $fullPath);
 finfo_close($finfo);
 
 header('Content-Type: ' . $mime_type);
-header('Content-Length: ' . filesize($file_path));
-readfile($file_path);
+header('Content-Length: ' . filesize($fullPath));
+readfile($fullPath);
 exit;

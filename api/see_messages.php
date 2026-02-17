@@ -36,9 +36,20 @@ if (!$messages_seen) {
     exit;
 }
 
-$str_messages = implode(',', $messages_seen);
-$stmt = $pdo->prepare("UPDATE messages SET seen_at = NOW() WHERE id in ($str_messages) AND receiver_id=?");
-if (!$stmt->execute([$userId])) {
+// Validate that all message IDs are integers
+$messages_seen = array_filter($messages_seen, 'is_numeric');
+$messages_seen = array_map('intval', $messages_seen);
+
+if (empty($messages_seen)) {
+    http_response_code(400);
+    echo json_encode(['status' => 'failed', 'error' => 'No valid message IDs provided!']);
+    exit;
+}
+
+$placeholders = implode(',', array_fill(0, count($messages_seen), '?'));
+$stmt = $pdo->prepare("UPDATE messages SET seen_at = NOW() WHERE id IN ($placeholders) AND receiver_id=?");
+$params = array_merge($messages_seen, [$userId]);
+if (!$stmt->execute($params)) {
     http_response_code(409);
     echo json_encode(['status' => 'failed', 'error' => 'Could not mark these messages as seen!']);
     exit;

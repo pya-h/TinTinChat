@@ -76,14 +76,19 @@ if (!$receiver) {
 }
 $receiver_id = $receiver['id'];
 
-$upload_dir = '../uploads/images/';
+$upload_dir = __DIR__ . '/../uploads/images/';
 
 if (!is_dir($upload_dir)) {
-    mkdir($upload_dir, 0777, true);
+    mkdir($upload_dir, 0755, true);
 }
 
+// Validate MIME type server-side using file contents, not client-provided type
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$detectedMime = finfo_file($finfo, $image_file['tmp_name']);
+finfo_close($finfo);
+
 $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-if (!in_array($image_file['type'], $allowed_types)) {
+if (!in_array($detectedMime, $allowed_types)) {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'error' => 'Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.']);
     exit;
@@ -98,6 +103,8 @@ if ($image_file['size'] > 5 * 1024 * 1024) {  // 5 MB limit
 $file_extension = pathinfo($image_file['name'], PATHINFO_EXTENSION);
 $unique_filename = uniqid('img_', true) . '.' . $file_extension;
 $upload_path = $upload_dir . $unique_filename;
+
+header('Content-Type: application/json');
 
 if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
     try {
@@ -123,7 +130,7 @@ if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
     } catch (PDOException $e) {
         http_response_code(500);
         unlink($upload_path);
-        echo json_encode(['status' => 'error', 'error' => 'Database error: ' . $e->getMessage()]);
+        echo json_encode(['status' => 'error', 'error' => 'Failed to save image message']);
     }
 } else {
     http_response_code(500);

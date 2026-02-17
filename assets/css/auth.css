@@ -212,8 +212,8 @@ body:has(.login-container)::after {
     border-color: #667eea;
     box-shadow:
         0 0 0 4px rgba(102, 126, 234, 0.15),
-        0 8px 25px rgba(102, 126, 234, 0.1);
-    transform: translateY(-3px) scale(1.02);
+        0 4px 12px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
     background: rgba(255, 255, 255, 0.95);
 }
 
@@ -632,8 +632,7 @@ body:has(.login-container)::after {
 }
 
 .form-control,
-.btn-login,
-.input-icon {
+.btn-login {
     will-change: transform;
 }
 
