@@ -1695,9 +1695,9 @@ imageUploadInput.addEventListener("change", (e) => {
             return;
         }
 
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        const maxSize = 20 * 1024 * 1024; // 20MB
         if (file.size > maxSize) {
-            showModal("File Too Large", "Image file size must be less than 10MB.", "warning");
+            showModal("File Too Large", "Image file size must be less than 20MB.", "warning");
             e.target.value = null;
             return;
         }
@@ -1761,9 +1761,9 @@ async function sendFileMessage(file) {
         return;
     }
 
-    const maxSize = 50 * 1024 * 1024;
+    const maxSize = 100 * 1024 * 1024;
     if (file.size > maxSize) {
-        showModal("File Too Large", "File size must be less than 50MB.", "warning");
+        showModal("File Too Large", "File size must be less than 100MB.", "warning");
         return;
     }
 
