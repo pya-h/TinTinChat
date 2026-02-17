@@ -17,7 +17,7 @@ let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
 let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
-const MESSAGES_PER_PAGE = 100;
+const MESSAGES_PER_PAGE = 50;
 
 let searchTimeout = null;
 let currentSuggestions = [];

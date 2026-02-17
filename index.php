@@ -30,6 +30,7 @@ $csrfToken = generateCsrfToken();
                 <i class="fas fa-comments"></i>
             </div>
             <h1 class="login-title">TinTinChat</h1>
+            <p class="login-subtitle">Secure messaging, beautifully simple</p>
         </div>
 
         <?php if ($error): ?>

@@ -43,12 +43,11 @@ $count_query->execute([$userId, $otherUserId, $otherUserId, $userId]);
 $total_count = $count_query->fetch()['total'];
 $hasMore = ($offset + $limit) < $total_count;
 
-if($offset < $total_count) {
-  $offset = max(0, $total_count - $limit - $offset);
-}
-
 if(!$hasMore) {
-  $limit = $total_count;
+  $limit = $total_count - $offset;
+  $offset = 0;
+} else if($offset < $total_count) {
+  $offset = max(0, $total_count - $limit - $offset);
 }
 
 $params = [$userId, $otherUserId, $otherUserId, $userId];
