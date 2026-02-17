@@ -5,7 +5,8 @@
 }
 
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(-45deg, #667eea, #764ba2, #6a11cb, #2575fc);
+    background-size: 300% 300%;
     min-height: 100vh;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
@@ -13,27 +14,13 @@ body {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    animation: gradientShift 10s ease infinite;
+    animation: gradientShift 12s ease infinite;
 }
 
 @keyframes gradientShift {
-
-    0%,
-    100% {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    25% {
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    }
-
-    50% {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    75% {
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 body::before,
@@ -105,14 +92,16 @@ body:has(.login-container)::after {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     border-radius: 20px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    box-shadow:
+        0 25px 50px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.3);
     padding: 2rem;
     width: 100%;
     max-width: 400px;
     position: relative;
     z-index: 10;
     animation: slideUp 0.8s ease-out;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 @keyframes slideUp {
@@ -231,28 +220,6 @@ body:has(.login-container)::after {
 .form-control.is-invalid {
     border-color: #f56565;
     box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
-}
-
-.input-icon {
-    position: relative;
-    top: -35px;
-    left: 1rem;
-    transform: translateY(-50%);
-    color: #a0aec0;
-    transition: all 0.3s ease;
-    z-index: 2;
-}
-
-.form-control:focus+.input-icon {
-    color: #667eea;
-}
-
-.form-control.is-valid+.input-icon {
-    color: #48bb78;
-}
-
-.form-control.is-invalid+.input-icon {
-    color: #f56565;
 }
 
 .password-strength {
@@ -403,26 +370,6 @@ body:has(.login-container)::after {
     transform: none;
 }
 
-.alert {
-    border-radius: 12px;
-    border: none;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .alert-danger {
     background: linear-gradient(135deg, #fed7d7, #feb2b2);
     color: #c53030;
@@ -434,35 +381,6 @@ body:has(.login-container)::after {
     font-size: 0.8rem;
     margin-top: 0.5rem;
     opacity: 0.8;
-}
-
-.btn-loading {
-    position: relative;
-    color: transparent;
-}
-
-.btn-loading::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
-    border: 2px solid transparent;
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% {
-        transform: translate(-50%, -50%) rotate(0deg);
-    }
-
-    100% {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
 }
 
 @media (max-width: 480px) {
@@ -629,11 +547,6 @@ body:has(.login-container)::after {
     100% {
         transform: translate(-50%, -50%) rotate(360deg);
     }
-}
-
-.form-control,
-.btn-login {
-    will-change: transform;
 }
 
 .form-control:focus-visible {
