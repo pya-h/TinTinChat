@@ -868,6 +868,7 @@ nav.navbar:hover {
 .recording-indicator {
     position: fixed;
     left: 50%;
+    bottom: 15%;
     transform: translateX(-50%);
     background: #dc3545;
     color: white;
@@ -926,11 +927,11 @@ nav.navbar:hover {
 
     0%,
     100% {
-        transform: translateX(-50%) scale(1);
+        transform: scale(1);
     }
 
     50% {
-        transform: translateX(-50%) scale(1.05);
+        transform: scale(1.1);
     }
 }
 
@@ -1183,7 +1184,7 @@ nav.navbar:hover {
 #voiceBtn.btn-danger {
     background: #dc3545;
     border-color: #dc3545;
-    animation: pulse 2s infinite;
+    animation: pulse 1s infinite;
 }
 
 #voiceBtn.btn-danger:hover {
@@ -1224,6 +1225,7 @@ nav.navbar:hover {
     }
 
     .recording-indicator {
+        left: 30%;
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
     }
@@ -1293,7 +1295,11 @@ nav.navbar:hover {
     padding-left: initial;
 }
 
-.message.is-voice-message.sent .voice-play-btn {\n    margin-left: 8px;\n}\n\n.message.is-image-message {
+.message.is-voice-message.sent .voice-play-btn {
+    margin-left: 8px;
+}
+
+.message.is-image-message {
     background: transparent;
     padding: 0;
     box-shadow: none;
