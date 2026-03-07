@@ -21,10 +21,16 @@ CREATE TABLE messages (
   image_file_path VARCHAR(255),
   any_file_path VARCHAR(255),
   file_size BIGINT,
+  reply_to_message_id INT NULL,
+  forwarded_from_message_id INT NULL,
+  forwarded_by_user_id INT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  seen_at TIMESTAMP DEFAULT NULL;
+  seen_at TIMESTAMP DEFAULT NULL,
   FOREIGN KEY (sender_id) REFERENCES users(id),
-  FOREIGN KEY (receiver_id) REFERENCES users(id)
+  FOREIGN KEY (receiver_id) REFERENCES users(id),
+  FOREIGN KEY (reply_to_message_id) REFERENCES messages(id) ON DELETE SET NULL,
+  FOREIGN KEY (forwarded_from_message_id) REFERENCES messages(id) ON DELETE SET NULL,
+  FOREIGN KEY (forwarded_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
 );
 
 
@@ -40,3 +46,8 @@ CREATE INDEX idx_created_at
 
 CREATE INDEX idx_message_type
   ON messages (message_type);
+
+CREATE INDEX idx_messages_reply_to ON messages(reply_to_message_id);
+
+CREATE INDEX idx_messages_forwarded_from ON messages(forwarded_from_message_id);
+CREATE INDEX idx_messages_forwarded_by ON messages(forwarded_by_user_id);
