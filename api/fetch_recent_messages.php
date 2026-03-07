@@ -37,7 +37,14 @@ if (!$other_user) {
 $other_user_id = $other_user['id'];
 $last_msg_id = (int)$_GET['offsetMsgId'];
 
-$stmt = $pdo->prepare("SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, any_file_path, file_size, created_at FROM messages 
+$stmt = $pdo->prepare("SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, any_file_path, file_size, reply_to_message_id, created_at,
+  r.id AS reply_message_id,
+  r.sender_id AS reply_sender_id,
+  r.message AS reply_message,
+  r.message_for_sender AS reply_message_for_sender,
+  r.message_type AS reply_message_type
+  FROM messages
+  LEFT JOIN messages r ON r.id = messages.reply_to_message_id
   WHERE ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) AND id > ? ORDER BY created_at ASC");
 $stmt->execute([$user_id, $other_user_id, $other_user_id, $user_id, $last_msg_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);

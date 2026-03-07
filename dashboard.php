@@ -60,6 +60,7 @@ $csrfToken = generateCsrfToken();
                 </div>
                 <div class="chat-messages" id="chatMessages"></div>
                 <div class="chat-input p-3">
+                    <div id="replyPreview" class="reply-preview" style="display: none;"></div>
                     <form id="chatForm" class="d-flex w-100 align-items-center">
                         <textarea id="chatInput" class="form-control" placeholder="Type a message..." rows="1"></textarea>
                         

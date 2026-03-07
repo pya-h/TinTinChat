@@ -39,7 +39,7 @@ Legend:
 
 - [ ] (`P0`) Full source review for debugging/improvement.
 - [ ] (`P0`) Complete security audit + hardening across all endpoints.
-- [ ] (`P1`) Reply to message.
+- [x] (`P1`) Reply to message.
 - [x] (`P1`) Small copy-message action.
 - [x] (`P1`) Message context menu (right-click/long-press).
 - [ ] (`P1`) Forward message.
@@ -58,11 +58,11 @@ Legend:
 - [ ] (`P0`) Create security regression checklist and execute after each major change.
 
 ### Phase B — Message Actions (`P1`)
-- [ ] (`P1`) DB migration: add `reply_to_message_id` to `messages`.
+- [x] (`P1`) DB migration: add `reply_to_message_id` to `messages`.
 - [ ] (`P1`) DB migration: add forwarding metadata columns.
-- [ ] (`P1`) Add backend support for `reply_to_message_id` in send/fetch endpoints.
-- [ ] (`P1`) Implement UI reply composer state + quoted preview.
-- [ ] (`P1`) Render quoted/referenced original message block in message bubble.
+- [x] (`P1`) Add backend support for `reply_to_message_id` in send/fetch endpoints.
+- [x] (`P1`) Implement UI reply composer state + quoted preview.
+- [x] (`P1`) Render quoted/referenced original message block in message bubble.
 - [x] (`P1`) Add copy button for text messages with clipboard fallback.
 - [x] (`P1`) Add message context menu component (desktop + mobile parity).
 - [ ] (`P1`) Add forward message flow (text first).

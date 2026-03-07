@@ -2,6 +2,7 @@ const chatListElem = document.getElementById("chatList");
 const chatMessagesElem = document.getElementById("chatMessages");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
+const replyPreviewElem = document.getElementById("replyPreview");
 const chatWithElem = document.getElementById("chatWith");
 const searchUserInput = document.getElementById("searchUser");
 const imageUploadInput = document.getElementById("imageUploadInput");
@@ -15,6 +16,7 @@ const MESSAGE_LONG_PRESS_MS = 500;
 
 let currentChatUser = null;
 let currentChatRecentMessages = null;
+let currentReplyTarget = null;
 const chatUsers = new Set();
 let messageOffset = 0;
 let hasMoreMessages = true;
@@ -163,6 +165,80 @@ function getMessageTextForCopy(messageElement) {
     return textElement.innerText?.trim() || "";
 }
 
+function getReplySnippetFromMessageElement(messageElement) {
+    const textContent = getMessageTextForCopy(messageElement);
+    if (textContent.length) {
+        return textContent;
+    }
+
+    if (messageElement.classList.contains("is-image-message")) {
+        return "[Image]";
+    }
+    if (messageElement.classList.contains("is-voice-message")) {
+        return "[Voice message]";
+    }
+    if (messageElement.classList.contains("is-file-message")) {
+        return "[File]";
+    }
+
+    return "[Message]";
+}
+
+function clearReplyState() {
+    currentReplyTarget = null;
+    if (replyPreviewElem) {
+        replyPreviewElem.style.display = "none";
+        replyPreviewElem.innerHTML = "";
+    }
+}
+
+function setReplyState(messageElement) {
+    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    if (!messageId || !replyPreviewElem) {
+        return;
+    }
+
+    const snippet = getReplySnippetFromMessageElement(messageElement);
+    const senderLabel = messageElement.classList.contains("sent") ? "You" : currentChatUser;
+
+    currentReplyTarget = {
+        messageId,
+        senderLabel,
+        snippet,
+    };
+
+    replyPreviewElem.innerHTML = `
+        <div class="reply-preview-content">
+            <div class="reply-preview-title">Replying to ${escapeHtml(senderLabel)}</div>
+            <div class="reply-preview-text">${escapeHtml(snippet.slice(0, 160))}</div>
+        </div>
+        <button type="button" class="reply-preview-close" aria-label="Cancel reply">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+
+    replyPreviewElem.style.display = "flex";
+    const closeBtn = replyPreviewElem.querySelector(".reply-preview-close");
+    closeBtn?.addEventListener("click", clearReplyState);
+}
+
+function buildReplyPreviewHtml(msg, decryptedReplyText) {
+    if (!msg.reply_message_id) {
+        return "";
+    }
+
+    const senderLabel = Number(msg.reply_sender_id) === Number(CURRENT_USER_ID) ? "You" : currentChatUser;
+    const fallbackText = msg.reply_message_type === "text" ? "[Message]" : `[${msg.reply_message_type}]`;
+    const previewText = (decryptedReplyText || fallbackText || "[Message]").slice(0, 160);
+
+    return `
+        <div class="reply-quote" data-reply-target-id="${msg.reply_message_id}">
+            <div class="reply-quote-sender">${escapeHtml(senderLabel)}</div>
+            <div class="reply-quote-text">${escapeHtml(previewText)}</div>
+        </div>
+    `;
+}
+
 async function copyMessageText(messageElement) {
     const messageText = getMessageTextForCopy(messageElement);
     if (!messageText) {
@@ -209,6 +285,17 @@ function addMessageActionHandlers(messageElement) {
             closeMessageContextMenu();
         });
         menu.appendChild(copyBtn);
+
+        const replyBtn = document.createElement("button");
+        replyBtn.type = "button";
+        replyBtn.className = "message-context-menu-item";
+        replyBtn.innerHTML = '<i class="fas fa-reply me-2"></i>Reply';
+        replyBtn.addEventListener("click", () => {
+            setReplyState(messageElement);
+            closeMessageContextMenu();
+            chatInput.focus();
+        });
+        menu.appendChild(replyBtn);
 
         document.body.appendChild(menu);
 
@@ -324,6 +411,7 @@ async function selectChatUser(username) {
     chatInput.disabled = false;
     chatWithElem.textContent = username;
     chatInput.value = "";
+    clearReplyState();
     chatMessagesElem.innerHTML = "";
 
     messageOffset = 0;
@@ -654,11 +742,21 @@ async function addMessageToChat(msg, prepend = false) {
         div.setAttribute("data-message-id", msg.id);
     } else {
         let decryptedText = "[Unable to decrypt message]";
+        let decryptedReplyText = "";
         try {
             if (msg.sender_id == CURRENT_USER_ID) {
                 decryptedText = await decryptLongMessage(msg.message_for_sender);
             } else {
                 decryptedText = await decryptLongMessage(msg.message);
+            }
+
+            if (msg.reply_message_id && msg.reply_message_type === "text") {
+                const replyPayload = msg.reply_sender_id == CURRENT_USER_ID
+                    ? msg.reply_message_for_sender
+                    : msg.reply_message;
+                if (replyPayload) {
+                    decryptedReplyText = await decryptLongMessage(replyPayload);
+                }
             }
         } catch (e) {
             decryptedText = "[Unsupported message]";
@@ -666,11 +764,12 @@ async function addMessageToChat(msg, prepend = false) {
         const isPersian = isTextPersian(decryptedText.trim());
         const safeText = escapeHtml(decryptedText);
         div.classList.add("is-text-message");
-        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button><span class="message-text-content">${safeText}</span>${newDateTag(msg, {
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${newDateTag(msg, {
             atLeft: isPersian,
             strictMargins: true,
             topSpace: 3,
         })}`;
+        div.setAttribute("data-message-id", msg.id);
         if (isPersian) {
             div.dir = "rtl";
         }
@@ -684,6 +783,22 @@ async function addMessageToChat(msg, prepend = false) {
         }
 
         addMessageActionHandlers(div);
+
+        const replyQuote = div.querySelector(".reply-quote");
+        if (replyQuote) {
+            replyQuote.addEventListener("click", () => {
+                const targetId = replyQuote.getAttribute("data-reply-target-id");
+                if (!targetId) {
+                    return;
+                }
+                const targetMessage = chatMessagesElem.querySelector(`[data-message-id="${targetId}"]`);
+                if (targetMessage) {
+                    targetMessage.scrollIntoView({ behavior: "smooth", block: "center" });
+                    targetMessage.classList.add("reply-target-highlight");
+                    setTimeout(() => targetMessage.classList.remove("reply-target-highlight"), 1100);
+                }
+            });
+        }
     }
 
     if (msg.sender_id == CURRENT_USER_ID) {
@@ -1279,6 +1394,9 @@ const sendTextMessage = async () => {
         formData.append("target", currentChatUser);
         formData.append("message", encryptedForRecipient);
         formData.append("message_for_sender", encryptedForSender);
+        if (currentReplyTarget?.messageId) {
+            formData.append("reply_to_message_id", String(currentReplyTarget.messageId));
+        }
 
         const res = await fetch("api/send_message.php", {
             method: "POST",
@@ -1290,6 +1408,7 @@ const sendTextMessage = async () => {
 
         addUserToChatList(currentChatUser);
         chatInput.value = "";
+        clearReplyState();
     } catch (err) {
         showModal("Send Error", "Encryption/send error: " + err.message, "error");
     } finally {
