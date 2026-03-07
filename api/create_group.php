@@ -12,15 +12,15 @@ $body = apiGetJsonBody();
 $title = trim((string) ($body['title'] ?? $_POST['title'] ?? ''));
 $description = trim((string) ($body['description'] ?? $_POST['description'] ?? ''));
 
-if (mb_strlen($title) < TTC_GROUP_TITLE_MIN_LENGTH || mb_strlen($title) > TTC_GROUP_TITLE_MAX_LENGTH) {
+if (groupStringLength($title) < TTC_GROUP_TITLE_MIN_LENGTH || groupStringLength($title) > TTC_GROUP_TITLE_MAX_LENGTH) {
     apiError('INVALID_GROUP_TITLE', 'Group title length is invalid', 400);
 }
 
-if (mb_strlen($description) > TTC_GROUP_DESCRIPTION_MAX_LENGTH) {
+if (groupStringLength($description) > TTC_GROUP_DESCRIPTION_MAX_LENGTH) {
     apiError('INVALID_GROUP_DESCRIPTION', 'Group description is too long', 400);
 }
 
-$joinToken = groupGenerateJoinToken();
+$joinToken = groupGenerateUniqueJoinToken($pdo);
 
 $pdo->beginTransaction();
 try {

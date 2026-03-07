@@ -13,6 +13,9 @@ $joinToken = trim((string) ($body['token'] ?? $_POST['token'] ?? ''));
 if ($joinToken === '') {
     apiError('INVALID_JOIN_TOKEN', 'Invalid join token', 400);
 }
+if (strlen($joinToken) > 128 || !preg_match('/^[a-f0-9]{32,128}$/i', $joinToken)) {
+    apiError('INVALID_JOIN_TOKEN', 'Invalid join token', 400);
+}
 
 $groupStmt = $pdo->prepare('SELECT id, title, description FROM groups WHERE join_token = ? LIMIT 1');
 $groupStmt->execute([$joinToken]);

@@ -15,7 +15,7 @@ if ($groupId <= 0) {
 }
 
 groupRequireManagePermission($pdo, $groupId, $userId);
-$newToken = groupGenerateJoinToken();
+$newToken = groupGenerateUniqueJoinToken($pdo);
 
 $updateStmt = $pdo->prepare('UPDATE groups SET join_token = ?, updated_at = NOW() WHERE id = ? LIMIT 1');
 if (!$updateStmt->execute([$newToken, $groupId])) {

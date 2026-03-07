@@ -3009,14 +3009,6 @@ async function loadChatList(force = false) {
         const data = await window.ApiService.json("api/fetch_chats.php");
         const incomingGroups = Array.isArray(data.chatGroups) ? data.chatGroups : [];
         const incomingGroupIds = new Set(incomingGroups.map((group) => Number(group.id || 0)));
-
-        if (
-            !force &&
-            chatUsers?.size === (data.chatUsers?.length || 0) &&
-            chatGroupsById.size === incomingGroups.length
-        ) {
-            return;
-        }
         if (data.chatUsers && Array.isArray(data.chatUsers)) {
             data.chatUsers.forEach(addUserToChatList);
         }

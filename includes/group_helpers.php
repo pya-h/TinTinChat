@@ -19,11 +19,45 @@ function groupGenerateJoinToken(): string
     }
 }
 
+function groupGenerateUniqueJoinToken(PDO $pdo, int $maxAttempts = 5): string
+{
+    $attempts = max(1, $maxAttempts);
+    $stmt = $pdo->prepare('SELECT 1 FROM groups WHERE join_token = ? LIMIT 1');
+
+    for ($i = 0; $i < $attempts; $i++) {
+        $candidate = groupGenerateJoinToken();
+        $stmt->execute([$candidate]);
+        if (!$stmt->fetchColumn()) {
+            return $candidate;
+        }
+    }
+
+    apiError('GROUP_JOIN_TOKEN_EXHAUSTED', 'Unable to generate unique group join token', 500);
+}
+
 function groupBuildJoinLink(string $token): string
 {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    return $scheme . '://' . $host . '/dashboard.php?join_group=' . urlencode($token);
+
+    $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+    $basePath = '/';
+    if ($scriptName !== '') {
+        $apiDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+        $projectBase = rtrim(str_replace('\\', '/', dirname($apiDir)), '/');
+        $basePath = $projectBase === '' ? '/' : $projectBase . '/';
+    }
+
+    return $scheme . '://' . $host . $basePath . 'dashboard.php?join_group=' . urlencode($token);
+}
+
+function groupStringLength(string $value): int
+{
+    if (function_exists('mb_strlen')) {
+        return (int) mb_strlen($value);
+    }
+
+    return strlen($value);
 }
 
 function groupGetMembershipRole(PDO $pdo, int $groupId, int $userId): ?string

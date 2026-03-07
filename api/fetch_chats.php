@@ -8,17 +8,24 @@ apiRequireMethod('GET');
 $userId = apiRequireAuth();
 
 $stmt = $pdo->prepare('
-  SELECT DISTINCT u.username
+  SELECT u.username, MAX(m.interaction_date) AS last_interaction
   FROM users u
   JOIN (
     SELECT sender_id as user_id, created_at as interaction_date FROM messages WHERE receiver_id = ?
     UNION
     SELECT receiver_id as user_id, created_at as interaction_date FROM messages WHERE sender_id = ?
   ) m ON u.id = m.user_id
-  WHERE u.id != ? ORDER BY interaction_date DESC
+  WHERE u.id != ?
+  GROUP BY u.id, u.username
+  ORDER BY last_interaction DESC
 ');
 $stmt->execute([$userId, $userId, $userId]);
-$users = $stmt->fetchAll(PDO::FETCH_COLUMN);
+$users = array_map(
+  static function (array $row): string {
+    return (string) ($row['username'] ?? '');
+  },
+  $stmt->fetchAll(PDO::FETCH_ASSOC)
+);
 
 $groupStmt = $pdo->prepare(
   'SELECT

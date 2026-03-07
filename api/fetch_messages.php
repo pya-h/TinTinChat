@@ -46,6 +46,18 @@ if ($groupId > 0) {
   $count_query->execute([$userId, $otherUserId, $otherUserId, $userId]);
 }
 $total_count = $count_query->fetch()['total'];
+$total_count = max(0, (int) $total_count);
+
+if ($offset >= $total_count) {
+  apiSuccess([
+    'messages' => [],
+    'hasMore' => false,
+    'total' => $total_count,
+    'offset' => 0,
+    'limit' => 0,
+  ]);
+}
+
 $hasMore = ($offset + $limit) < $total_count;
 
 if(!$hasMore) {

@@ -1,14 +1,14 @@
 # TinTinChat Product Requirements Document (PRD)
 
-Version: 1.0  
-Date: 2026-03-06  
+Version: 1.1  
+Date: 2026-03-07  
 Owner: Product + Engineering
 
 ## 1) Product Summary
 
 TinTinChat is a lightweight, self-hostable web chat application built with native PHP, HTML, CSS, and vanilla JavaScript. It is designed to run on limited hosting environments without relying on server-side external frameworks or package ecosystems.
 
-The product currently supports direct 1:1 chat with encrypted text messages and media/file exchange. The next stage focuses on improving reliability, security, and usability to match expected behavior of modern chat applications while keeping the architecture simple and dependency-light.
+The product currently supports direct 1:1 chat plus group chat (text-first), with encrypted direct text messaging and media/file exchange for direct conversations. The next stage focuses on parity enhancements and quality improvements while keeping the architecture simple and dependency-light.
 
 ## 2) Vision
 
@@ -32,7 +32,7 @@ Deliver a secure, responsive, easy-to-use chat experience that works on constrai
 - Complete security hardening pass for auth, endpoints, uploads, and session handling.
 
 ### 3.3 Non-Goals (for now)
-- Group chat, channels, and communities.
+- Channels/communities beyond current group-chat scope.
 - Full multi-device synchronization with push infrastructure.
 - Mandatory real-time WebSocket backend migration.
 - End-to-end encryption for large media binaries (text E2EE remains priority).
@@ -55,6 +55,7 @@ Deliver a secure, responsive, easy-to-use chat experience that works on constrai
 
 ### 5.2 Messaging
 - 1:1 direct messaging.
+- Group messaging (text-first flow with sender attribution).
 - Client-side RSA-OAEP encryption/decryption for text messages.
 - Read receipt model via `seen_at` and UI ticks.
 - Polling-based updates for recent messages.
@@ -68,7 +69,14 @@ Deliver a secure, responsive, easy-to-use chat experience that works on constrai
 
 ### 5.4 Discovery & Navigation
 - Chat list of recent contacts.
+- Group list integrated into chat sidebar.
 - Username search with suggestions and keyboard navigation.
+
+### 5.6 Group Support
+- Create group, update group details, and fetch member details.
+- Add/remove member with role-based permissions (owner/admin/member baseline).
+- Join group via tokenized join link with rotation support.
+- Leave group and transfer ownership safeguards.
 
 ### 5.5 UI
 - Responsive dashboard/chat layout.
@@ -106,6 +114,13 @@ Deliver a secure, responsive, easy-to-use chat experience that works on constrai
 - Cleaner message action discovery.
 - Better empty states and send/error/loading states.
 - Improved mobile interaction parity for actions.
+
+### FR-7: Group Support
+- User can create and manage groups with details and member list.
+- Group header/panel exposes title, description, members, and member management actions.
+- Group invite link can be copied and rotated by permitted roles.
+- Group messages include sender identification.
+- Reply/forward/copy/details/delete text actions work in group context with role-aware permissions.
 
 ## 7) Non-Functional Requirements
 
@@ -151,8 +166,11 @@ Deliver a secure, responsive, easy-to-use chat experience that works on constrai
 ### M2: Core Chat UX Actions
 - Reply, copy, context menu, forward (text first).
 
-### M3: Quality & Polish
+### M3: Group Support
+- Group schema + APIs + UI + role baseline.
+
+### M4: Quality & Polish
 - Usability pass, accessibility pass, and edge-case handling.
 
-### M4: Optional Enhancements
+### M5: Optional Enhancements
 - Typing indicator, better unread states, optional real-time transport, media-forward parity.

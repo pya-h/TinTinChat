@@ -1,7 +1,7 @@
 # TinTinChat Technical Design Document
 
-Version: 1.0  
-Date: 2026-03-06
+Version: 1.1  
+Date: 2026-03-07
 
 ## 1) Overview
 
@@ -19,14 +19,14 @@ Design priority: keep implementation lightweight and deployable on constrained/s
   - `index.php` (auth page)
   - `dashboard.php` (chat UI shell)
 - API Layer (`api/*.php`)
-  - Auth/session, message CRUD-like actions, upload/download, search, read status
+  - Auth/session, direct + group messaging actions, upload/download, search, read status
 - Core Includes (`includes/*.php`)
-  - DB bootstrap, session helpers, shared utilities
+  - DB bootstrap, session helpers, shared utilities, group helpers
 - Frontend Scripts
   - `assets/js/chat.js` (chat logic, polling, rendering, uploads)
   - `assets/js/crypto.js` (RSA key import + encrypt/decrypt utilities)
 - Data
-  - MySQL tables: `users`, `messages`
+  - MySQL tables: `users`, `messages`, `groups`, `group_members`
 - Storage
   - `uploads/images`, `uploads/voice_messages`, `uploads/files`
 
@@ -34,9 +34,9 @@ Design priority: keep implementation lightweight and deployable on constrained/s
 1. User authenticates at `index.php` -> `api/login.php`.
 2. Session established; user lands on `dashboard.php`.
 3. Frontend loads private key via `api/get_private_key.php` and chat list via `api/fetch_chats.php`.
-4. Selecting a user triggers `api/fetch_messages.php` with pagination.
+4. Selecting a user or group triggers `api/fetch_messages.php` with pagination.
 5. New messages fetched by polling (`api/fetch_recent_messages.php`).
-6. Sending text/media/files calls respective `send_*` endpoints.
+6. Sending text calls `api/send_message.php` for direct/group targets; media/files remain direct-chat endpoints in current scope.
 7. Seen status updated via `api/see_messages.php`.
 
 ## 3) Data Model
@@ -55,7 +55,8 @@ Design priority: keep implementation lightweight and deployable on constrained/s
 ### 3.2 `messages` (current)
 - `id` (PK)
 - `sender_id` (FK -> users)
-- `receiver_id` (FK -> users)
+- `receiver_id` (nullable FK -> users)
+- `group_id` (nullable FK -> groups)
 - `message` (recipient encrypted payload for text)
 - `message_for_sender` (sender encrypted payload for text)
 - `message_type` (`text`, `voice`, `image`, `video`, `file`)
@@ -66,14 +67,26 @@ Design priority: keep implementation lightweight and deployable on constrained/s
 - `created_at`
 - `seen_at`
 
-### 3.3 Required Schema Additions (for next features)
-- For reply:
-  - `messages.reply_to_message_id` nullable FK -> `messages.id`
-- For forward tracking:
-  - `messages.forwarded_from_message_id` nullable FK -> `messages.id`
-  - `messages.forwarded_by_user_id` nullable FK -> `users.id`
-- Optional metadata:
-  - `messages.client_action_meta` JSON nullable
+### 3.3 `groups` (implemented)
+- `id` (PK)
+- `title`
+- `description`
+- `created_by_user_id` (FK -> users)
+- `join_token` (unique)
+- `created_at`
+- `updated_at`
+
+### 3.4 `group_members` (implemented)
+- `group_id` (FK -> groups)
+- `user_id` (FK -> users)
+- `role` (`owner`, `admin`, `member`)
+- `joined_at`
+- `invited_by_user_id` (nullable FK -> users)
+
+### 3.5 Message metadata additions (implemented)
+- `messages.reply_to_message_id` nullable FK -> `messages.id`
+- `messages.forwarded_from_message_id` nullable FK -> `messages.id`
+- `messages.forwarded_by_user_id` nullable FK -> `users.id`
 
 ## 4) API Design (Current + Direction)
 
@@ -83,6 +96,17 @@ Design priority: keep implementation lightweight and deployable on constrained/s
 - Messaging: `send_message.php`, `fetch_messages.php`, `fetch_recent_messages.php`, `see_messages.php`, `delete_messages.php`
 - Media/files: `send_image_message.php`, `send_voice_message.php`, `send_file_message.php`, retrieval endpoints
 - User search/discovery: `search_users.php`, `check_user_exists.php`, `fetch_chats.php`
+- Groups:
+  - `create_group.php`
+  - `update_group.php`
+  - `fetch_groups.php`
+  - `fetch_group_details.php`
+  - `add_group_member.php`
+  - `remove_group_member.php`
+  - `join_group.php`
+  - `leave_group.php`
+  - `rotate_group_join_link.php`
+  - `transfer_group_owner.php`
 
 ### 4.2 Current Inconsistencies
 - Not all endpoints validate request method consistently.
@@ -132,19 +156,34 @@ Minimum policy:
 - Message render branches by `message_type`.
 - Media-specific handlers for playback, modal preview, download caching.
 
-### 6.2 Gaps
-- No message action abstraction (reply/copy/forward/context menu absent).
-- `chat.js` is large and tightly coupled (state, rendering, network, interactions mixed).
-- No shared API service wrapper for consistent request/response/error handling.
+### 6.2 Current Gaps
+- Group media/file send parity is not yet implemented (group text-first currently).
+- Group read-state/seen semantics are not yet implemented.
+- `chat.js` remains large and mixed-concern despite module extraction.
 
-### 6.3 Planned Frontend Refactor (no external libs)
-- Introduce lightweight internal modules/files (still vanilla JS):
-  - `api-service.js` (fetch wrappers + normalized errors)
-  - `message-actions.js` (reply/copy/forward/context menu)
-  - `message-renderer.js` (rendering by type)
-  - keep compatibility with existing `chat.js` during migration
+### 6.3 Frontend Refactor Status (implemented baseline)
+- `api-service.js` added for consistent fetch/error handling.
+- `chat-utils.js` and `chat-notifications.js` extracted from `chat.js`.
+- Group target model integrated in `chat.js` using mixed user/group chat entries.
 
 ## 7) Feature Design: Requested Next Capabilities
+
+### 7.0 Group Support (implemented baseline)
+Data/API:
+- Group and membership tables with role model and tokenized join links.
+- Group lifecycle/member management endpoints.
+- Message fetch/send endpoints extended for direct/group text support.
+
+UI:
+- Group creation entry point in sidebar.
+- Group details panel with title/description/members/add-member/join-link actions.
+- Sender labels in group messages.
+- Role actions: remove member, transfer ownership, leave group.
+
+Security:
+- Group membership enforced on group message fetch/send.
+- Owner/admin permission checks for management operations.
+- Owner transfer/leave safeguards.
 
 ### 7.1 Reply Message
 Data:

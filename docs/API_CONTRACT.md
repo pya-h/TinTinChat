@@ -66,7 +66,28 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 
 ---
 
-## 4) Common Error Codes
+## 4) Endpoint Families
+
+- Auth/session: login/logout/session restoration
+- Keys: public/private key fetch + key save
+- Messaging (direct + group text): send/fetch/recent/seen/delete
+- Media/files (direct): image/voice/file send + retrieval
+- Discovery: user search/check + chat list
+- Groups:
+  - `create_group.php`
+  - `update_group.php`
+  - `fetch_groups.php`
+  - `fetch_group_details.php`
+  - `add_group_member.php`
+  - `remove_group_member.php`
+  - `join_group.php`
+  - `leave_group.php`
+  - `rotate_group_join_link.php`
+  - `transfer_group_owner.php`
+
+---
+
+## 5) Common Error Codes
 
 ### Auth / Session
 - `UNAUTHORIZED` → user session missing/invalid.
@@ -94,10 +115,25 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 
 ### Security / Access
 - `FORBIDDEN` (or endpoint-specific equivalent) → resource exists but user not permitted.
+- `GROUP_FORBIDDEN` → user lacks required group membership/role.
+
+### Group Domain
+- `INVALID_GROUP_ID` → malformed/invalid group identifier.
+- `GROUP_NOT_FOUND` → target group does not exist.
+- `INVALID_GROUP_TITLE` / `INVALID_GROUP_DESCRIPTION` → invalid group metadata constraints.
+- `INVALID_JOIN_TOKEN` → malformed or invalid invite token.
+- `ALREADY_GROUP_MEMBER` → member already belongs to group.
+- `GROUP_MEMBER_NOT_FOUND` → target member not found in group.
+- `GROUP_MEMBER_ADD_FAILED` / `GROUP_MEMBER_REMOVE_FAILED` → membership mutation failed.
+- `OWNER_TRANSFER_REQUIRED` → owner cannot leave while other members exist.
+- `INVALID_NEW_OWNER` → ownership transfer target invalid.
+- `OWNER_TRANSFER_FAILED` → ownership transfer transaction failed.
+- `GROUP_CREATE_FAILED` / `GROUP_UPDATE_FAILED` / `GROUP_LEAVE_FAILED` / `GROUP_JOIN_FAILED` → group lifecycle mutation failed.
+- `GROUP_JOIN_LINK_ROTATE_FAILED` / `GROUP_JOIN_TOKEN_EXHAUSTED` → join link/token generation-rotation failure.
 
 ---
 
-## 5) HTTP Status Mapping Guidelines
+## 6) HTTP Status Mapping Guidelines
 
 - `200` success reads/writes (or `201` for explicit create if introduced later)
 - `400` validation and malformed payload
@@ -112,7 +148,7 @@ Keep status code + error code pair consistent for the same failure class.
 
 ---
 
-## 6) Frontend Consumption Rules
+## 7) Frontend Consumption Rules
 
 Frontend should:
 - Treat non-`2xx` as failure.
@@ -122,7 +158,7 @@ Frontend should:
 
 ---
 
-## 7) Adding a New Endpoint Checklist
+## 8) Adding a New Endpoint Checklist
 
 - Add method/auth/CSRF guards as required.
 - Reuse `apiNormalizeUsername`, upload helpers, and shared constants.
