@@ -11,6 +11,7 @@ const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
 const IMAGE_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
 const FILE_UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
+const MESSAGE_LONG_PRESS_MS = 500;
 
 let currentChatUser = null;
 let currentChatRecentMessages = null;
@@ -141,6 +142,126 @@ function getCsrfHeaders() {
     }
     return {};
 }
+
+function showMessageCopiedFeedback() {
+    if (window.UIEnhancements?.showSearchNotification) {
+        window.UIEnhancements.showSearchNotification("Message copied", "success");
+        return;
+    }
+    showModal("Copied", "Message copied to clipboard.", "success");
+}
+
+function closeMessageContextMenu() {
+    document.getElementById("messageContextMenu")?.remove();
+}
+
+function getMessageTextForCopy(messageElement) {
+    const textElement = messageElement.querySelector(".message-text-content");
+    if (!textElement) {
+        return "";
+    }
+    return textElement.innerText?.trim() || "";
+}
+
+async function copyMessageText(messageElement) {
+    const messageText = getMessageTextForCopy(messageElement);
+    if (!messageText) {
+        showModal("Copy Failed", "This message cannot be copied.", "warning");
+        return;
+    }
+
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(messageText);
+        } else {
+            const tempTextArea = document.createElement("textarea");
+            tempTextArea.value = messageText;
+            tempTextArea.setAttribute("readonly", "readonly");
+            tempTextArea.style.position = "absolute";
+            tempTextArea.style.left = "-9999px";
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempTextArea);
+        }
+        showMessageCopiedFeedback();
+    } catch (err) {
+        showModal("Copy Failed", "Unable to copy message.", "error");
+    }
+}
+
+function addMessageActionHandlers(messageElement) {
+    let longPressTimer = null;
+
+    const openContextMenu = (clientX, clientY) => {
+        closeMessageContextMenu();
+
+        const menu = document.createElement("div");
+        menu.id = "messageContextMenu";
+        menu.className = "message-context-menu";
+
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.className = "message-context-menu-item";
+        copyBtn.innerHTML = '<i class="fas fa-copy me-2"></i>Copy';
+        copyBtn.addEventListener("click", async () => {
+            await copyMessageText(messageElement);
+            closeMessageContextMenu();
+        });
+        menu.appendChild(copyBtn);
+
+        document.body.appendChild(menu);
+
+        const menuRect = menu.getBoundingClientRect();
+        const maxLeft = Math.max(8, window.innerWidth - menuRect.width - 8);
+        const maxTop = Math.max(8, window.innerHeight - menuRect.height - 8);
+        menu.style.left = `${Math.min(clientX, maxLeft)}px`;
+        menu.style.top = `${Math.min(clientY, maxTop)}px`;
+    };
+
+    messageElement.addEventListener("contextmenu", (event) => {
+        if (!messageElement.classList.contains("is-text-message")) {
+            return;
+        }
+        event.preventDefault();
+        openContextMenu(event.clientX, event.clientY);
+    });
+
+    messageElement.addEventListener("touchstart", (event) => {
+        if (!messageElement.classList.contains("is-text-message")) {
+            return;
+        }
+        longPressTimer = setTimeout(() => {
+            const touch = event.touches?.[0];
+            if (!touch) {
+                return;
+            }
+            openContextMenu(touch.clientX, touch.clientY);
+        }, MESSAGE_LONG_PRESS_MS);
+    });
+
+    const clearLongPress = () => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    };
+
+    messageElement.addEventListener("touchend", clearLongPress);
+    messageElement.addEventListener("touchcancel", clearLongPress);
+}
+
+document.addEventListener("click", (event) => {
+    const menu = document.getElementById("messageContextMenu");
+    if (!menu) {
+        return;
+    }
+    if (!event.target.closest("#messageContextMenu")) {
+        closeMessageContextMenu();
+    }
+});
+
+document.addEventListener("scroll", closeMessageContextMenu, true);
 
 window.addEventListener("resize", () => {
     if (window.innerWidth <= 767.98) {
@@ -544,7 +665,8 @@ async function addMessageToChat(msg, prepend = false) {
         }
         const isPersian = isTextPersian(decryptedText.trim());
         const safeText = escapeHtml(decryptedText);
-        div.innerHTML = `<span>${safeText}</span>${newDateTag(msg, {
+        div.classList.add("is-text-message");
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button><span class="message-text-content">${safeText}</span>${newDateTag(msg, {
             atLeft: isPersian,
             strictMargins: true,
             topSpace: 3,
@@ -552,6 +674,16 @@ async function addMessageToChat(msg, prepend = false) {
         if (isPersian) {
             div.dir = "rtl";
         }
+
+        const copyBtn = div.querySelector(".message-copy-btn");
+        if (copyBtn) {
+            copyBtn.addEventListener("click", async (event) => {
+                event.stopPropagation();
+                await copyMessageText(div);
+            });
+        }
+
+        addMessageActionHandlers(div);
     }
 
     if (msg.sender_id == CURRENT_USER_ID) {

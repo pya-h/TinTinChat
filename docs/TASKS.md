@@ -40,8 +40,8 @@ Legend:
 - [ ] (`P0`) Full source review for debugging/improvement.
 - [ ] (`P0`) Complete security audit + hardening across all endpoints.
 - [ ] (`P1`) Reply to message.
-- [ ] (`P1`) Small copy-message action.
-- [ ] (`P1`) Message context menu (right-click/long-press).
+- [x] (`P1`) Small copy-message action.
+- [x] (`P1`) Message context menu (right-click/long-press).
 - [ ] (`P1`) Forward message.
 - [ ] (`P1`) UI/UX simplification and consistency pass.
 
@@ -63,8 +63,8 @@ Legend:
 - [ ] (`P1`) Add backend support for `reply_to_message_id` in send/fetch endpoints.
 - [ ] (`P1`) Implement UI reply composer state + quoted preview.
 - [ ] (`P1`) Render quoted/referenced original message block in message bubble.
-- [ ] (`P1`) Add copy button for text messages with clipboard fallback.
-- [ ] (`P1`) Add message context menu component (desktop + mobile parity).
+- [x] (`P1`) Add copy button for text messages with clipboard fallback.
+- [x] (`P1`) Add message context menu component (desktop + mobile parity).
 - [ ] (`P1`) Add forward message flow (text first).
 - [ ] (`P1`) Add delete action entry in context menu using existing endpoint.
 

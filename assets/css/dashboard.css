@@ -428,6 +428,80 @@ nav.navbar:hover::after {
     box-shadow: 0 6px 20px transparent, 0 2px 6px transparent;
 }
 
+.message.is-text-message .message-text-content {
+    display: inline;
+}
+
+.message-copy-btn {
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--subtle-text-color);
+    border-radius: 999px;
+    width: 1.7rem;
+    height: 1.7rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-inline-end: 0.35rem;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: var(--transition-fast);
+    vertical-align: middle;
+}
+
+.message-copy-btn i {
+    font-size: 0.72rem;
+}
+
+.message:hover .message-copy-btn,
+.message:focus-within .message-copy-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.message-copy-btn:hover {
+    background: color-mix(in srgb, var(--secondary-color) 12%, var(--surface-color));
+    color: var(--primary-color);
+}
+
+.message.sent .message-copy-btn {
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.message.sent .message-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+.message-context-menu {
+    position: fixed;
+    z-index: 2500;
+    min-width: 10rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-lg);
+    padding: 0.3rem;
+}
+
+.message-context-menu-item {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.5rem;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.92rem;
+}
+
+.message-context-menu-item:hover {
+    background: color-mix(in srgb, var(--secondary-color) 12%, transparent);
+}
+
 .message.sent + .message.sent {
     margin-top: -0.25rem;
     border-top-right-radius: 6px;
