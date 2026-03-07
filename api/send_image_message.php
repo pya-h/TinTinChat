@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 
 apiRequireMethod('POST');
 $sender_id = apiRequireAuth();
+apiRequireCsrf();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
     $post_max_size = ini_get('post_max_size');

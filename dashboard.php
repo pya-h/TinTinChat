@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 $username = $_SESSION['username'];
 $user_id = $_SESSION['user_id'];
 $user_ident = isset($_SESSION['ident']) ? $_SESSION['ident'] : null;
+$csrfToken = generateCsrfToken();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -88,6 +89,7 @@ $user_ident = isset($_SESSION['ident']) ? $_SESSION['ident'] : null;
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
+        const CSRF_TOKEN = <?= json_encode($csrfToken) ?>;
         const currentUserIdent = <?= json_encode($user_ident) ?>;
         if(currentUserIdent?.length) {
             localStorage.setItem('ident', currentUserIdent);

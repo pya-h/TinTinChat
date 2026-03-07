@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
+apiRequireCsrf();
 $target = $_POST['target'] ?? '';
 $messageEncryptedForRecipient = $_POST['message'] ?? null;
 $messageEncryptedForSender = $_POST['message_for_sender'] ?? null;

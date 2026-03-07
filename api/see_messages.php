@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
+apiRequireCsrf();
 
 $body = apiGetJsonBody();
 $messages_seen = $body['messages'] ?? null;

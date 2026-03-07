@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 
 apiRequireMethod('DELETE');
 $userId = apiRequireAuth();
+apiRequireCsrf();
 
 $data = apiGetJsonBody();
 $messages = isset($data['messages']) ? $data['messages'] : (is_array($data) ? $data : null);

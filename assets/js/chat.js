@@ -133,6 +133,13 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function getCsrfHeaders() {
+    if (typeof CSRF_TOKEN === "string" && CSRF_TOKEN.length) {
+        return { "X-CSRF-Token": CSRF_TOKEN };
+    }
+    return {};
+}
+
 window.addEventListener("resize", () => {
     if (window.innerWidth <= 767.98) {
         const heightDifference = initialViewportHeight - window.innerHeight;
@@ -217,6 +224,10 @@ async function updateMessagesStatus(messages) {
     }
     res = await fetch("api/see_messages.php", {
         method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...getCsrfHeaders(),
+        },
         body: JSON.stringify({ messages: messagesNewlySeen }),
     });
     const json = await res.json();
@@ -1137,6 +1148,7 @@ const sendTextMessage = async () => {
 
         const res = await fetch("api/send_message.php", {
             method: "POST",
+            headers: getCsrfHeaders(),
             body: formData,
         });
         const json = await res.json();
@@ -1660,6 +1672,7 @@ async function sendVoiceMessage(audioBlob) {
 
         const res = await fetch("api/send_voice_message.php", {
             method: "POST",
+            headers: getCsrfHeaders(),
             body: formData,
         });
 
@@ -1735,6 +1748,7 @@ async function sendImageMessage(imageFile) {
 
         const res = await fetch("api/send_image_message.php", {
             method: "POST",
+            headers: getCsrfHeaders(),
             body: formData,
         });
 
@@ -1791,6 +1805,7 @@ async function sendFileMessage(file) {
 
         const res = await fetch("api/send_file_message.php", {
             method: "POST",
+            headers: getCsrfHeaders(),
             body: formData,
         });
 

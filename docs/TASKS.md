@@ -50,8 +50,8 @@ Legend:
 ### Phase A — Stabilization & Security (`P0`)
 - [ ] (`P0`) Standardize endpoint method checks (`GET/POST/DELETE`) everywhere.
 - [ ] (`P0`) Standardize API JSON response contract across all endpoints.
-- [ ] (`P0`) Add CSRF validation to every state-changing endpoint.
-- [ ] (`P0`) Centralize auth/method/input guards in shared include utility.
+- [x] (`P0`) Add CSRF validation to every state-changing endpoint.
+- [x] (`P0`) Centralize auth/method/input guards in shared include utility.
 - [ ] (`P0`) Normalize upload validation (server-side MIME + size + extension policy).
 - [ ] (`P0`) Align frontend and backend file size limits.
 - [ ] (`P0`) Run full endpoint authorization review for cross-user data isolation.

@@ -43,6 +43,15 @@ function apiRequireAuth(): int
     return (int) $_SESSION['user_id'];
 }
 
+function apiRequireCsrf(): void
+{
+    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($_POST['csrf_token'] ?? null);
+
+    if (!$csrfToken || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
+        apiError('INVALID_CSRF', 'Invalid CSRF token', 403);
+    }
+}
+
 function apiGetJsonBody(): array
 {
     $rawBody = file_get_contents('php://input');
