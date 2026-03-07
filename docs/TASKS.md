@@ -43,7 +43,10 @@ Legend:
 - [x] (`P1`) Small copy-message action.
 - [x] (`P1`) Message context menu (right-click/long-press).
 - [x] (`P1`) Forward message.
+- [x] (`P1`) Forward message via in-app chat picker modal (no prompt flow).
 - [x] (`P1`) UI/UX simplification and consistency pass.
+- [x] (`P1`) Message details action and modal in context menu.
+- [x] (`P1`) Live seen-tick refresh using targeted seen-status polling.
 
 ## 3) Priority Roadmap (Planned)
 

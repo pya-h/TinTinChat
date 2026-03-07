@@ -107,6 +107,18 @@ $csrfToken = generateCsrfToken();
         </div>
     </div>
 
+    <div id="messageActionModalOverlay" class="message-action-modal-overlay" hidden>
+        <div class="message-action-modal" role="dialog" aria-modal="true" aria-labelledby="messageActionModalTitle">
+            <div class="message-action-modal-header">
+                <h5 id="messageActionModalTitle" class="message-action-modal-title">Message Action</h5>
+                <button type="button" id="messageActionModalClose" class="message-action-modal-close" aria-label="Close action modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="messageActionModalBody" class="message-action-modal-body"></div>
+        </div>
+    </div>
+
     <?php require_once __DIR__ . '/includes/modal.php' ?>
     <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
     <script src="assets/js/ext/jquery-3.6.1.min.js"></script>

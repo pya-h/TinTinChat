@@ -14,6 +14,10 @@ const settingsPanel = document.getElementById("chatSettingsPanel");
 const settingNotificationSound = document.getElementById("settingNotificationSound");
 const settingAutoScroll = document.getElementById("settingAutoScroll");
 const messageActionsHintElem = document.getElementById("messageActionsHint");
+const messageActionModalOverlay = document.getElementById("messageActionModalOverlay");
+const messageActionModalTitle = document.getElementById("messageActionModalTitle");
+const messageActionModalBody = document.getElementById("messageActionModalBody");
+const messageActionModalClose = document.getElementById("messageActionModalClose");
 
 const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
@@ -23,6 +27,7 @@ const MESSAGE_LONG_PRESS_MS = 500;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
 const SETTINGS_HINT_DISMISSED_KEY = "tintinchat.messageActionsHint.dismissed";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
+const SEEN_STATUS_POLL_MS = 3000;
 
 let currentChatUser = null;
 let currentChatRecentMessages = null;
@@ -50,6 +55,9 @@ let activeAnalyser = null;
 
 let initialViewportHeight = window.innerHeight;
 let lastContextMenuMessageElement = null;
+let lastFocusedElementBeforeActionModal = null;
+const pendingSeenMessageIds = new Set();
+const messageMetaById = new Map();
 
 const appSettings = {
     notificationSoundEnabled: true,
@@ -245,6 +253,23 @@ function bindSettingsUiEvents() {
     window.addEventListener("resize", syncMobileComposerActions);
 }
 
+function bindMessageActionModalEvents() {
+    messageActionModalClose?.addEventListener("click", closeMessageActionModal);
+    messageActionModalOverlay?.addEventListener("click", (event) => {
+        if (event.target === messageActionModalOverlay) {
+            closeMessageActionModal();
+        }
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && messageActionModalOverlay && !messageActionModalOverlay.hidden) {
+            event.preventDefault();
+            closeMessageActionModal();
+            return;
+        }
+        trapActionModalFocus(event);
+    });
+}
+
 async function loadCustomNotificationSound() {
     try {
         const response = await fetch(CUSTOM_SOUND_PATH);
@@ -267,6 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadAppSettings();
     applySettingsUi();
     bindSettingsUiEvents();
+    bindMessageActionModalEvents();
     loadCustomNotificationSound();
 });
 
@@ -364,6 +390,131 @@ function closeMessageContextMenu() {
         lastContextMenuMessageElement.focus();
         lastContextMenuMessageElement = null;
     }
+}
+
+function getActionModalFocusableElements() {
+    if (!messageActionModalOverlay || messageActionModalOverlay.hidden) {
+        return [];
+    }
+
+    const selector = [
+        "button:not([disabled])",
+        "a[href]",
+        "input:not([disabled])",
+        "select:not([disabled])",
+        "textarea:not([disabled])",
+        "[tabindex]:not([tabindex='-1'])",
+    ].join(",");
+
+    return Array.from(messageActionModalOverlay.querySelectorAll(selector)).filter((element) => {
+        if (!(element instanceof HTMLElement)) {
+            return false;
+        }
+        if (element.hidden) {
+            return false;
+        }
+        return element.offsetParent !== null || element === document.activeElement;
+    });
+}
+
+function focusFirstActionModalElement() {
+    const focusable = getActionModalFocusableElements();
+    if (focusable.length) {
+        focusable[0].focus();
+        return;
+    }
+    messageActionModalClose?.focus();
+}
+
+function trapActionModalFocus(event) {
+    if (!messageActionModalOverlay || messageActionModalOverlay.hidden || event.key !== "Tab") {
+        return;
+    }
+
+    const focusable = getActionModalFocusableElements();
+    if (!focusable.length) {
+        event.preventDefault();
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+        return;
+    }
+
+    if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+    }
+}
+
+function formatMessageTimestamp(timestamp) {
+    if (!timestamp) {
+        return "-";
+    }
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+        return "-";
+    }
+    return date.toLocaleString("default", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    });
+}
+
+function openMessageActionModal(title, bodyNode) {
+    if (!messageActionModalOverlay || !messageActionModalTitle || !messageActionModalBody) {
+        return;
+    }
+
+    lastFocusedElementBeforeActionModal =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    messageActionModalTitle.textContent = title;
+    messageActionModalBody.innerHTML = "";
+    if (bodyNode instanceof Node) {
+        messageActionModalBody.appendChild(bodyNode);
+    }
+    messageActionModalOverlay.setAttribute("aria-hidden", "false");
+    messageActionModalOverlay.hidden = false;
+    requestAnimationFrame(() => {
+        messageActionModalOverlay.classList.add("visible");
+        focusFirstActionModalElement();
+    });
+}
+
+function closeMessageActionModal() {
+    if (!messageActionModalOverlay) {
+        return;
+    }
+
+    messageActionModalOverlay.classList.remove("visible");
+    messageActionModalOverlay.setAttribute("aria-hidden", "true");
+    setTimeout(() => {
+        if (!messageActionModalOverlay.classList.contains("visible")) {
+            messageActionModalOverlay.hidden = true;
+            if (messageActionModalBody) {
+                messageActionModalBody.innerHTML = "";
+            }
+            if (
+                lastFocusedElementBeforeActionModal &&
+                document.contains(lastFocusedElementBeforeActionModal)
+            ) {
+                lastFocusedElementBeforeActionModal.focus();
+            }
+            lastFocusedElementBeforeActionModal = null;
+        }
+    }, 180);
 }
 
 function getMessageTextForCopy(messageElement) {
@@ -563,6 +714,80 @@ async function sendEncryptedTextMessage(
     return json;
 }
 
+function createForwardTargetListContent(onSelectUsername) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "forward-target-list";
+
+    const users = Array.from(chatUsers)
+        .filter((username) => username && username !== CURRENT_USER)
+        .sort((a, b) => a.localeCompare(b));
+
+    if (!users.length) {
+        const empty = document.createElement("div");
+        empty.className = "forward-target-empty";
+        empty.textContent = "No chats available yet. Start a chat first, then try forwarding.";
+        wrapper.appendChild(empty);
+        return wrapper;
+    }
+
+    users.forEach((username) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "forward-target-item";
+        button.innerHTML = `
+            <span class="forward-target-avatar">${escapeHtml((username[0] || "?").toUpperCase())}</span>
+            <span class="forward-target-name">${escapeHtml(username)}</span>
+        `;
+        button.addEventListener("click", () => onSelectUsername(username, button));
+        wrapper.appendChild(button);
+    });
+
+    return wrapper;
+}
+
+function showMessageDetailsModal(messageElement, messageData = null) {
+    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const details = messageData || messageMetaById.get(messageId) || {};
+
+    const senderId = Number(details.sender_id ?? messageElement.getAttribute("data-sender-id") ?? 0);
+    const senderLabel = senderId === Number(CURRENT_USER_ID) ? "You" : currentChatUser || "Peer";
+    const messageType = String(details.message_type || messageElement.getAttribute("data-message-type") || "text");
+    const sentAt = details.created_at || messageElement.getAttribute("data-created-at") || "";
+    const seenAt = details.seen_at || messageElement.getAttribute("data-seen-at") || "";
+    const fileSize = details.file_size || messageElement.getAttribute("data-file-size") || "";
+    const text = getMessageTextForCopy(messageElement);
+
+    const body = document.createElement("div");
+    body.className = "message-details-list";
+
+    const rows = [
+        ["Message ID", messageId || "-"],
+        ["Type", messageType],
+        ["Sender", senderLabel],
+        ["Sent", formatMessageTimestamp(sentAt)],
+        ["Seen", seenAt ? formatMessageTimestamp(seenAt) : "Not seen yet"],
+    ];
+
+    if (text) {
+        rows.push(["Characters", String(text.length)]);
+    }
+    if (fileSize) {
+        rows.push(["File Size", formatFileSize(Number(fileSize)) || String(fileSize)]);
+    }
+
+    rows.forEach(([label, value]) => {
+        const row = document.createElement("div");
+        row.className = "message-details-row";
+        row.innerHTML = `
+            <span class="message-details-label">${escapeHtml(String(label))}</span>
+            <span class="message-details-value">${escapeHtml(String(value))}</span>
+        `;
+        body.appendChild(row);
+    });
+
+    openMessageActionModal("Message Details", body);
+}
+
 async function forwardMessageText(messageElement) {
     const messageText = getMessageTextForCopy(messageElement);
     if (!messageText) {
@@ -570,40 +795,38 @@ async function forwardMessageText(messageElement) {
         return;
     }
 
-    const destination = window
-        .prompt("Forward to username:", currentChatUser || "")
-        ?.trim();
-    if (!destination) {
-        return;
-    }
+    const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const content = createForwardTargetListContent(async (destination, button) => {
+        if (!destination || destination === CURRENT_USER) {
+            showModal("Forward Failed", "Invalid forward target.", "warning");
+            return;
+        }
 
-    if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(destination)) {
-        showModal(
-            "Invalid Username",
-            "Username must start with a letter and contain only letters, numbers, hyphens, and underscores.",
-            "warning"
-        );
-        return;
-    }
+        try {
+            if (button) {
+                button.disabled = true;
+                button.classList.add("is-forwarding");
+            }
+            await sendEncryptedTextMessage(
+                destination,
+                messageText,
+                null,
+                sourceMessageId || null
+            );
+            addUserToChatList(destination);
+            closeMessageActionModal();
+            showModal("Forwarded", `Message forwarded to ${destination}.`, "success");
+        } catch (error) {
+            showModal("Forward Failed", error.message || "Unable to forward message.", "error");
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.classList.remove("is-forwarding");
+            }
+        }
+    });
 
-    if (destination === CURRENT_USER) {
-        showModal("Forward Failed", "You cannot forward messages to yourself.", "warning");
-        return;
-    }
-
-    try {
-        const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
-        await sendEncryptedTextMessage(
-            destination,
-            messageText,
-            null,
-            sourceMessageId || null
-        );
-        addUserToChatList(destination);
-        showModal("Forwarded", `Message forwarded to ${destination}.`, "success");
-    } catch (error) {
-        showModal("Forward Failed", error.message || "Unable to forward message.", "error");
-    }
+    openMessageActionModal("Forward Message", content);
 }
 
 async function deleteMessageById(messageId) {
@@ -645,6 +868,8 @@ async function deleteMessageFromContext(messageElement) {
                 (item) => Number(item.id) !== messageId
             );
         }
+        pendingSeenMessageIds.delete(messageId);
+        messageMetaById.delete(messageId);
     } catch (error) {
         showModal("Delete Failed", error.message || "Unable to delete message.", "error");
     }
@@ -652,7 +877,14 @@ async function deleteMessageFromContext(messageElement) {
 
 function addMessageActionHandlers(
     messageElement,
-    { canReply = true, canDelete = true, canCopy = false, canForward = false } = {}
+    {
+        canReply = true,
+        canDelete = true,
+        canCopy = false,
+        canForward = false,
+        canDetails = true,
+        messageData = null,
+    } = {}
 ) {
     let longPressTimer = null;
     messageElement.tabIndex = 0;
@@ -722,6 +954,18 @@ function addMessageActionHandlers(
                 closeMessageContextMenu();
             });
             appendMenuAction(deleteBtn);
+        }
+
+        if (canDetails) {
+            const detailsBtn = document.createElement("button");
+            detailsBtn.type = "button";
+            detailsBtn.className = "message-context-menu-item";
+            detailsBtn.innerHTML = '<i class="fas fa-circle-info me-2"></i>Details';
+            detailsBtn.addEventListener("click", () => {
+                closeMessageContextMenu();
+                showMessageDetailsModal(messageElement, messageData);
+            });
+            appendMenuAction(detailsBtn);
         }
 
         if (!menu.children.length) {
@@ -892,6 +1136,8 @@ async function selectChatUser(username) {
     setComposerStatus("");
     clearReplyState();
     chatMessagesElem.innerHTML = "";
+    pendingSeenMessageIds.clear();
+    messageMetaById.clear();
     toggleSettingsPanel(false);
 
     messageOffset = 0;
@@ -1042,6 +1288,10 @@ async function loadCurrentChatsRecentMessages() {
             return;
         }
 
+        const hasIncomingFromPeer = data.messages.some(
+            (message) => Number(message.sender_id) !== Number(CURRENT_USER_ID)
+        );
+
         if (
             appSettings.notificationSoundEnabled &&
             data.messages[data.messages.length - 1]?.sender_id != CURRENT_USER_ID
@@ -1058,6 +1308,14 @@ async function loadCurrentChatsRecentMessages() {
         for (const msg of currentChatRecentMessages) {
             await addMessageToChat(msg, false, true);
         }
+
+        if (hasIncomingFromPeer && pendingSeenMessageIds.size) {
+            pendingSeenMessageIds.forEach((pendingId) => {
+                updateMessageTickStatus(pendingId, true);
+            });
+            pendingSeenMessageIds.clear();
+        }
+
         updateMessagesStatus(data.messages); // Mark as seen on the background
         setComposerStatus("");
 
@@ -1073,6 +1331,44 @@ async function loadCurrentChatsRecentMessages() {
     } finally {
         isLoadingMessages = false;
     }
+}
+
+async function refreshPendingSeenStates() {
+    if (!currentChatUser || !pendingSeenMessageIds.size || !navigator.onLine) {
+        return;
+    }
+
+    const ids = Array.from(pendingSeenMessageIds).slice(0, 200);
+    const query = new URLSearchParams({
+        with: currentChatUser,
+        message_ids: ids.join(","),
+    });
+
+    try {
+        const res = await fetch(`api/fetch_seen_status.php?${query.toString()}`);
+        if (!res.ok) {
+            return;
+        }
+        const data = await res.json();
+        if (data.status !== "ok") {
+            return;
+        }
+        if (Array.isArray(data.seen_messages) && data.seen_messages.length) {
+            data.seen_messages.forEach((item) => {
+                const seenId = Number(item?.id || 0);
+                if (!seenId) {
+                    return;
+                }
+                const seenAt = typeof item?.seen_at === "string" ? item.seen_at : "";
+                updateMessageTickStatus(seenId, true, seenAt);
+            });
+            return;
+        }
+
+        (data.seen_message_ids || []).forEach((seenId) => {
+            updateMessageTickStatus(Number(seenId), true);
+        });
+    } catch (error) {}
 }
 
 function forceFetchCurrentChatMessages() {
@@ -1316,6 +1612,22 @@ async function addMessageToChat(msg, prepend = false) {
             ? "message-status-indicator seen-ticks"
             : "message-status-indicator just-sent-tick";
         div.appendChild(tickContainer);
+
+        if (msg.seen_at) {
+            pendingSeenMessageIds.delete(Number(msg.id));
+        } else {
+            pendingSeenMessageIds.add(Number(msg.id));
+        }
+    }
+
+    messageMetaById.set(Number(msg.id), msg);
+    div.setAttribute("data-message-id", String(msg.id));
+    div.setAttribute("data-message-type", String(msg.message_type || "text"));
+    div.setAttribute("data-sender-id", String(msg.sender_id));
+    div.setAttribute("data-created-at", msg.created_at || "");
+    div.setAttribute("data-seen-at", msg.seen_at || "");
+    if (msg.file_size) {
+        div.setAttribute("data-file-size", String(msg.file_size));
     }
 
     if (hasContextActions) {
@@ -1324,6 +1636,8 @@ async function addMessageToChat(msg, prepend = false) {
             canDelete: true,
             canCopy,
             canForward,
+            canDetails: true,
+            messageData: msg,
         });
     }
 
@@ -1394,7 +1708,7 @@ function scrollToLatest() {
 
 window.scrollToLatest = scrollToLatest;
 
-function updateMessageTickStatus(messageId, isSeen) {
+function updateMessageTickStatus(messageId, isSeen, seenAtOverride = "") {
     const messageDiv = Array.from(chatMessagesElem.children).find(
         (el) =>
             el.getAttribute("data-message-id") == messageId ||
@@ -1408,6 +1722,20 @@ function updateMessageTickStatus(messageId, isSeen) {
         tickIndicator.className = isSeen
             ? "message-status-indicator seen-ticks"
             : "message-status-indicator just-sent-tick";
+    }
+
+    if (isSeen) {
+        pendingSeenMessageIds.delete(Number(messageId));
+        const seenAt = seenAtOverride || new Date().toISOString();
+        messageDiv.setAttribute("data-seen-at", seenAt);
+
+        const existingMeta = messageMetaById.get(Number(messageId));
+        if (existingMeta && typeof existingMeta === "object") {
+            existingMeta.seen_at = seenAt;
+            messageMetaById.set(Number(messageId), existingMeta);
+        }
+    } else {
+        pendingSeenMessageIds.add(Number(messageId));
     }
 }
 
@@ -2306,6 +2634,10 @@ setInterval(async () => {
     chatListTriggerTime = ++chatListTriggerTime % 10;
 }, 1000);
 
+setInterval(() => {
+    refreshPendingSeenStates();
+}, SEEN_STATUS_POLL_MS);
+
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
         showModal("No Chat Selected", "Select a user to chat with first", "warning");
@@ -2377,7 +2709,7 @@ function addRecordingIndicator() {
     indicator.innerHTML = `
     <div class="recording-content">
       <div class="recording-dot"></div>
-      <span class="px-1 px-lg-5 pg-md-5">Recording...</span>
+            <span class="px-1 px-lg-5 px-md-5">Recording...</span>
       <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="stopRecording()" title="Stop Recording">
         <i class="fas fa-stop"></i>
       </button>
