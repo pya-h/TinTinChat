@@ -33,10 +33,20 @@ async function importRsaPrivateKey(pem) {
 const publicKeyCache = new Map();
 let privateKey = null;
 
+async function fetchApiJson(url, options = {}) {
+    if (window.ApiService?.json) {
+        return window.ApiService.json(url, options);
+    }
+
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+    }
+    return response.json();
+}
+
 async function fetchAndImportPrivateKey() {
-    const res = await fetch("api/get_private_key.php");
-    if (!res.ok) throw new Error("Failed to fetch private key");
-    const data = await res.json();
+    const data = await fetchApiJson("api/get_private_key.php");
     if (!data.privateKeyPem) throw new Error("No private key PEM found");
     privateKey = await importRsaPrivateKey(data.privateKeyPem);
     return privateKey;
@@ -45,9 +55,9 @@ async function fetchAndImportPrivateKey() {
 async function getPublicKey(username) {
     if (publicKeyCache.has(username)) return publicKeyCache.get(username);
 
-    const res = await fetch(`api/get_public_key.php?username=${encodeURIComponent(username)}`);
-    if (!res.ok) throw new Error("Failed to fetch public key");
-    const data = await res.json();
+    const data = await fetchApiJson(
+        `api/get_public_key.php?username=${encodeURIComponent(username)}`
+    );
     if (!data.publicKey) throw new Error("Public key missing");
 
     const cryptoKey = await importRsaPublicKey(data.publicKey);

@@ -81,7 +81,7 @@ Legend:
 - [x] (`P2`) Centralize key user-facing modal strings in chat actions/errors for localization-readiness.
 
 ### Phase D — Maintainability (`P1/P2`)
-- [ ] (`P1`) Introduce internal `api-service.js` for consistent fetch/error handling.
+- [x] (`P1`) Introduce internal `api-service.js` for consistent fetch/error handling.
 - [ ] (`P1`) Split `chat.js` into smaller modules while keeping vanilla JS approach.
 - [ ] (`P2`) Introduce shared constants for limits/timeouts (frontend + backend sync).
 - [ ] (`P2`) Add developer docs for endpoint contract and error codes.

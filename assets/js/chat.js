@@ -411,6 +411,9 @@ function escapeHtml(text) {
 }
 
 function getCsrfHeaders() {
+    if (window.ApiService?.csrfHeaders) {
+        return window.ApiService.csrfHeaders();
+    }
     if (typeof CSRF_TOKEN === "string" && CSRF_TOKEN.length) {
         return { "X-CSRF-Token": CSRF_TOKEN };
     }
@@ -764,15 +767,11 @@ async function sendEncryptedTextMessage(
         formData.append("forwarded_from_message_id", String(forwardedFromMessageId));
     }
 
-    const res = await fetch("api/send_message.php", {
+    const json = await window.ApiService.jsonOk("api/send_message.php", {
         method: "POST",
         headers: getCsrfHeaders(),
         body: formData,
     });
-    const json = await res.json();
-    if (json.status !== "ok") {
-        throw new Error(json.error || "Send failed");
-    }
 
     return json;
 }
@@ -897,7 +896,7 @@ async function forwardMessageText(messageElement) {
 }
 
 async function deleteMessageById(messageId) {
-    const res = await fetch("api/delete_messages.php", {
+    await window.ApiService.jsonOk("api/delete_messages.php", {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
@@ -905,10 +904,6 @@ async function deleteMessageById(messageId) {
         },
         body: JSON.stringify({ messages: [messageId] }),
     });
-    const json = await res.json();
-    if (json.status !== "ok") {
-        throw new Error(json.error || "Failed to delete message");
-    }
 }
 
 async function deleteMessageFromContext(messageElement) {
@@ -1226,7 +1221,7 @@ async function updateMessagesStatus(messages) {
     if (!messagesNewlySeen?.length) {
         return false;
     }
-    const res = await fetch("api/see_messages.php", {
+    await window.ApiService.jsonOk("api/see_messages.php", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -1234,10 +1229,6 @@ async function updateMessagesStatus(messages) {
         },
         body: JSON.stringify({ messages: messagesNewlySeen }),
     });
-    const json = await res.json();
-    if (json.status !== "ok") {
-        throw new Error(json.error || "Failed marking new messages as seen");
-    }
     return true;
 }
 
@@ -1254,13 +1245,11 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
 
         const offset = isInitialLoad ? 0 : messageOffset;
 
-        const res = await fetch(
+        const data = await window.ApiService.json(
             `api/fetch_messages.php?with=${encodeURIComponent(
                 username
             )}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
         );
-        if (!res.ok) throw new Error("Failed to load messages");
-        const data = await res.json();
         clearInlineChatState();
         setComposerStatus("");
 
@@ -1342,13 +1331,11 @@ async function loadCurrentChatsRecentMessages() {
 
     try {
         isLoadingMessages = true;
-        const res = await fetch(
+        const data = await window.ApiService.json(
             `api/fetch_recent_messages.php?with=${encodeURIComponent(
                 currentChatUser
             )}&offsetMsgId=${currentChatRecentMessages[currentChatRecentMessages.length - 1].id}`
         );
-        if (!res.ok) throw new Error("Failed to load messages");
-        const data = await res.json();
 
         if (!data?.messages?.length) {
             setComposerStatus("");
@@ -1401,13 +1388,9 @@ async function refreshPendingSeenStates() {
     });
 
     try {
-        const res = await fetch(`api/fetch_seen_status.php?${query.toString()}`, {
+        const data = await window.ApiService.json(`api/fetch_seen_status.php?${query.toString()}`, {
             cache: "no-store",
         });
-        if (!res.ok) {
-            return;
-        }
-        const data = await res.json();
         if (!data || data.status !== "ok") {
             return;
         }
@@ -2470,10 +2453,9 @@ async function searchForUser(selectUser = false) {
     searchUserInput.disabled = true;
 
     try {
-        const response = await fetch(
+        const data = await window.ApiService.json(
             `api/check_user_exists.php?username=${encodeURIComponent(val)}`
         );
-        const data = await response.json();
 
         if (data.exists) {
             addUserToChatList(val);
@@ -2547,8 +2529,9 @@ async function searchUserSuggestions(query) {
     }
 
     try {
-        const response = await fetch(`api/search_users.php?query=${encodeURIComponent(query)}`);
-        const data = await response.json();
+        const data = await window.ApiService.json(
+            `api/search_users.php?query=${encodeURIComponent(query)}`
+        );
 
         if (data.users && data.users.length > 0) {
             showSuggestions(data.users);
@@ -2678,9 +2661,7 @@ function clearChatListErrorState() {
 
 async function loadChatList(force = false) {
     try {
-        const res = await fetch("api/fetch_chats.php");
-        if (!res.ok) throw new Error("Failed to load chat list");
-        const data = await res.json();
+        const data = await window.ApiService.json("api/fetch_chats.php");
         if (!force && chatUsers?.size === data.chatUsers.length) {
             return;
         }
@@ -2847,14 +2828,11 @@ async function sendVoiceMessage(audioBlob) {
         formData.append("message_for_sender", null);
         formData.append("voice_file", audioBlob, "voice_message.webm");
 
-        const res = await fetch("api/send_voice_message.php", {
+        await window.ApiService.jsonOk("api/send_voice_message.php", {
             method: "POST",
             headers: getCsrfHeaders(),
             body: formData,
         });
-
-        const json = await res.json();
-        if (json.status !== "ok") throw new Error(json.error || "Send failed");
 
         sendingIndicator.remove();
 
@@ -2928,14 +2906,11 @@ async function sendImageMessage(imageFile) {
         formData.append("message_for_sender", null);
         formData.append("image_file", imageFile, imageFile.name);
 
-        const res = await fetch("api/send_image_message.php", {
+        await window.ApiService.jsonOk("api/send_image_message.php", {
             method: "POST",
             headers: getCsrfHeaders(),
             body: formData,
         });
-
-        const json = await res.json();
-        if (json.status !== "ok") throw new Error(json.error || "Send failed");
 
         sendingIndicator.remove();
 
@@ -2990,14 +2965,11 @@ async function sendFileMessage(file) {
         formData.append("message_for_sender", null);
         formData.append("file", file, file.name);
 
-        const res = await fetch("api/send_file_message.php", {
+        await window.ApiService.jsonOk("api/send_file_message.php", {
             method: "POST",
             headers: getCsrfHeaders(),
             body: formData,
         });
-
-        const json = await res.json();
-        if (json.status !== "ok") throw new Error(json.error || "Send failed");
 
         sendingIndicator.remove();
 

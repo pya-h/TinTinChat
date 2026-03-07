@@ -152,6 +152,7 @@ $csrfToken = generateCsrfToken();
     </script>
 
     <script src="assets/js/ui-enhancements.js"></script>
+    <script src="assets/js/api-service.js"></script>
     <script src="assets/js/crypto.js"></script>
     <script src="assets/js/chat.js"></script>
 </body>
