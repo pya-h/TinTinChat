@@ -134,7 +134,7 @@ Legend:
 	- forward supports user→group, group→user, and group→group targets,
 	- copy/details/delete behaviors follow group permissions.
 	- text-first group parity delivered; group media/file parity remains follow-up.
-- [ ] (`P2`) **Milestone E9 — Roles & Permissions**
+- [x] (`P2`) **Milestone E9 — Roles & Permissions**
 	- add group role/permission policy baseline:
 	- owner/admin/member roles,
 	- add/remove member permissions,

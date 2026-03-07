@@ -105,6 +105,10 @@ $csrfToken = generateCsrfToken();
                             <button type="button" id="groupCopyJoinLinkBtn" class="btn btn-outline-secondary">Copy</button>
                             <button type="button" id="groupRotateJoinLinkBtn" class="btn btn-outline-secondary">Rotate</button>
                         </div>
+                        <div class="group-management-actions mt-2 d-flex gap-2">
+                            <button type="button" id="groupTransferOwnerBtn" class="btn btn-sm btn-outline-warning" hidden>Transfer Ownership</button>
+                            <button type="button" id="groupLeaveBtn" class="btn btn-sm btn-outline-danger">Leave Group</button>
+                        </div>
                     </div>
                 </div>
                 <div id="messageActionsHint" class="message-actions-hint" aria-live="polite">

@@ -28,6 +28,8 @@ $membersStmt->execute([$groupId]);
 $members = $membersStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $canManage = in_array($role, ['owner', 'admin'], true);
+$canTransferOwner = $role === 'owner';
+$canLeave = true;
 
 apiSuccess([
     'group' => [
@@ -42,4 +44,6 @@ apiSuccess([
     'members' => $members,
     'role' => $role,
     'can_manage' => $canManage,
+    'can_transfer_owner' => $canTransferOwner,
+    'can_leave' => $canLeave,
 ]);

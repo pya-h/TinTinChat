@@ -31,6 +31,8 @@ const groupAddMemberBtn = document.getElementById("groupAddMemberBtn");
 const groupJoinLinkInput = document.getElementById("groupJoinLinkInput");
 const groupCopyJoinLinkBtn = document.getElementById("groupCopyJoinLinkBtn");
 const groupRotateJoinLinkBtn = document.getElementById("groupRotateJoinLinkBtn");
+const groupTransferOwnerBtn = document.getElementById("groupTransferOwnerBtn");
+const groupLeaveBtn = document.getElementById("groupLeaveBtn");
 
 const appConstants = window.APP_CONSTANTS || {};
 
@@ -228,6 +230,17 @@ function chatListItemId(chatTarget) {
 
 function chatListSpinnerId(chatTarget) {
     return `${chatListItemId(chatTarget)}_loading`;
+}
+
+function setGroupNewBadgeVisibility(chatListItem, visible) {
+    if (!chatListItem) {
+        return;
+    }
+    const badge = chatListItem.querySelector(".chat-item-new-badge");
+    if (!badge) {
+        return;
+    }
+    badge.style.display = visible ? "inline-flex" : "none";
 }
 
 function loadAppSettings() {
@@ -1224,12 +1237,14 @@ function addGroupToChatList(group) {
         return false;
     }
 
+    const existingGroup = chatGroupsById.get(groupId);
     chatGroupsById.set(groupId, {
         id: groupId,
         title: String(group.title || `Group ${groupId}`),
         description: String(group.description || ""),
         role: String(group.role || "member"),
         member_count: Number(group.member_count || 0),
+        last_message_at: String(group.last_message_at || ""),
     });
 
     const token = buildGroupToken(groupId);
@@ -1242,6 +1257,13 @@ function addGroupToChatList(group) {
         const metaElement = existing.querySelector(".chat-item-meta");
         if (titleElement) titleElement.textContent = title;
         if (metaElement) metaElement.textContent = `Group • ${role}`;
+
+        const previousLast = String(existingGroup?.last_message_at || "");
+        const currentLast = String(chatGroupsById.get(groupId)?.last_message_at || "");
+        const isCurrentOpen = currentChatUser === token;
+        if (!isCurrentOpen && previousLast && currentLast && previousLast !== currentLast) {
+            setGroupNewBadgeVisibility(existing, true);
+        }
         return false;
     }
 
@@ -1264,6 +1286,7 @@ function addGroupToChatList(group) {
             <span class="chat-item-title">${escapeHtml(title)}</span>
             <span class="chat-item-meta">Group • ${escapeHtml(role)}</span>
         </span>
+        <span class="chat-item-new-badge" style="display:none;" aria-label="New messages in group">new</span>
         <span id='${chatListSpinnerId(token)}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>
     `;
     li.id = chatListItemId(token);
@@ -1328,6 +1351,8 @@ async function selectChatUser(username) {
 
 async function selectGroupChat(groupId) {
     const token = buildGroupToken(groupId);
+    const listItem = document.getElementById(chatListItemId(token));
+    setGroupNewBadgeVisibility(listItem, false);
     return selectChatTarget(token);
 }
 
@@ -1394,7 +1419,11 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
         if (isInitialLoad) {
             if (!data.messages.length) {
                 chatMessagesElem.innerHTML = "";
-                showEmptyChatState("No messages yet. Start the conversation.");
+                showEmptyChatState(
+                    isGroupToken(chatTarget)
+                        ? "No messages in this group yet. Start the conversation."
+                        : "No messages yet. Start the conversation."
+                );
                 currentChatRecentMessages = [];
                 messageOffset = 0;
                 return;
@@ -2843,6 +2872,7 @@ async function renderGroupInfoPanel(groupId) {
         const details = await loadGroupDetails(groupId, true);
         const group = details?.group || {};
         const members = Array.isArray(details?.members) ? details.members : [];
+        const role = String(details?.role || "member");
 
         if (groupInfoTitle) groupInfoTitle.textContent = group.title || `Group ${groupId}`;
         if (groupInfoDescription)
@@ -2853,9 +2883,25 @@ async function renderGroupInfoPanel(groupId) {
             groupInfoMembers.innerHTML = "";
             members.forEach((member) => {
                 const li = document.createElement("li");
-                li.innerHTML = `<span>${escapeHtml(member.username || "Unknown")}</span><span>${escapeHtml(
-                    member.role || "member"
-                )}</span>`;
+                const memberRole = String(member.role || "member");
+                const memberUserId = Number(member.user_id || 0);
+                const canRemove =
+                    details?.can_manage &&
+                    memberUserId !== Number(CURRENT_USER_ID) &&
+                    memberRole !== "owner" &&
+                    !(role === "admin" && memberRole !== "member");
+                const canTransfer =
+                    Boolean(details?.can_transfer_owner) &&
+                    memberUserId !== Number(CURRENT_USER_ID) &&
+                    memberRole !== "owner";
+
+                li.innerHTML = `
+                    <span>${escapeHtml(member.username || "Unknown")} (${escapeHtml(memberRole)})</span>
+                    <span class="group-member-actions">
+                        ${canTransfer ? `<button type="button" class="btn btn-outline-warning" data-action="transfer-owner" aria-label="Transfer ownership to ${escapeHtml(member.username || "member")}" data-user-id="${memberUserId}" data-username="${escapeHtml(member.username || "")}">Owner</button>` : ""}
+                        ${canRemove ? `<button type="button" class="btn btn-outline-danger" data-action="remove-member" aria-label="Remove ${escapeHtml(member.username || "member")} from group" data-user-id="${memberUserId}" data-username="${escapeHtml(member.username || "")}">Remove</button>` : ""}
+                    </span>
+                `;
                 groupInfoMembers.appendChild(li);
             });
         }
@@ -2876,6 +2922,16 @@ async function renderGroupInfoPanel(groupId) {
         if (groupAddMemberBtn) {
             groupAddMemberBtn.style.display = details?.can_manage ? "" : "none";
         }
+        if (groupTransferOwnerBtn) {
+            groupTransferOwnerBtn.hidden = !Boolean(details?.can_transfer_owner);
+        }
+        if (groupLeaveBtn) {
+            groupLeaveBtn.hidden = !Boolean(details?.can_leave);
+        }
+        groupInfoPanel?.setAttribute(
+            "aria-label",
+            `Group details for ${group.title || `Group ${groupId}`}`
+        );
     } catch (error) {
         showModal("Group Details", error.message || "Failed to load group details", "warning");
     }
@@ -2943,19 +2999,29 @@ async function handleJoinGroupFromUrl() {
 async function loadChatList(force = false) {
     try {
         const data = await window.ApiService.json("api/fetch_chats.php");
+        const incomingGroups = Array.isArray(data.chatGroups) ? data.chatGroups : [];
+        const incomingGroupIds = new Set(incomingGroups.map((group) => Number(group.id || 0)));
+
         if (
             !force &&
             chatUsers?.size === (data.chatUsers?.length || 0) &&
-            chatGroupsById.size === (data.chatGroups?.length || 0)
+            chatGroupsById.size === incomingGroups.length
         ) {
             return;
         }
         if (data.chatUsers && Array.isArray(data.chatUsers)) {
             data.chatUsers.forEach(addUserToChatList);
         }
-        if (data.chatGroups && Array.isArray(data.chatGroups)) {
-            data.chatGroups.forEach(addGroupToChatList);
-        }
+        Array.from(chatGroupsById.keys()).forEach((groupId) => {
+            if (!incomingGroupIds.has(Number(groupId))) {
+                const token = buildGroupToken(groupId);
+                chatGroupsById.delete(groupId);
+                groupDetailsCache.delete(groupId);
+                document.getElementById(chatListItemId(token))?.remove();
+            }
+        });
+
+        incomingGroups.forEach(addGroupToChatList);
         clearChatListErrorState();
     } catch (e) {
         showChatListErrorState();
@@ -3040,6 +3106,112 @@ groupRotateJoinLinkBtn?.addEventListener("click", async () => {
         showModal("Join Link Rotated", "A new join link is now active.", "success");
     } catch (error) {
         showModal("Rotate Failed", error.message || "Unable to rotate join link.", "error");
+    }
+});
+
+groupInfoMembers?.addEventListener("click", async (event) => {
+    const target = event.target.closest("button[data-action]");
+    if (!target) {
+        return;
+    }
+    const action = target.getAttribute("data-action");
+    const userId = Number(target.getAttribute("data-user-id") || 0);
+    const username = target.getAttribute("data-username") || "member";
+    const groupId = getCurrentGroupId();
+    if (!groupId || !userId) {
+        return;
+    }
+
+    if (action === "remove-member") {
+        const confirmed = window.confirm(`Remove ${username} from this group?`);
+        if (!confirmed) {
+            return;
+        }
+        try {
+            await window.ApiService.jsonOk("api/remove_group_member.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
+                body: JSON.stringify({ group_id: groupId, user_id: userId }),
+            });
+            await renderGroupInfoPanel(groupId);
+            showModal("Member Removed", `${username} was removed from group.`, "success");
+        } catch (error) {
+            showModal("Remove Failed", error.message || "Unable to remove member.", "error");
+        }
+        return;
+    }
+
+    if (action === "transfer-owner") {
+        const confirmed = window.confirm(`Transfer ownership to ${username}?`);
+        if (!confirmed) {
+            return;
+        }
+        try {
+            await window.ApiService.jsonOk("api/transfer_group_owner.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
+                body: JSON.stringify({ group_id: groupId, new_owner_user_id: userId }),
+            });
+            await renderGroupInfoPanel(groupId);
+            await loadChatList(true);
+            showModal("Ownership Transferred", `${username} is now the group owner.`, "success");
+        } catch (error) {
+            showModal("Transfer Failed", error.message || "Unable to transfer ownership.", "error");
+        }
+    }
+});
+
+groupTransferOwnerBtn?.addEventListener("click", () => {
+    showModal(
+        "Transfer Ownership",
+        "Use the Owner button next to a member name to transfer ownership.",
+        "info"
+    );
+});
+
+groupLeaveBtn?.addEventListener("click", async () => {
+    const groupId = getCurrentGroupId();
+    if (!groupId) {
+        return;
+    }
+
+    const confirmed = window.confirm(
+        "Leave this group? If you are the owner, transfer ownership first unless you are the last member."
+    );
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await window.ApiService.jsonOk("api/leave_group.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
+            body: JSON.stringify({ group_id: groupId }),
+        });
+
+        groupInfoPanel.hidden = true;
+        groupInfoBtn.hidden = true;
+        currentChatUser = null;
+        currentChatRecentMessages = null;
+        chatMessagesElem.innerHTML = "";
+        chatWithElem.textContent = "Select a chat";
+        chatInput.value = "";
+        chatInput.disabled = true;
+        chatInput.placeholder = "Select someone to chat...";
+
+        await loadChatList(true);
+        showModal("Left Group", "You have left the group.", "success");
+    } catch (error) {
+        showModal("Leave Failed", error.message || "Unable to leave group.", "error");
     }
 });
 

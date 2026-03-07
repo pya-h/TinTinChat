@@ -280,6 +280,18 @@ nav.navbar:hover::after {
     margin-top: 2px;
 }
 
+.chat-item-new-badge {
+    margin-left: auto;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--secondary-color) 18%, transparent);
+    color: var(--secondary-color);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .group-info-panel {
     border-bottom: 1px solid var(--border-color);
     padding: 0.75rem 1rem;
@@ -313,6 +325,22 @@ nav.navbar:hover::after {
     padding: 0.2rem 0;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.group-member-actions {
+    display: inline-flex;
+    gap: 0.3rem;
+}
+
+.group-member-actions .btn {
+    padding: 0.1rem 0.35rem;
+    font-size: 0.7rem;
+}
+
+.group-management-actions .btn {
+    flex: 1;
 }
 
 .group-message-sender {
