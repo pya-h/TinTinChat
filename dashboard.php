@@ -118,6 +118,7 @@ $csrfToken = generateCsrfToken();
             <div id="messageActionModalBody" class="message-action-modal-body"></div>
         </div>
     </div>
+    <div id="messageActionModalAnnouncer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <?php require_once __DIR__ . '/includes/modal.php' ?>
     <script src="assets/js/ext/bootstrap.bundle.min.js"></script>

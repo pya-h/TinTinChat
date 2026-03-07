@@ -18,6 +18,7 @@ const messageActionModalOverlay = document.getElementById("messageActionModalOve
 const messageActionModalTitle = document.getElementById("messageActionModalTitle");
 const messageActionModalBody = document.getElementById("messageActionModalBody");
 const messageActionModalClose = document.getElementById("messageActionModalClose");
+const messageActionModalAnnouncer = document.getElementById("messageActionModalAnnouncer");
 
 const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
@@ -28,6 +29,23 @@ const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
 const SETTINGS_HINT_DISMISSED_KEY = "tintinchat.messageActionsHint.dismissed";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
 const SEEN_STATUS_POLL_MS = 3000;
+const I18N_TEXT = {
+    modalOpened: "Opened {title} dialog.",
+    modalClosed: "Closed {title} dialog.",
+    copiedTitle: "Copied",
+    copiedBody: "Message copied to clipboard.",
+    copyFailedTitle: "Copy Failed",
+    copyFailedNoText: "This message cannot be copied.",
+    copyFailedUnknown: "Unable to copy message.",
+    messageDetailsTitle: "Message Details",
+    forwardTitle: "Forward Message",
+    forwardFailedTitle: "Forward Failed",
+    forwardFailedOnlyText: "Only text messages can be forwarded right now.",
+    forwardFailedInvalidTarget: "Invalid forward target.",
+    forwardedTitle: "Forwarded",
+    forwardedBody: "Message forwarded to {destination}.",
+    forwardTargetEmpty: "No chats available yet. Start a chat first, then try forwarding.",
+};
 
 let currentChatUser = null;
 let currentChatRecentMessages = null;
@@ -378,10 +396,10 @@ function getCsrfHeaders() {
 
 function showMessageCopiedFeedback() {
     if (window.UIEnhancements?.showSearchNotification) {
-        window.UIEnhancements.showSearchNotification("Message copied", "success");
+        window.UIEnhancements.showSearchNotification(I18N_TEXT.copiedBody, "success");
         return;
     }
-    showModal("Copied", "Message copied to clipboard.", "success");
+    showModal(I18N_TEXT.copiedTitle, I18N_TEXT.copiedBody, "success");
 }
 
 function closeMessageContextMenu() {
@@ -472,6 +490,13 @@ function formatMessageTimestamp(timestamp) {
     });
 }
 
+function formatI18nText(template, values = {}) {
+    return String(template || "").replace(/\{(\w+)\}/g, (_, key) => {
+        const value = values[key];
+        return value == null ? "" : String(value);
+    });
+}
+
 function openMessageActionModal(title, bodyNode) {
     if (!messageActionModalOverlay || !messageActionModalTitle || !messageActionModalBody) {
         return;
@@ -485,6 +510,11 @@ function openMessageActionModal(title, bodyNode) {
     if (bodyNode instanceof Node) {
         messageActionModalBody.appendChild(bodyNode);
     }
+    if (messageActionModalAnnouncer) {
+        messageActionModalAnnouncer.textContent = formatI18nText(I18N_TEXT.modalOpened, {
+            title,
+        });
+    }
     messageActionModalOverlay.setAttribute("aria-hidden", "false");
     messageActionModalOverlay.hidden = false;
     requestAnimationFrame(() => {
@@ -497,6 +527,8 @@ function closeMessageActionModal() {
     if (!messageActionModalOverlay) {
         return;
     }
+
+    const closedTitle = messageActionModalTitle?.textContent?.trim() || "message action";
 
     messageActionModalOverlay.classList.remove("visible");
     messageActionModalOverlay.setAttribute("aria-hidden", "true");
@@ -513,6 +545,11 @@ function closeMessageActionModal() {
                 lastFocusedElementBeforeActionModal.focus();
             }
             lastFocusedElementBeforeActionModal = null;
+            if (messageActionModalAnnouncer) {
+                messageActionModalAnnouncer.textContent = formatI18nText(I18N_TEXT.modalClosed, {
+                    title: closedTitle,
+                });
+            }
         }
     }, 180);
 }
@@ -654,7 +691,7 @@ function showEmptyChatState(message = "No messages yet. Start the conversation."
 async function copyMessageText(messageElement) {
     const messageText = getMessageTextForCopy(messageElement);
     if (!messageText) {
-        showModal("Copy Failed", "This message cannot be copied.", "warning");
+        showModal(I18N_TEXT.copyFailedTitle, I18N_TEXT.copyFailedNoText, "warning");
         return;
     }
 
@@ -674,7 +711,7 @@ async function copyMessageText(messageElement) {
         }
         showMessageCopiedFeedback();
     } catch (err) {
-        showModal("Copy Failed", "Unable to copy message.", "error");
+        showModal(I18N_TEXT.copyFailedTitle, I18N_TEXT.copyFailedUnknown, "error");
     }
 }
 
@@ -725,7 +762,7 @@ function createForwardTargetListContent(onSelectUsername) {
     if (!users.length) {
         const empty = document.createElement("div");
         empty.className = "forward-target-empty";
-        empty.textContent = "No chats available yet. Start a chat first, then try forwarding.";
+        empty.textContent = I18N_TEXT.forwardTargetEmpty;
         wrapper.appendChild(empty);
         return wrapper;
     }
@@ -785,20 +822,20 @@ function showMessageDetailsModal(messageElement, messageData = null) {
         body.appendChild(row);
     });
 
-    openMessageActionModal("Message Details", body);
+    openMessageActionModal(I18N_TEXT.messageDetailsTitle, body);
 }
 
 async function forwardMessageText(messageElement) {
     const messageText = getMessageTextForCopy(messageElement);
     if (!messageText) {
-        showModal("Forward Failed", "Only text messages can be forwarded right now.", "warning");
+        showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedOnlyText, "warning");
         return;
     }
 
     const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
     const content = createForwardTargetListContent(async (destination, button) => {
         if (!destination || destination === CURRENT_USER) {
-            showModal("Forward Failed", "Invalid forward target.", "warning");
+            showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedInvalidTarget, "warning");
             return;
         }
 
@@ -815,9 +852,13 @@ async function forwardMessageText(messageElement) {
             );
             addUserToChatList(destination);
             closeMessageActionModal();
-            showModal("Forwarded", `Message forwarded to ${destination}.`, "success");
+            showModal(
+                I18N_TEXT.forwardedTitle,
+                formatI18nText(I18N_TEXT.forwardedBody, { destination }),
+                "success"
+            );
         } catch (error) {
-            showModal("Forward Failed", error.message || "Unable to forward message.", "error");
+            showModal(I18N_TEXT.forwardFailedTitle, error.message || "Unable to forward message.", "error");
         } finally {
             if (button) {
                 button.disabled = false;
@@ -826,7 +867,7 @@ async function forwardMessageText(messageElement) {
         }
     });
 
-    openMessageActionModal("Forward Message", content);
+    openMessageActionModal(I18N_TEXT.forwardTitle, content);
 }
 
 async function deleteMessageById(messageId) {
