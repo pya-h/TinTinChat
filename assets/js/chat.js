@@ -45,6 +45,29 @@ const I18N_TEXT = {
     forwardedTitle: "Forwarded",
     forwardedBody: "Message forwarded to {destination}.",
     forwardTargetEmpty: "No chats available yet. Start a chat first, then try forwarding.",
+    noChatSelectedTitle: "No Chat Selected",
+    noChatSelectedBody: "Select a user to chat with first",
+    sendErrorTitle: "Send Error",
+    sendErrorBody: "Encryption/send error: {error}",
+    downloadErrorTitle: "Download Error",
+    downloadErrorBody: "Failed to download file: {error}",
+    playbackErrorTitle: "Playback Error",
+    playbackErrorBody: "Unable to play voice message. Please try again.",
+    connectionErrorTitle: "Connection Error",
+    connectionErrorBody: "Error checking user existence. Please try again.",
+    keyErrorTitle: "Key Error",
+    keyErrorBody: "Error loading private key: {error}",
+    microphoneErrorTitle: "Microphone Error",
+    microphoneErrorBody: "Microphone access denied or not available.",
+    voiceSendErrorTitle: "Voice Send Error",
+    voiceSendErrorBody: "Voice message send error: {error}",
+    invalidFileTypeTitle: "Invalid File Type",
+    invalidFileTypeImageBody: "Please select an image file.",
+    fileTooLargeTitle: "File Too Large",
+    imageTooLargeBody: "Image file size must be less than 5MB.",
+    fileTooLargeBody: "File size must be less than 50MB.",
+    imageSendErrorTitle: "Image Send Error",
+    imageSendErrorBody: "Image send error: {error}",
 };
 
 let currentChatUser = null;
@@ -2065,7 +2088,11 @@ async function downloadAndOpenFile(messageId, fileName) {
             URL.revokeObjectURL(url);
         }
     } catch (error) {
-        showModal("Download Error", "Failed to download file: " + error.message, "error");
+        showModal(
+            I18N_TEXT.downloadErrorTitle,
+            formatI18nText(I18N_TEXT.downloadErrorBody, { error: error.message || "Unknown" }),
+            "error"
+        );
     } finally {
         if (container) {
             container.style.opacity = "1";
@@ -2243,7 +2270,7 @@ window.playVoiceMessage = function (messageId) {
         }
 
         audio.play().catch(function (error) {
-            showModal("Playback Error", "Unable to play voice message. Please try again.", "error");
+            showModal(I18N_TEXT.playbackErrorTitle, I18N_TEXT.playbackErrorBody, "error");
         });
         playBtn.classList.add("playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
@@ -2257,7 +2284,7 @@ window.playVoiceMessage = function (messageId) {
 
 const sendTextMessage = async () => {
     if (!currentChatUser) {
-        showModal("No Chat Selected", "Select a user to chat with first", "warning");
+        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
     }
     const text = chatInput.value.trim();
@@ -2277,7 +2304,11 @@ const sendTextMessage = async () => {
         setComposerStatus("Message sent", "success");
     } catch (err) {
         setComposerStatus("Message failed to send. Try again.", "error");
-        showModal("Send Error", "Encryption/send error: " + err.message, "error");
+        showModal(
+            I18N_TEXT.sendErrorTitle,
+            formatI18nText(I18N_TEXT.sendErrorBody, { error: err.message || "Unknown" }),
+            "error"
+        );
     } finally {
         sendBtn.disabled = false;
         sendBtn.classList.remove("btn-pressed");
@@ -2460,7 +2491,7 @@ async function searchForUser(selectUser = false) {
             searchUserInput.value = "";
         }
     } catch (error) {
-        showModal("Connection Error", "Error checking user existence. Please try again.", "error");
+        showModal(I18N_TEXT.connectionErrorTitle, I18N_TEXT.connectionErrorBody, "error");
         searchUserInput.value = "";
     } finally {
         searchUserInput.placeholder = originalPlaceholder;
@@ -2623,7 +2654,11 @@ function showSearchLoading(show) {
 chatInput.disabled = true;
 chatInput.placeholder = "Select someone to chat...";
 fetchAndImportPrivateKey().catch((err) => {
-    showModal("Key Error", "Error loading private key: " + err.message, "error");
+    showModal(
+        I18N_TEXT.keyErrorTitle,
+        formatI18nText(I18N_TEXT.keyErrorBody, { error: err.message || "Unknown" }),
+        "error"
+    );
 });
 
 function showChatListErrorState() {
@@ -2681,7 +2716,7 @@ setInterval(() => {
 
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
-        showModal("No Chat Selected", "Select a user to chat with first", "warning");
+        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
     }
     if (!isRecording) {
@@ -2716,7 +2751,7 @@ voiceBtn.addEventListener("click", async () => {
 
             addRecordingIndicator();
         } catch (err) {
-            showModal("Microphone Error", "Microphone access denied or not available.", "error");
+            showModal(I18N_TEXT.microphoneErrorTitle, I18N_TEXT.microphoneErrorBody, "error");
         }
     } else {
         stopRecording();
@@ -2830,7 +2865,11 @@ async function sendVoiceMessage(audioBlob) {
         setComposerStatus("Voice message sent", "success");
     } catch (err) {
         setComposerStatus("Voice message failed. Try again.", "error");
-        showModal("Voice Send Error", "Voice message send error: " + err.message, "error");
+        showModal(
+            I18N_TEXT.voiceSendErrorTitle,
+            formatI18nText(I18N_TEXT.voiceSendErrorBody, { error: err.message || "Unknown" }),
+            "error"
+        );
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
@@ -2839,7 +2878,7 @@ async function sendVoiceMessage(audioBlob) {
 
 imageUploadBtn.addEventListener("click", () => {
     if (!currentChatUser) {
-        showModal("No Chat Selected", "Select a user to chat with first", "warning");
+        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
     }
     imageUploadInput.click();
@@ -2849,13 +2888,13 @@ imageUploadInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
         if (!file.type.startsWith("image/")) {
-            showModal("Invalid File Type", "Please select an image file.", "warning");
+            showModal(I18N_TEXT.invalidFileTypeTitle, I18N_TEXT.invalidFileTypeImageBody, "warning");
             e.target.value = null;
             return;
         }
 
         if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
-            showModal("File Too Large", "Image file size must be less than 5MB.", "warning");
+            showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.imageTooLargeBody, "warning");
             e.target.value = null;
             return;
         }
@@ -2907,7 +2946,11 @@ async function sendImageMessage(imageFile) {
         setComposerStatus("Image sent", "success");
     } catch (err) {
         setComposerStatus("Image upload failed. Try again.", "error");
-        showModal("Image Send Error", "Image send error: " + err.message, "error");
+        showModal(
+            I18N_TEXT.imageSendErrorTitle,
+            formatI18nText(I18N_TEXT.imageSendErrorBody, { error: err.message || "Unknown" }),
+            "error"
+        );
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();
@@ -2918,12 +2961,12 @@ async function sendImageMessage(imageFile) {
 
 async function sendFileMessage(file) {
     if (!currentChatUser) {
-        showModal("No Chat Selected", "Select a user to chat with first", "warning");
+        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
     }
 
     if (file.size > FILE_UPLOAD_MAX_BYTES) {
-        showModal("File Too Large", "File size must be less than 50MB.", "warning");
+        showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.fileTooLargeBody, "warning");
         return;
     }
 
