@@ -1,16 +1,10 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['user_id'])) {
-  http_response_code(401);
-  echo json_encode(['error' => 'Not logged in']);
-  exit;
-}
-
-$userId = $_SESSION['user_id'];
+apiRequireMethod('GET');
+$userId = apiRequireAuth();
 
 $stmt = $pdo->prepare('
   SELECT DISTINCT u.username
@@ -25,4 +19,4 @@ $stmt = $pdo->prepare('
 $stmt->execute([$userId, $userId, $userId]);
 $users = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-echo json_encode(['chatUsers' => $users]);
+apiSuccess(['chatUsers' => $users]);

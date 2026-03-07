@@ -1,27 +1,19 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Not logged in']);
-    exit;
-}
+apiRequireMethod('GET');
+apiRequireAuth();
 
 $username = trim($_GET['username'] ?? '');
 
 if (!$username) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing username parameter']);
-    exit;
+    apiError('MISSING_USERNAME', 'Missing username parameter', 400);
 }
 
 if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/', $username)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid username format']);
-    exit;
+    apiError('INVALID_USERNAME', 'Invalid username format', 400);
 }
 
 try {
@@ -29,12 +21,10 @@ try {
     $stmt->execute([$username]);
     $user = $stmt->fetch();
     
-    echo json_encode([
+    apiSuccess([
         'exists' => $user !== false,
         'username' => $username
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error']);
+    apiError('DB_ERROR', 'Database error', 500);
 }
-?> 

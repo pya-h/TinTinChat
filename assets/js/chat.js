@@ -3,16 +3,26 @@ const chatMessagesElem = document.getElementById("chatMessages");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 const replyPreviewElem = document.getElementById("replyPreview");
+const composerStatusElem = document.getElementById("composerStatus");
 const chatWithElem = document.getElementById("chatWith");
 const searchUserInput = document.getElementById("searchUser");
 const imageUploadInput = document.getElementById("imageUploadInput");
 const imageUploadBtn = document.getElementById("imageUploadBtn");
+const composerToolsToggleBtn = document.getElementById("composerToolsToggle");
+const settingsButton = document.getElementById("chatSettingsBtn");
+const settingsPanel = document.getElementById("chatSettingsPanel");
+const settingNotificationSound = document.getElementById("settingNotificationSound");
+const settingAutoScroll = document.getElementById("settingAutoScroll");
+const messageActionsHintElem = document.getElementById("messageActionsHint");
 
 const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
 const IMAGE_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
 const FILE_UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
 const MESSAGE_LONG_PRESS_MS = 500;
+const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
+const SETTINGS_HINT_DISMISSED_KEY = "tintinchat.messageActionsHint.dismissed";
+const MOBILE_BREAKPOINT_WIDTH = 767.98;
 
 let currentChatUser = null;
 let currentChatRecentMessages = null;
@@ -39,11 +49,201 @@ let audioContext = null;
 let activeAnalyser = null;
 
 let initialViewportHeight = window.innerHeight;
+let lastContextMenuMessageElement = null;
+
+const appSettings = {
+    notificationSoundEnabled: true,
+    autoScrollEnabled: true,
+    mobileComposerExpanded: false,
+};
 
 let notificationAudio = null;
 let customNotificationAudio = null;
 const NOTIFICATION_COOLDOWN = 500;
 const CUSTOM_SOUND_PATH = "assets/sounds/notification.mp3";
+
+function parseStoredBoolean(value, fallback = true) {
+    if (typeof value === "boolean") {
+        return value;
+    }
+    if (typeof value === "string") {
+        if (value === "true") {
+            return true;
+        }
+        if (value === "false") {
+            return false;
+        }
+    }
+    return fallback;
+}
+
+function loadAppSettings() {
+    try {
+        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (!raw) {
+            return;
+        }
+        const parsed = JSON.parse(raw);
+        appSettings.notificationSoundEnabled = parseStoredBoolean(
+            parsed.notificationSoundEnabled,
+            true
+        );
+        appSettings.autoScrollEnabled = parseStoredBoolean(parsed.autoScrollEnabled, true);
+        appSettings.mobileComposerExpanded = parseStoredBoolean(
+            parsed.mobileComposerExpanded,
+            false
+        );
+    } catch (error) {}
+}
+
+function persistAppSettings() {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
+}
+
+function setComposerStatus(message = "", type = "neutral") {
+    if (!composerStatusElem) {
+        return;
+    }
+    composerStatusElem.textContent = message;
+    composerStatusElem.classList.remove(
+        "composer-status-error",
+        "composer-status-success",
+        "composer-status-warning"
+    );
+    if (type === "error") {
+        composerStatusElem.classList.add("composer-status-error");
+    } else if (type === "success") {
+        composerStatusElem.classList.add("composer-status-success");
+    } else if (type === "warning") {
+        composerStatusElem.classList.add("composer-status-warning");
+    }
+}
+
+function isMobileViewport() {
+    return window.innerWidth <= MOBILE_BREAKPOINT_WIDTH;
+}
+
+function syncMobileComposerActions() {
+    if (!imageUploadBtn || !voiceBtn || !composerToolsToggleBtn || !chatForm) {
+        return;
+    }
+
+    if (!isMobileViewport()) {
+        imageUploadBtn.style.display = "";
+        voiceBtn.style.display = "";
+        composerToolsToggleBtn.style.display = "none";
+        chatForm.classList.remove("mobile-tools-visible");
+        return;
+    }
+
+    composerToolsToggleBtn.style.display = "inline-flex";
+    const showTools = Boolean(appSettings.mobileComposerExpanded);
+    imageUploadBtn.style.display = showTools ? "inline-flex" : "none";
+    voiceBtn.style.display = showTools ? "inline-flex" : "none";
+    chatForm.classList.toggle("mobile-tools-visible", showTools);
+    composerToolsToggleBtn.setAttribute("aria-expanded", showTools ? "true" : "false");
+}
+
+function updateMessageActionsHintVisibility(forceDismiss = false) {
+    if (!messageActionsHintElem) {
+        return;
+    }
+    const dismissed =
+        forceDismiss || localStorage.getItem(SETTINGS_HINT_DISMISSED_KEY) === "true";
+    messageActionsHintElem.style.display = dismissed ? "none" : "block";
+    if (forceDismiss) {
+        localStorage.setItem(SETTINGS_HINT_DISMISSED_KEY, "true");
+    }
+}
+
+function applySettingsUi() {
+    if (settingNotificationSound) {
+        settingNotificationSound.checked = appSettings.notificationSoundEnabled;
+    }
+    if (settingAutoScroll) {
+        settingAutoScroll.checked = appSettings.autoScrollEnabled;
+    }
+    syncMobileComposerActions();
+    updateMessageActionsHintVisibility();
+}
+
+function toggleSettingsPanel(forceState = null) {
+    if (!settingsPanel || !settingsButton) {
+        return;
+    }
+    const shouldOpen = forceState === null ? settingsPanel.hidden : forceState;
+    settingsPanel.hidden = !shouldOpen;
+    settingsButton.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+}
+
+function bindSettingsUiEvents() {
+    if (settingsButton) {
+        settingsButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+            toggleSettingsPanel();
+        });
+    }
+
+    if (settingNotificationSound) {
+        settingNotificationSound.addEventListener("change", (event) => {
+            appSettings.notificationSoundEnabled = Boolean(event.target.checked);
+            persistAppSettings();
+            setComposerStatus(
+                appSettings.notificationSoundEnabled
+                    ? "Notification sound enabled"
+                    : "Notification sound disabled",
+                "success"
+            );
+        });
+    }
+
+    if (settingAutoScroll) {
+        settingAutoScroll.addEventListener("change", (event) => {
+            appSettings.autoScrollEnabled = Boolean(event.target.checked);
+            persistAppSettings();
+            setComposerStatus(
+                appSettings.autoScrollEnabled
+                    ? "Auto-scroll enabled"
+                    : "Auto-scroll disabled",
+                "success"
+            );
+        });
+    }
+
+    if (composerToolsToggleBtn) {
+        composerToolsToggleBtn.addEventListener("click", () => {
+            appSettings.mobileComposerExpanded = !appSettings.mobileComposerExpanded;
+            persistAppSettings();
+            syncMobileComposerActions();
+        });
+    }
+
+    document.addEventListener("click", (event) => {
+        if (!settingsPanel || settingsPanel.hidden) {
+            return;
+        }
+        if (!event.target.closest("#chatSettingsPanel") && !event.target.closest("#chatSettingsBtn")) {
+            toggleSettingsPanel(false);
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && settingsPanel && !settingsPanel.hidden) {
+            toggleSettingsPanel(false);
+            settingsButton?.focus();
+        }
+    });
+
+    chatInput?.addEventListener("focus", () => {
+        if (isMobileViewport()) {
+            appSettings.mobileComposerExpanded = false;
+            persistAppSettings();
+            syncMobileComposerActions();
+        }
+    });
+
+    window.addEventListener("resize", syncMobileComposerActions);
+}
 
 async function loadCustomNotificationSound() {
     try {
@@ -63,7 +263,12 @@ async function loadCustomNotificationSound() {
     return false;
 }
 
-document.addEventListener("DOMContentLoaded", loadCustomNotificationSound);
+document.addEventListener("DOMContentLoaded", () => {
+    loadAppSettings();
+    applySettingsUi();
+    bindSettingsUiEvents();
+    loadCustomNotificationSound();
+});
 
 function createNotificationSound() {
     try {
@@ -155,6 +360,10 @@ function showMessageCopiedFeedback() {
 
 function closeMessageContextMenu() {
     document.getElementById("messageContextMenu")?.remove();
+    if (lastContextMenuMessageElement) {
+        lastContextMenuMessageElement.focus();
+        lastContextMenuMessageElement = null;
+    }
 }
 
 function getMessageTextForCopy(messageElement) {
@@ -239,6 +448,58 @@ function buildReplyPreviewHtml(msg, decryptedReplyText) {
     `;
 }
 
+function buildForwardedPreviewHtml(msg) {
+    if (!msg.forwarded_from_message_id) {
+        return "";
+    }
+    const forwardedBy = msg.forwarded_by_username || "Unknown";
+    const originalSender = msg.forwarded_original_sender_username || "Unknown";
+    return `
+        <div class="forwarded-meta" aria-label="Forwarded message metadata">
+            <i class="fas fa-share" aria-hidden="true"></i>
+            <span>Forwarded</span>
+            <span class="forwarded-meta-detail">by ${escapeHtml(forwardedBy)} · from ${escapeHtml(originalSender)}</span>
+        </div>
+    `;
+}
+
+function clearInlineChatState() {
+    chatMessagesElem.querySelector(".chat-inline-state")?.remove();
+}
+
+function showInlineChatState({
+    message,
+    kind = "error",
+    actionLabel = "Retry",
+    onAction = null,
+} = {}) {
+    clearInlineChatState();
+
+    const wrapper = document.createElement("div");
+    wrapper.className = `chat-inline-state chat-inline-state-${kind}`;
+
+    const text = document.createElement("span");
+    text.className = "chat-inline-state-text";
+    text.textContent = message;
+    wrapper.appendChild(text);
+
+    if (typeof onAction === "function") {
+        const actionBtn = document.createElement("button");
+        actionBtn.type = "button";
+        actionBtn.className = "btn btn-sm btn-outline-primary chat-inline-state-action";
+        actionBtn.textContent = actionLabel;
+        actionBtn.addEventListener("click", onAction);
+        wrapper.appendChild(actionBtn);
+    }
+
+    chatMessagesElem.appendChild(wrapper);
+}
+
+function showEmptyChatState(message = "No messages yet. Start the conversation.") {
+    clearInlineChatState();
+    showInlineChatState({ message, kind: "info" });
+}
+
 async function copyMessageText(messageElement) {
     const messageText = getMessageTextForCopy(messageElement);
     if (!messageText) {
@@ -266,7 +527,12 @@ async function copyMessageText(messageElement) {
     }
 }
 
-async function sendEncryptedTextMessage(targetUsername, text, replyToMessageId = null) {
+async function sendEncryptedTextMessage(
+    targetUsername,
+    text,
+    replyToMessageId = null,
+    forwardedFromMessageId = null
+) {
     const recipientKey = await getPublicKey(targetUsername);
     const senderKey = await getPublicKey(CURRENT_USER);
 
@@ -279,6 +545,9 @@ async function sendEncryptedTextMessage(targetUsername, text, replyToMessageId =
     formData.append("message_for_sender", encryptedForSender);
     if (replyToMessageId) {
         formData.append("reply_to_message_id", String(replyToMessageId));
+    }
+    if (forwardedFromMessageId) {
+        formData.append("forwarded_from_message_id", String(forwardedFromMessageId));
     }
 
     const res = await fetch("api/send_message.php", {
@@ -323,7 +592,13 @@ async function forwardMessageText(messageElement) {
     }
 
     try {
-        await sendEncryptedTextMessage(destination, messageText);
+        const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
+        await sendEncryptedTextMessage(
+            destination,
+            messageText,
+            null,
+            sourceMessageId || null
+        );
         addUserToChatList(destination);
         showModal("Forwarded", `Message forwarded to ${destination}.`, "success");
     } catch (error) {
@@ -375,56 +650,88 @@ async function deleteMessageFromContext(messageElement) {
     }
 }
 
-function addMessageActionHandlers(messageElement) {
+function addMessageActionHandlers(
+    messageElement,
+    { canReply = true, canDelete = true, canCopy = false, canForward = false } = {}
+) {
     let longPressTimer = null;
+    messageElement.tabIndex = 0;
+    messageElement.setAttribute("aria-label", "Chat message actions available");
 
     const openContextMenu = (clientX, clientY) => {
         closeMessageContextMenu();
+        updateMessageActionsHintVisibility(true);
+        lastContextMenuMessageElement = messageElement;
 
         const menu = document.createElement("div");
         menu.id = "messageContextMenu";
         menu.className = "message-context-menu";
+        menu.setAttribute("role", "menu");
+        menu.setAttribute("aria-label", "Message actions");
 
-        const copyBtn = document.createElement("button");
-        copyBtn.type = "button";
-        copyBtn.className = "message-context-menu-item";
-        copyBtn.innerHTML = '<i class="fas fa-copy me-2"></i>Copy';
-        copyBtn.addEventListener("click", async () => {
-            await copyMessageText(messageElement);
-            closeMessageContextMenu();
-        });
-        menu.appendChild(copyBtn);
+        const appendMenuAction = (element) => {
+            element.setAttribute("role", "menuitem");
+            element.tabIndex = 0;
+            menu.appendChild(element);
+        };
 
-        const replyBtn = document.createElement("button");
-        replyBtn.type = "button";
-        replyBtn.className = "message-context-menu-item";
-        replyBtn.innerHTML = '<i class="fas fa-reply me-2"></i>Reply';
-        replyBtn.addEventListener("click", () => {
-            setReplyState(messageElement);
-            closeMessageContextMenu();
-            chatInput.focus();
-        });
-        menu.appendChild(replyBtn);
+        if (canCopy) {
+            const copyBtn = document.createElement("button");
+            copyBtn.type = "button";
+            copyBtn.className = "message-context-menu-item";
+            copyBtn.innerHTML = '<i class="fas fa-copy me-2"></i>Copy';
+            copyBtn.addEventListener("click", async () => {
+                await copyMessageText(messageElement);
+                closeMessageContextMenu();
+            });
+            appendMenuAction(copyBtn);
+        }
 
-        const forwardBtn = document.createElement("button");
-        forwardBtn.type = "button";
-        forwardBtn.className = "message-context-menu-item";
-        forwardBtn.innerHTML = '<i class="fas fa-share-from-square me-2"></i>Forward';
-        forwardBtn.addEventListener("click", async () => {
-            await forwardMessageText(messageElement);
-            closeMessageContextMenu();
-        });
-        menu.appendChild(forwardBtn);
+        if (canReply) {
+            const replyBtn = document.createElement("button");
+            replyBtn.type = "button";
+            replyBtn.className = "message-context-menu-item";
+            replyBtn.innerHTML = '<i class="fas fa-reply me-2"></i>Reply';
+            replyBtn.addEventListener("click", () => {
+                setReplyState(messageElement);
+                closeMessageContextMenu();
+                chatInput.focus();
+            });
+            appendMenuAction(replyBtn);
+        }
 
-        const deleteBtn = document.createElement("button");
-        deleteBtn.type = "button";
-        deleteBtn.className = "message-context-menu-item";
-        deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete';
-        deleteBtn.addEventListener("click", async () => {
-            await deleteMessageFromContext(messageElement);
-            closeMessageContextMenu();
-        });
-        menu.appendChild(deleteBtn);
+        if (canForward) {
+            const forwardBtn = document.createElement("button");
+            forwardBtn.type = "button";
+            forwardBtn.className = "message-context-menu-item";
+            forwardBtn.innerHTML = '<i class="fas fa-share-from-square me-2"></i>Forward';
+            forwardBtn.addEventListener("click", async () => {
+                await forwardMessageText(messageElement);
+                closeMessageContextMenu();
+            });
+            appendMenuAction(forwardBtn);
+        }
+
+        if (canDelete) {
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "message-context-menu-item";
+            deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete';
+            deleteBtn.addEventListener("click", async () => {
+                await deleteMessageFromContext(messageElement);
+                closeMessageContextMenu();
+            });
+            appendMenuAction(deleteBtn);
+        }
+
+        if (!menu.children.length) {
+            const noActionsItem = document.createElement("div");
+            noActionsItem.className = "message-context-menu-item";
+            noActionsItem.textContent = "No actions available";
+            noActionsItem.style.opacity = "0.7";
+            noActionsItem.style.cursor = "default";
+            menu.appendChild(noActionsItem);
+        }
 
         document.body.appendChild(menu);
 
@@ -433,20 +740,25 @@ function addMessageActionHandlers(messageElement) {
         const maxTop = Math.max(8, window.innerHeight - menuRect.height - 8);
         menu.style.left = `${Math.min(clientX, maxLeft)}px`;
         menu.style.top = `${Math.min(clientY, maxTop)}px`;
+
+        const firstMenuButton = menu.querySelector(".message-context-menu-item");
+        firstMenuButton?.focus();
     };
 
     messageElement.addEventListener("contextmenu", (event) => {
-        if (!messageElement.classList.contains("is-text-message")) {
-            return;
-        }
         event.preventDefault();
         openContextMenu(event.clientX, event.clientY);
     });
 
-    messageElement.addEventListener("touchstart", (event) => {
-        if (!messageElement.classList.contains("is-text-message")) {
-            return;
+    messageElement.addEventListener("keydown", (event) => {
+        if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+            event.preventDefault();
+            const rect = messageElement.getBoundingClientRect();
+            openContextMenu(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
+    });
+
+    messageElement.addEventListener("touchstart", (event) => {
         longPressTimer = setTimeout(() => {
             const touch = event.touches?.[0];
             if (!touch) {
@@ -474,6 +786,35 @@ document.addEventListener("click", (event) => {
     }
     if (!event.target.closest("#messageContextMenu")) {
         closeMessageContextMenu();
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    const menu = document.getElementById("messageContextMenu");
+    if (!menu) {
+        return;
+    }
+
+    const items = Array.from(menu.querySelectorAll(".message-context-menu-item"));
+    if (!items.length) {
+        return;
+    }
+
+    const currentIndex = items.indexOf(document.activeElement);
+    if (event.key === "Escape") {
+        event.preventDefault();
+        closeMessageContextMenu();
+        return;
+    }
+    if (event.key === "ArrowDown") {
+        event.preventDefault();
+        const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+        items[nextIndex].focus();
+    }
+    if (event.key === "ArrowUp") {
+        event.preventDefault();
+        const nextIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+        items[nextIndex].focus();
     }
 });
 
@@ -507,6 +848,8 @@ function addUserToChatList(username) {
 
     const li = document.createElement("li");
     li.tabIndex = 0;
+    li.setAttribute("role", "listitem");
+    li.setAttribute("aria-label", `Open chat with ${username}`);
     li.style.setProperty("--i", chatListElem.children.length);
 
     const initials = username
@@ -519,6 +862,12 @@ function addUserToChatList(username) {
     li.id = `user_${username}`;
     li.classList.add("chat-user");
     li.addEventListener("click", () => selectChatUser(username));
+    li.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            selectChatUser(username);
+        }
+    });
     chatListElem.appendChild(li);
     return true;
 }
@@ -540,8 +889,10 @@ async function selectChatUser(username) {
     chatInput.disabled = false;
     chatWithElem.textContent = username;
     chatInput.value = "";
+    setComposerStatus("");
     clearReplyState();
     chatMessagesElem.innerHTML = "";
+    toggleSettingsPanel(false);
 
     messageOffset = 0;
     hasMoreMessages = true;
@@ -562,7 +913,7 @@ async function updateMessagesStatus(messages) {
     if (!messagesNewlySeen?.length) {
         return false;
     }
-    res = await fetch("api/see_messages.php", {
+    const res = await fetch("api/see_messages.php", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -597,11 +948,13 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         );
         if (!res.ok) throw new Error("Failed to load messages");
         const data = await res.json();
+        clearInlineChatState();
+        setComposerStatus("");
 
         if (isInitialLoad) {
             if (!data.messages.length) {
                 chatMessagesElem.innerHTML = "";
-                chatMessagesElem.textContent = "No messages yet.";
+                showEmptyChatState("No messages yet. Start the conversation.");
                 currentChatRecentMessages = [];
                 messageOffset = 0;
                 return;
@@ -636,10 +989,14 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             for (const msg of data.messages) {
                 await addMessageToChat(msg);
             }
-            requestAnimationFrame(() => {
-                chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-                removeGoToLatestButton();
-            });
+            if (appSettings.autoScrollEnabled) {
+                requestAnimationFrame(() => {
+                    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+                    removeGoToLatestButton();
+                });
+            } else {
+                addGoToLatestButton();
+            }
 
             if (hasMoreMessages) {
                 addLoadMoreButton();
@@ -654,7 +1011,13 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         }
         updateMessagesStatus(data.messages);
     } catch (err) {
-        chatMessagesElem.textContent = "Error loading messages";
+        showInlineChatState({
+            message: "Unable to load messages.",
+            kind: "error",
+            actionLabel: "Retry",
+            onAction: () => loadMessages(username, true, isInitialLoad),
+        });
+        setComposerStatus("Message loading failed. You can retry.", "error");
     } finally {
         if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
         isLoadingMessages = false;
@@ -675,10 +1038,14 @@ async function loadCurrentChatsRecentMessages() {
         const data = await res.json();
 
         if (!data?.messages?.length) {
+            setComposerStatus("");
             return;
         }
 
-        if (data.messages[data.messages.length - 1]?.sender_id != CURRENT_USER_ID) {
+        if (
+            appSettings.notificationSoundEnabled &&
+            data.messages[data.messages.length - 1]?.sender_id != CURRENT_USER_ID
+        ) {
             try {
 
                 playNotificationSound()
@@ -692,12 +1059,17 @@ async function loadCurrentChatsRecentMessages() {
             await addMessageToChat(msg, false, true);
         }
         updateMessagesStatus(data.messages); // Mark as seen on the background
+        setComposerStatus("");
 
-        if (!hasLoadedMoreMessages) {
+        if (appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
             requestAnimationFrame(() => {
                 chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
             });
+        } else {
+            addGoToLatestButton();
         }
+    } catch (error) {
+        setComposerStatus("Failed to refresh latest messages.", "warning");
     } finally {
         isLoadingMessages = false;
     }
@@ -764,7 +1136,7 @@ function newDateTag(
     { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "" }
 ) {
     const margins = strictMargins ? `mt-${topSpace}` : `mt-0 mt-lg-${topSpace} mt-md-${topSpace}`;
-    return `<span class="mx-2 ${margins}" style="font-size: ${fontSize}px; float: ${
+    return `<span class="message-meta-time mx-2 ${margins}" style="font-size: ${fontSize}px; float: ${
         atLeft ? "left" : "right"
     };${extraStyles}">${new Date(msg.created_at).toLocaleString("default", {
         year: "numeric",
@@ -778,11 +1150,15 @@ function newDateTag(
 
 async function addMessageToChat(msg, prepend = false) {
     let div = document.createElement("div");
+    let hasContextActions = false;
+    let canCopy = false;
+    let canForward = false;
     div.classList.add("message");
     div.classList.add(msg.sender_id == CURRENT_USER_ID ? "sent" : "received");
 
     if (msg.message_type === "voice" && msg.voice_file_path) {
         div.classList.add("is-voice-message");
+        hasContextActions = true;
 
         div.innerHTML = `
           <div class="voice-player-container">
@@ -806,6 +1182,7 @@ async function addMessageToChat(msg, prepend = false) {
         div.setAttribute("data-message-id", msg.id);
     } else if (msg.message_type === "image" && msg.image_file_path) {
         div.classList.add("is-image-message");
+        hasContextActions = true;
 
         const imageUrl = `api/get_image.php?id=${msg.id}`;
         div.innerHTML = `<a href="${imageUrl}" class="image-message-link" data-image-url="${imageUrl}" title="View full image">
@@ -817,6 +1194,7 @@ async function addMessageToChat(msg, prepend = false) {
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color); font-weight: 600;",
                 })}`;
+                div.setAttribute("data-message-id", msg.id);
 
         const imageLink = div.querySelector(".image-message-link");
         if (imageLink) {
@@ -827,6 +1205,7 @@ async function addMessageToChat(msg, prepend = false) {
         }
     } else if (msg.message_type === "file" && msg.any_file_path) {
         div.classList.add("is-file-message");
+        hasContextActions = true;
 
         const fileUrl = `api/get_file_message.php?id=${msg.id}`;
         let fileName = msg.any_file_path;
@@ -893,7 +1272,10 @@ async function addMessageToChat(msg, prepend = false) {
         const isPersian = isTextPersian(decryptedText.trim());
         const safeText = escapeHtml(decryptedText);
         div.classList.add("is-text-message");
-        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${newDateTag(msg, {
+        hasContextActions = true;
+        canCopy = true;
+        canForward = true;
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${newDateTag(msg, {
             atLeft: isPersian,
             strictMargins: true,
             topSpace: 3,
@@ -910,8 +1292,6 @@ async function addMessageToChat(msg, prepend = false) {
                 await copyMessageText(div);
             });
         }
-
-        addMessageActionHandlers(div);
 
         const replyQuote = div.querySelector(".reply-quote");
         if (replyQuote) {
@@ -937,6 +1317,16 @@ async function addMessageToChat(msg, prepend = false) {
             : "message-status-indicator just-sent-tick";
         div.appendChild(tickContainer);
     }
+
+    if (hasContextActions) {
+        addMessageActionHandlers(div, {
+            canReply: true,
+            canDelete: true,
+            canCopy,
+            canForward,
+        });
+    }
+
     if (prepend) {
         const loadMoreBtn = document.getElementById("loadMoreBtn");
         if (loadMoreBtn) {
@@ -1507,6 +1897,7 @@ const sendTextMessage = async () => {
     const sendBtn = chatForm.querySelector('button[type="submit"]');
     sendBtn.disabled = true;
     sendBtn.classList.add("btn-pressed");
+    setComposerStatus("Sending message...");
 
     try {
         await sendEncryptedTextMessage(currentChatUser, text, currentReplyTarget?.messageId || null);
@@ -1514,7 +1905,9 @@ const sendTextMessage = async () => {
         addUserToChatList(currentChatUser);
         chatInput.value = "";
         clearReplyState();
+        setComposerStatus("Message sent", "success");
     } catch (err) {
+        setComposerStatus("Message failed to send. Try again.", "error");
         showModal("Send Error", "Encryption/send error: " + err.message, "error");
     } finally {
         sendBtn.disabled = false;
@@ -1859,23 +2252,43 @@ function showSearchLoading(show) {
 }
 
 chatInput.disabled = true;
-chatInput.textContent = "Select someone to chat...";
+chatInput.placeholder = "Select someone to chat...";
 fetchAndImportPrivateKey().catch((err) => {
     showModal("Key Error", "Error loading private key: " + err.message, "error");
 });
 
-async function loadChatList() {
+function showChatListErrorState() {
+    const existing = document.getElementById("chatListRetryItem");
+    if (existing) {
+        return;
+    }
+    const li = document.createElement("li");
+    li.id = "chatListRetryItem";
+    li.className = "chat-list-retry-item";
+    li.innerHTML = `<button type="button" class="btn btn-sm btn-outline-primary">Retry loading chats</button>`;
+    li.querySelector("button")?.addEventListener("click", () => loadChatList(true));
+    chatListElem.appendChild(li);
+}
+
+function clearChatListErrorState() {
+    document.getElementById("chatListRetryItem")?.remove();
+}
+
+async function loadChatList(force = false) {
     try {
         const res = await fetch("api/fetch_chats.php");
         if (!res.ok) throw new Error("Failed to load chat list");
         const data = await res.json();
-        if (chatUsers?.size === data.chatUsers.length) {
+        if (!force && chatUsers?.size === data.chatUsers.length) {
             return;
         }
         if (data.chatUsers && Array.isArray(data.chatUsers)) {
             data.chatUsers.forEach(addUserToChatList);
         }
-    } catch (e) {}
+        clearChatListErrorState();
+    } catch (e) {
+        showChatListErrorState();
+    }
 }
 
 loadChatList();
@@ -2041,7 +2454,9 @@ async function sendVoiceMessage(audioBlob) {
 
         addUserToChatList(currentChatUser);
         loadCurrentChatsRecentMessages();
+        setComposerStatus("Voice message sent", "success");
     } catch (err) {
+        setComposerStatus("Voice message failed. Try again.", "error");
         showModal("Voice Send Error", "Voice message send error: " + err.message, "error");
 
         const sendingIndicator = document.querySelector(".sending-indicator");
@@ -2116,7 +2531,9 @@ async function sendImageMessage(imageFile) {
 
         addUserToChatList(currentChatUser);
         loadCurrentChatsRecentMessages();
+        setComposerStatus("Image sent", "success");
     } catch (err) {
+        setComposerStatus("Image upload failed. Try again.", "error");
         showModal("Image Send Error", "Image send error: " + err.message, "error");
 
         const sendingIndicator = document.querySelector(".sending-indicator");
@@ -2172,7 +2589,9 @@ async function sendFileMessage(file) {
 
         addUserToChatList(currentChatUser);
         loadCurrentChatsRecentMessages();
+        setComposerStatus("File sent", "success");
     } catch (err) {
+        setComposerStatus("File upload failed. Try again.", "error");
         showModal("File Send Error", "File send error: " + err.message, "error");
 
         const sendingIndicator = document.querySelector(".sending-indicator");

@@ -502,6 +502,11 @@ nav.navbar:hover::after {
     background: color-mix(in srgb, var(--secondary-color) 12%, transparent);
 }
 
+.message-context-menu-item:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 2px;
+}
+
 .message.sent + .message.sent {
     margin-top: -0.25rem;
     border-top-right-radius: 6px;
@@ -660,6 +665,168 @@ nav.navbar:hover::after {
     transition: var(--transition-slow);
     backdrop-filter: blur(20px);
     position: relative;
+}
+
+.chat-header-actions {
+    position: relative;
+}
+
+.chat-settings-panel {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    min-width: 14rem;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-md);
+    padding: 0.55rem;
+    display: grid;
+    gap: 0.3rem;
+    z-index: 20;
+}
+
+.chat-setting-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.86rem;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0.35rem 0.4rem;
+    border-radius: 0.45rem;
+}
+
+.chat-setting-item:hover {
+    background: color-mix(in srgb, var(--secondary-color) 10%, transparent);
+}
+
+.chat-setting-item input {
+    accent-color: var(--primary-color);
+}
+
+.message-actions-hint {
+    padding: 0.35rem 1rem;
+    font-size: 0.82rem;
+    color: var(--subtle-text-color);
+    border-bottom: 1px dashed var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 80%, transparent);
+}
+
+.composer-status {
+    min-height: 1.1rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.8rem;
+    color: var(--subtle-text-color);
+}
+
+.composer-status-error {
+    color: color-mix(in srgb, var(--primary-color) 70%, var(--text-color));
+}
+
+.composer-status-success {
+    color: color-mix(in srgb, var(--secondary-color) 62%, var(--text-color));
+}
+
+.composer-status-warning {
+    color: color-mix(in srgb, var(--primary-color) 48%, var(--subtle-text-color));
+}
+
+.chat-inline-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 4rem;
+    margin: 1.5rem auto;
+    padding: 0.75rem 1rem;
+    border-radius: 0.9rem;
+    width: min(90%, 32rem);
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 85%, transparent);
+}
+
+.chat-inline-state-info {
+    color: var(--subtle-text-color);
+}
+
+.chat-inline-state-error {
+    color: var(--text-color);
+}
+
+.chat-inline-state-text {
+    font-size: 0.92rem;
+}
+
+.chat-list-retry-item {
+    justify-content: center;
+    background: transparent !important;
+    cursor: default !important;
+}
+
+.forwarded-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    margin-bottom: 0.28rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    color: var(--subtle-text-color);
+    background: color-mix(in srgb, var(--secondary-color) 10%, transparent);
+}
+
+.message.sent .forwarded-meta {
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.forwarded-meta-detail {
+    opacity: 0.85;
+}
+
+.message-meta-time {
+    opacity: 0.72;
+    letter-spacing: 0.01em;
+}
+
+.message.sent .just-sent-tick::before {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.message.sent .seen-ticks::before,
+.message.sent .seen-ticks::after {
+    color: color-mix(in srgb, var(--secondary-color) 75%, var(--surface-color));
+}
+
+#composerToolsToggle {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .message-actions-hint {
+        font-size: 0.76rem;
+        padding: 0.25rem 0.75rem;
+    }
+
+    .chat-settings-panel {
+        right: 0;
+        left: auto;
+        min-width: 12.5rem;
+    }
+
+    .chat-input {
+        gap: 0.55rem;
+        padding: 0.75rem;
+    }
+
+    #composerToolsToggle {
+        display: inline-flex;
+    }
+
+    #chatForm.mobile-tools-visible #composerToolsToggle i {
+        transform: rotate(45deg);
+    }
 }
 
 .reply-preview {

@@ -43,23 +43,23 @@ Legend:
 - [x] (`P1`) Small copy-message action.
 - [x] (`P1`) Message context menu (right-click/long-press).
 - [x] (`P1`) Forward message.
-- [ ] (`P1`) UI/UX simplification and consistency pass.
+- [x] (`P1`) UI/UX simplification and consistency pass.
 
 ## 3) Priority Roadmap (Planned)
 
 ### Phase A — Stabilization & Security (`P0`)
-- [ ] (`P0`) Standardize endpoint method checks (`GET/POST/DELETE`) everywhere.
-- [ ] (`P0`) Standardize API JSON response contract across all endpoints.
+- [x] (`P0`) Standardize endpoint method checks (`GET/POST/DELETE`) everywhere.
+- [x] (`P0`) Standardize API JSON response contract across all endpoints.
 - [x] (`P0`) Add CSRF validation to every state-changing endpoint.
 - [x] (`P0`) Centralize auth/method/input guards in shared include utility.
 - [x] (`P0`) Normalize upload validation (server-side MIME + size + extension policy).
 - [x] (`P0`) Align frontend and backend file size limits.
-- [ ] (`P0`) Run full endpoint authorization review for cross-user data isolation.
-- [ ] (`P0`) Create security regression checklist and execute after each major change.
+- [x] (`P0`) Run full endpoint authorization review for cross-user data isolation.
+- [x] (`P0`) Create security regression checklist and execute after each major change.
 
 ### Phase B — Message Actions (`P1`)
 - [x] (`P1`) DB migration: add `reply_to_message_id` to `messages`.
-- [ ] (`P1`) DB migration: add forwarding metadata columns.
+- [x] (`P1`) DB migration: add forwarding metadata columns.
 - [x] (`P1`) Add backend support for `reply_to_message_id` in send/fetch endpoints.
 - [x] (`P1`) Implement UI reply composer state + quoted preview.
 - [x] (`P1`) Render quoted/referenced original message block in message bubble.
@@ -69,12 +69,12 @@ Legend:
 - [x] (`P1`) Add delete action entry in context menu using existing endpoint.
 
 ### Phase C — UX Quality (`P1/P2`)
-- [ ] (`P1`) Improve empty states and inline error/retry UX.
-- [ ] (`P1`) Improve message action discoverability (hover/focus/long-press cues).
-- [ ] (`P1`) Improve mobile composer ergonomics and action placement.
-- [ ] (`P2`) Improve accessibility: keyboard focus, ARIA labels, context menu navigation.
-- [ ] (`P2`) Improve visual consistency of status indicators and message metadata.
-- [ ] (`P2`) Add lightweight user settings (notification sound on/off, auto-scroll behavior).
+- [x] (`P1`) Improve empty states and inline error/retry UX.
+- [x] (`P1`) Improve message action discoverability (hover/focus/long-press cues).
+- [x] (`P1`) Improve mobile composer ergonomics and action placement.
+- [x] (`P2`) Improve accessibility: keyboard focus, ARIA labels, context menu navigation.
+- [x] (`P2`) Improve visual consistency of status indicators and message metadata.
+- [x] (`P2`) Add lightweight user settings (notification sound on/off, auto-scroll behavior).
 
 ### Phase D — Maintainability (`P1/P2`)
 - [ ] (`P1`) Introduce internal `api-service.js` for consistent fetch/error handling.

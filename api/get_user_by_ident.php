@@ -1,15 +1,14 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
+apiRequireMethod('GET');
 
 $ident = isset($_GET['ident']) ? trim($_GET['ident']) : '';
 
 if (!$ident || strlen($ident) < 10) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Invalid session token']);
-    exit;
+    apiError('INVALID_SESSION_TOKEN', 'Invalid session token', 401);
 }
 
 $stmt = $pdo->prepare('SELECT id, username FROM users WHERE ident = ?');
@@ -27,13 +26,11 @@ try {
         throw new Exception('Session expired!');
     }
 } catch (Exception $ex) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Session expired or invalid']);
-    exit;
+    apiError('SESSION_INVALID', 'Session expired or invalid', 401);
 }
 
 session_regenerate_id(true);
 $_SESSION['user_id'] = $user['id'];
 $_SESSION['username'] = $user['username'];
 
-echo json_encode(['result' => 'ok']);
+apiSuccess(['result' => 'ok']);

@@ -12,6 +12,9 @@ $messageEncryptedForSender = $_POST['message_for_sender'] ?? '';
 $replyToMessageId = isset($_POST['reply_to_message_id']) && is_numeric($_POST['reply_to_message_id'])
     ? (int) $_POST['reply_to_message_id']
     : null;
+$forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numeric($_POST['forwarded_from_message_id'])
+    ? (int) $_POST['forwarded_from_message_id']
+    : null;
 
 if (!$target || !$messageEncryptedForRecipient || !$messageEncryptedForSender) {
     apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
@@ -35,7 +38,17 @@ if ($replyToMessageId) {
     }
 }
 
-$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type, reply_to_message_id) VALUES (?, ?, ?, ?, 'text', ?)");
+if ($forwardedFromMessageId) {
+    $forwardStmt = $pdo->prepare(
+        'SELECT id FROM messages WHERE id = ? AND (sender_id = ? OR receiver_id = ?) LIMIT 1'
+    );
+    $forwardStmt->execute([$forwardedFromMessageId, $userId, $userId]);
+    if (!$forwardStmt->fetch()) {
+        apiError('INVALID_FORWARD_TARGET', 'Invalid forwarded source message', 400);
+    }
+}
+
+$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id) VALUES (?, ?, ?, ?, 'text', ?, ?, ?)");
 if (
     !$stmt->execute([
         $userId,
@@ -43,6 +56,8 @@ if (
         $messageEncryptedForRecipient,
         $messageEncryptedForSender,
         $replyToMessageId,
+        $forwardedFromMessageId,
+        $forwardedFromMessageId ? $userId : null,
     ])
 ) {
     apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);

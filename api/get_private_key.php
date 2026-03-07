@@ -1,23 +1,17 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Not logged in']);
-    exit;
-}
+apiRequireMethod('GET');
+$userId = apiRequireAuth();
 
 $stmt = $pdo->prepare('SELECT private_key FROM users WHERE id = ?');
-$stmt->execute([$_SESSION['user_id']]);
+$stmt->execute([$userId]);
 $user = $stmt->fetch();
 
 if (!$user) {
-    http_response_code(404);
-    echo json_encode(['error' => 'User not found']);
-    exit;
+    apiError('USER_NOT_FOUND', 'User not found', 404);
 }
 
-echo json_encode(['privateKeyPem' => $user['private_key']]);
+apiSuccess(['privateKeyPem' => $user['private_key']]);

@@ -2,6 +2,11 @@
 session_start();
 require_once __DIR__ . '/../includes/db.php';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    exit('Invalid request method');
+}
+
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     exit('Not authorized');

@@ -1,14 +1,14 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
+apiRequireMethod('GET');
+apiRequireAuth();
 
 $username = $_GET['username'] ?? '';
 if (!$username) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing username']);
-    exit;
+    apiError('MISSING_USERNAME', 'Missing username', 400);
 }
 
 $stmt = $pdo->prepare('SELECT public_key FROM users WHERE username = ?');
@@ -16,9 +16,7 @@ $stmt->execute([$username]);
 $user = $stmt->fetch();
 
 if (!$user) {
-    http_response_code(404);
-    echo json_encode(['error' => 'User not found']);
-    exit;
+    apiError('USER_NOT_FOUND', 'User not found', 404);
 }
 
-echo json_encode(['publicKey' => $user['public_key']]);
+apiSuccess(['publicKey' => $user['public_key']]);

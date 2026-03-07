@@ -1,22 +1,14 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['user_id'])) {
-  http_response_code(401);
-  echo json_encode(['error' => 'Not logged in']);
-  exit;
-}
-
-$userId = $_SESSION['user_id'];
+apiRequireMethod('GET');
+$userId = apiRequireAuth();
 $otherUsername = $_GET['with'] ?? '';
 
 if (!$otherUsername) {
-  http_response_code(400);
-  echo json_encode(['error' => 'Missing target username']);
-  exit;
+  apiError('MISSING_TARGET', 'Missing target username', 400);
 }
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
@@ -24,9 +16,7 @@ $stmt->execute([$otherUsername]);
 $otherUser = $stmt->fetch();
 
 if (!$otherUser) {
-  http_response_code(404);
-  echo json_encode(['error' => 'Target user not found']);
-  exit;
+  apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
 }
 $otherUserId = $otherUser['id'];
 
@@ -57,20 +47,25 @@ if ($last_msg_id) {
 } else {
   $where_clause = '(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)';
 }
-$stmt = $pdo->prepare("SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, any_file_path, file_size, reply_to_message_id, created_at, seen_at,
+$stmt = $pdo->prepare("SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, any_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id, created_at, seen_at,
   r.id AS reply_message_id,
   r.sender_id AS reply_sender_id,
   r.message AS reply_message,
   r.message_for_sender AS reply_message_for_sender,
-  r.message_type AS reply_message_type
+  r.message_type AS reply_message_type,
+  fu.username AS forwarded_by_username,
+  fmu.username AS forwarded_original_sender_username
   FROM messages
   LEFT JOIN messages r ON r.id = messages.reply_to_message_id
+  LEFT JOIN users fu ON fu.id = messages.forwarded_by_user_id
+  LEFT JOIN messages fm ON fm.id = messages.forwarded_from_message_id
+  LEFT JOIN users fmu ON fmu.id = fm.sender_id
   WHERE $where_clause ORDER BY created_at ASC LIMIT $limit OFFSET $offset");
 
 $stmt->execute($params);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-echo json_encode([
+apiSuccess([
   'messages' => $messages,
   'hasMore' => $hasMore,
   'total' => $total_count,
