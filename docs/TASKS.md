@@ -92,15 +92,64 @@ Legend:
 - [ ] (`P2`) Better per-message timestamp formatting and grouping.
 - [ ] (`P2`) Search inside current conversation.
 - [ ] (`P3`) Message reactions (minimal emoji set).
-- [ ] (`P3`) Optional edit message (time-limited).
 - [ ] (`P3`) Optional delete-for-everyone policy (with permissions).
+
+### Phase F — Sticker Support (Telegram-like) (`P1/P2`)
+- [ ] (`P1`) Define sticker format spec aligned to Telegram style:
+	- static sticker image on `512x512` canvas,
+	- one side exactly `512px` (the other side `<=512px`),
+	- preferred `WEBP`, allow `PNG` fallback,
+	- enforce max upload size (target: `<=512KB` per sticker).
+- [ ] (`P1`) DB migration: add `stickers` table (id, file_path, width, height, uploaded_by_user_id, created_at, is_active).
+- [ ] (`P1`) DB migration: add sticker message reference (e.g. `messages.sticker_id` nullable FK).
+- [ ] (`P1`) Add backend endpoint to upload sticker image with validation/resizing to spec.
+- [ ] (`P1`) Add backend endpoint to fetch sticker catalog (global list usable by all users).
+- [ ] (`P1`) Add backend support to send sticker messages and fetch/render them in chat history.
+- [ ] (`P1`) Add sticker picker section in composer area (toggle/button + grid list of stickers).
+- [ ] (`P1`) Add “Add Sticker” button inside sticker section for user uploads.
+- [ ] (`P2`) Add lightweight sticker management safeguards:
+	- file type + dimension checks,
+	- duplicate/hash check,
+	- basic moderation control (`is_active` flag for admin disable).
+- [ ] (`P2`) Add UX states for sticker flow (loading, empty, upload progress, error/retry).
+
+### Phase G — Nice to Have (Power UX) (`P3`)
+- [ ] (`P3`) Add **Select messages** action to message context menu.
+- [ ] (`P3`) Implement select mode behavior:
+	- tap/click messages to multi-select,
+	- show selected count,
+	- clear visual selected state on cancel/success.
+- [ ] (`P3`) In select mode, show top action bar with:
+	- `Cancel`,
+	- `Forward`,
+	- `Delete`.
+- [ ] (`P3`) Implement bulk actions for selected messages:
+	- bulk forward to chosen target chat,
+	- bulk delete with confirmation and partial-failure handling.
+- [ ] (`P3`) Add **Edit message** (text only) with time limit and edited marker:
+	- context menu item `Edit` on eligible sent text messages,
+	- composer enters edit mode with save/cancel,
+	- show `edited` metadata in message bubble.
+- [ ] (`P3`) Add **Settings modal** with user UI preferences:
+	- theme mode (`System` / `Light` / `Dark`),
+	- compact vs comfortable density,
+	- show/hide message timestamps,
+	- animation/reduced motion toggle.
+- [ ] (`P3`) Add persistence for UI preferences (localStorage first, optional server sync later).
+- [ ] (`P3`) Add keyboard shortcuts for power users:
+	- `Esc` to exit select/edit mode,
+	- `Ctrl/Cmd + A` for select-all visible (when in select mode),
+	- `Ctrl/Cmd + Enter` to save edit.
+- [ ] (`P3`) Add guardrails for destructive bulk actions (confirm dialogs + clear success/error summaries).
 
 ## 4) Suggested Execution Order
 
 1. Security and endpoint consistency (`P0`)  
 2. Reply + context menu + copy + forward (`P1`)  
 3. UX polishing and accessibility (`P1/P2`)  
-4. Optional parity features (`P2/P3`)
+4. Optional parity features (`P2/P3`)  
+5. Telegram-like sticker support (`P1/P2`)  
+6. Nice-to-have power UX (`P3`)
 
 ## 5) Definition of Done (for upcoming feature work)
 
