@@ -1,26 +1,16 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['status' => 'failed', 'error' => 'Not logged in']);
-    exit;
-}
-// FIXME: Checkout Post bodies on all endpoints
-// TODO: Also check all update/insert queries results and return error on failures.
-
-$userId = $_SESSION['user_id'];
+apiRequireMethod('POST');
+$userId = apiRequireAuth();
 $target = $_POST['target'] ?? '';
 $messageEncryptedForRecipient = $_POST['message'] ?? '';
 $messageEncryptedForSender = $_POST['message_for_sender'] ?? '';
 
 if (!$target || !$messageEncryptedForRecipient || !$messageEncryptedForSender) {
-    http_response_code(400);
-    echo json_encode(['status' => 'failed', 'error' => 'Missing parameters']);
-    exit;
+    apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
 }
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
@@ -28,9 +18,7 @@ $stmt->execute([$target]);
 $targetUser = $stmt->fetch();
 
 if (!$targetUser) {
-    http_response_code(404);
-    echo json_encode(['status' => 'failed', 'error' => 'Target user not found']);
-    exit;
+    apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
 }
 
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type) VALUES (?, ?, ?, ?, 'text')");
@@ -42,11 +30,9 @@ if (
         $messageEncryptedForSender,
     ])
 ) {
-    http_response_code(409);
-    echo json_encode(['status' => 'failed', 'error' => 'Something went wrong while sending your message!']);
-    exit;
+    apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);
 }
 
 $messageId = $pdo->lastInsertId();
 
-echo json_encode(['status' => 'ok', 'message_id' => $messageId]);
+apiSuccess(['message_id' => $messageId]);

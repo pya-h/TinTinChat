@@ -1,39 +1,16 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
+apiRequireMethod('POST');
+$userId = apiRequireAuth();
 
-if($_SERVER['REQUEST_METHOD'] != 'POST') {
-    http_response_code(400);
-    echo json_encode(['status' => 'failed', 'error' => 'Invalid Request!']);
-    exit;
-}
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['status' => 'failed', 'error' => 'Not logged in']);
-    exit;
-}
-
-$userId = $_SESSION['user_id'];
-if(!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(404);
-    echo json_encode(['status' => 'failed', 'error' => 'Invalid endpoint!']);
-    exit;
-}
-$body = file_get_contents('php://input');
-if(!$body) {
-    http_response_code(400);
-    echo json_encode(['status' => 'failed', 'error' => 'No messages specified!']);
-    exit;
-}
-$body = json_decode($body, true);
-$messages_seen = isset($body['messages']) ? $body['messages'] : null;
+$body = apiGetJsonBody();
+$messages_seen = $body['messages'] ?? null;
 
 if (!$messages_seen) {
-    http_response_code(400);
-    echo json_encode(['status' => 'failed', 'error' => 'No messages specified!']);
-    exit;
+    apiError('MISSING_MESSAGES', 'No messages specified!', 400);
 }
 
 // Validate that all message IDs are integers
@@ -41,18 +18,14 @@ $messages_seen = array_filter($messages_seen, 'is_numeric');
 $messages_seen = array_map('intval', $messages_seen);
 
 if (empty($messages_seen)) {
-    http_response_code(400);
-    echo json_encode(['status' => 'failed', 'error' => 'No valid message IDs provided!']);
-    exit;
+    apiError('INVALID_MESSAGES', 'No valid message IDs provided!', 400);
 }
 
 $placeholders = implode(',', array_fill(0, count($messages_seen), '?'));
 $stmt = $pdo->prepare("UPDATE messages SET seen_at = NOW() WHERE id IN ($placeholders) AND receiver_id=?");
 $params = array_merge($messages_seen, [$userId]);
 if (!$stmt->execute($params)) {
-    http_response_code(409);
-    echo json_encode(['status' => 'failed', 'error' => 'Could not mark these messages as seen!']);
-    exit;
+    apiError('UPDATE_FAILED', 'Could not mark these messages as seen!', 409);
 }
 
-echo json_encode(['status' => 'ok', 'messages_seen' => count($messages_seen)]);
+apiSuccess(['messages_seen' => count($messages_seen)]);
