@@ -51,6 +51,11 @@ $csrfToken = generateCsrfToken();
                     <div id="searchSuggestions" class="search-suggestions" style="display: none;" role="listbox" aria-label="User suggestions"></div>
                 </div>
                 <div id='chatListWrapper' class="chat-list-wrapper">
+                    <div class="group-actions mb-2">
+                        <button type="button" id="createGroupBtn" class="btn btn-sm btn-primary w-100" aria-label="Create group">
+                            <i class="fas fa-users me-1"></i>Create Group
+                        </button>
+                    </div>
                     <ul class="chat-list" id="chatList" role="list" aria-label="Chats"></ul>
                 </div>
             </aside>
@@ -59,6 +64,9 @@ $csrfToken = generateCsrfToken();
                 <div class="chat-header">
                     <h5 id="chatWith">Select a chat</h5>
                     <div class="chat-header-actions ms-auto">
+                        <button type="button" id="groupInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Group details" title="Group details" hidden>
+                            <i class="fas fa-users"></i>
+                        </button>
                         <button type="button" id="chatSettingsBtn" class="btn btn-sm btn-outline-secondary" aria-label="Chat settings" aria-haspopup="true" aria-expanded="false" title="Chat settings">
                             <i class="fas fa-sliders-h"></i>
                         </button>
@@ -71,6 +79,31 @@ $csrfToken = generateCsrfToken();
                                 <input type="checkbox" id="settingAutoScroll" checked>
                                 <span>Auto-scroll to latest</span>
                             </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="groupInfoPanel" class="group-info-panel" hidden>
+                    <div class="group-info-header">
+                        <div>
+                            <h6 id="groupInfoTitle" class="mb-1">Group</h6>
+                            <p id="groupInfoDescription" class="mb-0 text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="group-info-meta">
+                        <div><strong>Members:</strong> <span id="groupInfoMemberCount">0</span></div>
+                    </div>
+                    <div class="group-info-members">
+                        <ul id="groupInfoMembers" class="mb-2"></ul>
+                    </div>
+                    <div class="group-info-actions">
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="text" id="groupAddMemberInput" class="form-control" placeholder="Username to add" aria-label="Username to add">
+                            <button type="button" id="groupAddMemberBtn" class="btn btn-outline-primary">Add</button>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="groupJoinLinkInput" class="form-control" readonly aria-label="Group join link">
+                            <button type="button" id="groupCopyJoinLinkBtn" class="btn btn-outline-secondary">Copy</button>
+                            <button type="button" id="groupRotateJoinLinkBtn" class="btn btn-outline-secondary">Rotate</button>
                         </div>
                     </div>
                 </div>

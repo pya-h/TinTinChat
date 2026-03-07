@@ -19,6 +19,18 @@ const messageActionModalTitle = document.getElementById("messageActionModalTitle
 const messageActionModalBody = document.getElementById("messageActionModalBody");
 const messageActionModalClose = document.getElementById("messageActionModalClose");
 const messageActionModalAnnouncer = document.getElementById("messageActionModalAnnouncer");
+const createGroupBtn = document.getElementById("createGroupBtn");
+const groupInfoBtn = document.getElementById("groupInfoBtn");
+const groupInfoPanel = document.getElementById("groupInfoPanel");
+const groupInfoTitle = document.getElementById("groupInfoTitle");
+const groupInfoDescription = document.getElementById("groupInfoDescription");
+const groupInfoMemberCount = document.getElementById("groupInfoMemberCount");
+const groupInfoMembers = document.getElementById("groupInfoMembers");
+const groupAddMemberInput = document.getElementById("groupAddMemberInput");
+const groupAddMemberBtn = document.getElementById("groupAddMemberBtn");
+const groupJoinLinkInput = document.getElementById("groupJoinLinkInput");
+const groupCopyJoinLinkBtn = document.getElementById("groupCopyJoinLinkBtn");
+const groupRotateJoinLinkBtn = document.getElementById("groupRotateJoinLinkBtn");
 
 const appConstants = window.APP_CONSTANTS || {};
 
@@ -78,6 +90,8 @@ let currentChatUser = null;
 let currentChatRecentMessages = null;
 let currentReplyTarget = null;
 const chatUsers = new Set();
+const chatGroupsById = new Map();
+const groupDetailsCache = new Map();
 let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
@@ -177,6 +191,44 @@ const notificationPlayer = window.ChatNotificationService?.createPlayer({
 };
 
 const playNotificationSound = () => notificationPlayer.play();
+
+function buildGroupToken(groupId) {
+    return `group:${groupId}`;
+}
+
+function isGroupToken(chatTarget) {
+    return typeof chatTarget === "string" && chatTarget.startsWith("group:");
+}
+
+function parseGroupIdFromToken(chatTarget) {
+    if (!isGroupToken(chatTarget)) {
+        return 0;
+    }
+    return Number(chatTarget.slice("group:".length)) || 0;
+}
+
+function getCurrentGroupId() {
+    return parseGroupIdFromToken(currentChatUser);
+}
+
+function getCurrentChatDisplayName() {
+    if (!currentChatUser) {
+        return "";
+    }
+    const groupId = parseGroupIdFromToken(currentChatUser);
+    if (groupId > 0) {
+        return chatGroupsById.get(groupId)?.title || "Group";
+    }
+    return currentChatUser;
+}
+
+function chatListItemId(chatTarget) {
+    return `chat_${encodeURIComponent(String(chatTarget)).replace(/%/g, "_")}`;
+}
+
+function chatListSpinnerId(chatTarget) {
+    return `${chatListItemId(chatTarget)}_loading`;
+}
 
 function loadAppSettings() {
     try {
@@ -560,7 +612,9 @@ function setReplyState(messageElement) {
     }
 
     const snippet = getReplySnippetFromMessageElement(messageElement);
-    const senderLabel = messageElement.classList.contains("sent") ? "You" : currentChatUser;
+    const senderLabel = messageElement.classList.contains("sent")
+        ? "You"
+        : messageElement.getAttribute("data-sender-username") || getCurrentChatDisplayName();
 
     currentReplyTarget = {
         messageId,
@@ -588,7 +642,9 @@ function buildReplyPreviewHtml(msg, decryptedReplyText) {
         return "";
     }
 
-    const senderLabel = Number(msg.reply_sender_id) === Number(CURRENT_USER_ID) ? "You" : currentChatUser;
+    const senderLabel = Number(msg.reply_sender_id) === Number(CURRENT_USER_ID)
+        ? "You"
+        : msg.reply_sender_username || getCurrentChatDisplayName();
     const fallbackText = msg.reply_message_type === "text" ? "[Message]" : `[${msg.reply_message_type}]`;
     const previewText = (decryptedReplyText || fallbackText || "[Message]").slice(0, 160);
 
@@ -711,6 +767,28 @@ async function sendEncryptedTextMessage(
     return json;
 }
 
+async function sendGroupTextMessage(groupId, text, replyToMessageId = null, forwardedFromMessageId = null) {
+    const formData = new FormData();
+    formData.append("group_id", String(groupId));
+    formData.append("message", text);
+    formData.append("message_for_sender", text);
+
+    if (replyToMessageId) {
+        formData.append("reply_to_message_id", String(replyToMessageId));
+    }
+    if (forwardedFromMessageId) {
+        formData.append("forwarded_from_message_id", String(forwardedFromMessageId));
+    }
+
+    const json = await window.ApiService.jsonOk("api/send_message.php", {
+        method: "POST",
+        headers: getCsrfHeaders(),
+        body: formData,
+    });
+
+    return json;
+}
+
 function createForwardTargetListContent(onSelectUsername) {
     const wrapper = document.createElement("div");
     wrapper.className = "forward-target-list";
@@ -719,7 +797,11 @@ function createForwardTargetListContent(onSelectUsername) {
         .filter((username) => username && username !== CURRENT_USER)
         .sort((a, b) => a.localeCompare(b));
 
-    if (!users.length) {
+    const groups = Array.from(chatGroupsById.values()).sort((a, b) =>
+        String(a.title || "").localeCompare(String(b.title || ""))
+    );
+
+    if (!users.length && !groups.length) {
         const empty = document.createElement("div");
         empty.className = "forward-target-empty";
         empty.textContent = I18N_TEXT.forwardTargetEmpty;
@@ -739,6 +821,18 @@ function createForwardTargetListContent(onSelectUsername) {
         wrapper.appendChild(button);
     });
 
+    groups.forEach((group) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "forward-target-item";
+        button.innerHTML = `
+            <span class="forward-target-avatar"><i class="fas fa-users"></i></span>
+            <span class="forward-target-name">${escapeHtml(group.title || `Group ${group.id}`)}</span>
+        `;
+        button.addEventListener("click", () => onSelectUsername(buildGroupToken(group.id), button));
+        wrapper.appendChild(button);
+    });
+
     return wrapper;
 }
 
@@ -747,7 +841,12 @@ function showMessageDetailsModal(messageElement, messageData = null) {
     const details = messageData || messageMetaById.get(messageId) || {};
 
     const senderId = Number(details.sender_id ?? messageElement.getAttribute("data-sender-id") ?? 0);
-    const senderLabel = senderId === Number(CURRENT_USER_ID) ? "You" : currentChatUser || "Peer";
+    const senderUsername =
+        details.sender_username || messageElement.getAttribute("data-sender-username") || "";
+    const senderLabel =
+        senderId === Number(CURRENT_USER_ID)
+            ? "You"
+            : senderUsername || getCurrentChatDisplayName() || "Peer";
     const messageType = String(details.message_type || messageElement.getAttribute("data-message-type") || "text");
     const sentAt = details.created_at || messageElement.getAttribute("data-created-at") || "";
     const seenAt = details.seen_at || messageElement.getAttribute("data-seen-at") || "";
@@ -794,7 +893,7 @@ async function forwardMessageText(messageElement) {
 
     const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
     const content = createForwardTargetListContent(async (destination, button) => {
-        if (!destination || destination === CURRENT_USER) {
+        if (!destination || (!isGroupToken(destination) && destination === CURRENT_USER)) {
             showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedInvalidTarget, "warning");
             return;
         }
@@ -804,17 +903,21 @@ async function forwardMessageText(messageElement) {
                 button.disabled = true;
                 button.classList.add("is-forwarding");
             }
-            await sendEncryptedTextMessage(
-                destination,
-                messageText,
-                null,
-                sourceMessageId || null
-            );
-            addUserToChatList(destination);
+            if (isGroupToken(destination)) {
+                const groupId = parseGroupIdFromToken(destination);
+                await sendGroupTextMessage(groupId, messageText, null, sourceMessageId || null);
+            } else {
+                await sendEncryptedTextMessage(destination, messageText, null, sourceMessageId || null);
+                addUserToChatList(destination);
+            }
             closeMessageActionModal();
             showModal(
                 I18N_TEXT.forwardedTitle,
-                formatI18nText(I18N_TEXT.forwardedBody, { destination }),
+                formatI18nText(I18N_TEXT.forwardedBody, {
+                    destination: isGroupToken(destination)
+                        ? chatGroupsById.get(parseGroupIdFromToken(destination))?.title || "group"
+                        : destination,
+                }),
                 "success"
             );
         } catch (error) {
@@ -1099,8 +1202,10 @@ function addUserToChatList(username) {
         .join("")
         .toUpperCase();
 
-    li.innerHTML = `<span class="avatar">${initials}</span> <span>${username}</span><span id='user_${username}_loading' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
-    li.id = `user_${username}`;
+    li.innerHTML = `<span class="avatar">${initials}</span> <span>${username}</span><span id='${chatListSpinnerId(
+        username
+    )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
+    li.id = chatListItemId(username);
     li.classList.add("chat-user");
     li.addEventListener("click", () => selectChatUser(username));
     li.addEventListener("keydown", (event) => {
@@ -1113,22 +1218,86 @@ function addUserToChatList(username) {
     return true;
 }
 
-function updateLoadingSpinnerState(username, show = false) {
-    const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
-    loadingSpinnerElement.style = `display: ${show ? "inline" : "none"}`;
+function addGroupToChatList(group) {
+    const groupId = Number(group?.id || 0);
+    if (groupId <= 0) {
+        return false;
+    }
+
+    chatGroupsById.set(groupId, {
+        id: groupId,
+        title: String(group.title || `Group ${groupId}`),
+        description: String(group.description || ""),
+        role: String(group.role || "member"),
+        member_count: Number(group.member_count || 0),
+    });
+
+    const token = buildGroupToken(groupId);
+    const existing = document.getElementById(chatListItemId(token));
+    const title = chatGroupsById.get(groupId).title;
+    const role = chatGroupsById.get(groupId).role;
+
+    if (existing) {
+        const titleElement = existing.querySelector(".chat-item-title");
+        const metaElement = existing.querySelector(".chat-item-meta");
+        if (titleElement) titleElement.textContent = title;
+        if (metaElement) metaElement.textContent = `Group • ${role}`;
+        return false;
+    }
+
+    const li = document.createElement("li");
+    li.tabIndex = 0;
+    li.setAttribute("role", "listitem");
+    li.setAttribute("aria-label", `Open group ${title}`);
+    li.style.setProperty("--i", chatListElem.children.length);
+
+    const initials = title
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+
+    li.innerHTML = `
+        <span class="avatar">${initials || "G"}</span>
+        <span>
+            <span class="chat-item-title">${escapeHtml(title)}</span>
+            <span class="chat-item-meta">Group • ${escapeHtml(role)}</span>
+        </span>
+        <span id='${chatListSpinnerId(token)}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>
+    `;
+    li.id = chatListItemId(token);
+    li.classList.add("chat-user", "chat-group");
+    li.addEventListener("click", () => selectGroupChat(groupId));
+    li.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            selectGroupChat(groupId);
+        }
+    });
+
+    chatListElem.appendChild(li);
+    return true;
 }
 
-async function selectChatUser(username) {
+function updateLoadingSpinnerState(chatTarget, show = false) {
+    const loadingSpinnerElement = document.getElementById(chatListSpinnerId(chatTarget));
+    if (loadingSpinnerElement) {
+        loadingSpinnerElement.style = `display: ${show ? "inline" : "none"}`;
+    }
+}
+
+async function selectChatTarget(target) {
     if (currentChatUser?.length) {
         updateLoadingSpinnerState(currentChatUser, false);
     }
 
-    document.getElementById(`user_${currentChatUser}`)?.classList.remove("selected-chat");
-    currentChatUser = username;
+    document.getElementById(chatListItemId(currentChatUser))?.classList.remove("selected-chat");
+    currentChatUser = target;
     currentChatRecentMessages = null;
-    document.getElementById(`user_${currentChatUser}`)?.classList.add("selected-chat");
+    document.getElementById(chatListItemId(currentChatUser))?.classList.add("selected-chat");
     chatInput.disabled = false;
-    chatWithElem.textContent = username;
+    chatWithElem.textContent = getCurrentChatDisplayName();
     chatInput.value = "";
     setComposerStatus("");
     clearReplyState();
@@ -1142,14 +1311,48 @@ async function selectChatUser(username) {
     isLoadingMessages = false;
     hasLoadedMoreMessages = false; // Reset when selecting a new chat
 
+    const isGroup = isGroupToken(currentChatUser);
+    groupInfoBtn.hidden = !isGroup;
+    groupInfoPanel.hidden = true;
+
     [...chatListElem.children].forEach((li) => {
-        li.classList.toggle("active", li.textContent === username);
+        li.classList.toggle("active", li.id === chatListItemId(target));
     });
 
-    await loadMessages(username, true, true);
+    await loadMessages(target, true, true);
+}
+
+async function selectChatUser(username) {
+    return selectChatTarget(username);
+}
+
+async function selectGroupChat(groupId) {
+    const token = buildGroupToken(groupId);
+    return selectChatTarget(token);
+}
+
+function buildChatQueryParams(target, extra = {}) {
+    const params = new URLSearchParams();
+    const groupId = parseGroupIdFromToken(target);
+    if (groupId > 0) {
+        params.set("group_id", String(groupId));
+    } else {
+        params.set("with", target);
+    }
+
+    Object.entries(extra).forEach(([key, value]) => {
+        if (value != null) {
+            params.set(key, String(value));
+        }
+    });
+
+    return params;
 }
 
 async function updateMessagesStatus(messages) {
+    if (isGroupToken(currentChatUser)) {
+        return false;
+    }
     const messagesNewlySeen = messages
         ?.filter((msg) => msg.receiver_id == CURRENT_USER_ID && !msg.seen_at)
         .map((msg) => Number(msg.id));
@@ -1167,10 +1370,10 @@ async function updateMessagesStatus(messages) {
     return true;
 }
 
-async function loadMessages(username, showLoading = false, isInitialLoad = false) {
+async function loadMessages(chatTarget, showLoading = false, isInitialLoad = false) {
     if (isLoadingMessages) return;
 
-    const loadingSpinnerElement = document.getElementById(`user_${username}_loading`);
+    const loadingSpinnerElement = document.getElementById(chatListSpinnerId(chatTarget));
     try {
         isLoadingMessages = true;
 
@@ -1179,12 +1382,12 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
         }
 
         const offset = isInitialLoad ? 0 : messageOffset;
+        const query = buildChatQueryParams(chatTarget, {
+            limit: MESSAGES_PER_PAGE,
+            offset,
+        });
 
-        const data = await window.ApiService.json(
-            `api/fetch_messages.php?with=${encodeURIComponent(
-                username
-            )}&limit=${MESSAGES_PER_PAGE}&offset=${offset}`
-        );
+        const data = await window.ApiService.json(`api/fetch_messages.php?${query.toString()}`);
         clearInlineChatState();
         setComposerStatus("");
 
@@ -1252,7 +1455,7 @@ async function loadMessages(username, showLoading = false, isInitialLoad = false
             message: "Unable to load messages.",
             kind: "error",
             actionLabel: "Retry",
-            onAction: () => loadMessages(username, true, isInitialLoad),
+            onAction: () => loadMessages(chatTarget, true, isInitialLoad),
         });
         setComposerStatus("Message loading failed. You can retry.", "error");
     } finally {
@@ -1266,10 +1469,12 @@ async function loadCurrentChatsRecentMessages() {
 
     try {
         isLoadingMessages = true;
+        const offsetMsgId = currentChatRecentMessages[currentChatRecentMessages.length - 1].id;
+        const query = buildChatQueryParams(currentChatUser, {
+            offsetMsgId,
+        });
         const data = await window.ApiService.json(
-            `api/fetch_recent_messages.php?with=${encodeURIComponent(
-                currentChatUser
-            )}&offsetMsgId=${currentChatRecentMessages[currentChatRecentMessages.length - 1].id}`
+            `api/fetch_recent_messages.php?${query.toString()}`
         );
 
         if (!data?.messages?.length) {
@@ -1312,15 +1517,12 @@ async function loadCurrentChatsRecentMessages() {
 }
 
 async function refreshPendingSeenStates() {
-    if (!currentChatUser || !pendingSeenMessageIds.size || !navigator.onLine) {
+    if (!currentChatUser || !pendingSeenMessageIds.size || !navigator.onLine || isGroupToken(currentChatUser)) {
         return;
     }
 
     const ids = Array.from(pendingSeenMessageIds).slice(0, 200);
-    const query = new URLSearchParams({
-        with: currentChatUser,
-        message_ids: ids.join(","),
-    });
+    const query = buildChatQueryParams(currentChatUser, { message_ids: ids.join(",") });
 
     try {
         const data = await window.ApiService.json(`api/fetch_seen_status.php?${query.toString()}`, {
@@ -1525,33 +1727,52 @@ async function addMessageToChat(msg, prepend = false) {
         `;
         div.setAttribute("data-message-id", msg.id);
     } else {
+        const isGroupMessage = Number(msg.group_id || 0) > 0;
         let decryptedText = "[Unable to decrypt message]";
         let decryptedReplyText = "";
         try {
-            if (msg.sender_id == CURRENT_USER_ID) {
-                decryptedText = await decryptLongMessage(msg.message_for_sender);
+            if (isGroupMessage) {
+                decryptedText =
+                    msg.sender_id == CURRENT_USER_ID
+                        ? msg.message_for_sender || msg.message || ""
+                        : msg.message || msg.message_for_sender || "";
             } else {
-                decryptedText = await decryptLongMessage(msg.message);
+                if (msg.sender_id == CURRENT_USER_ID) {
+                    decryptedText = await decryptLongMessage(msg.message_for_sender);
+                } else {
+                    decryptedText = await decryptLongMessage(msg.message);
+                }
             }
 
             if (msg.reply_message_id && msg.reply_message_type === "text") {
-                const replyPayload = msg.reply_sender_id == CURRENT_USER_ID
-                    ? msg.reply_message_for_sender
-                    : msg.reply_message;
+                const replyPayload =
+                    isGroupMessage
+                        ? msg.reply_message || msg.reply_message_for_sender
+                        : msg.reply_sender_id == CURRENT_USER_ID
+                          ? msg.reply_message_for_sender
+                          : msg.reply_message;
                 if (replyPayload) {
-                    decryptedReplyText = await decryptLongMessage(replyPayload);
+                    decryptedReplyText = isGroupMessage
+                        ? String(replyPayload)
+                        : await decryptLongMessage(replyPayload);
                 }
             }
         } catch (e) {
-            decryptedText = "[Unsupported message]";
+            decryptedText = isGroupMessage ? String(msg.message || "") : "[Unsupported message]";
         }
         const isPersian = isTextPersian(decryptedText.trim());
         const safeText = escapeHtml(decryptedText);
+        const senderHeader =
+            isGroupMessage && msg.sender_id != CURRENT_USER_ID
+                ? `<div class="group-message-sender">${escapeHtml(
+                      msg.sender_username || "Member"
+                  )}</div>`
+                : "";
         div.classList.add("is-text-message");
         hasContextActions = true;
         canCopy = true;
         canForward = true;
-        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${newDateTag(msg, {
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${senderHeader}${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${newDateTag(msg, {
             atLeft: isPersian,
             strictMargins: true,
             topSpace: 3,
@@ -1586,7 +1807,7 @@ async function addMessageToChat(msg, prepend = false) {
         }
     }
 
-    if (msg.sender_id == CURRENT_USER_ID) {
+    if (msg.sender_id == CURRENT_USER_ID && !Number(msg.group_id || 0)) {
         const tickContainer = document.createElement("span");
         tickContainer.className = msg.seen_at
             ? "message-status-indicator seen-ticks"
@@ -1604,6 +1825,7 @@ async function addMessageToChat(msg, prepend = false) {
     div.setAttribute("data-message-id", String(msg.id));
     div.setAttribute("data-message-type", String(msg.message_type || "text"));
     div.setAttribute("data-sender-id", String(msg.sender_id));
+    div.setAttribute("data-sender-username", String(msg.sender_username || ""));
     div.setAttribute("data-created-at", msg.created_at || "");
     div.setAttribute("data-seen-at", msg.seen_at || "");
     if (msg.file_size) {
@@ -2212,9 +2434,16 @@ const sendTextMessage = async () => {
     setComposerStatus("Sending message...");
 
     try {
-        await sendEncryptedTextMessage(currentChatUser, text, currentReplyTarget?.messageId || null);
-
-        addUserToChatList(currentChatUser);
+        if (isGroupToken(currentChatUser)) {
+            await sendGroupTextMessage(
+                getCurrentGroupId(),
+                text,
+                currentReplyTarget?.messageId || null
+            );
+        } else {
+            await sendEncryptedTextMessage(currentChatUser, text, currentReplyTarget?.messageId || null);
+            addUserToChatList(currentChatUser);
+        }
         chatInput.value = "";
         clearReplyState();
         setComposerStatus("Message sent", "success");
@@ -2594,14 +2823,138 @@ function clearChatListErrorState() {
     document.getElementById("chatListRetryItem")?.remove();
 }
 
+async function loadGroupDetails(groupId, force = false) {
+    if (!groupId) {
+        return null;
+    }
+    if (!force && groupDetailsCache.has(groupId)) {
+        return groupDetailsCache.get(groupId);
+    }
+
+    const data = await window.ApiService.json(
+        `api/fetch_group_details.php?group_id=${encodeURIComponent(groupId)}`
+    );
+    groupDetailsCache.set(groupId, data);
+    return data;
+}
+
+async function renderGroupInfoPanel(groupId) {
+    try {
+        const details = await loadGroupDetails(groupId, true);
+        const group = details?.group || {};
+        const members = Array.isArray(details?.members) ? details.members : [];
+
+        if (groupInfoTitle) groupInfoTitle.textContent = group.title || `Group ${groupId}`;
+        if (groupInfoDescription)
+            groupInfoDescription.textContent =
+                group.description || "No description provided yet.";
+        if (groupInfoMemberCount) groupInfoMemberCount.textContent = String(members.length);
+        if (groupInfoMembers) {
+            groupInfoMembers.innerHTML = "";
+            members.forEach((member) => {
+                const li = document.createElement("li");
+                li.innerHTML = `<span>${escapeHtml(member.username || "Unknown")}</span><span>${escapeHtml(
+                    member.role || "member"
+                )}</span>`;
+                groupInfoMembers.appendChild(li);
+            });
+        }
+
+        if (groupJoinLinkInput) {
+            groupJoinLinkInput.value = details?.can_manage && group.join_link ? group.join_link : "";
+            groupJoinLinkInput.style.display = details?.can_manage ? "" : "none";
+        }
+        if (groupCopyJoinLinkBtn) {
+            groupCopyJoinLinkBtn.style.display = details?.can_manage ? "" : "none";
+        }
+        if (groupRotateJoinLinkBtn) {
+            groupRotateJoinLinkBtn.style.display = details?.can_manage ? "" : "none";
+        }
+        if (groupAddMemberInput) {
+            groupAddMemberInput.style.display = details?.can_manage ? "" : "none";
+        }
+        if (groupAddMemberBtn) {
+            groupAddMemberBtn.style.display = details?.can_manage ? "" : "none";
+        }
+    } catch (error) {
+        showModal("Group Details", error.message || "Failed to load group details", "warning");
+    }
+}
+
+async function createGroupFlow() {
+    const title = window.prompt("Group title:", "");
+    if (!title || !title.trim()) {
+        return;
+    }
+    const description = window.prompt("Group description (optional):", "") || "";
+
+    const data = await window.ApiService.jsonOk("api/create_group.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...getCsrfHeaders(),
+        },
+        body: JSON.stringify({
+            title: title.trim(),
+            description: description.trim(),
+        }),
+    });
+
+    if (data?.group) {
+        addGroupToChatList(data.group);
+        await selectGroupChat(Number(data.group.id));
+        showModal("Group Created", `Created group "${data.group.title}" successfully.`, "success");
+    }
+}
+
+async function handleJoinGroupFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("join_group");
+    if (!token) {
+        return;
+    }
+
+    try {
+        const data = await window.ApiService.jsonOk("api/join_group.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
+            body: JSON.stringify({ token }),
+        });
+
+        await loadChatList(true);
+        if (data?.group?.id) {
+            await selectGroupChat(Number(data.group.id));
+        }
+        showModal("Joined Group", "You have joined the group successfully.", "success");
+    } catch (error) {
+        showModal("Join Group Failed", error.message || "Invalid join link.", "error");
+    } finally {
+        params.delete("join_group");
+        const cleaned = `${window.location.pathname}${
+            params.toString() ? `?${params.toString()}` : ""
+        }`;
+        window.history.replaceState({}, "", cleaned);
+    }
+}
+
 async function loadChatList(force = false) {
     try {
         const data = await window.ApiService.json("api/fetch_chats.php");
-        if (!force && chatUsers?.size === data.chatUsers.length) {
+        if (
+            !force &&
+            chatUsers?.size === (data.chatUsers?.length || 0) &&
+            chatGroupsById.size === (data.chatGroups?.length || 0)
+        ) {
             return;
         }
         if (data.chatUsers && Array.isArray(data.chatUsers)) {
             data.chatUsers.forEach(addUserToChatList);
+        }
+        if (data.chatGroups && Array.isArray(data.chatGroups)) {
+            data.chatGroups.forEach(addGroupToChatList);
         }
         clearChatListErrorState();
     } catch (e) {
@@ -2610,6 +2963,85 @@ async function loadChatList(force = false) {
 }
 
 loadChatList();
+handleJoinGroupFromUrl();
+
+createGroupBtn?.addEventListener("click", async () => {
+    try {
+        await createGroupFlow();
+    } catch (error) {
+        showModal("Create Group Failed", error.message || "Unable to create group", "error");
+    }
+});
+
+groupInfoBtn?.addEventListener("click", async () => {
+    const groupId = getCurrentGroupId();
+    if (!groupId) {
+        return;
+    }
+    const willShow = groupInfoPanel.hidden;
+    groupInfoPanel.hidden = !willShow;
+    if (willShow) {
+        await renderGroupInfoPanel(groupId);
+    }
+});
+
+groupAddMemberBtn?.addEventListener("click", async () => {
+    const groupId = getCurrentGroupId();
+    const username = groupAddMemberInput?.value?.trim();
+    if (!groupId || !username) {
+        return;
+    }
+
+    try {
+        await window.ApiService.jsonOk("api/add_group_member.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
+            body: JSON.stringify({ group_id: groupId, username }),
+        });
+        groupAddMemberInput.value = "";
+        await renderGroupInfoPanel(groupId);
+        showModal("Member Added", `${username} added to group.`, "success");
+    } catch (error) {
+        showModal("Add Member Failed", error.message || "Unable to add member", "error");
+    }
+});
+
+groupCopyJoinLinkBtn?.addEventListener("click", async () => {
+    const link = groupJoinLinkInput?.value?.trim();
+    if (!link) return;
+    try {
+        await navigator.clipboard.writeText(link);
+        showModal("Copied", "Join link copied to clipboard.", "success");
+    } catch (error) {
+        showModal("Copy Failed", "Unable to copy join link.", "warning");
+    }
+});
+
+groupRotateJoinLinkBtn?.addEventListener("click", async () => {
+    const groupId = getCurrentGroupId();
+    if (!groupId) {
+        return;
+    }
+    try {
+        const data = await window.ApiService.jsonOk("api/rotate_group_join_link.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
+            body: JSON.stringify({ group_id: groupId }),
+        });
+        if (groupJoinLinkInput) {
+            groupJoinLinkInput.value = data.join_link || "";
+        }
+        showModal("Join Link Rotated", "A new join link is now active.", "success");
+    } catch (error) {
+        showModal("Rotate Failed", error.message || "Unable to rotate join link.", "error");
+    }
+});
 
 let chatListTriggerTime = 0;
 
@@ -2631,6 +3063,10 @@ setInterval(() => {
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        return;
+    }
+    if (isGroupToken(currentChatUser)) {
+        showModal("Group Media", "Voice messages for groups will be added soon.", "info");
         return;
     }
     if (!isRecording) {
@@ -2792,6 +3228,10 @@ imageUploadBtn.addEventListener("click", () => {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
     }
+    if (isGroupToken(currentChatUser)) {
+        showModal("Group Media", "Image uploads for groups will be added soon.", "info");
+        return;
+    }
     imageUploadInput.click();
 });
 
@@ -2870,6 +3310,11 @@ async function sendImageMessage(imageFile) {
 async function sendFileMessage(file) {
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        return;
+    }
+
+    if (isGroupToken(currentChatUser)) {
+        showModal("Group Media", "File uploads for groups will be added soon.", "info");
         return;
     }
 

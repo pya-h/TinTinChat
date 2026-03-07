@@ -86,7 +86,68 @@ Legend:
 - [x] (`P2`) Introduce shared constants for limits/timeouts (frontend + backend sync).
 - [x] (`P2`) Add developer docs for endpoint contract and error codes.
 
-### Phase E — Chatroom Parity Features (Recommended) (`P2/P3`)
+### Phase E — Group Support (`P1/P2`)
+- [x] (`P1`) **Milestone E1 — Schema Foundation**
+	- define group chat data model and migration plan:
+	- `groups` table (`id`, `title`, `description`, `created_by_user_id`, `join_token`, `created_at`, `updated_at`),
+	- `group_members` table (`group_id`, `user_id`, `role`, `joined_at`, `invited_by_user_id`),
+	- `messages.group_id` nullable FK for group messages,
+	- keep direct-message compatibility fully intact.
+- [x] (`P1`) **Milestone E2 — Group Lifecycle APIs**
+	- implement backend APIs for group lifecycle:
+	- create group,
+	- update group details,
+	- fetch user groups,
+	- fetch group details + members,
+	- add member (owner/admin-controlled),
+	- join group by secure tokenized link.
+- [x] (`P1`) **Milestone E3 — Join Link Management**
+	- add group join-link flow with rotation/revocation:
+	- generate copyable invite link,
+	- allow owner/admin to rotate link,
+	- validate expiry/authorization rules server-side.
+- [x] (`P1`) **Milestone E4 — Message API Group Parity**
+	- extend send/fetch message APIs to support group conversations:
+	- sender identity always included per message,
+	- membership check on all group reads/writes,
+	- seen/read behavior adapted for group-safe semantics.
+- [x] (`P1`) **Milestone E5 — Group UI Entry + Navigation**
+	- add group UI entry points in chat list:
+	- create-group action,
+	- clear visual distinction between users and groups,
+	- fast switch between direct and group chats.
+- [x] (`P1`) **Milestone E6 — Group Details Panel**
+	- add group details panel in chat header area:
+	- title,
+	- description/details,
+	- members list,
+	- add-member button,
+	- copy/rotate join-link actions.
+- [x] (`P1`) **Milestone E7 — Group Message Rendering**
+	- update message renderer for group context:
+	- show sender name/avatar on each inbound group message,
+	- keep clean bubble spacing for repeated sender blocks,
+	- preserve existing media/file rendering behavior.
+- [x] (`P1`) **Milestone E8 — Action Parity (Reply/Forward/Copy/Delete/Details)**
+	- ensure message actions parity in groups:
+	- reply works end-to-end in groups,
+	- forward supports user→group, group→user, and group→group targets,
+	- copy/details/delete behaviors follow group permissions.
+	- text-first group parity delivered; group media/file parity remains follow-up.
+- [ ] (`P2`) **Milestone E9 — Roles & Permissions**
+	- add group role/permission policy baseline:
+	- owner/admin/member roles,
+	- add/remove member permissions,
+	- optional group leave and owner-transfer safeguards.
+- [ ] (`P2`) **Milestone E10 — UX Polish + QA Closure**
+	- add user-friendly polish for group UX:
+	- empty states for new groups,
+	- member-add success/error feedback,
+	- lightweight “new in group” badge in list,
+	- accessibility parity (keyboard + screen reader labels).
+	- run full regression for direct chat flows (reply/forward/seen/media) before closing Phase E.
+
+### Phase F — Chatroom Parity Features (Recommended) (`P2/P3`)
 - [ ] (`P2`) Typing indicator.
 - [ ] (`P2`) Unread counter per chat.
 - [ ] (`P2`) Better per-message timestamp formatting and grouping.
@@ -94,7 +155,7 @@ Legend:
 - [ ] (`P3`) Message reactions (minimal emoji set).
 - [ ] (`P3`) Optional delete-for-everyone policy (with permissions).
 
-### Phase F — Sticker Support (Telegram-like) (`P1/P2`)
+### Phase G — Sticker Support (Telegram-like) (`P1/P2`)
 - [ ] (`P1`) Define sticker format spec aligned to Telegram style:
 	- static sticker image on `512x512` canvas,
 	- one side exactly `512px` (the other side `<=512px`),
@@ -113,7 +174,7 @@ Legend:
 	- basic moderation control (`is_active` flag for admin disable).
 - [ ] (`P2`) Add UX states for sticker flow (loading, empty, upload progress, error/retry).
 
-### Phase G — Nice to Have (Power UX) (`P3`)
+### Phase H — Nice to Have (Power UX) (`P3`)
 - [ ] (`P3`) Add **Select messages** action to message context menu.
 - [ ] (`P3`) Implement select mode behavior:
 	- tap/click messages to multi-select,
@@ -147,9 +208,10 @@ Legend:
 1. Security and endpoint consistency (`P0`)  
 2. Reply + context menu + copy + forward (`P1`)  
 3. UX polishing and accessibility (`P1/P2`)  
-4. Optional parity features (`P2/P3`)  
-5. Telegram-like sticker support (`P1/P2`)  
-6. Nice-to-have power UX (`P3`)
+4. Group support foundation + UX (`P1/P2`)  
+5. Optional parity features (`P2/P3`)  
+6. Telegram-like sticker support (`P1/P2`)  
+7. Nice-to-have power UX (`P3`)
 
 ## 5) Definition of Done (for upcoming feature work)
 

@@ -269,6 +269,59 @@ nav.navbar:hover::after {
     margin-bottom: 0.5rem;
 }
 
+.chat-list li.chat-group {
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 20%, var(--border-color));
+}
+
+.chat-list .chat-item-meta {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--subtle-text-color);
+    margin-top: 2px;
+}
+
+.group-info-panel {
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    background: color-mix(in srgb, var(--surface-color) 85%, var(--background-color));
+}
+
+.group-info-header h6 {
+    margin: 0;
+    font-weight: 700;
+}
+
+.group-info-header p {
+    font-size: 0.85rem;
+}
+
+.group-info-meta {
+    font-size: 0.85rem;
+    margin: 0.5rem 0;
+}
+
+#groupInfoMembers {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 120px;
+    overflow: auto;
+}
+
+#groupInfoMembers li {
+    font-size: 0.82rem;
+    padding: 0.2rem 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.group-message-sender {
+    font-size: 0.74rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    opacity: 0.85;
+}
+
 .chat-list li::before {
     content: "";
     position: absolute;
