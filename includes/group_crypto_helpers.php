@@ -143,7 +143,15 @@ function groupEnsureMemberHasSharedKey(PDO $pdo, int $groupId, int $userId): voi
     $rawGroupKey = groupTryGetAnyDecryptableSharedKey($pdo, $groupId);
     if ($rawGroupKey === null) {
         if ($existingKeysCount > 0) {
-            apiError('GROUP_KEY_RECOVERY_FAILED', 'Unable to recover existing group encryption key', 500);
+            $encryptedTextStmt = $pdo->prepare(
+                "SELECT 1 FROM messages WHERE group_id = ? AND message_type = 'text' AND message LIKE 'gcm1:%' LIMIT 1"
+            );
+            $encryptedTextStmt->execute([$groupId]);
+            $hasEncryptedText = (bool) $encryptedTextStmt->fetchColumn();
+
+            if ($hasEncryptedText) {
+                apiError('GROUP_KEY_RECOVERY_FAILED', 'Unable to recover existing group encryption key', 500);
+            }
         }
         $rawGroupKey = groupGenerateSharedKey();
         groupAssignSharedKeyToAllMembers($pdo, $groupId, $rawGroupKey);

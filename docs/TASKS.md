@@ -169,6 +169,13 @@ Legend:
 - [ ] (`P3`) Message reactions (minimal emoji set).
 - [ ] (`P3`) Optional delete-for-everyone policy (with permissions).
 
+### Phase F.5 — Avatar Assignment (Small) (`P2`)
+- [ ] (`P2`) DB migration for user avatar metadata/path.
+- [ ] (`P2`) Add secure avatar upload endpoint with MIME/size validation.
+- [ ] (`P2`) Add avatar retrieval endpoint + default fallback behavior.
+- [ ] (`P2`) Show avatars in chat list, member lists, and message sender contexts.
+- [ ] (`P2`) Add simple profile/avatar update UI action.
+
 ### Phase G — Sticker Support (Telegram-like) (`P1/P2`)
 - [ ] (`P1`) Define sticker format spec aligned to Telegram style:
 	- static sticker image on `512x512` canvas,

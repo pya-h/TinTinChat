@@ -22,18 +22,19 @@ const messageActionModalAnnouncer = document.getElementById("messageActionModalA
 const createGroupBtn = document.getElementById("createGroupBtn");
 const groupKeyHealthBtn = document.getElementById("groupKeyHealthBtn");
 const groupInfoBtn = document.getElementById("groupInfoBtn");
+const groupInfoBackBtn = document.getElementById("groupInfoBackBtn");
 const groupInfoPanel = document.getElementById("groupInfoPanel");
 const groupInfoTitle = document.getElementById("groupInfoTitle");
 const groupInfoDescription = document.getElementById("groupInfoDescription");
 const groupInfoMemberCount = document.getElementById("groupInfoMemberCount");
 const groupInfoMembers = document.getElementById("groupInfoMembers");
-const groupAddMemberInput = document.getElementById("groupAddMemberInput");
 const groupAddMemberBtn = document.getElementById("groupAddMemberBtn");
 const groupJoinLinkInput = document.getElementById("groupJoinLinkInput");
 const groupCopyJoinLinkBtn = document.getElementById("groupCopyJoinLinkBtn");
 const groupRotateJoinLinkBtn = document.getElementById("groupRotateJoinLinkBtn");
 const groupTransferOwnerBtn = document.getElementById("groupTransferOwnerBtn");
 const groupLeaveBtn = document.getElementById("groupLeaveBtn");
+const chatAreaElem = document.querySelector(".chat-area");
 
 const appConstants = window.APP_CONSTANTS || {};
 
@@ -449,6 +450,26 @@ function getCsrfHeaders() {
     return {};
 }
 
+function closeGroupInfoPanel() {
+    if (groupInfoPanel) {
+        groupInfoPanel.hidden = true;
+    }
+    if (groupInfoBtn) {
+        groupInfoBtn.setAttribute("aria-expanded", "false");
+    }
+    chatAreaElem?.classList.remove("group-panel-open");
+}
+
+function openGroupInfoPanel() {
+    if (groupInfoPanel) {
+        groupInfoPanel.hidden = false;
+    }
+    if (groupInfoBtn) {
+        groupInfoBtn.setAttribute("aria-expanded", "true");
+    }
+    chatAreaElem?.classList.add("group-panel-open");
+}
+
 async function fetchAndImportGroupCryptoKey(groupId) {
     const data = await window.ApiService.jsonOk("api/get_group_key.php", {
         method: "POST",
@@ -835,7 +856,14 @@ async function sendEncryptedTextMessage(
 }
 
 async function sendGroupTextMessage(groupId, text, replyToMessageId = null, forwardedFromMessageId = null) {
-    const groupKey = await getGroupCryptoKey(groupId);
+    let groupKey;
+    try {
+        groupKey = await getGroupCryptoKey(groupId);
+    } catch (error) {
+        groupTextCryptoKeyCache.delete(Number(groupId));
+        groupTextCryptoKeyInflight.delete(Number(groupId));
+        groupKey = await getGroupCryptoKey(groupId, true);
+    }
     const encryptedGroupMessage = await encryptGroupMessage(text, groupKey);
 
     const formData = new FormData();
@@ -1396,7 +1424,7 @@ async function selectChatTarget(target) {
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
-    groupInfoPanel.hidden = true;
+    closeGroupInfoPanel();
 
     [...chatListElem.children].forEach((li) => {
         li.classList.toggle("active", li.id === chatListItemId(target));
@@ -2549,10 +2577,14 @@ const sendTextMessage = async () => {
         clearReplyState();
         setComposerStatus("Message sent", "success");
     } catch (err) {
+        const errorMessage =
+            (err && typeof err === "object" && "message" in err && String(err.message || "").trim())
+                ? String(err.message)
+                : String(err || "Unknown");
         setComposerStatus("Message failed to send. Try again.", "error");
         showModal(
             I18N_TEXT.sendErrorTitle,
-            formatI18nText(I18N_TEXT.sendErrorBody, { error: err.message || "Unknown" }),
+            formatI18nText(I18N_TEXT.sendErrorBody, { error: errorMessage }),
             "error"
         );
     } finally {
@@ -2955,13 +2987,17 @@ async function renderGroupInfoPanel(groupId) {
             groupInfoMembers.innerHTML = "";
             if (!members.length) {
                 const empty = document.createElement("li");
+                empty.className = "group-member-empty";
                 empty.textContent = "No members found.";
                 groupInfoMembers.appendChild(empty);
             }
             members.forEach((member) => {
                 const li = document.createElement("li");
+                li.className = "group-member-item";
                 const memberRole = String(member.role || "member");
                 const memberUserId = Number(member.user_id || 0);
+                const memberUsername = String(member.username || "Unknown");
+                const memberInitial = (memberUsername[0] || "?").toUpperCase();
                 const canRemove =
                     details?.can_manage &&
                     memberUserId !== Number(CURRENT_USER_ID) &&
@@ -2973,10 +3009,16 @@ async function renderGroupInfoPanel(groupId) {
                     memberRole !== "owner";
 
                 li.innerHTML = `
-                    <span>${escapeHtml(member.username || "Unknown")} (${escapeHtml(memberRole)})</span>
+                    <div class="group-member-contact">
+                        <span class="group-member-avatar">${escapeHtml(memberInitial)}</span>
+                        <span class="group-member-info">
+                            <span class="group-member-name">${escapeHtml(memberUsername)}</span>
+                            <span class="group-member-role">${escapeHtml(memberRole)}</span>
+                        </span>
+                    </div>
                     <span class="group-member-actions">
-                        ${canTransfer ? `<button type="button" class="btn btn-outline-warning" data-action="transfer-owner" aria-label="Transfer ownership to ${escapeHtml(member.username || "member")}" data-user-id="${memberUserId}" data-username="${escapeHtml(member.username || "")}">Owner</button>` : ""}
-                        ${canRemove ? `<button type="button" class="btn btn-outline-danger" data-action="remove-member" aria-label="Remove ${escapeHtml(member.username || "member")} from group" data-user-id="${memberUserId}" data-username="${escapeHtml(member.username || "")}">Remove</button>` : ""}
+                        ${canTransfer ? `<button type="button" class="btn btn-outline-warning" data-action="transfer-owner" aria-label="Transfer ownership to ${escapeHtml(memberUsername)}" data-user-id="${memberUserId}" data-username="${escapeHtml(memberUsername)}">Owner</button>` : ""}
+                        ${canRemove ? `<button type="button" class="btn btn-outline-danger" data-action="remove-member" aria-label="Remove ${escapeHtml(memberUsername)} from group" data-user-id="${memberUserId}" data-username="${escapeHtml(memberUsername)}">Remove</button>` : ""}
                     </span>
                 `;
                 groupInfoMembers.appendChild(li);
@@ -2993,11 +3035,8 @@ async function renderGroupInfoPanel(groupId) {
         if (groupRotateJoinLinkBtn) {
             groupRotateJoinLinkBtn.style.display = details?.can_manage ? "" : "none";
         }
-        if (groupAddMemberInput) {
-            groupAddMemberInput.style.display = details?.can_manage ? "" : "none";
-        }
         if (groupAddMemberBtn) {
-            groupAddMemberBtn.style.display = details?.can_manage ? "" : "none";
+            groupAddMemberBtn.hidden = !Boolean(details?.can_manage);
         }
         if (groupTransferOwnerBtn) {
             groupTransferOwnerBtn.hidden = !Boolean(details?.can_transfer_owner);
@@ -3114,6 +3153,91 @@ async function runGroupKeyHealthCheck() {
     } catch (error) {
         setComposerStatus("Group key health check failed", "error");
         showModal("Group Key Health", error.message || "Unable to run health check.", "error");
+    }
+}
+
+function createAddMemberPickerContent(groupId, details) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "forward-target-list";
+
+    const existingUsernames = new Set(
+        (Array.isArray(details?.members) ? details.members : []).map((member) =>
+            String(member?.username || "").trim().toLowerCase()
+        )
+    );
+
+    const candidates = Array.from(chatUsers)
+        .filter((username) => username && username !== CURRENT_USER)
+        .filter((username) => !existingUsernames.has(String(username).toLowerCase()))
+        .sort((a, b) => a.localeCompare(b));
+
+    if (!candidates.length) {
+        const empty = document.createElement("div");
+        empty.className = "forward-target-empty";
+        empty.textContent = "No available chat friends to add.";
+        wrapper.appendChild(empty);
+        return wrapper;
+    }
+
+    candidates.forEach((username) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "forward-target-item";
+        button.innerHTML = `
+            <span class="forward-target-avatar">${escapeHtml((username[0] || "?").toUpperCase())}</span>
+            <span class="forward-target-name">${escapeHtml(username)}</span>
+        `;
+
+        button.addEventListener("click", async () => {
+            try {
+                button.disabled = true;
+                button.classList.add("is-forwarding");
+                setComposerStatus("Adding member...");
+
+                await window.ApiService.jsonOk("api/add_group_member.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({ group_id: groupId, username }),
+                });
+
+                await renderGroupInfoPanel(groupId);
+                closeMessageActionModal();
+                setComposerStatus("Member added", "success");
+                showModal("Member Added", `${username} added to group.`, "success");
+            } catch (error) {
+                setComposerStatus("Failed to add member", "error");
+                showModal("Add Member Failed", error.message || "Unable to add member", "error");
+            } finally {
+                button.disabled = false;
+                button.classList.remove("is-forwarding");
+            }
+        });
+
+        wrapper.appendChild(button);
+    });
+
+    return wrapper;
+}
+
+async function openAddMemberModal() {
+    const groupId = getCurrentGroupId();
+    if (!groupId) {
+        return;
+    }
+
+    try {
+        const details = await loadGroupDetails(groupId, true);
+        if (!details?.can_manage) {
+            showModal("Add Member", "You do not have permission to add members.", "warning");
+            return;
+        }
+        const pickerContent = createAddMemberPickerContent(groupId, details);
+        openMessageActionModal("Add Group Member", pickerContent);
+    } catch (error) {
+        showModal("Add Member", error.message || "Unable to load member picker.", "error");
     }
 }
 
@@ -3320,39 +3444,16 @@ groupInfoBtn?.addEventListener("click", async () => {
     if (!groupId) {
         return;
     }
-    const willShow = groupInfoPanel.hidden;
-    groupInfoPanel.hidden = !willShow;
-    groupInfoBtn.setAttribute("aria-expanded", willShow ? "true" : "false");
-    if (willShow) {
-        await renderGroupInfoPanel(groupId);
-    }
+    await renderGroupInfoPanel(groupId);
+    openGroupInfoPanel();
+});
+
+groupInfoBackBtn?.addEventListener("click", () => {
+    closeGroupInfoPanel();
 });
 
 groupAddMemberBtn?.addEventListener("click", async () => {
-    const groupId = getCurrentGroupId();
-    const username = groupAddMemberInput?.value?.trim();
-    if (!groupId || !username) {
-        return;
-    }
-
-    try {
-        setComposerStatus("Adding member...");
-        await window.ApiService.jsonOk("api/add_group_member.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...getCsrfHeaders(),
-            },
-            body: JSON.stringify({ group_id: groupId, username }),
-        });
-        groupAddMemberInput.value = "";
-        await renderGroupInfoPanel(groupId);
-        setComposerStatus("Member added", "success");
-        showModal("Member Added", `${username} added to group.`, "success");
-    } catch (error) {
-        setComposerStatus("Failed to add member", "error");
-        showModal("Add Member Failed", error.message || "Unable to add member", "error");
-    }
+    await openAddMemberModal();
 });
 
 groupCopyJoinLinkBtn?.addEventListener("click", async () => {
@@ -3487,7 +3588,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
             body: JSON.stringify({ group_id: groupId }),
         });
 
-        groupInfoPanel.hidden = true;
+        closeGroupInfoPanel();
         groupTextCryptoKeyCache.delete(Number(groupId));
         groupTextCryptoKeyInflight.delete(Number(groupId));
         groupInfoBtn.hidden = true;

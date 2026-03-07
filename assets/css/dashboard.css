@@ -298,6 +298,27 @@ nav.navbar:hover::after {
     background: color-mix(in srgb, var(--surface-color) 85%, var(--background-color));
 }
 
+.chat-area.group-panel-open .chat-messages,
+.chat-area.group-panel-open .chat-input,
+.chat-area.group-panel-open #messageActionsHint {
+    display: none;
+}
+
+.chat-area.group-panel-open .group-info-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    border-bottom: 0;
+    padding: 0.9rem 1rem;
+}
+
+.group-page-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+}
+
 .group-info-header h6 {
     margin: 0;
     font-weight: 700;
@@ -316,17 +337,66 @@ nav.navbar:hover::after {
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: 120px;
+    max-height: 100%;
     overflow: auto;
 }
 
-#groupInfoMembers li {
+.group-member-item {
     font-size: 0.82rem;
-    padding: 0.2rem 0;
+    padding: 0.45rem 0.25rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.55rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+}
+
+.group-member-empty {
+    font-size: 0.84rem;
+    color: var(--subtle-text-color);
+    padding: 0.5rem 0.25rem;
+}
+
+.group-member-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.group-member-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--sent-bg);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.84rem;
+    flex-shrink: 0;
+}
+
+.group-member-info {
+    display: inline-flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.group-member-name {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.group-member-role {
+    font-size: 0.74rem;
+    color: var(--subtle-text-color);
+    text-transform: capitalize;
 }
 
 .group-member-actions {
@@ -341,6 +411,11 @@ nav.navbar:hover::after {
 
 .group-management-actions .btn {
     flex: 1;
+}
+
+.group-info-members {
+    flex: 1;
+    min-height: 0;
 }
 
 .group-message-sender {

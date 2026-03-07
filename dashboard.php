@@ -99,23 +99,26 @@ $csrfToken = generateCsrfToken();
                     </div>
                 </div>
                 <div id="groupInfoPanel" class="group-info-panel" role="region" aria-label="Group details" hidden>
-                    <div class="group-info-header">
+                    <div class="group-page-header">
+                        <button type="button" id="groupInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back to group chat">
+                            <i class="fas fa-arrow-left me-1"></i>Back
+                        </button>
                         <div>
                             <h6 id="groupInfoTitle" class="mb-1">Group</h6>
                             <p id="groupInfoDescription" class="mb-0 text-muted"></p>
                         </div>
                     </div>
+
                     <div class="group-info-meta">
                         <div><strong>Members:</strong> <span id="groupInfoMemberCount">0</span></div>
                     </div>
+
                     <div class="group-info-members">
                         <ul id="groupInfoMembers" class="mb-2" role="list" aria-label="Group members"></ul>
                     </div>
+
                     <div class="group-info-actions">
-                        <div class="input-group input-group-sm mb-2">
-                            <input type="text" id="groupAddMemberInput" class="form-control" placeholder="Username to add" aria-label="Username to add">
-                            <button type="button" id="groupAddMemberBtn" class="btn btn-outline-primary">Add</button>
-                        </div>
+                        <button type="button" id="groupAddMemberBtn" class="btn btn-outline-primary w-100 mb-2">Add Member</button>
                         <div class="input-group input-group-sm">
                             <input type="text" id="groupJoinLinkInput" class="form-control" readonly aria-label="Group join link">
                             <button type="button" id="groupCopyJoinLinkBtn" class="btn btn-outline-secondary">Copy</button>
