@@ -1,7 +1,20 @@
 (function (global) {
-    function csrfHeaders() {
+    function resolveCsrfToken() {
         if (typeof global.CSRF_TOKEN === "string" && global.CSRF_TOKEN.length) {
-            return { "X-CSRF-Token": global.CSRF_TOKEN };
+            return global.CSRF_TOKEN;
+        }
+
+        if (typeof CSRF_TOKEN === "string" && CSRF_TOKEN.length) {
+            return CSRF_TOKEN;
+        }
+
+        return "";
+    }
+
+    function csrfHeaders() {
+        const token = resolveCsrfToken();
+        if (token) {
+            return { "X-CSRF-Token": token };
         }
         return {};
     }
