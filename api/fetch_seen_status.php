@@ -7,10 +7,15 @@ apiRequireMethod('GET');
 $userId = apiRequireAuth();
 $otherUsername = apiNormalizeUsername($_GET['with'] ?? '', 'INVALID_TARGET_USERNAME');
 $maxIds = 200;
+$maxRawIdsLength = 4000;
 
 $rawIds = trim((string) ($_GET['message_ids'] ?? ''));
 if ($rawIds === '') {
     apiSuccess(['seen_message_ids' => [], 'seen_messages' => []]);
+}
+
+if (strlen($rawIds) > $maxRawIdsLength) {
+    apiError('INVALID_MESSAGE_IDS', 'Too many message ids', 400);
 }
 
 $messageIds = array_values(array_unique(array_filter(array_map('intval', explode(',', $rawIds)), static function ($id) {
@@ -42,7 +47,8 @@ $seenStmt = $pdo->prepare(
      WHERE sender_id = ?
        AND receiver_id = ?
        AND seen_at IS NOT NULL
-       AND id IN ($placeholders)"
+             AND id IN ($placeholders)
+         ORDER BY id ASC"
 );
 $seenStmt->execute($params);
 $seenRows = $seenStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -56,7 +62,7 @@ foreach ($seenRows as $row) {
     $seenMessageIds[] = $id;
     $seenMessages[] = [
         'id' => $id,
-        'seen_at' => (string) ($row['seen_at'] ?? ''),
+        'seen_at' => isset($row['seen_at']) ? (string) $row['seen_at'] : null,
     ];
 }
 

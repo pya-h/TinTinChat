@@ -454,7 +454,10 @@ function getActionModalFocusableElements() {
         if (element.hidden) {
             return false;
         }
-        return element.offsetParent !== null || element === document.activeElement;
+        if (element.getClientRects().length > 0) {
+            return true;
+        }
+        return element === document.activeElement;
     });
 }
 
@@ -1352,10 +1355,6 @@ async function loadCurrentChatsRecentMessages() {
             return;
         }
 
-        const hasIncomingFromPeer = data.messages.some(
-            (message) => Number(message.sender_id) !== Number(CURRENT_USER_ID)
-        );
-
         if (
             appSettings.notificationSoundEnabled &&
             data.messages[data.messages.length - 1]?.sender_id != CURRENT_USER_ID
@@ -1371,13 +1370,6 @@ async function loadCurrentChatsRecentMessages() {
         messageOffset += currentChatRecentMessages?.length ?? 0;
         for (const msg of currentChatRecentMessages) {
             await addMessageToChat(msg, false, true);
-        }
-
-        if (hasIncomingFromPeer && pendingSeenMessageIds.size) {
-            pendingSeenMessageIds.forEach((pendingId) => {
-                updateMessageTickStatus(pendingId, true);
-            });
-            pendingSeenMessageIds.clear();
         }
 
         updateMessagesStatus(data.messages); // Mark as seen on the background
@@ -1409,12 +1401,14 @@ async function refreshPendingSeenStates() {
     });
 
     try {
-        const res = await fetch(`api/fetch_seen_status.php?${query.toString()}`);
+        const res = await fetch(`api/fetch_seen_status.php?${query.toString()}`, {
+            cache: "no-store",
+        });
         if (!res.ok) {
             return;
         }
         const data = await res.json();
-        if (data.status !== "ok") {
+        if (!data || data.status !== "ok") {
             return;
         }
         if (Array.isArray(data.seen_messages) && data.seen_messages.length) {
@@ -1429,7 +1423,11 @@ async function refreshPendingSeenStates() {
             return;
         }
 
-        (data.seen_message_ids || []).forEach((seenId) => {
+        if (!Array.isArray(data.seen_message_ids)) {
+            return;
+        }
+
+        data.seen_message_ids.forEach((seenId) => {
             updateMessageTickStatus(Number(seenId), true);
         });
     } catch (error) {}

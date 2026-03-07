@@ -78,6 +78,7 @@ Legend:
 - [x] (`P2`) Improve accessibility: keyboard focus, ARIA labels, context menu navigation.
 - [x] (`P2`) Improve visual consistency of status indicators and message metadata.
 - [x] (`P2`) Add lightweight user settings (notification sound on/off, auto-scroll behavior).
+- [x] (`P2`) Centralize key user-facing modal strings in chat actions/errors for localization-readiness.
 
 ### Phase D — Maintainability (`P1/P2`)
 - [ ] (`P1`) Introduce internal `api-service.js` for consistent fetch/error handling.
