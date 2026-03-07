@@ -6,6 +6,19 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
+apiGuardOversizedPostBody();
+
+const VOICE_MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_VOICE_EXTENSIONS = ['wav', 'mp3', 'ogg', 'webm'];
+const ALLOWED_VOICE_MIME_TYPES = [
+    'audio/wav',
+    'audio/x-wav',
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/ogg',
+    'audio/webm',
+];
+
 $target = $_POST['target'] ?? '';
 $messageEncryptedForRecipient = $_POST['message'] ?? null;
 $messageEncryptedForSender = $_POST['message_for_sender'] ?? null;
@@ -14,21 +27,19 @@ if (!$target) {
     apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
 }
 
-if (!isset($_FILES['voice_file']) || $_FILES['voice_file']['error'] !== UPLOAD_ERR_OK) {
-    apiError('UPLOAD_FAILED', 'Voice file upload failed', 400);
-}
-
-$voiceFile = $_FILES['voice_file'];
-$allowedTypes = ['audio/wav', 'audio/mp3', 'audio/ogg', 'audio/webm'];
-$allowedExtensions = ['wav', 'mp3', 'ogg', 'webm'];
-$maxSize = 10 * 1024 * 1024;  // 10MB
+$voiceFile = apiRequireUploadedFile('voice_file');
 
 $fileExtension = strtolower(pathinfo($voiceFile['name'], PATHINFO_EXTENSION));
-if (!in_array($voiceFile['type'], $allowedTypes) || !in_array($fileExtension, $allowedExtensions)) {
+if (!in_array($fileExtension, ALLOWED_VOICE_EXTENSIONS, true)) {
     apiError('INVALID_FILE_TYPE', 'Invalid file type. Only WAV, MP3, OGG, and WebM are allowed', 400);
 }
 
-if ($voiceFile['size'] > $maxSize) {
+$detectedMime = apiDetectMimeType($voiceFile['tmp_name']);
+if (!in_array($detectedMime, ALLOWED_VOICE_MIME_TYPES, true)) {
+    apiError('INVALID_FILE_TYPE', 'Invalid audio MIME type.', 400);
+}
+
+if ((int) $voiceFile['size'] > VOICE_MAX_SIZE_BYTES) {
     apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 10MB', 400);
 }
 
@@ -43,21 +54,8 @@ if (!$targetUser) {
 $uploadsDir = __DIR__ . '/../uploads';
 $voiceMessagesDir = __DIR__ . '/../uploads/voice_messages';
 
-if (!is_dir($uploadsDir)) {
-    if (!mkdir($uploadsDir, 0755, true)) {
-        apiError('DIRECTORY_CREATE_FAILED', 'Failed to create uploads directory', 500);
-    }
-}
-
-if (!is_dir($voiceMessagesDir)) {
-    if (!mkdir($voiceMessagesDir, 0755, true)) {
-        apiError('DIRECTORY_CREATE_FAILED', 'Failed to create voice messages directory', 500);
-    }
-}
-
-if (!is_writable($voiceMessagesDir)) {
-    apiError('DIRECTORY_NOT_WRITABLE', 'Voice messages directory is not writable', 500);
-}
+apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
+apiEnsureWritableDirectory($voiceMessagesDir, 'voice messages directory');
 
 $uniqueFilename = uniqid('voice_', true) . '.' . $fileExtension;
 $uploadPath = $voiceMessagesDir . '/' . $uniqueFilename;

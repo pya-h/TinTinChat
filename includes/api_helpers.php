@@ -66,3 +66,77 @@ function apiGetJsonBody(): array
 
     return $decoded;
 }
+
+function apiUploadErrorMessage(int $uploadError): string
+{
+    switch ($uploadError) {
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE:
+            return 'The uploaded file exceeds the server maximum file size limit.';
+        case UPLOAD_ERR_PARTIAL:
+            return 'The uploaded file was only partially uploaded.';
+        case UPLOAD_ERR_NO_FILE:
+            return 'No file was uploaded.';
+        case UPLOAD_ERR_NO_TMP_DIR:
+            return 'Server configuration error: missing temporary upload directory.';
+        case UPLOAD_ERR_CANT_WRITE:
+            return 'Server error: failed to write uploaded file to disk.';
+        case UPLOAD_ERR_EXTENSION:
+            return 'A server extension blocked the file upload.';
+        default:
+            return 'Unknown upload error.';
+    }
+}
+
+function apiRequireUploadedFile(string $fieldName): array
+{
+    if (!isset($_FILES[$fieldName])) {
+        apiError('UPLOAD_MISSING', 'No file was uploaded.', 400);
+    }
+
+    $file = $_FILES[$fieldName];
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        apiError('UPLOAD_FAILED', apiUploadErrorMessage((int) $file['error']), 400);
+    }
+
+    return $file;
+}
+
+function apiDetectMimeType(string $tmpFilePath): string
+{
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    if (!$finfo) {
+        apiError('MIME_CHECK_FAILED', 'Failed to initialize MIME detection', 500);
+    }
+
+    $detectedMime = finfo_file($finfo, $tmpFilePath) ?: '';
+    finfo_close($finfo);
+
+    if (!$detectedMime) {
+        apiError('MIME_CHECK_FAILED', 'Could not determine uploaded file MIME type', 400);
+    }
+
+    return $detectedMime;
+}
+
+function apiEnsureWritableDirectory(string $path, string $label): void
+{
+    if (!is_dir($path)) {
+        if (!mkdir($path, 0755, true)) {
+            apiError('DIRECTORY_CREATE_FAILED', "Failed to create {$label}", 500);
+        }
+    }
+
+    if (!is_writable($path)) {
+        apiError('DIRECTORY_NOT_WRITABLE', "{$label} is not writable", 500);
+    }
+}
+
+function apiGuardOversizedPostBody(): void
+{
+    $contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $contentLength > 0) {
+        $postMaxSize = ini_get('post_max_size');
+        apiError('UPLOAD_TOO_LARGE', "Uploaded data exceeds server limit (post_max_size: {$postMaxSize})", 400);
+    }
+}

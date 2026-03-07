@@ -9,6 +9,8 @@ const imageUploadBtn = document.getElementById("imageUploadBtn");
 
 const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
+const IMAGE_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+const FILE_UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
 
 let currentChatUser = null;
 let currentChatRecentMessages = null;
@@ -1708,9 +1710,8 @@ imageUploadInput.addEventListener("change", (e) => {
             return;
         }
 
-        const maxSize = 20 * 1024 * 1024; // 20MB
-        if (file.size > maxSize) {
-            showModal("File Too Large", "Image file size must be less than 20MB.", "warning");
+        if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+            showModal("File Too Large", "Image file size must be less than 5MB.", "warning");
             e.target.value = null;
             return;
         }
@@ -1775,9 +1776,8 @@ async function sendFileMessage(file) {
         return;
     }
 
-    const maxSize = 100 * 1024 * 1024;
-    if (file.size > maxSize) {
-        showModal("File Too Large", "File size must be less than 100MB.", "warning");
+    if (file.size > FILE_UPLOAD_MAX_BYTES) {
+        showModal("File Too Large", "File size must be less than 50MB.", "warning");
         return;
     }
 

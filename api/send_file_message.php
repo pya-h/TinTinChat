@@ -6,6 +6,27 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
+apiGuardOversizedPostBody();
+
+const FILE_MAX_SIZE_BYTES = 50 * 1024 * 1024;
+const BLOCKED_FILE_EXTENSIONS = [
+    'php', 'phtml', 'php3', 'php4', 'php5', 'phar',
+    'exe', 'msi', 'bat', 'cmd', 'com', 'scr',
+    'sh', 'bash', 'zsh', 'ps1',
+    'js', 'mjs', 'cjs',
+];
+const BLOCKED_FILE_MIME_TYPES = [
+    'application/x-php',
+    'text/x-php',
+    'application/x-httpd-php',
+    'application/x-dosexec',
+    'application/x-msdownload',
+    'application/x-sh',
+    'text/x-shellscript',
+    'application/javascript',
+    'text/javascript',
+];
+
 $target = $_POST['target'] ?? '';
 $messageEncryptedForRecipient = $_POST['message'] ?? null;
 $messageEncryptedForSender = $_POST['message_for_sender'] ?? null;
@@ -14,15 +35,20 @@ if (!$target) {
     apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
 }
 
-if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-    apiError('UPLOAD_FAILED', 'File upload failed', 400);
+$file = apiRequireUploadedFile('file');
+
+if ((int) $file['size'] > FILE_MAX_SIZE_BYTES) {
+    apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 50MB', 400);
 }
 
-$file = $_FILES['file'];
-$maxSize = 50 * 1024 * 1024;  // 50MB
+$fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+if ($fileExtension && in_array($fileExtension, BLOCKED_FILE_EXTENSIONS, true)) {
+    apiError('BLOCKED_FILE_TYPE', 'This file type is not allowed for security reasons', 400);
+}
 
-if ($file['size'] > $maxSize) {
-    apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 50MB', 400);
+$detectedMime = apiDetectMimeType($file['tmp_name']);
+if (in_array($detectedMime, BLOCKED_FILE_MIME_TYPES, true)) {
+    apiError('BLOCKED_FILE_TYPE', 'This file MIME type is not allowed for security reasons', 400);
 }
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
@@ -36,23 +62,9 @@ if (!$targetUser) {
 $uploadsDir = __DIR__ . '/../uploads';
 $filesDir = __DIR__ . '/../uploads/files';
 
-if (!is_dir($uploadsDir)) {
-    if (!mkdir($uploadsDir, 0755, true)) {
-        apiError('DIRECTORY_CREATE_FAILED', 'Failed to create uploads directory', 500);
-    }
-}
+apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
+apiEnsureWritableDirectory($filesDir, 'files directory');
 
-if (!is_dir($filesDir)) {
-    if (!mkdir($filesDir, 0755, true)) {
-        apiError('DIRECTORY_CREATE_FAILED', 'Failed to create files directory', 500);
-    }
-}
-
-if (!is_writable($filesDir)) {
-    apiError('DIRECTORY_NOT_WRITABLE', 'Files directory is not writable', 500);
-}
-
-$fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 $originalFileName = pathinfo($file['name'], PATHINFO_FILENAME);
 $uniqueFilename = uniqid('file_', true) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalFileName) . ($fileExtension ? '.' . $fileExtension : '');
 $uploadPath = $filesDir . '/' . $uniqueFilename;

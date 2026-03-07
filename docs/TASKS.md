@@ -52,8 +52,8 @@ Legend:
 - [ ] (`P0`) Standardize API JSON response contract across all endpoints.
 - [x] (`P0`) Add CSRF validation to every state-changing endpoint.
 - [x] (`P0`) Centralize auth/method/input guards in shared include utility.
-- [ ] (`P0`) Normalize upload validation (server-side MIME + size + extension policy).
-- [ ] (`P0`) Align frontend and backend file size limits.
+- [x] (`P0`) Normalize upload validation (server-side MIME + size + extension policy).
+- [x] (`P0`) Align frontend and backend file size limits.
 - [ ] (`P0`) Run full endpoint authorization review for cross-user data isolation.
 - [ ] (`P0`) Create security regression checklist and execute after each major change.
 
