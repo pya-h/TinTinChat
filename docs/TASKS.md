@@ -139,13 +139,14 @@ Legend:
 	- owner/admin/member roles,
 	- add/remove member permissions,
 	- optional group leave and owner-transfer safeguards.
-- [ ] (`P2`) **Milestone E10 — UX Polish + QA Closure**
+- [x] (`P2`) **Milestone E10 — UX Polish + QA Closure**
 	- add user-friendly polish for group UX:
 	- empty states for new groups,
 	- member-add success/error feedback,
 	- lightweight “new in group” badge in list,
 	- accessibility parity (keyboard + screen reader labels).
 	- run full regression for direct chat flows (reply/forward/seen/media) before closing Phase E.
+	- QA closure log: `docs/GROUP_E10_QA_2026-03-07.md`.
 
 ### Phase F — Chatroom Parity Features (Recommended) (`P2/P3`)
 - [ ] (`P2`) Typing indicator.

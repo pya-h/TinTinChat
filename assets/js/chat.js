@@ -1336,6 +1336,9 @@ async function selectChatTarget(target) {
 
     const isGroup = isGroupToken(currentChatUser);
     groupInfoBtn.hidden = !isGroup;
+    if (groupInfoBtn) {
+        groupInfoBtn.setAttribute("aria-expanded", "false");
+    }
     groupInfoPanel.hidden = true;
 
     [...chatListElem.children].forEach((li) => {
@@ -2881,6 +2884,11 @@ async function renderGroupInfoPanel(groupId) {
         if (groupInfoMemberCount) groupInfoMemberCount.textContent = String(members.length);
         if (groupInfoMembers) {
             groupInfoMembers.innerHTML = "";
+            if (!members.length) {
+                const empty = document.createElement("li");
+                empty.textContent = "No members found.";
+                groupInfoMembers.appendChild(empty);
+            }
             members.forEach((member) => {
                 const li = document.createElement("li");
                 const memberRole = String(member.role || "member");
@@ -3046,6 +3054,7 @@ groupInfoBtn?.addEventListener("click", async () => {
     }
     const willShow = groupInfoPanel.hidden;
     groupInfoPanel.hidden = !willShow;
+    groupInfoBtn.setAttribute("aria-expanded", willShow ? "true" : "false");
     if (willShow) {
         await renderGroupInfoPanel(groupId);
     }
@@ -3059,6 +3068,7 @@ groupAddMemberBtn?.addEventListener("click", async () => {
     }
 
     try {
+        setComposerStatus("Adding member...");
         await window.ApiService.jsonOk("api/add_group_member.php", {
             method: "POST",
             headers: {
@@ -3069,8 +3079,10 @@ groupAddMemberBtn?.addEventListener("click", async () => {
         });
         groupAddMemberInput.value = "";
         await renderGroupInfoPanel(groupId);
+        setComposerStatus("Member added", "success");
         showModal("Member Added", `${username} added to group.`, "success");
     } catch (error) {
+        setComposerStatus("Failed to add member", "error");
         showModal("Add Member Failed", error.message || "Unable to add member", "error");
     }
 });
@@ -3080,8 +3092,10 @@ groupCopyJoinLinkBtn?.addEventListener("click", async () => {
     if (!link) return;
     try {
         await navigator.clipboard.writeText(link);
+        setComposerStatus("Join link copied", "success");
         showModal("Copied", "Join link copied to clipboard.", "success");
     } catch (error) {
+        setComposerStatus("Unable to copy join link", "warning");
         showModal("Copy Failed", "Unable to copy join link.", "warning");
     }
 });
@@ -3092,6 +3106,7 @@ groupRotateJoinLinkBtn?.addEventListener("click", async () => {
         return;
     }
     try {
+        setComposerStatus("Rotating join link...");
         const data = await window.ApiService.jsonOk("api/rotate_group_join_link.php", {
             method: "POST",
             headers: {
@@ -3103,8 +3118,10 @@ groupRotateJoinLinkBtn?.addEventListener("click", async () => {
         if (groupJoinLinkInput) {
             groupJoinLinkInput.value = data.join_link || "";
         }
+        setComposerStatus("Join link rotated", "success");
         showModal("Join Link Rotated", "A new join link is now active.", "success");
     } catch (error) {
+        setComposerStatus("Unable to rotate join link", "error");
         showModal("Rotate Failed", error.message || "Unable to rotate join link.", "error");
     }
 });
@@ -3137,8 +3154,10 @@ groupInfoMembers?.addEventListener("click", async (event) => {
                 body: JSON.stringify({ group_id: groupId, user_id: userId }),
             });
             await renderGroupInfoPanel(groupId);
+            setComposerStatus("Member removed", "success");
             showModal("Member Removed", `${username} was removed from group.`, "success");
         } catch (error) {
+            setComposerStatus("Unable to remove member", "error");
             showModal("Remove Failed", error.message || "Unable to remove member.", "error");
         }
         return;
@@ -3160,8 +3179,10 @@ groupInfoMembers?.addEventListener("click", async (event) => {
             });
             await renderGroupInfoPanel(groupId);
             await loadChatList(true);
+            setComposerStatus("Ownership transferred", "success");
             showModal("Ownership Transferred", `${username} is now the group owner.`, "success");
         } catch (error) {
+            setComposerStatus("Unable to transfer ownership", "error");
             showModal("Transfer Failed", error.message || "Unable to transfer ownership.", "error");
         }
     }
@@ -3200,6 +3221,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
 
         groupInfoPanel.hidden = true;
         groupInfoBtn.hidden = true;
+        groupInfoBtn.setAttribute("aria-expanded", "false");
         currentChatUser = null;
         currentChatRecentMessages = null;
         chatMessagesElem.innerHTML = "";
@@ -3209,8 +3231,10 @@ groupLeaveBtn?.addEventListener("click", async () => {
         chatInput.placeholder = "Select someone to chat...";
 
         await loadChatList(true);
+        setComposerStatus("Left group", "success");
         showModal("Left Group", "You have left the group.", "success");
     } catch (error) {
+        setComposerStatus("Unable to leave group", "error");
         showModal("Leave Failed", error.message || "Unable to leave group.", "error");
     }
 });

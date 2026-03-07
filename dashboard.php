@@ -82,7 +82,7 @@ $csrfToken = generateCsrfToken();
                         </div>
                     </div>
                 </div>
-                <div id="groupInfoPanel" class="group-info-panel" hidden>
+                <div id="groupInfoPanel" class="group-info-panel" role="region" aria-label="Group details" hidden>
                     <div class="group-info-header">
                         <div>
                             <h6 id="groupInfoTitle" class="mb-1">Group</h6>
@@ -93,7 +93,7 @@ $csrfToken = generateCsrfToken();
                         <div><strong>Members:</strong> <span id="groupInfoMemberCount">0</span></div>
                     </div>
                     <div class="group-info-members">
-                        <ul id="groupInfoMembers" class="mb-2"></ul>
+                        <ul id="groupInfoMembers" class="mb-2" role="list" aria-label="Group members"></ul>
                     </div>
                     <div class="group-info-actions">
                         <div class="input-group input-group-sm mb-2">
