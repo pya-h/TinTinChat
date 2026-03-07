@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/group_helpers.php';
+require_once __DIR__ . '/../includes/group_crypto_helpers.php';
 
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
@@ -40,9 +41,24 @@ if ($existingRole) {
     ]);
 }
 
-$insertStmt = $pdo->prepare('INSERT INTO group_members (group_id, user_id, role, invited_by_user_id) VALUES (?, ?, ?, NULL)');
-if (!$insertStmt->execute([$groupId, $userId, 'member'])) {
-    apiError('GROUP_JOIN_FAILED', 'Failed to join group', 500);
+$pdo->beginTransaction();
+try {
+    $insertStmt = $pdo->prepare('INSERT INTO group_members (group_id, user_id, role, invited_by_user_id) VALUES (?, ?, ?, NULL)');
+    if (!$insertStmt->execute([$groupId, $userId, 'member'])) {
+        throw new RuntimeException('GROUP_JOIN_FAILED');
+    }
+
+    groupEnsureMemberHasSharedKey($pdo, $groupId, $userId);
+
+    $pdo->commit();
+} catch (Throwable $ex) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    if ($ex instanceof RuntimeException && $ex->getMessage() === 'GROUP_JOIN_FAILED') {
+        apiError('GROUP_JOIN_FAILED', 'Failed to join group', 500);
+    }
+    apiError('GROUP_JOIN_KEY_ASSIGNMENT_FAILED', 'Failed to assign group encryption key', 500);
 }
 
 apiSuccess([

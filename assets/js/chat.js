@@ -20,6 +20,7 @@ const messageActionModalBody = document.getElementById("messageActionModalBody")
 const messageActionModalClose = document.getElementById("messageActionModalClose");
 const messageActionModalAnnouncer = document.getElementById("messageActionModalAnnouncer");
 const createGroupBtn = document.getElementById("createGroupBtn");
+const groupKeyHealthBtn = document.getElementById("groupKeyHealthBtn");
 const groupInfoBtn = document.getElementById("groupInfoBtn");
 const groupInfoPanel = document.getElementById("groupInfoPanel");
 const groupInfoTitle = document.getElementById("groupInfoTitle");
@@ -94,6 +95,8 @@ let currentReplyTarget = null;
 const chatUsers = new Set();
 const chatGroupsById = new Map();
 const groupDetailsCache = new Map();
+const groupTextCryptoKeyCache = new Map();
+const groupTextCryptoKeyInflight = new Map();
 let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
@@ -446,6 +449,57 @@ function getCsrfHeaders() {
     return {};
 }
 
+async function fetchAndImportGroupCryptoKey(groupId) {
+    const data = await window.ApiService.jsonOk("api/get_group_key.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...getCsrfHeaders(),
+        },
+        body: JSON.stringify({ group_id: groupId }),
+    });
+    const encryptedGroupKey = String(data?.encrypted_group_key || "").trim();
+    if (!encryptedGroupKey) {
+        throw new Error("Group encryption key is unavailable");
+    }
+
+    await ensurePrivateKeyLoaded();
+    const rawGroupKey = await decryptMessage(encryptedGroupKey);
+    if (!rawGroupKey) {
+        throw new Error("Failed to decrypt group encryption key");
+    }
+
+    return importGroupSymmetricKey(rawGroupKey);
+}
+
+async function getGroupCryptoKey(groupId, forceRefresh = false) {
+    if (!groupId) {
+        throw new Error("Invalid group id");
+    }
+
+    if (!forceRefresh && groupTextCryptoKeyCache.has(groupId)) {
+        return groupTextCryptoKeyCache.get(groupId);
+    }
+
+    if (!forceRefresh && groupTextCryptoKeyInflight.has(groupId)) {
+        return groupTextCryptoKeyInflight.get(groupId);
+    }
+
+    const request = fetchAndImportGroupCryptoKey(groupId)
+        .then((key) => {
+            groupTextCryptoKeyCache.set(groupId, key);
+            groupTextCryptoKeyInflight.delete(groupId);
+            return key;
+        })
+        .catch((error) => {
+            groupTextCryptoKeyInflight.delete(groupId);
+            throw error;
+        });
+
+    groupTextCryptoKeyInflight.set(groupId, request);
+    return request;
+}
+
 function showMessageCopiedFeedback() {
     if (window.UIEnhancements?.showSearchNotification) {
         window.UIEnhancements.showSearchNotification(I18N_TEXT.copiedBody, "success");
@@ -781,10 +835,13 @@ async function sendEncryptedTextMessage(
 }
 
 async function sendGroupTextMessage(groupId, text, replyToMessageId = null, forwardedFromMessageId = null) {
+    const groupKey = await getGroupCryptoKey(groupId);
+    const encryptedGroupMessage = await encryptGroupMessage(text, groupKey);
+
     const formData = new FormData();
     formData.append("group_id", String(groupId));
-    formData.append("message", text);
-    formData.append("message_for_sender", text);
+    formData.append("message", encryptedGroupMessage);
+    formData.append("message_for_sender", encryptedGroupMessage);
 
     if (replyToMessageId) {
         formData.append("reply_to_message_id", String(replyToMessageId));
@@ -1356,6 +1413,11 @@ async function selectGroupChat(groupId) {
     const token = buildGroupToken(groupId);
     const listItem = document.getElementById(chatListItemId(token));
     setGroupNewBadgeVisibility(listItem, false);
+    try {
+        await getGroupCryptoKey(groupId);
+    } catch (error) {
+        setComposerStatus("Unable to initialize group encryption key", "warning");
+    }
     return selectChatTarget(token);
 }
 
@@ -1764,10 +1826,13 @@ async function addMessageToChat(msg, prepend = false) {
         let decryptedReplyText = "";
         try {
             if (isGroupMessage) {
-                decryptedText =
+                const groupId = Number(msg.group_id || 0);
+                const groupKey = await getGroupCryptoKey(groupId);
+                const groupPayload =
                     msg.sender_id == CURRENT_USER_ID
                         ? msg.message_for_sender || msg.message || ""
                         : msg.message || msg.message_for_sender || "";
+                decryptedText = await decryptGroupMessage(String(groupPayload || ""), groupKey);
             } else {
                 if (msg.sender_id == CURRENT_USER_ID) {
                     decryptedText = await decryptLongMessage(msg.message_for_sender);
@@ -1784,9 +1849,13 @@ async function addMessageToChat(msg, prepend = false) {
                           ? msg.reply_message_for_sender
                           : msg.reply_message;
                 if (replyPayload) {
-                    decryptedReplyText = isGroupMessage
-                        ? String(replyPayload)
-                        : await decryptLongMessage(replyPayload);
+                    if (isGroupMessage) {
+                        const groupId = Number(msg.group_id || 0);
+                        const groupKey = await getGroupCryptoKey(groupId);
+                        decryptedReplyText = await decryptGroupMessage(String(replyPayload), groupKey);
+                    } else {
+                        decryptedReplyText = await decryptLongMessage(replyPayload);
+                    }
                 }
             }
         } catch (e) {
@@ -3004,6 +3073,207 @@ async function handleJoinGroupFromUrl() {
     }
 }
 
+async function runGroupKeyHealthCheck() {
+    if (!window.CURRENT_USER_IS_ADMIN) {
+        showModal("Access Denied", "Admin privileges required.", "warning");
+        return;
+    }
+
+    const activeGroupId = getCurrentGroupId();
+    const body = activeGroupId ? { group_id: activeGroupId } : {};
+
+    try {
+        setComposerStatus("Running group key health check...");
+        const data = await window.ApiService.jsonOk("api/group_key_health.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
+            body: JSON.stringify(body),
+        });
+
+        const groups = Array.isArray(data?.groups) ? data.groups : [];
+        if (!groups.length) {
+            setComposerStatus("Group key health check finished", "success");
+            showModal("Group Key Health", "No groups found.", "info");
+            return;
+        }
+
+        const unhealthyGroups = groups.filter((group) => !group.is_healthy);
+        const modalBody = createGroupKeyHealthModalContent(groups, {
+            activeGroupId,
+            checkedAt: String(data?.checked_at || ""),
+        });
+
+        setComposerStatus(
+            unhealthyGroups.length ? "Group key health check found issues" : "Group key health check passed",
+            unhealthyGroups.length ? "warning" : "success"
+        );
+        openMessageActionModal("Group Key Health", modalBody);
+    } catch (error) {
+        setComposerStatus("Group key health check failed", "error");
+        showModal("Group Key Health", error.message || "Unable to run health check.", "error");
+    }
+}
+
+function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt = "" } = {}) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "group-health-modal";
+
+    const unhealthyGroups = groups.filter((group) => !group.is_healthy);
+    const legacyGroups = groups.filter(
+        (group) => Number(group.legacy_plaintext_text_messages_count || 0) > 0
+    );
+
+    const summary = document.createElement("div");
+    summary.className = "group-health-summary";
+
+    const scopeText = document.createElement("div");
+    scopeText.className = "group-health-summary-title";
+    scopeText.textContent = activeGroupId
+        ? `Checked active group (${activeGroupId}).`
+        : `Checked ${groups.length} group(s).`;
+
+    const facts = document.createElement("div");
+    facts.className = "group-health-summary-facts";
+
+    const factMissing = document.createElement("span");
+    factMissing.textContent = unhealthyGroups.length
+        ? `${unhealthyGroups.length} group(s) need attention`
+        : "No missing member keys";
+
+    const factLegacy = document.createElement("span");
+    factLegacy.textContent = legacyGroups.length
+        ? `${legacyGroups.length} group(s) contain legacy plaintext`
+        : "No legacy plaintext detected";
+
+    facts.appendChild(factMissing);
+    facts.appendChild(factLegacy);
+
+    if (checkedAt) {
+        const checkedAtText = document.createElement("div");
+        checkedAtText.className = "group-health-summary-meta";
+        checkedAtText.textContent = `Checked at: ${checkedAt}`;
+        summary.appendChild(scopeText);
+        summary.appendChild(facts);
+        summary.appendChild(checkedAtText);
+    } else {
+        summary.appendChild(scopeText);
+        summary.appendChild(facts);
+    }
+
+    const tableWrap = document.createElement("div");
+    tableWrap.className = "group-health-table-wrap";
+
+    const table = document.createElement("table");
+    table.className = "group-health-table";
+    table.setAttribute("aria-label", "Group key health check results");
+
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    ["Group", "Missing Keys", "Encrypted Text", "Legacy Plaintext", "Status"].forEach((title) => {
+        const th = document.createElement("th");
+        th.scope = "col";
+        th.textContent = title;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+
+    const tbody = document.createElement("tbody");
+    groups.forEach((group) => {
+        const tr = document.createElement("tr");
+        tr.className = "group-health-main-row";
+
+        const titleCell = document.createElement("td");
+        titleCell.textContent = group.title || `Group ${group.group_id}`;
+
+        const missingCell = document.createElement("td");
+        missingCell.textContent = String(Number(group.missing_member_keys_count || 0));
+
+        const encryptedCell = document.createElement("td");
+        encryptedCell.textContent = String(Number(group.encrypted_text_messages_count || 0));
+
+        const legacyCell = document.createElement("td");
+        legacyCell.textContent = String(Number(group.legacy_plaintext_text_messages_count || 0));
+
+        const statusCell = document.createElement("td");
+        const statusPill = document.createElement("span");
+        const isHealthy = Boolean(group.is_healthy);
+        statusPill.className = `group-health-status ${isHealthy ? "healthy" : "warning"}`;
+        statusPill.textContent = isHealthy ? "Healthy" : "Needs attention";
+        statusCell.appendChild(statusPill);
+
+        const missingMembers = Array.isArray(group.missing_member_keys)
+            ? group.missing_member_keys
+            : [];
+        let detailsRow = null;
+        if (!isHealthy && missingMembers.length) {
+            const toggleBtn = document.createElement("button");
+            toggleBtn.type = "button";
+            toggleBtn.className = "group-health-toggle-btn";
+            toggleBtn.textContent = "Details";
+            toggleBtn.setAttribute("aria-expanded", "false");
+            statusCell.appendChild(toggleBtn);
+
+            detailsRow = document.createElement("tr");
+            detailsRow.className = "group-health-details-row";
+            detailsRow.hidden = true;
+
+            const detailsCell = document.createElement("td");
+            detailsCell.colSpan = 5;
+
+            const detailsWrap = document.createElement("div");
+            detailsWrap.className = "group-health-details-wrap";
+
+            const detailsTitle = document.createElement("div");
+            detailsTitle.className = "group-health-details-title";
+            detailsTitle.textContent = "Members missing wrapped group key:";
+            detailsWrap.appendChild(detailsTitle);
+
+            const detailsList = document.createElement("ul");
+            detailsList.className = "group-health-details-list";
+            missingMembers.forEach((member) => {
+                const item = document.createElement("li");
+                const username = String(member?.username || "").trim();
+                const memberUserId = Number(member?.user_id || 0);
+                item.textContent = username ? `${username} (id: ${memberUserId})` : `User ${memberUserId}`;
+                detailsList.appendChild(item);
+            });
+
+            detailsWrap.appendChild(detailsList);
+            detailsCell.appendChild(detailsWrap);
+            detailsRow.appendChild(detailsCell);
+
+            toggleBtn.addEventListener("click", () => {
+                const willOpen = detailsRow.hidden;
+                detailsRow.hidden = !willOpen;
+                toggleBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+                toggleBtn.textContent = willOpen ? "Hide" : "Details";
+            });
+        }
+
+        tr.appendChild(titleCell);
+        tr.appendChild(missingCell);
+        tr.appendChild(encryptedCell);
+        tr.appendChild(legacyCell);
+        tr.appendChild(statusCell);
+
+        tbody.appendChild(tr);
+        if (detailsRow) {
+            tbody.appendChild(detailsRow);
+        }
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+
+    wrapper.appendChild(summary);
+    wrapper.appendChild(tableWrap);
+    return wrapper;
+}
+
 async function loadChatList(force = false) {
     try {
         const data = await window.ApiService.json("api/fetch_chats.php");
@@ -3017,6 +3287,8 @@ async function loadChatList(force = false) {
                 const token = buildGroupToken(groupId);
                 chatGroupsById.delete(groupId);
                 groupDetailsCache.delete(groupId);
+                groupTextCryptoKeyCache.delete(Number(groupId));
+                groupTextCryptoKeyInflight.delete(Number(groupId));
                 document.getElementById(chatListItemId(token))?.remove();
             }
         });
@@ -3037,6 +3309,10 @@ createGroupBtn?.addEventListener("click", async () => {
     } catch (error) {
         showModal("Create Group Failed", error.message || "Unable to create group", "error");
     }
+});
+
+groupKeyHealthBtn?.addEventListener("click", async () => {
+    await runGroupKeyHealthCheck();
 });
 
 groupInfoBtn?.addEventListener("click", async () => {
@@ -3212,6 +3488,8 @@ groupLeaveBtn?.addEventListener("click", async () => {
         });
 
         groupInfoPanel.hidden = true;
+        groupTextCryptoKeyCache.delete(Number(groupId));
+        groupTextCryptoKeyInflight.delete(Number(groupId));
         groupInfoBtn.hidden = true;
         groupInfoBtn.setAttribute("aria-expanded", "false");
         currentChatUser = null;

@@ -148,6 +148,19 @@ Legend:
 	- run full regression for direct chat flows (reply/forward/seen/media) before closing Phase E.
 	- QA closure log: `docs/GROUP_E10_QA_2026-03-07.md`.
 
+### Phase E.1 — Group Text Encryption (`P1`)
+- [x] (`P1`) Implement shared group text encryption key model (single encrypted payload per group message).
+- [x] (`P1`) Add member key distribution for create/add/join flows with membership-gated access.
+- [x] (`P1`) Encrypt/decrypt group text and forwarded text across group↔group, user↔group paths.
+- [x] (`P1`) Expand encrypted text storage capacity (`messages.message`, `messages.message_for_sender`) to `MEDIUMTEXT` for larger payload support.
+
+### Phase E.2 — Group Media/File Encryption (Separate) (`P1/P2`)
+- [ ] (`P1`) Encrypt group voice message payloads with shared group key.
+- [ ] (`P1`) Encrypt group image payloads (at-rest + transport metadata policy).
+- [ ] (`P1`) Encrypt group generic file payloads with secure key handling.
+- [ ] (`P2`) Add key-versioning/rotation strategy for non-text encrypted attachments.
+- [ ] (`P2`) Add migration/backfill policy for legacy unencrypted group media/files.
+
 ### Phase F — Chatroom Parity Features (Recommended) (`P2/P3`)
 - [ ] (`P2`) Typing indicator.
 - [ ] (`P2`) Unread counter per chat.

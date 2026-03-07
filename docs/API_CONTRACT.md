@@ -78,6 +78,8 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
   - `update_group.php`
   - `fetch_groups.php`
   - `fetch_group_details.php`
+  - `group_key_health.php` (admin diagnostics)
+  - `get_group_key.php`
   - `add_group_member.php`
   - `remove_group_member.php`
   - `join_group.php`
@@ -125,6 +127,11 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - `ALREADY_GROUP_MEMBER` → member already belongs to group.
 - `GROUP_MEMBER_NOT_FOUND` → target member not found in group.
 - `GROUP_MEMBER_ADD_FAILED` / `GROUP_MEMBER_REMOVE_FAILED` → membership mutation failed.
+- `GROUP_MEMBER_PUBLIC_KEY_MISSING` → member key material unavailable for group key assignment.
+- `GROUP_KEY_ENCRYPTION_FAILED` / `GROUP_KEY_GENERATION_FAILED` → failed to establish wrapped shared group key.
+- `GROUP_KEY_NOT_FOUND` / `GROUP_KEY_FETCH_FAILED` → failed to fetch member-specific wrapped group key.
+- `GROUP_KEY_RECOVERY_FAILED` → existing wrapped group key set cannot be recovered safely.
+- `GROUP_MEMBER_KEY_ASSIGNMENT_FAILED` / `GROUP_JOIN_KEY_ASSIGNMENT_FAILED` → membership succeeded but key assignment failed and was rolled back.
 - `OWNER_TRANSFER_REQUIRED` → owner cannot leave while other members exist.
 - `INVALID_NEW_OWNER` → ownership transfer target invalid.
 - `OWNER_TRANSFER_FAILED` → ownership transfer transaction failed.

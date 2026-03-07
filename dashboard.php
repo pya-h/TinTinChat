@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/session.php';
 require_once __DIR__ . '/includes/constants.php';
+require_once __DIR__ . '/includes/db.php';
 configSession();
 
 if (!isset($_SESSION['user_id'])) {
@@ -10,6 +11,16 @@ if (!isset($_SESSION['user_id'])) {
 $username = $_SESSION['username'];
 $user_id = $_SESSION['user_id'];
 $user_ident = isset($_SESSION['ident']) ? $_SESSION['ident'] : null;
+$is_admin = false;
+
+try {
+    $adminStmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
+    $adminStmt->execute([$user_id]);
+    $is_admin = (bool) $adminStmt->fetchColumn();
+} catch (Throwable $ex) {
+    $is_admin = false;
+}
+
 $csrfToken = generateCsrfToken();
 ?>
 <!DOCTYPE html>
@@ -55,6 +66,11 @@ $csrfToken = generateCsrfToken();
                         <button type="button" id="createGroupBtn" class="btn btn-sm btn-primary w-100" aria-label="Create group">
                             <i class="fas fa-users me-1"></i>Create Group
                         </button>
+                        <?php if ($is_admin): ?>
+                        <button type="button" id="groupKeyHealthBtn" class="btn btn-sm btn-outline-secondary w-100 mt-2" aria-label="Run group key health check">
+                            <i class="fas fa-shield-alt me-1"></i>Group Key Health Check
+                        </button>
+                        <?php endif; ?>
                     </div>
                     <ul class="chat-list" id="chatList" role="list" aria-label="Chats"></ul>
                 </div>
@@ -166,6 +182,7 @@ $csrfToken = generateCsrfToken();
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
         const CSRF_TOKEN = <?= json_encode($csrfToken) ?>;
         const APP_CONSTANTS = <?= json_encode(tintinchatFrontendConstants()) ?>;
+        const CURRENT_USER_IS_ADMIN = <?= json_encode($is_admin) ?>;
         const currentUserIdent = <?= json_encode($user_ident) ?>;
         if(currentUserIdent?.length) {
             localStorage.setItem('ident', currentUserIdent);

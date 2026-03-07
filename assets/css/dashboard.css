@@ -735,6 +735,126 @@ nav.navbar:hover::after {
     text-align: right;
 }
 
+.group-health-modal {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.group-health-summary {
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.7rem;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.group-health-summary-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.group-health-summary-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    color: var(--subtle-text-color);
+    font-size: 0.82rem;
+}
+
+.group-health-summary-meta {
+    color: var(--subtle-text-color);
+    font-size: 0.78rem;
+}
+
+.group-health-table-wrap {
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    overflow: auto;
+}
+
+.group-health-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 540px;
+}
+
+.group-health-table th,
+.group-health-table td {
+    padding: 0.5rem 0.55rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.82rem;
+    vertical-align: middle;
+}
+
+.group-health-table th {
+    color: var(--subtle-text-color);
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.group-health-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.group-health-status {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.group-health-status.healthy {
+    color: color-mix(in srgb, var(--primary-color) 65%, var(--text-color));
+    background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+}
+
+.group-health-status.warning {
+    color: color-mix(in srgb, var(--secondary-color) 70%, var(--text-color));
+    background: color-mix(in srgb, var(--secondary-color) 14%, transparent);
+}
+
+.group-health-toggle-btn {
+    margin-left: 0.35rem;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--subtle-text-color);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.14rem 0.45rem;
+    line-height: 1.2;
+}
+
+.group-health-toggle-btn:hover {
+    color: var(--secondary-color);
+    border-color: color-mix(in srgb, var(--secondary-color) 35%, var(--border-color));
+}
+
+.group-health-details-row td {
+    background: color-mix(in srgb, var(--secondary-color) 4%, var(--surface-color));
+}
+
+.group-health-details-wrap {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.group-health-details-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--subtle-text-color);
+}
+
+.group-health-details-list {
+    margin: 0;
+    padding-left: 1rem;
+    font-size: 0.8rem;
+}
+
 .message.sent + .message.sent {
     margin-top: -0.25rem;
     border-top-right-radius: 6px;

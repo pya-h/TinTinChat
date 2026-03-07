@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/group_helpers.php';
+require_once __DIR__ . '/../includes/group_crypto_helpers.php';
 
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
@@ -31,9 +32,24 @@ if ($existsStmt->fetchColumn()) {
     apiError('ALREADY_GROUP_MEMBER', 'User is already a group member', 409);
 }
 
-$insertStmt = $pdo->prepare('INSERT INTO group_members (group_id, user_id, role, invited_by_user_id) VALUES (?, ?, ?, ?)');
-if (!$insertStmt->execute([$groupId, $targetUserId, 'member', $userId])) {
-    apiError('GROUP_MEMBER_ADD_FAILED', 'Failed to add member', 500);
+$pdo->beginTransaction();
+try {
+    $insertStmt = $pdo->prepare('INSERT INTO group_members (group_id, user_id, role, invited_by_user_id) VALUES (?, ?, ?, ?)');
+    if (!$insertStmt->execute([$groupId, $targetUserId, 'member', $userId])) {
+        throw new RuntimeException('GROUP_MEMBER_ADD_FAILED');
+    }
+
+    groupEnsureMemberHasSharedKey($pdo, $groupId, $targetUserId);
+
+    $pdo->commit();
+} catch (Throwable $ex) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    if ($ex instanceof RuntimeException && $ex->getMessage() === 'GROUP_MEMBER_ADD_FAILED') {
+        apiError('GROUP_MEMBER_ADD_FAILED', 'Failed to add member', 500);
+    }
+    apiError('GROUP_MEMBER_KEY_ASSIGNMENT_FAILED', 'Failed to assign group encryption key to member', 500);
 }
 
 apiSuccess([

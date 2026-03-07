@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/group_helpers.php';
+require_once __DIR__ . '/../includes/group_crypto_helpers.php';
 
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
@@ -30,6 +31,8 @@ try {
 
     $memberStmt = $pdo->prepare('INSERT INTO group_members (group_id, user_id, role, invited_by_user_id) VALUES (?, ?, ?, ?)');
     $memberStmt->execute([$groupId, $userId, 'owner', $userId]);
+
+    groupEnsureMemberHasSharedKey($pdo, $groupId, $userId);
 
     $pdo->commit();
 } catch (Throwable $ex) {

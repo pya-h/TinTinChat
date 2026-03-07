@@ -1,0 +1,3 @@
+ALTER TABLE messages
+  MODIFY COLUMN message MEDIUMTEXT NULL,
+  MODIFY COLUMN message_for_sender MEDIUMTEXT NULL;
