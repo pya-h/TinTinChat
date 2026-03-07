@@ -266,6 +266,115 @@ async function copyMessageText(messageElement) {
     }
 }
 
+async function sendEncryptedTextMessage(targetUsername, text, replyToMessageId = null) {
+    const recipientKey = await getPublicKey(targetUsername);
+    const senderKey = await getPublicKey(CURRENT_USER);
+
+    const encryptedForRecipient = await encryptLongMessage(text, recipientKey, isTextPersian(text));
+    const encryptedForSender = await encryptLongMessage(text, senderKey, isTextPersian(text));
+
+    const formData = new FormData();
+    formData.append("target", targetUsername);
+    formData.append("message", encryptedForRecipient);
+    formData.append("message_for_sender", encryptedForSender);
+    if (replyToMessageId) {
+        formData.append("reply_to_message_id", String(replyToMessageId));
+    }
+
+    const res = await fetch("api/send_message.php", {
+        method: "POST",
+        headers: getCsrfHeaders(),
+        body: formData,
+    });
+    const json = await res.json();
+    if (json.status !== "ok") {
+        throw new Error(json.error || "Send failed");
+    }
+
+    return json;
+}
+
+async function forwardMessageText(messageElement) {
+    const messageText = getMessageTextForCopy(messageElement);
+    if (!messageText) {
+        showModal("Forward Failed", "Only text messages can be forwarded right now.", "warning");
+        return;
+    }
+
+    const destination = window
+        .prompt("Forward to username:", currentChatUser || "")
+        ?.trim();
+    if (!destination) {
+        return;
+    }
+
+    if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(destination)) {
+        showModal(
+            "Invalid Username",
+            "Username must start with a letter and contain only letters, numbers, hyphens, and underscores.",
+            "warning"
+        );
+        return;
+    }
+
+    if (destination === CURRENT_USER) {
+        showModal("Forward Failed", "You cannot forward messages to yourself.", "warning");
+        return;
+    }
+
+    try {
+        await sendEncryptedTextMessage(destination, messageText);
+        addUserToChatList(destination);
+        showModal("Forwarded", `Message forwarded to ${destination}.`, "success");
+    } catch (error) {
+        showModal("Forward Failed", error.message || "Unable to forward message.", "error");
+    }
+}
+
+async function deleteMessageById(messageId) {
+    const res = await fetch("api/delete_messages.php", {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            ...getCsrfHeaders(),
+        },
+        body: JSON.stringify({ messages: [messageId] }),
+    });
+    const json = await res.json();
+    if (json.status !== "ok") {
+        throw new Error(json.error || "Failed to delete message");
+    }
+}
+
+async function deleteMessageFromContext(messageElement) {
+    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    if (!messageId) {
+        showModal("Delete Failed", "Invalid message id.", "warning");
+        return;
+    }
+
+    const confirmed = window.confirm("Delete this message?");
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await deleteMessageById(messageId);
+        messageElement.remove();
+
+        if (currentReplyTarget?.messageId === messageId) {
+            clearReplyState();
+        }
+        if (Array.isArray(currentChatRecentMessages)) {
+            currentChatRecentMessages = currentChatRecentMessages.filter(
+                (item) => Number(item.id) !== messageId
+            );
+        }
+    } catch (error) {
+        showModal("Delete Failed", error.message || "Unable to delete message.", "error");
+    }
+}
+
 function addMessageActionHandlers(messageElement) {
     let longPressTimer = null;
 
@@ -296,6 +405,26 @@ function addMessageActionHandlers(messageElement) {
             chatInput.focus();
         });
         menu.appendChild(replyBtn);
+
+        const forwardBtn = document.createElement("button");
+        forwardBtn.type = "button";
+        forwardBtn.className = "message-context-menu-item";
+        forwardBtn.innerHTML = '<i class="fas fa-share-from-square me-2"></i>Forward';
+        forwardBtn.addEventListener("click", async () => {
+            await forwardMessageText(messageElement);
+            closeMessageContextMenu();
+        });
+        menu.appendChild(forwardBtn);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "message-context-menu-item";
+        deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete';
+        deleteBtn.addEventListener("click", async () => {
+            await deleteMessageFromContext(messageElement);
+            closeMessageContextMenu();
+        });
+        menu.appendChild(deleteBtn);
 
         document.body.appendChild(menu);
 
@@ -1380,31 +1509,7 @@ const sendTextMessage = async () => {
     sendBtn.classList.add("btn-pressed");
 
     try {
-        const recipientKey = await getPublicKey(currentChatUser);
-        const senderKey = await getPublicKey(CURRENT_USER);
-
-        const encryptedForRecipient = await encryptLongMessage(
-            text,
-            recipientKey,
-            isTextPersian(text)
-        );
-        const encryptedForSender = await encryptLongMessage(text, senderKey, isTextPersian(text));
-
-        const formData = new FormData();
-        formData.append("target", currentChatUser);
-        formData.append("message", encryptedForRecipient);
-        formData.append("message_for_sender", encryptedForSender);
-        if (currentReplyTarget?.messageId) {
-            formData.append("reply_to_message_id", String(currentReplyTarget.messageId));
-        }
-
-        const res = await fetch("api/send_message.php", {
-            method: "POST",
-            headers: getCsrfHeaders(),
-            body: formData,
-        });
-        const json = await res.json();
-        if (json.status !== "ok") throw new Error(json.error || "Send failed");
+        await sendEncryptedTextMessage(currentChatUser, text, currentReplyTarget?.messageId || null);
 
         addUserToChatList(currentChatUser);
         chatInput.value = "";

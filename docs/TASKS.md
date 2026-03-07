@@ -42,7 +42,7 @@ Legend:
 - [x] (`P1`) Reply to message.
 - [x] (`P1`) Small copy-message action.
 - [x] (`P1`) Message context menu (right-click/long-press).
-- [ ] (`P1`) Forward message.
+- [x] (`P1`) Forward message.
 - [ ] (`P1`) UI/UX simplification and consistency pass.
 
 ## 3) Priority Roadmap (Planned)
@@ -65,8 +65,8 @@ Legend:
 - [x] (`P1`) Render quoted/referenced original message block in message bubble.
 - [x] (`P1`) Add copy button for text messages with clipboard fallback.
 - [x] (`P1`) Add message context menu component (desktop + mobile parity).
-- [ ] (`P1`) Add forward message flow (text first).
-- [ ] (`P1`) Add delete action entry in context menu using existing endpoint.
+- [x] (`P1`) Add forward message flow (text first).
+- [x] (`P1`) Add delete action entry in context menu using existing endpoint.
 
 ### Phase C — UX Quality (`P1/P2`)
 - [ ] (`P1`) Improve empty states and inline error/retry UX.
