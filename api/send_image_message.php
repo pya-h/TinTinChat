@@ -8,8 +8,6 @@ apiRequireMethod('POST');
 $sender_id = apiRequireAuth();
 apiRequireCsrf();
 apiGuardOversizedPostBody();
-
-const IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_MIME_TO_EXT = [
     'image/jpeg' => 'jpg',
     'image/png' => 'png',
@@ -39,7 +37,7 @@ if (!array_key_exists($detectedMime, ALLOWED_IMAGE_MIME_TO_EXT)) {
     apiError('INVALID_IMAGE_TYPE', 'Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.', 400);
 }
 
-if ((int) $image_file['size'] > IMAGE_MAX_SIZE_BYTES) {
+if ((int) $image_file['size'] > TTC_UPLOAD_IMAGE_MAX_BYTES) {
     apiError('FILE_TOO_LARGE', 'Image file is too large. Max 5MB allowed.', 400);
 }
 

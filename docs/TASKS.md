@@ -82,9 +82,9 @@ Legend:
 
 ### Phase D — Maintainability (`P1/P2`)
 - [x] (`P1`) Introduce internal `api-service.js` for consistent fetch/error handling.
-- [ ] (`P1`) Split `chat.js` into smaller modules while keeping vanilla JS approach.
-- [ ] (`P2`) Introduce shared constants for limits/timeouts (frontend + backend sync).
-- [ ] (`P2`) Add developer docs for endpoint contract and error codes.
+- [x] (`P1`) Split `chat.js` into smaller modules while keeping vanilla JS approach.
+- [x] (`P2`) Introduce shared constants for limits/timeouts (frontend + backend sync).
+- [x] (`P2`) Add developer docs for endpoint contract and error codes.
 
 ### Phase E — Chatroom Parity Features (Recommended) (`P2/P3`)
 - [ ] (`P2`) Typing indicator.

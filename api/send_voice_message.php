@@ -7,8 +7,6 @@ apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
 apiGuardOversizedPostBody();
-
-const VOICE_MAX_SIZE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_VOICE_EXTENSIONS = ['wav', 'mp3', 'ogg', 'webm'];
 const ALLOWED_VOICE_MIME_TYPES = [
     'audio/wav',
@@ -35,7 +33,7 @@ if (!in_array($detectedMime, ALLOWED_VOICE_MIME_TYPES, true)) {
     apiError('INVALID_FILE_TYPE', 'Invalid audio MIME type.', 400);
 }
 
-if ((int) $voiceFile['size'] > VOICE_MAX_SIZE_BYTES) {
+if ((int) $voiceFile['size'] > TTC_UPLOAD_VOICE_MAX_BYTES) {
     apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 10MB', 400);
 }
 

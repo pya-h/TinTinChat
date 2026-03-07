@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/session.php';
+require_once __DIR__ . '/includes/constants.php';
 configSession();
 
 if (!isset($_SESSION['user_id'])) {
@@ -127,6 +128,7 @@ $csrfToken = generateCsrfToken();
         const CURRENT_USER = <?= json_encode($username) ?>;
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
         const CSRF_TOKEN = <?= json_encode($csrfToken) ?>;
+        const APP_CONSTANTS = <?= json_encode(tintinchatFrontendConstants()) ?>;
         const currentUserIdent = <?= json_encode($user_ident) ?>;
         if(currentUserIdent?.length) {
             localStorage.setItem('ident', currentUserIdent);
@@ -153,6 +155,8 @@ $csrfToken = generateCsrfToken();
 
     <script src="assets/js/ui-enhancements.js"></script>
     <script src="assets/js/api-service.js"></script>
+    <script src="assets/js/chat-utils.js"></script>
+    <script src="assets/js/chat-notifications.js"></script>
     <script src="assets/js/crypto.js"></script>
     <script src="assets/js/chat.js"></script>
 </body>

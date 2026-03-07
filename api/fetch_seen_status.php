@@ -6,8 +6,8 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
 $otherUsername = apiNormalizeUsername($_GET['with'] ?? '', 'INVALID_TARGET_USERNAME');
-$maxIds = 200;
-$maxRawIdsLength = 4000;
+$maxIds = TTC_SEEN_STATUS_MAX_IDS;
+$maxRawIdsLength = TTC_SEEN_STATUS_MAX_RAW_IDS_LENGTH;
 
 $rawIds = trim((string) ($_GET['message_ids'] ?? ''));
 if ($rawIds === '') {

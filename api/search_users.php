@@ -6,7 +6,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 apiRequireMethod('GET');
 $currentUserId = apiRequireAuth();
 
-if (!isset($_GET['query']) || strlen(trim($_GET['query'])) < 3) {
+if (!isset($_GET['query']) || strlen(trim($_GET['query'])) < TTC_SEARCH_USERS_MIN_QUERY_LENGTH) {
     apiSuccess(['users' => []]);
 }
 
@@ -19,7 +19,7 @@ try {
         WHERE LOWER(username) LIKE LOWER(?) 
         AND id != ? 
         ORDER BY username 
-        LIMIT 10
+        LIMIT " . (int) TTC_SEARCH_USERS_LIMIT . "
     ");
     
     $searchPattern = '%' . $query . '%';

@@ -20,15 +20,19 @@ const messageActionModalBody = document.getElementById("messageActionModalBody")
 const messageActionModalClose = document.getElementById("messageActionModalClose");
 const messageActionModalAnnouncer = document.getElementById("messageActionModalAnnouncer");
 
+const appConstants = window.APP_CONSTANTS || {};
+
 const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
-const IMAGE_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
-const FILE_UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
+const IMAGE_UPLOAD_MAX_BYTES = Number(appConstants.uploadImageMaxBytes) || 5 * 1024 * 1024;
+const FILE_UPLOAD_MAX_BYTES = Number(appConstants.uploadFileMaxBytes) || 50 * 1024 * 1024;
+const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
 const SETTINGS_HINT_DISMISSED_KEY = "tintinchat.messageActionsHint.dismissed";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
-const SEEN_STATUS_POLL_MS = 3000;
+const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
+const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
 const I18N_TEXT = {
     modalOpened: "Opened {title} dialog.",
     modalClosed: "Closed {title} dialog.",
@@ -78,7 +82,7 @@ let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
 let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
-const MESSAGES_PER_PAGE = 50;
+const MESSAGES_PER_PAGE = Number(appConstants.messagesPerPage) || 50;
 
 let searchTimeout = null;
 let currentSuggestions = [];
@@ -106,25 +110,73 @@ const appSettings = {
     mobileComposerExpanded: false,
 };
 
-let notificationAudio = null;
-let customNotificationAudio = null;
-const NOTIFICATION_COOLDOWN = 500;
 const CUSTOM_SOUND_PATH = "assets/sounds/notification.mp3";
+const chatUtils = window.ChatUtils || {
+    parseStoredBoolean(value, fallback = true) {
+        if (typeof value === "boolean") {
+            return value;
+        }
+        if (typeof value === "string") {
+            if (value === "true") {
+                return true;
+            }
+            if (value === "false") {
+                return false;
+            }
+        }
+        return fallback;
+    },
+    isTextPersian(text) {
+        return /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(text);
+    },
+    escapeHtml(text) {
+        const div = document.createElement("div");
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    },
+    formatMessageTimestamp(timestamp) {
+        if (!timestamp) {
+            return "-";
+        }
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) {
+            return "-";
+        }
+        return date.toLocaleString("default", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+        });
+    },
+    formatI18nText(template, values = {}) {
+        return String(template || "").replace(/\{(\w+)\}/g, (_, key) => {
+            const value = values[key];
+            return value == null ? "" : String(value);
+        });
+    },
+};
 
-function parseStoredBoolean(value, fallback = true) {
-    if (typeof value === "boolean") {
-        return value;
-    }
-    if (typeof value === "string") {
-        if (value === "true") {
-            return true;
-        }
-        if (value === "false") {
-            return false;
-        }
-    }
-    return fallback;
-}
+const {
+    parseStoredBoolean,
+    isTextPersian,
+    escapeHtml,
+    formatMessageTimestamp,
+    formatI18nText,
+} = chatUtils;
+
+const notificationPlayer = window.ChatNotificationService?.createPlayer({
+    customSoundPath: CUSTOM_SOUND_PATH,
+    volume: 0.7,
+}) || {
+    preloadCustom: async () => false,
+    play: () => Promise.resolve(),
+};
+
+const playNotificationSound = () => notificationPlayer.play();
 
 function loadAppSettings() {
     try {
@@ -311,104 +363,13 @@ function bindMessageActionModalEvents() {
     });
 }
 
-async function loadCustomNotificationSound() {
-    try {
-        const response = await fetch(CUSTOM_SOUND_PATH);
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            customNotificationAudio = new Audio();
-            customNotificationAudio.src = url;
-            customNotificationAudio.volume = 0.7;
-            return true;
-        }
-    } catch (error) {
-        initNotificationSound();
-        createNotificationSound();
-    }
-    return false;
-}
-
 document.addEventListener("DOMContentLoaded", () => {
     loadAppSettings();
     applySettingsUi();
     bindSettingsUiEvents();
     bindMessageActionModalEvents();
-    loadCustomNotificationSound();
+    notificationPlayer.preloadCustom();
 });
-
-function createNotificationSound() {
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const now = audioContext.currentTime;
-
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(850, now);
-        osc.frequency.setValueAtTime(550, now + 0.12);
-
-        gain.gain.setValueAtTime(0.6, now);
-        gain.gain.exponentialRampToValueAtTime(0.05, now + 0.25);
-
-        osc.start(now);
-        osc.stop(now + 0.25);
-    } catch (error) {
-        initNotificationSound();
-    }
-}
-
-function initNotificationSound() {
-    if (!notificationAudio) {
-        notificationAudio = new Audio();
-        notificationAudio.src =
-            "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
-        notificationAudio.volume = 0.7;
-    }
-}
-
-function playDefaultNotificationSound() {
-    if (!notificationAudio) {
-        initNotificationSound();
-    }
-    createNotificationSound();
-    return notificationAudio.cloneNode().play();
-}
-
-function setupNotificationSoundPlayer() {
-    if (customNotificationAudio) {
-        return () => {
-            return customNotificationAudio
-                .cloneNode()
-                .play()
-                .catch(() => playDefaultNotificationSound());
-        };
-    }
-    initNotificationSound();
-    return () => {
-        createNotificationSound();
-        return notificationAudio
-            .cloneNode()
-            .play()
-            .catch(() => playDefaultNotificationSound());
-    };
-}
-
-const playNotificationSound = setupNotificationSoundPlayer();
-
-function isTextPersian(text) {
-    return /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(text);
-}
-
-function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.appendChild(document.createTextNode(text));
-    return div.innerHTML;
-}
 
 function getCsrfHeaders() {
     if (window.ApiService?.csrfHeaders) {
@@ -498,32 +459,6 @@ function trapActionModalFocus(event) {
         event.preventDefault();
         first.focus();
     }
-}
-
-function formatMessageTimestamp(timestamp) {
-    if (!timestamp) {
-        return "-";
-    }
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) {
-        return "-";
-    }
-    return date.toLocaleString("default", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-    });
-}
-
-function formatI18nText(template, values = {}) {
-    return String(template || "").replace(/\{(\w+)\}/g, (_, key) => {
-        const value = values[key];
-        return value == null ? "" : String(value);
-    });
 }
 
 function openMessageActionModal(title, bodyNode) {
@@ -2409,7 +2344,7 @@ searchUserInput.addEventListener("input", function () {
         clearTimeout(searchTimeout);
     }
 
-    if (val.length < 3) {
+    if (val.length < SEARCH_MIN_QUERY_LENGTH) {
         hideSuggestions();
         if (feedback) feedback.style.display = "none";
         return;
@@ -2519,7 +2454,7 @@ document.addEventListener("click", function (e) {
 searchUserInput.addEventListener("change", () => searchForUser());
 
 async function searchUserSuggestions(query) {
-    if (isSearching || query.length < 3) return;
+    if (isSearching || query.length < SEARCH_MIN_QUERY_LENGTH) return;
 
     isSearching = true;
     showSearchLoading(true);
@@ -2687,7 +2622,7 @@ setInterval(async () => {
         !(chatListTriggerTime % 10) && loadChatList(),
     ]);
     chatListTriggerTime = ++chatListTriggerTime % 10;
-}, 1000);
+}, CHAT_REFRESH_POLL_MS);
 
 setInterval(() => {
     refreshPendingSeenStates();

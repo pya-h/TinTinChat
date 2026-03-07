@@ -1,0 +1,35 @@
+<?php
+
+const TTC_USERNAME_MIN_LENGTH = 3;
+
+const TTC_FETCH_MESSAGES_MIN_LIMIT = 1;
+const TTC_FETCH_MESSAGES_MAX_LIMIT = 100;
+const TTC_FETCH_MESSAGES_DEFAULT_LIMIT = 50;
+
+const TTC_SEARCH_USERS_LIMIT = 10;
+const TTC_SEARCH_USERS_MIN_QUERY_LENGTH = 3;
+
+const TTC_SEEN_STATUS_MAX_IDS = 200;
+const TTC_SEEN_STATUS_MAX_RAW_IDS_LENGTH = 4000;
+
+const TTC_UPLOAD_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const TTC_UPLOAD_FILE_MAX_BYTES = 50 * 1024 * 1024;
+const TTC_UPLOAD_VOICE_MAX_BYTES = 10 * 1024 * 1024;
+
+const TTC_CHAT_REFRESH_POLL_MS = 1000;
+const TTC_SEEN_STATUS_POLL_MS = 3000;
+
+function tintinchatFrontendConstants(): array
+{
+    return [
+        'usernameMinLength' => TTC_SEARCH_USERS_MIN_QUERY_LENGTH,
+        'messagesPerPage' => TTC_FETCH_MESSAGES_DEFAULT_LIMIT,
+        'messagePageMaxLimit' => TTC_FETCH_MESSAGES_MAX_LIMIT,
+        'seenStatusMaxIds' => TTC_SEEN_STATUS_MAX_IDS,
+        'uploadImageMaxBytes' => TTC_UPLOAD_IMAGE_MAX_BYTES,
+        'uploadFileMaxBytes' => TTC_UPLOAD_FILE_MAX_BYTES,
+        'uploadVoiceMaxBytes' => TTC_UPLOAD_VOICE_MAX_BYTES,
+        'chatRefreshPollMs' => TTC_CHAT_REFRESH_POLL_MS,
+        'seenStatusPollMs' => TTC_SEEN_STATUS_POLL_MS,
+    ];
+}

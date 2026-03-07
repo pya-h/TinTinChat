@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/constants.php';
+
 function apiJsonResponse(array $payload, int $statusCode = 200): void
 {
     http_response_code($statusCode);
@@ -148,7 +150,8 @@ function apiNormalizeUsername(?string $username, string $errorCode = 'INVALID_US
         apiError('MISSING_USERNAME', 'Missing username', 400);
     }
 
-    if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/', $normalized)) {
+    $minimumTailLength = max(0, TTC_USERNAME_MIN_LENGTH - 1);
+    if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{' . $minimumTailLength . ',}$/', $normalized)) {
         apiError($errorCode, 'Invalid username format', 400);
     }
 

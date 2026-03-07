@@ -18,7 +18,13 @@ $otherUserId = $otherUser['id'];
 
 $offset = isset($_GET['offset']) ? max(0, (int)$_GET['offset']) : 0;
 $last_msg_id = isset($_GET['lastMsg']) ? (int)$_GET['lastMsg'] : 0;
-$limit = max(1, min(100, isset($_GET['limit']) ? (int)$_GET['limit'] : 20));
+$limit = max(
+  TTC_FETCH_MESSAGES_MIN_LIMIT,
+  min(
+    TTC_FETCH_MESSAGES_MAX_LIMIT,
+    isset($_GET['limit']) ? (int)$_GET['limit'] : TTC_FETCH_MESSAGES_DEFAULT_LIMIT
+  )
+);
 
 $count_query = $pdo->prepare('
     SELECT COUNT(*) as total

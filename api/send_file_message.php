@@ -7,8 +7,6 @@ apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
 apiGuardOversizedPostBody();
-
-const FILE_MAX_SIZE_BYTES = 50 * 1024 * 1024;
 const BLOCKED_FILE_EXTENSIONS = [
     'php', 'phtml', 'php3', 'php4', 'php5', 'phar',
     'exe', 'msi', 'bat', 'cmd', 'com', 'scr',
@@ -33,7 +31,7 @@ $messageEncryptedForSender = $_POST['message_for_sender'] ?? null;
 
 $file = apiRequireUploadedFile('file');
 
-if ((int) $file['size'] > FILE_MAX_SIZE_BYTES) {
+if ((int) $file['size'] > TTC_UPLOAD_FILE_MAX_BYTES) {
     apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 50MB', 400);
 }
 
