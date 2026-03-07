@@ -32,5 +32,10 @@ try {
 session_regenerate_id(true);
 $_SESSION['user_id'] = $user['id'];
 $_SESSION['username'] = $user['username'];
+$newIdent = bin2hex(random_bytes(32)) . '.' . time();
+$_SESSION['ident'] = $newIdent;
+
+$updateStmt = $pdo->prepare('UPDATE users SET ident = ?, last_login = NOW() WHERE id = ?');
+$updateStmt->execute([$newIdent, $user['id']]);
 
 apiSuccess(['result' => 'ok']);

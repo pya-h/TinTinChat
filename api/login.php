@@ -61,8 +61,23 @@ if (!$user) {
     ];
 
     $res = openssl_pkey_new($config);
+    if ($res === false) {
+        $_SESSION['login_error'] = 'Unable to initialize account cryptography. Please try again.';
+        header('Location: ../index.php');
+        exit;
+    }
     openssl_pkey_export($res, $privatePem);
+    if (!$privatePem) {
+        $_SESSION['login_error'] = 'Unable to generate private key. Please try again.';
+        header('Location: ../index.php');
+        exit;
+    }
     $details = openssl_pkey_get_details($res);
+    if (!$details || empty($details['key'])) {
+        $_SESSION['login_error'] = 'Unable to generate public key. Please try again.';
+        header('Location: ../index.php');
+        exit;
+    }
     $publicPem = $details['key'];
 
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);

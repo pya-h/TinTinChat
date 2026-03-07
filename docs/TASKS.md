@@ -37,8 +37,8 @@ Legend:
 
 ## 2) Current Gaps from Your Requested Feature Set
 
-- [ ] (`P0`) Full source review for debugging/improvement.
-- [ ] (`P0`) Complete security audit + hardening across all endpoints.
+- [x] (`P0`) Full source review for debugging/improvement.
+- [x] (`P0`) Complete security audit + hardening across all endpoints.
 - [x] (`P1`) Reply to message.
 - [x] (`P1`) Small copy-message action.
 - [x] (`P1`) Message context menu (right-click/long-press).

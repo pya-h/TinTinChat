@@ -12,11 +12,17 @@ if (empty($data['publicKey'])) {
     apiError('MISSING_PUBLIC_KEY', 'No public key provided', 400);
 }
 
-$publicKeyJson = json_encode($data['publicKey']);
+$publicKey = is_array($data['publicKey'])
+    ? json_encode($data['publicKey'])
+    : trim((string) $data['publicKey']);
+
+if (!$publicKey) {
+    apiError('INVALID_PUBLIC_KEY', 'Invalid public key payload', 400);
+}
 
 try {
     $stmt = $pdo->prepare('UPDATE users SET public_key = ? WHERE id = ?');
-    $stmt->execute([$publicKeyJson, $userId]);
+    $stmt->execute([$publicKey, $userId]);
     apiSuccess();
 } catch (Exception $e) {
     apiError('SAVE_FAILED', 'Failed to save key', 500);

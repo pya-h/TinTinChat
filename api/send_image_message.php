@@ -17,14 +17,10 @@ const ALLOWED_IMAGE_MIME_TO_EXT = [
     'image/webp' => 'webp',
 ];
 
-$target_username = $_POST['target'] ?? null;
+$target_username = apiNormalizeUsername($_POST['target'] ?? null, 'INVALID_TARGET_USERNAME');
 $message_for_recipient = $_POST['message'] ?? null;
 $message_for_sender = $_POST['message_for_sender'] ?? null;
 $image_file = apiRequireUploadedFile('image_file');
-
-if (!$target_username) {
-    apiError('MISSING_PARAMETERS', 'A required field was missing from the request.', 400);
-}
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
 $stmt->execute([$target_username]);

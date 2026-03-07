@@ -5,11 +5,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 $user_id = apiRequireAuth();
-$other_username = $_GET['with'] ?? '';
-
-if (!$other_username) {
-  apiError('MISSING_TARGET', 'Missing target username', 400);
-}
+$other_username = apiNormalizeUsername($_GET['with'] ?? '', 'INVALID_TARGET_USERNAME');
 
 if(!isset($_GET['offsetMsgId'])) {
   apiError('MISSING_OFFSET', 'Cannot fetch recent messages without specifying the offset message', 400);
@@ -23,7 +19,7 @@ if (!$other_user) {
   apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
 }
 $other_user_id = $other_user['id'];
-$last_msg_id = (int)$_GET['offsetMsgId'];
+$last_msg_id = max(0, (int)$_GET['offsetMsgId']);
 
 $stmt = $pdo->prepare("SELECT id, sender_id, receiver_id, message, message_for_sender, message_type, voice_file_path, image_file_path, any_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id, created_at, seen_at,
   r.id AS reply_message_id,

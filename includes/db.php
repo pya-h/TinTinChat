@@ -8,7 +8,11 @@ function loadEnv(string $path)
     foreach ($lines as $line) {
         if (strpos(trim($line), '#') === 0)
             continue;
+        if (strpos($line, '=') === false)
+            continue;
         [$name, $value] = array_map('trim', explode('=', $line, 2));
+        if ($name === '')
+            continue;
         if (!isset($_ENV[$name])) {
             $value = trim($value, '"\'');
             $_ENV[$name] = $value;

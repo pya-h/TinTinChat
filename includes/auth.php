@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/crypto_helper.php';
 
@@ -31,13 +33,16 @@ function createUser($username, $password)
 }
 
 function logout(): void {
-    session_start();
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
     clearPossibleLoginSession();
+    $_SESSION = [];
     session_destroy();
     echo <<<_END
         <script>
-            localStorage.clear();
-            window.location.href = '/';
+            localStorage.removeItem('ident');
+            window.location.href = '../index.php';
         </script>
     _END;
 }

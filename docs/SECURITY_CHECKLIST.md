@@ -1,6 +1,6 @@
 # TinTinChat Security Regression Checklist
 
-Last run: 2026-03-07
+Last run: 2026-03-07 (deep pass)
 Owner: Engineering
 
 ## Purpose
@@ -49,6 +49,13 @@ Use this checklist after every major backend/API change to prevent regressions i
 - Standardized JSON response shape for legacy GET endpoints via shared helpers.
 - Added auth requirement for public key endpoint to reduce unauthenticated user/key enumeration.
 - Performed syntax validation (`php -l`) on all modified API files.
+
+### Run: 2026-03-07 (Deep hardening pass)
+- Added shared server-side username normalization helper and applied it across send/fetch/key endpoints.
+- Hardened destructive admin endpoint (`notrace`) to require POST + CSRF + JSON body and return non-leaky error text.
+- Rotated `ident` token on session restore in `get_user_by_ident` to reduce replay window.
+- Added pagination bounds hardening for fetch endpoints (`limit` cap and non-negative offsets).
+- Re-ran full API syntax validation after changes.
 
 Outstanding follow-up:
 - Full source review (`P0`) remains open.

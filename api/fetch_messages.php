@@ -5,11 +5,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
-$otherUsername = $_GET['with'] ?? '';
-
-if (!$otherUsername) {
-  apiError('MISSING_TARGET', 'Missing target username', 400);
-}
+$otherUsername = apiNormalizeUsername($_GET['with'] ?? '', 'INVALID_TARGET_USERNAME');
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
 $stmt->execute([$otherUsername]);
@@ -20,9 +16,9 @@ if (!$otherUser) {
 }
 $otherUserId = $otherUser['id'];
 
-$offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+$offset = isset($_GET['offset']) ? max(0, (int)$_GET['offset']) : 0;
 $last_msg_id = isset($_GET['lastMsg']) ? (int)$_GET['lastMsg'] : 0;
-$limit = max(1, isset($_GET['limit']) ? (int)$_GET['limit'] : 20);
+$limit = max(1, min(100, isset($_GET['limit']) ? (int)$_GET['limit'] : 20));
 
 $count_query = $pdo->prepare('
     SELECT COUNT(*) as total

@@ -19,13 +19,9 @@ const ALLOWED_VOICE_MIME_TYPES = [
     'audio/webm',
 ];
 
-$target = $_POST['target'] ?? '';
+$target = apiNormalizeUsername($_POST['target'] ?? '', 'INVALID_TARGET_USERNAME');
 $messageEncryptedForRecipient = $_POST['message'] ?? null;
 $messageEncryptedForSender = $_POST['message_for_sender'] ?? null;
-
-if (!$target) {
-    apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
-}
 
 $voiceFile = apiRequireUploadedFile('voice_file');
 

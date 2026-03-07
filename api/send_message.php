@@ -6,7 +6,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
-$target = $_POST['target'] ?? '';
+$target = apiNormalizeUsername($_POST['target'] ?? '', 'INVALID_TARGET_USERNAME');
 $messageEncryptedForRecipient = $_POST['message'] ?? '';
 $messageEncryptedForSender = $_POST['message_for_sender'] ?? '';
 $replyToMessageId = isset($_POST['reply_to_message_id']) && is_numeric($_POST['reply_to_message_id'])
@@ -16,7 +16,7 @@ $forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numer
     ? (int) $_POST['forwarded_from_message_id']
     : null;
 
-if (!$target || !$messageEncryptedForRecipient || !$messageEncryptedForSender) {
+if (!$messageEncryptedForRecipient || !$messageEncryptedForSender) {
     apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
 }
 

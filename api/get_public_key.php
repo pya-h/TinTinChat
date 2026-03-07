@@ -6,10 +6,7 @@ require_once __DIR__ . '/../includes/api_helpers.php';
 apiRequireMethod('GET');
 apiRequireAuth();
 
-$username = $_GET['username'] ?? '';
-if (!$username) {
-    apiError('MISSING_USERNAME', 'Missing username', 400);
-}
+$username = apiNormalizeUsername($_GET['username'] ?? '', 'INVALID_USERNAME');
 
 $stmt = $pdo->prepare('SELECT public_key FROM users WHERE username = ?');
 $stmt->execute([$username]);

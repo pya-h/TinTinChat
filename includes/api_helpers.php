@@ -140,3 +140,17 @@ function apiGuardOversizedPostBody(): void
         apiError('UPLOAD_TOO_LARGE', "Uploaded data exceeds server limit (post_max_size: {$postMaxSize})", 400);
     }
 }
+
+function apiNormalizeUsername(?string $username, string $errorCode = 'INVALID_USERNAME'): string
+{
+    $normalized = trim((string) $username);
+    if ($normalized === '') {
+        apiError('MISSING_USERNAME', 'Missing username', 400);
+    }
+
+    if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/', $normalized)) {
+        apiError($errorCode, 'Invalid username format', 400);
+    }
+
+    return $normalized;
+}
