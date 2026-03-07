@@ -10,17 +10,17 @@ function apiJsonResponse(array $payload, int $statusCode = 200): void
 
 function apiSuccess(array $data = [], int $statusCode = 200): void
 {
-    apiJsonResponse([
+    apiJsonResponse(array_merge([
         'status' => 'ok',
-        'data' => $data,
-    ], $statusCode);
+    ], $data), $statusCode);
 }
 
 function apiError(string $code, string $message, int $statusCode = 400): void
 {
     apiJsonResponse([
         'status' => 'error',
-        'error' => [
+        'error' => $message,
+        'error_details' => [
             'code' => $code,
             'message' => $message,
         ],

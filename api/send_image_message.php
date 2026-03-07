@@ -2,38 +2,26 @@
 session_start();
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
+
+apiRequireMethod('POST');
+$sender_id = apiRequireAuth();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
-    http_response_code(400);
     $post_max_size = ini_get('post_max_size');
-    echo json_encode([
-        'status' => 'error',
-        'error' => "The uploaded data exceeds the server's configured limit (post_max_size is {$post_max_size}). Please upload a smaller file."
-    ]);
-    exit;
+    apiError('UPLOAD_TOO_LARGE', "The uploaded data exceeds the server's configured limit (post_max_size is {$post_max_size}). Please upload a smaller file.", 400);
 }
 
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'error' => 'User not logged in']);
-    exit;
-}
-
-$sender_id = $_SESSION['user_id'];
 $target_username = $_POST['target'] ?? null;
 $message_for_recipient = $_POST['message'] ?? null;
 $message_for_sender = $_POST['message_for_sender'] ?? null;
 $image_file = $_FILES['image_file'] ?? null;
 
 if (!$target_username) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'error' => 'A required field was missing from the request.']);
-    exit;
+    apiError('MISSING_PARAMETERS', 'A required field was missing from the request.', 400);
 }
 
 if (!isset($image_file) || $image_file['error'] !== UPLOAD_ERR_OK) {
-    http_response_code(400);
-
     $error_message = 'An unknown file upload error occurred.';
     if (isset($image_file['error'])) {
         switch ($image_file['error']) {
@@ -61,8 +49,7 @@ if (!isset($image_file) || $image_file['error'] !== UPLOAD_ERR_OK) {
         $error_message = 'No file was sent with the request or the file was too large.';
     }
 
-    echo json_encode(['status' => 'error', 'error' => $error_message]);
-    exit;
+    apiError('UPLOAD_FAILED', $error_message, 400);
 }
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
@@ -70,16 +57,16 @@ $stmt->execute([$target_username]);
 $receiver = $stmt->fetch();
 
 if (!$receiver) {
-    http_response_code(404);
-    echo json_encode(['status' => 'error', 'error' => 'Target user not found']);
-    exit;
+    apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
 }
 $receiver_id = $receiver['id'];
 
 $upload_dir = __DIR__ . '/../uploads/images/';
 
 if (!is_dir($upload_dir)) {
-    mkdir($upload_dir, 0755, true);
+    if (!mkdir($upload_dir, 0755, true)) {
+        apiError('DIRECTORY_CREATE_FAILED', 'Failed to create images directory', 500);
+    }
 }
 
 // Validate MIME type server-side using file contents, not client-provided type
@@ -89,22 +76,16 @@ finfo_close($finfo);
 
 $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 if (!in_array($detectedMime, $allowed_types)) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'error' => 'Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.']);
-    exit;
+    apiError('INVALID_IMAGE_TYPE', 'Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.', 400);
 }
 
 if ($image_file['size'] > 5 * 1024 * 1024) {  // 5 MB limit
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'error' => 'Image file is too large. Max 5MB allowed.']);
-    exit;
+    apiError('FILE_TOO_LARGE', 'Image file is too large. Max 5MB allowed.', 400);
 }
 
 $file_extension = pathinfo($image_file['name'], PATHINFO_EXTENSION);
 $unique_filename = uniqid('img_', true) . '.' . $file_extension;
 $upload_path = $upload_dir . $unique_filename;
-
-header('Content-Type: application/json');
 
 if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
     try {
@@ -121,18 +102,14 @@ if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
                 'uploads/images/' . $unique_filename
             ])
         ) {
-            http_response_code(409);
-            echo json_encode(['status' => 'failed', 'error' => 'Something went wrong while sending your message!']);
-            exit;
+            apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);
         }
 
-        echo json_encode(['status' => 'ok', 'message' => 'Image sent successfully']);
+        apiSuccess(['message' => 'Image sent successfully']);
     } catch (PDOException $e) {
-        http_response_code(500);
         unlink($upload_path);
-        echo json_encode(['status' => 'error', 'error' => 'Failed to save image message']);
+        apiError('DB_SAVE_FAILED', 'Failed to save image message', 500);
     }
 } else {
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'error' => 'Failed to move uploaded file.']);
+    apiError('FILE_MOVE_FAILED', 'Failed to move uploaded file.', 500);
 }

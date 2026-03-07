@@ -1,39 +1,27 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Not logged in']);
-    exit;
-}
-
-$userId = $_SESSION['user_id'];
+apiRequireMethod('POST');
+$userId = apiRequireAuth();
 $target = $_POST['target'] ?? '';
 $messageEncryptedForRecipient = $_POST['message'] ?? null;
 $messageEncryptedForSender = $_POST['message_for_sender'] ?? null;
 
 if (!$target) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing parameters']);
-    exit;
+    apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
 }
 
 if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-    http_response_code(400);
-    echo json_encode(['error' => 'File upload failed']);
-    exit;
+    apiError('UPLOAD_FAILED', 'File upload failed', 400);
 }
 
 $file = $_FILES['file'];
 $maxSize = 50 * 1024 * 1024;  // 50MB
 
 if ($file['size'] > $maxSize) {
-    http_response_code(400);
-    echo json_encode(['error' => 'File too large. Maximum size is 50MB']);
-    exit;
+    apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 50MB', 400);
 }
 
 $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
@@ -41,34 +29,26 @@ $stmt->execute([$target]);
 $targetUser = $stmt->fetch();
 
 if (!$targetUser) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Target user not found']);
-    exit;
+    apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
 }
 
-$uploadsDir = '../uploads';
-$filesDir = '../uploads/files';
+$uploadsDir = __DIR__ . '/../uploads';
+$filesDir = __DIR__ . '/../uploads/files';
 
 if (!is_dir($uploadsDir)) {
     if (!mkdir($uploadsDir, 0755, true)) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to create uploads directory']);
-        exit;
+        apiError('DIRECTORY_CREATE_FAILED', 'Failed to create uploads directory', 500);
     }
 }
 
 if (!is_dir($filesDir)) {
     if (!mkdir($filesDir, 0755, true)) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to create files directory']);
-        exit;
+        apiError('DIRECTORY_CREATE_FAILED', 'Failed to create files directory', 500);
     }
 }
 
 if (!is_writable($filesDir)) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Files directory is not writable']);
-    exit;
+    apiError('DIRECTORY_NOT_WRITABLE', 'Files directory is not writable', 500);
 }
 
 $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -77,9 +57,7 @@ $uniqueFilename = uniqid('file_', true) . '_' . preg_replace('/[^a-zA-Z0-9._-]/'
 $uploadPath = $filesDir . '/' . $uniqueFilename;
 
 if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to save file']);
-    exit;
+    apiError('FILE_SAVE_FAILED', 'Failed to save file', 500);
 }
 
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type, any_file_path, file_size) VALUES (?, ?, ?, ?, 'file', ?, ?)");
@@ -93,12 +71,10 @@ if (
         $file['size'],
     ])
 ) {
-    http_response_code(409);
-    echo json_encode(['status' => 'failed', 'error' => 'Something went wrong while sending your message!']);
-    exit;
+    apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);
 }
 
 $messageId = $pdo->lastInsertId();
 
-echo json_encode(['status' => 'ok', 'message_id' => $messageId, 'file_path' => $uniqueFilename, 'file_size' => $file['size']]);
+apiSuccess(['message_id' => $messageId, 'file_path' => $uniqueFilename, 'file_size' => $file['size']]);
 

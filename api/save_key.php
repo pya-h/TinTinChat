@@ -1,30 +1,22 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 
-header('Content-Type: application/json');
+apiRequireMethod('POST');
+$userId = apiRequireAuth();
 
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Not logged in']);
-    exit;
-}
-
-$data = json_decode(file_get_contents('php://input'), true);
+$data = apiGetJsonBody();
 if (empty($data['publicKey'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'No public key provided']);
-    exit;
+    apiError('MISSING_PUBLIC_KEY', 'No public key provided', 400);
 }
 
-$userId = $_SESSION['user_id'];
 $publicKeyJson = json_encode($data['publicKey']);
 
 try {
     $stmt = $pdo->prepare('UPDATE users SET public_key = ? WHERE id = ?');
     $stmt->execute([$publicKeyJson, $userId]);
-    echo json_encode(['status' => 'ok']);
+    apiSuccess();
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to save key']);
+    apiError('SAVE_FAILED', 'Failed to save key', 500);
 }
