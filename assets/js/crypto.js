@@ -51,8 +51,23 @@ async function importRsaPrivateKey(pem) {
     ]);
 }
 
+async function importRsaPrivateKeySha1(pem) {
+    const pemHeader = "-----BEGIN PRIVATE KEY-----";
+    const pemFooter = "-----END PRIVATE KEY-----";
+    let pemContents = pem.replace(pemHeader, "").replace(pemFooter, "").replace(/\s+/g, "");
+    const binaryDerString = atob(pemContents);
+    const binaryDer = new Uint8Array(binaryDerString.length);
+    for (let i = 0; i < binaryDerString.length; i++) {
+        binaryDer[i] = binaryDerString.charCodeAt(i);
+    }
+    return window.crypto.subtle.importKey("pkcs8", binaryDer.buffer, { name: "RSA-OAEP", hash: "SHA-1" }, true, [
+        "decrypt",
+    ]);
+}
+
 const publicKeyCache = new Map();
 let privateKey = null;
+let privateKeySha1 = null;
 
 async function fetchApiJson(url, options = {}) {
     if (window.ApiService?.json) {
@@ -70,6 +85,7 @@ async function fetchAndImportPrivateKey() {
     const data = await fetchApiJson("api/get_private_key.php");
     if (!data.privateKeyPem) throw new Error("No private key PEM found");
     privateKey = await importRsaPrivateKey(data.privateKeyPem);
+    privateKeySha1 = await importRsaPrivateKeySha1(data.privateKeyPem);
     return privateKey;
 }
 
@@ -148,6 +164,17 @@ async function decryptMessage(base64Encrypted) {
     const decrypted = await window.crypto.subtle.decrypt({ name: "RSA-OAEP" }, privateKey, buffer.buffer);
     const decoder = new TextDecoder();
     return decoder.decode(decrypted);
+}
+
+async function decryptServerWrappedMessage(base64Encrypted) {
+    if (!privateKeySha1) throw new Error("Private key not loaded");
+    const binary = atob(base64Encrypted);
+    const buffer = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        buffer[i] = binary.charCodeAt(i);
+    }
+    const decrypted = await window.crypto.subtle.decrypt({ name: "RSA-OAEP" }, privateKeySha1, buffer.buffer);
+    return new TextDecoder().decode(decrypted);
 }
 
 async function decryptLongMessage(message) {

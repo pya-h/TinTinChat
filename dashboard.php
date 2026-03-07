@@ -100,8 +100,8 @@ $csrfToken = generateCsrfToken();
                 </div>
                 <div id="groupInfoPanel" class="group-info-panel" role="region" aria-label="Group details" hidden>
                     <div class="group-page-header">
-                        <button type="button" id="groupInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back to group chat">
-                            <i class="fas fa-arrow-left me-1"></i>Back
+                        <button type="button" id="groupInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back to group chat" title="Back to group chat">
+                            <i class="fas fa-arrow-left"></i>
                         </button>
                         <div>
                             <h6 id="groupInfoTitle" class="mb-1">Group</h6>

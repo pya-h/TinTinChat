@@ -485,7 +485,7 @@ async function fetchAndImportGroupCryptoKey(groupId) {
     }
 
     await ensurePrivateKeyLoaded();
-    const rawGroupKey = await decryptMessage(encryptedGroupKey);
+    const rawGroupKey = await decryptServerWrappedMessage(encryptedGroupKey);
     if (!rawGroupKey) {
         throw new Error("Failed to decrypt group encryption key");
     }
