@@ -869,10 +869,7 @@ nav.navbar:hover::after {
     flex-wrap: wrap;
     gap: 0.3rem;
     margin-top: 0.35rem;
-}
-
-.message.sent .message-reactions {
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 .message-reaction-chip {
@@ -914,6 +911,58 @@ nav.navbar:hover::after {
 
 .message-reaction-count {
     font-weight: 700;
+}
+
+.message-reaction-picker {
+    position: fixed;
+    z-index: 2550;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 94%, transparent);
+    border-radius: 999px;
+    box-shadow: var(--shadow-md);
+    padding: 0.24rem;
+}
+
+.reaction-picker-list {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.18rem;
+}
+
+.reaction-picker-item {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: var(--transition-fast);
+}
+
+.reaction-picker-item:hover,
+.reaction-picker-item:focus-visible {
+    background: color-mix(in srgb, var(--secondary-color) 16%, transparent);
+    border-color: color-mix(in srgb, var(--secondary-color) 35%, var(--border-color));
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.reaction-picker-item.is-active {
+    background: color-mix(in srgb, var(--secondary-color) 20%, transparent);
+    border-color: color-mix(in srgb, var(--secondary-color) 44%, var(--border-color));
+}
+
+.reaction-picker-emoji {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.group-message-content .message-reactions {
+    margin-top: 0.42rem;
 }
 
 .chat-item-unread-badge {

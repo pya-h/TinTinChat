@@ -159,6 +159,7 @@ let activeAnalyser = null;
 
 let initialViewportHeight = window.innerHeight;
 let lastContextMenuMessageElement = null;
+let lastReactionPickerMessageElement = null;
 let lastFocusedElementBeforeActionModal = null;
 const pendingSeenMessageIds = new Set();
 const messageMetaById = new Map();
@@ -1160,6 +1161,14 @@ function closeMessageContextMenu() {
     }
 }
 
+function closeReactionPicker({ restoreFocus = true } = {}) {
+    document.getElementById("messageReactionPicker")?.remove();
+    if (restoreFocus && lastReactionPickerMessageElement) {
+        lastReactionPickerMessageElement.focus();
+    }
+    lastReactionPickerMessageElement = null;
+}
+
 function getActionModalFocusableElements() {
     if (!messageActionModalOverlay || messageActionModalOverlay.hidden) {
         return [];
@@ -1706,7 +1715,7 @@ async function toggleMessageReaction(messageId, reaction) {
 
 function buildReactionPickerContent(messageElement, messageData = null) {
     const wrapper = document.createElement("div");
-    wrapper.className = "forward-target-list";
+    wrapper.className = "reaction-picker-list";
 
     const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
     const reactions = Array.isArray(messageData?.reactions) ? messageData.reactions : [];
@@ -1715,10 +1724,12 @@ function buildReactionPickerContent(messageElement, messageData = null) {
         const reactionMeta = reactions.find((item) => item?.emoji === emoji) || null;
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "forward-target-item";
-        button.innerHTML = `<span class="forward-target-avatar">${emoji}</span><span class="forward-target-name">${emoji}</span>`;
+        button.className = "reaction-picker-item";
+        button.setAttribute("role", "menuitem");
+        button.setAttribute("aria-label", `React with ${emoji}`);
+        button.innerHTML = `<span class="reaction-picker-emoji">${emoji}</span>`;
         if (reactionMeta?.reacted_by_me) {
-            button.classList.add("is-forwarding");
+            button.classList.add("is-active");
         }
 
         button.addEventListener("click", async () => {
@@ -1726,7 +1737,7 @@ function buildReactionPickerContent(messageElement, messageData = null) {
                 button.disabled = true;
                 const nextReaction = reactionMeta?.reacted_by_me ? "" : emoji;
                 await toggleMessageReaction(messageId, nextReaction);
-                closeMessageActionModal();
+                closeReactionPicker({ restoreFocus: false });
             } catch (error) {
                 showModal(I18N_TEXT.reactFailedTitle, error.message || I18N_TEXT.reactFailedBody, "error");
             } finally {
@@ -1742,8 +1753,39 @@ function buildReactionPickerContent(messageElement, messageData = null) {
 function openReactionPickerFromContext(messageElement, messageData = null) {
     const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
     const latestMeta = messageMetaById.get(messageId) || messageData;
+    closeReactionPicker({ restoreFocus: false });
+
+    const picker = document.createElement("div");
+    picker.id = "messageReactionPicker";
+    picker.className = "message-reaction-picker";
+    picker.setAttribute("role", "menu");
+    picker.setAttribute("aria-label", I18N_TEXT.reactTitle);
+
     const content = buildReactionPickerContent(messageElement, latestMeta);
-    openMessageActionModal(I18N_TEXT.reactTitle, content);
+    picker.appendChild(content);
+    document.body.appendChild(picker);
+
+    const messageRect = messageElement.getBoundingClientRect();
+    const pickerRect = picker.getBoundingClientRect();
+    const gap = 8;
+    const showAbove = messageRect.top - pickerRect.height - gap >= 8;
+    const maxLeft = Math.max(8, window.innerWidth - pickerRect.width - 8);
+    const maxTop = Math.max(8, window.innerHeight - pickerRect.height - 8);
+
+    const top = Math.min(
+        maxTop,
+        Math.max(8, showAbove ? messageRect.top - pickerRect.height - gap : messageRect.bottom + gap)
+    );
+    const left = Math.min(
+        maxLeft,
+        Math.max(8, messageRect.left + messageRect.width / 2 - pickerRect.width / 2)
+    );
+
+    picker.style.top = `${top}px`;
+    picker.style.left = `${left}px`;
+
+    lastReactionPickerMessageElement = messageElement;
+    picker.querySelector(".reaction-picker-item")?.focus();
 }
 
 async function deleteMessageById(messageId, { deleteForEveryone = false } = {}) {
@@ -1810,6 +1852,7 @@ function addMessageActionHandlers(
 
     const openContextMenu = (clientX, clientY) => {
         closeMessageContextMenu();
+        closeReactionPicker({ restoreFocus: false });
         updateMessageActionsHintVisibility(true);
         lastContextMenuMessageElement = messageElement;
 
@@ -1867,7 +1910,8 @@ function addMessageActionHandlers(
             reactBtn.type = "button";
             reactBtn.className = "message-context-menu-item";
             reactBtn.innerHTML = '<i class="fas fa-face-smile me-2"></i>React';
-            reactBtn.addEventListener("click", () => {
+            reactBtn.addEventListener("click", (event) => {
+                event.stopPropagation();
                 closeMessageContextMenu();
                 openReactionPickerFromContext(messageElement, messageData);
             });
@@ -1969,14 +2013,32 @@ function addMessageActionHandlers(
 document.addEventListener("click", (event) => {
     const menu = document.getElementById("messageContextMenu");
     if (!menu) {
+        const picker = document.getElementById("messageReactionPicker");
+        if (!picker) {
+            return;
+        }
+        if (!event.target.closest("#messageReactionPicker")) {
+            closeReactionPicker({ restoreFocus: false });
+        }
         return;
     }
     if (!event.target.closest("#messageContextMenu")) {
         closeMessageContextMenu();
     }
+
+    const picker = document.getElementById("messageReactionPicker");
+    if (picker && !event.target.closest("#messageReactionPicker")) {
+        closeReactionPicker({ restoreFocus: false });
+    }
 });
 
 document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.getElementById("messageReactionPicker")) {
+        event.preventDefault();
+        closeReactionPicker();
+        return;
+    }
+
     const menu = document.getElementById("messageContextMenu");
     if (!menu) {
         return;
@@ -2006,8 +2068,10 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("scroll", closeMessageContextMenu, true);
+document.addEventListener("scroll", () => closeReactionPicker({ restoreFocus: false }), true);
 
 window.addEventListener("resize", () => {
+    closeReactionPicker({ restoreFocus: false });
     if (window.innerWidth <= 767.98) {
         const heightDifference = initialViewportHeight - window.innerHeight;
         if (Math.abs(heightDifference) > 150) {
@@ -2731,14 +2795,15 @@ function renderMessageReactions(messageElement, messageData) {
         return;
     }
 
-    const existingContainer = messageElement.querySelector(".message-reactions");
-    if (existingContainer) {
-        existingContainer.remove();
-    }
+    messageElement.querySelectorAll(".message-reactions").forEach((node) => node.remove());
 
     if (!Array.isArray(messageData?.reactions) || !messageData.reactions.length) {
         return;
     }
+
+    const hostElement = messageElement.classList.contains("group-incoming-message")
+        ? messageElement.querySelector(".group-message-content") || messageElement
+        : messageElement;
 
     const container = document.createElement("div");
     container.className = "message-reactions";
@@ -2772,7 +2837,7 @@ function renderMessageReactions(messageElement, messageData) {
     if (!container.children.length) {
         return;
     }
-    messageElement.appendChild(container);
+    hostElement.appendChild(container);
 }
 
 async function addMessageToChat(msg, prepend = false) {
