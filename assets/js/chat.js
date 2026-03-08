@@ -35,6 +35,7 @@ const groupRotateJoinLinkBtn = document.getElementById("groupRotateJoinLinkBtn")
 const groupTransferOwnerBtn = document.getElementById("groupTransferOwnerBtn");
 const groupLeaveBtn = document.getElementById("groupLeaveBtn");
 const chatAreaElem = document.querySelector(".chat-area");
+const typingIndicatorElem = document.getElementById("typingIndicator");
 const createGroupModalOverlay = document.getElementById("createGroupModalOverlay");
 const createGroupModalClose = document.getElementById("createGroupModalClose");
 const createGroupForm = document.getElementById("createGroupForm");
@@ -55,6 +56,8 @@ const SETTINGS_HINT_DISMISSED_KEY = "tintinchat.messageActionsHint.dismissed";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
 const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
+const TYPING_IDLE_TIMEOUT_MS = 1800;
+const TYPING_UPDATE_THROTTLE_MS = 750;
 const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
     "php", "phtml", "php3", "php4", "php5", "phar",
     "exe", "msi", "bat", "cmd", "com", "scr",
@@ -137,6 +140,9 @@ let lastFocusedElementBeforeActionModal = null;
 const pendingSeenMessageIds = new Set();
 const messageMetaById = new Map();
 const decryptedMediaCacheByMessageId = new Map();
+let lastTypingSentAt = 0;
+let localTypingState = false;
+let typingStopTimer = null;
 
 const appSettings = {
     notificationSoundEnabled: true,
@@ -458,6 +464,79 @@ function setGroupNewBadgeVisibility(chatListItem, visible) {
         return;
     }
     badge.style.display = visible ? "inline-flex" : "none";
+}
+
+function setTypingIndicator(text = "") {
+    if (!typingIndicatorElem) {
+        return;
+    }
+    typingIndicatorElem.textContent = text;
+    typingIndicatorElem.classList.toggle("active", Boolean(text));
+}
+
+function setUserUnreadBadge(username, unreadCount = 0) {
+    const chatItem = document.getElementById(chatListItemId(username));
+    if (!chatItem) {
+        return;
+    }
+    const badge = chatItem.querySelector(".chat-item-unread-badge");
+    if (!badge) {
+        return;
+    }
+
+    const count = Math.max(0, Number(unreadCount) || 0);
+    if (!count) {
+        badge.style.display = "none";
+        badge.textContent = "0";
+        return;
+    }
+
+    badge.style.display = "inline-flex";
+    badge.textContent = count > 99 ? "99+" : String(count);
+}
+
+async function updateTypingStatus(isTyping) {
+    if (!currentChatUser || isGroupToken(currentChatUser)) {
+        return;
+    }
+
+    const now = Date.now();
+    if (isTyping && now - lastTypingSentAt < TYPING_UPDATE_THROTTLE_MS) {
+        return;
+    }
+
+    try {
+        await window.ApiService.jsonOk("api/update_typing_status.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
+            body: JSON.stringify({
+                target: currentChatUser,
+                is_typing: Boolean(isTyping),
+            }),
+        });
+        localTypingState = Boolean(isTyping);
+        lastTypingSentAt = now;
+    } catch (error) {}
+}
+
+async function refreshTypingIndicator() {
+    if (!currentChatUser || isGroupToken(currentChatUser)) {
+        setTypingIndicator("");
+        return;
+    }
+
+    try {
+        const data = await window.ApiService.json(
+            `api/fetch_typing_status.php?with=${encodeURIComponent(currentChatUser)}`,
+            { cache: "no-store" }
+        );
+        setTypingIndicator(data?.is_typing ? `${currentChatUser} is typing...` : "");
+    } catch (error) {
+        setTypingIndicator("");
+    }
 }
 
 function loadAppSettings() {
@@ -1566,8 +1645,15 @@ window.addEventListener("load", () => {
     initialViewportHeight = window.innerHeight;
 });
 
-function addUserToChatList(username) {
-    if (chatUsers.has(username) || username === CURRENT_USER) return false;
+function addUserToChatList(username, options = {}) {
+    if (!username || username === CURRENT_USER) return false;
+    const unreadCount = Math.max(0, Number(options.unreadCount) || 0);
+
+    if (chatUsers.has(username)) {
+        setUserUnreadBadge(username, unreadCount);
+        return false;
+    }
+
     chatUsers.add(username);
 
     const li = document.createElement("li");
@@ -1582,7 +1668,7 @@ function addUserToChatList(username) {
         .join("")
         .toUpperCase();
 
-    li.innerHTML = `<span class="avatar">${initials}</span> <span>${username}</span><span id='${chatListSpinnerId(
+    li.innerHTML = `<span class="avatar">${initials}</span> <span>${username}</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
         username
     )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
     li.id = chatListItemId(username);
@@ -1595,6 +1681,7 @@ function addUserToChatList(username) {
         }
     });
     chatListElem.appendChild(li);
+    setUserUnreadBadge(username, unreadCount);
     return true;
 }
 
@@ -1678,6 +1765,11 @@ function updateLoadingSpinnerState(chatTarget, show = false) {
 }
 
 async function selectChatTarget(target) {
+    const previousChatTarget = currentChatUser;
+    if (previousChatTarget && !isGroupToken(previousChatTarget) && localTypingState) {
+        updateTypingStatus(false);
+    }
+
     if (currentChatUser?.length) {
         updateLoadingSpinnerState(currentChatUser, false);
     }
@@ -1708,6 +1800,10 @@ async function selectChatTarget(target) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
     closeGroupInfoPanel();
+    setTypingIndicator("");
+    if (!isGroupToken(target)) {
+        setUserUnreadBadge(target, 0);
+    }
 
     [...chatListElem.children].forEach((li) => {
         li.classList.toggle("active", li.id === chatListItemId(target));
@@ -2910,6 +3006,13 @@ const sendTextMessage = async () => {
         }
         chatInput.value = "";
         clearReplyState();
+        if (!isGroupToken(currentChatUser)) {
+            if (typingStopTimer) {
+                clearTimeout(typingStopTimer);
+                typingStopTimer = null;
+            }
+            updateTypingStatus(false);
+        }
         setComposerStatus("Message sent", "success");
     } catch (err) {
         const errorMessage =
@@ -3029,6 +3132,27 @@ chatInput.addEventListener("keydown", async (e) => {
 
 chatInput.addEventListener("input", () => {
     chatInput.dir = isTextPersian(chatInput.value) ? "rtl" : "ltr";
+
+    if (!currentChatUser || isGroupToken(currentChatUser)) {
+        return;
+    }
+
+    const hasText = Boolean(chatInput.value.trim().length);
+    if (hasText) {
+        updateTypingStatus(true);
+        if (typingStopTimer) {
+            clearTimeout(typingStopTimer);
+        }
+        typingStopTimer = setTimeout(() => {
+            updateTypingStatus(false);
+        }, TYPING_IDLE_TIMEOUT_MS);
+    } else {
+        if (typingStopTimer) {
+            clearTimeout(typingStopTimer);
+            typingStopTimer = null;
+        }
+        updateTypingStatus(false);
+    }
 });
 
 searchUserInput.addEventListener("input", function () {
@@ -3732,8 +3856,14 @@ async function loadChatList(force = false) {
         const data = await window.ApiService.json("api/fetch_chats.php");
         const incomingGroups = Array.isArray(data.chatGroups) ? data.chatGroups : [];
         const incomingGroupIds = new Set(incomingGroups.map((group) => Number(group.id || 0)));
-        if (data.chatUsers && Array.isArray(data.chatUsers)) {
-            data.chatUsers.forEach(addUserToChatList);
+        if (Array.isArray(data.chatUserItems) && data.chatUserItems.length) {
+            data.chatUserItems.forEach((item) => {
+                addUserToChatList(String(item?.username || ""), {
+                    unreadCount: Number(item?.unread_count || 0),
+                });
+            });
+        } else if (data.chatUsers && Array.isArray(data.chatUsers)) {
+            data.chatUsers.forEach((username) => addUserToChatList(String(username || "")));
         }
         Array.from(chatGroupsById.keys()).forEach((groupId) => {
             if (!incomingGroupIds.has(Number(groupId))) {
@@ -3946,6 +4076,7 @@ setInterval(async () => {
     }
     await Promise.all([
         currentChatUser?.length && forceFetchCurrentChatMessages(),
+        currentChatUser?.length && !isGroupToken(currentChatUser) && refreshTypingIndicator(),
         !(chatListTriggerTime % 10) && loadChatList(),
     ]);
     chatListTriggerTime = ++chatListTriggerTime % 10;
@@ -4115,6 +4246,7 @@ async function sendVoiceMessage(audioBlob) {
 
         if (!isGroupToken(currentChatUser)) {
             addUserToChatList(currentChatUser);
+            updateTypingStatus(false);
         }
         loadCurrentChatsRecentMessages();
         setComposerStatus("Voice message sent", "success");
@@ -4210,6 +4342,7 @@ async function sendImageMessage(imageFile) {
 
         if (!isGroupToken(currentChatUser)) {
             addUserToChatList(currentChatUser);
+            updateTypingStatus(false);
         }
         loadCurrentChatsRecentMessages();
         setComposerStatus("Image sent", "success");
@@ -4296,6 +4429,7 @@ async function sendFileMessage(file) {
 
         if (!isGroupToken(currentChatUser)) {
             addUserToChatList(currentChatUser);
+            updateTypingStatus(false);
         }
         loadCurrentChatsRecentMessages();
         setComposerStatus("File sent", "success");

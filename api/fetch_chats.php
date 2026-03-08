@@ -8,24 +8,38 @@ apiRequireMethod('GET');
 $userId = apiRequireAuth();
 
 $stmt = $pdo->prepare('
-  SELECT u.username, MAX(m.interaction_date) AS last_interaction
-  FROM users u
-  JOIN (
-    SELECT sender_id as user_id, created_at as interaction_date FROM messages WHERE receiver_id = ?
-    UNION
-    SELECT receiver_id as user_id, created_at as interaction_date FROM messages WHERE sender_id = ?
-  ) m ON u.id = m.user_id
-  WHERE u.id != ?
+  SELECT
+    u.username,
+    MAX(m.created_at) AS last_interaction,
+    SUM(CASE WHEN m.receiver_id = ? AND m.seen_at IS NULL THEN 1 ELSE 0 END) AS unread_count
+  FROM messages m
+  JOIN users u
+    ON u.id = CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END
+  WHERE (m.sender_id = ? OR m.receiver_id = ?)
+    AND m.group_id IS NULL
   GROUP BY u.id, u.username
-  ORDER BY last_interaction DESC
+  ORDER BY MAX(m.created_at) DESC
 ');
-$stmt->execute([$userId, $userId, $userId]);
-$users = array_map(
+$stmt->execute([$userId, $userId, $userId, $userId]);
+$userRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$chatUserItems = array_map(
+  static function (array $row): array {
+    return [
+      'username' => (string) ($row['username'] ?? ''),
+      'unread_count' => max(0, (int) ($row['unread_count'] ?? 0)),
+      'last_interaction' => (string) ($row['last_interaction'] ?? ''),
+    ];
+  },
+  $userRows
+);
+
+$users = array_values(array_filter(array_map(
   static function (array $row): string {
     return (string) ($row['username'] ?? '');
   },
-  $stmt->fetchAll(PDO::FETCH_ASSOC)
-);
+  $userRows
+)));
 
 $groupStmt = $pdo->prepare(
   'SELECT
@@ -45,4 +59,8 @@ $groupStmt = $pdo->prepare(
 $groupStmt->execute([$userId]);
 $groups = $groupStmt->fetchAll(PDO::FETCH_ASSOC);
 
-apiSuccess(['chatUsers' => $users, 'chatGroups' => $groups]);
+apiSuccess([
+  'chatUsers' => $users,
+  'chatUserItems' => $chatUserItems,
+  'chatGroups' => $groups,
+]);

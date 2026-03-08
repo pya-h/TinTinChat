@@ -102,6 +102,7 @@ $csrfToken = generateCsrfToken();
                         </div>
                     </div>
                 </div>
+                <div id="typingIndicator" class="typing-indicator" aria-live="polite" aria-atomic="true"></div>
                 <div id="groupInfoPanel" class="group-info-panel" role="region" aria-label="Group details" hidden>
                     <div class="group-page-header">
                         <button type="button" id="groupInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back to group chat" title="Back to group chat">

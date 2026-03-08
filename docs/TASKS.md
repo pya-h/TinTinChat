@@ -163,8 +163,8 @@ Legend:
 - [x] (`P2`) Add migration/backfill policy for legacy unencrypted group media/files.
 
 ### Phase F — Chatroom Parity Features (Recommended) (`P2/P3`)
-- [ ] (`P2`) Typing indicator.
-- [ ] (`P2`) Unread counter per chat.
+- [x] (`P2`) Typing indicator.
+- [x] (`P2`) Unread counter per chat.
 - [ ] (`P2`) Better per-message timestamp formatting and grouping.
 - [ ] (`P2`) Search inside current conversation.
 - [ ] (`P3`) Message reactions (minimal emoji set).

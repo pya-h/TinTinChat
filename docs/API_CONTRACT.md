@@ -73,6 +73,9 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - Messaging (direct + group text): send/fetch/recent/seen/delete
 - Media/files (direct + group): image/voice/file send + retrieval
 - Discovery: user search/check + chat list
+- Typing status (private):
+  - `update_typing_status.php`
+  - `fetch_typing_status.php`
 - Groups:
   - `create_group.php`
   - `update_group.php`
@@ -108,6 +111,7 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - `MISSING_USERNAME` / `INVALID_USERNAME` / `INVALID_TARGET_USERNAME` → username validation failures.
 - `TARGET_NOT_FOUND` → referenced chat user does not exist.
 - `MISSING_OFFSET` / `INVALID_MESSAGE_IDS` → required pagination/seen inputs missing/invalid.
+- `INVALID_TARGET_USERNAME` → invalid or disallowed target username (also used for typing-status target validation).
 
 ### Upload / File Handling
 - `UPLOAD_TOO_LARGE` → POST body exceeded server config (`post_max_size`).

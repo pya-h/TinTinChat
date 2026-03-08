@@ -727,6 +727,34 @@ nav.navbar:hover::after {
     gap: 0.75rem;
 }
 
+.typing-indicator {
+    min-height: 1.15rem;
+    padding: 0.1rem 1.5rem 0.2rem;
+    font-size: 0.76rem;
+    color: var(--subtle-text-color);
+}
+
+.typing-indicator.active {
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+.chat-item-unread-badge {
+    margin-left: auto;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 999px;
+    padding: 0 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--secondary-color);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
 .chat-messages {
     flex: 1;
     padding: 1.5rem;
