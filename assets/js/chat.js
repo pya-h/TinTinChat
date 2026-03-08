@@ -1968,7 +1968,23 @@ async function addMessageToChat(msg, prepend = false) {
         const isIncomingGroup = isGroupMessage && msg.sender_id != CURRENT_USER_ID;
         const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
         const senderInitial = escapeHtml(String((msg.sender_username || "M")[0] || "M").toUpperCase());
-        const messageBodyContent = `${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>`;
+        const groupDateLabel = new Date(msg.created_at).toLocaleString("default", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: false,
+        });
+        const groupDateTag = `<span class="message-meta-time group-message-meta-time">${escapeHtml(groupDateLabel)}</span>`;
+        const messageBodyContent = `${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${isIncomingGroup ? groupDateTag : ""}`;
+        const outsideDateTag = isIncomingGroup
+            ? ""
+            : newDateTag(msg, {
+                  atLeft: isPersian,
+                  strictMargins: true,
+                  topSpace: 3,
+              });
         div.classList.add("is-text-message");
         if (isIncomingGroup) {
             div.classList.add("group-incoming-message");
@@ -1977,11 +1993,7 @@ async function addMessageToChat(msg, prepend = false) {
         hasContextActions = true;
         canCopy = true;
         canForward = true;
-        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-row"><span class="group-message-avatar">${senderInitial}</span><div class="group-message-content"><span class="group-message-name">${senderUsername}</span>${messageBodyContent}</div></div>` : messageBodyContent}${newDateTag(msg, {
-            atLeft: isPersian,
-            strictMargins: true,
-            topSpace: 3,
-        })}`;
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-row"><span class="group-message-avatar">${senderInitial}</span><div class="group-message-content"><span class="group-message-name">${senderUsername}</span>${messageBodyContent}</div></div>` : messageBodyContent}${outsideDateTag}`;
         div.setAttribute("data-message-id", msg.id);
         if (isPersian && !isIncomingGroup) {
             div.dir = "rtl";
