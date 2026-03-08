@@ -2986,7 +2986,7 @@ async function addMessageToChat(msg, prepend = false) {
         }
     }
 
-    if (Number(msg.sender_id || 0) === Number(CURRENT_USER_ID)) {
+    if (Number(msg.sender_id || 0) === Number(CURRENT_USER_ID) && Number(msg.group_id || 0) > 0) {
         canDeleteEveryone = true;
     }
 
