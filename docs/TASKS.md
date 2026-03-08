@@ -159,8 +159,8 @@ Legend:
 - [x] (`P1`) Encrypt group image payloads (at-rest + transport metadata policy).
 - [x] (`P1`) Encrypt group generic file payloads with secure key handling.
 - [x] (`P1`) Apply full media encryption parity to direct/private chats (voice/image/file) using same envelope model.
-- [ ] (`P2`) Add key-versioning/rotation strategy for non-text encrypted attachments.
-- [ ] (`P2`) Add migration/backfill policy for legacy unencrypted group media/files.
+- [x] (`P2`) Add key-versioning/rotation strategy for non-text encrypted attachments.
+- [x] (`P2`) Add migration/backfill policy for legacy unencrypted group media/files.
 
 ### Phase F — Chatroom Parity Features (Recommended) (`P2/P3`)
 - [ ] (`P2`) Typing indicator.

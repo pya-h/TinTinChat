@@ -55,6 +55,12 @@ const SETTINGS_HINT_DISMISSED_KEY = "tintinchat.messageActionsHint.dismissed";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
 const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
+const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
+    "php", "phtml", "php3", "php4", "php5", "phar",
+    "exe", "msi", "bat", "cmd", "com", "scr",
+    "sh", "bash", "zsh", "ps1",
+    "js", "mjs", "cjs",
+]);
 const I18N_TEXT = {
     modalOpened: "Opened {title} dialog.",
     modalClosed: "Closed {title} dialog.",
@@ -104,6 +110,7 @@ const chatGroupsById = new Map();
 const groupDetailsCache = new Map();
 const groupTextCryptoKeyCache = new Map();
 const groupTextCryptoKeyInflight = new Map();
+const groupKeyVersionCache = new Map();
 let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
@@ -215,6 +222,30 @@ function getMediaEndpointForType(messageType, messageId) {
     return `api/get_file_message.php?id=${messageId}`;
 }
 
+function sanitizeAttachmentFileName(fileName, fallback = "attachment") {
+    const rawName = String(fileName || "").trim();
+    const candidate = rawName || fallback;
+    const normalized = candidate
+        .replace(/[\\/:*?"<>|\x00-\x1F]/g, "_")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    if (!normalized.length || normalized === "." || normalized === "..") {
+        return `${fallback}.bin`;
+    }
+
+    return normalized.slice(0, 180);
+}
+
+function getFileExtension(fileName) {
+    const name = String(fileName || "").trim();
+    const lastDot = name.lastIndexOf(".");
+    if (lastDot <= 0 || lastDot === name.length - 1) {
+        return "";
+    }
+    return name.slice(lastDot + 1).toLowerCase();
+}
+
 function getMediaEnvelopePayloadForMessage(msg) {
     const isGroupMessage = Number(msg?.group_id || 0) > 0;
     if (isGroupMessage) {
@@ -248,6 +279,13 @@ async function getDecryptedMediaResource(msg) {
 
     const envelopePayload = getMediaEnvelopePayloadForMessage(msg);
     const envelope = parseMediaEnvelopePayload(envelopePayload);
+    if (Number(msg?.group_id || 0) > 0) {
+        const groupId = Number(msg.group_id || 0);
+        const currentKeyVersion = Number(groupKeyVersionCache.get(groupId) || 1);
+        if (Number(envelope.kv || 1) !== currentKeyVersion) {
+            await getGroupCryptoKey(groupId, true);
+        }
+    }
     const mediaKey = await resolveMediaAesKey(msg, envelope.k);
     const metadata = await decryptMediaMetadata(envelope.m, mediaKey);
 
@@ -262,9 +300,10 @@ async function getDecryptedMediaResource(msg) {
     const mimeType =
         String(metadata?.mime_type || metadata?.mime || "").trim() ||
         "application/octet-stream";
-    const fileName =
-        String(metadata?.file_name || metadata?.name || "").trim() ||
-        `attachment_${messageId}`;
+    const fileName = sanitizeAttachmentFileName(
+        String(metadata?.file_name || metadata?.name || "").trim(),
+        `attachment_${messageId}`
+    );
 
     const blob = new Blob([decryptedBytes], { type: mimeType });
     const objectUrl = URL.createObjectURL(blob);
@@ -280,6 +319,13 @@ async function getDecryptedMediaMetadata(msg) {
     }
     const envelopePayload = getMediaEnvelopePayloadForMessage(msg);
     const envelope = parseMediaEnvelopePayload(envelopePayload);
+    if (Number(msg?.group_id || 0) > 0) {
+        const groupId = Number(msg.group_id || 0);
+        const currentKeyVersion = Number(groupKeyVersionCache.get(groupId) || 1);
+        if (Number(envelope.kv || 1) !== currentKeyVersion) {
+            await getGroupCryptoKey(groupId, true);
+        }
+    }
     const mediaKey = await resolveMediaAesKey(msg, envelope.k);
     return decryptMediaMetadata(envelope.m, mediaKey);
 }
@@ -293,16 +339,29 @@ async function encryptMediaForMessage(fileOrBlob, metadata, context = {}) {
     let senderEnvelopePayload = "";
     if (isGroupMessage) {
         const groupKey = await getGroupCryptoKey(Number(context.groupId));
+        const keyVersion = Number(groupKeyVersionCache.get(Number(context.groupId)) || 1);
         const wrappedForGroup = await wrapMediaKeyForGroup(mediaKey, groupKey);
-        recipientEnvelopePayload = buildMediaEnvelopePayload(wrappedForGroup, encryptedMetadata);
+        recipientEnvelopePayload = buildMediaEnvelopePayload(
+            wrappedForGroup,
+            encryptedMetadata,
+            keyVersion
+        );
         senderEnvelopePayload = recipientEnvelopePayload;
     } else {
         const recipientPublicKey = await getPublicKey(String(context.targetUsername || ""));
         const senderPublicKey = await getPublicKey(CURRENT_USER);
         const wrappedForRecipient = await wrapMediaKeyForPublicKey(mediaKey, recipientPublicKey);
         const wrappedForSender = await wrapMediaKeyForPublicKey(mediaKey, senderPublicKey);
-        recipientEnvelopePayload = buildMediaEnvelopePayload(wrappedForRecipient, encryptedMetadata);
-        senderEnvelopePayload = buildMediaEnvelopePayload(wrappedForSender, encryptedMetadata);
+        recipientEnvelopePayload = buildMediaEnvelopePayload(
+            wrappedForRecipient,
+            encryptedMetadata,
+            1
+        );
+        senderEnvelopePayload = buildMediaEnvelopePayload(
+            wrappedForSender,
+            encryptedMetadata,
+            1
+        );
     }
 
     const sourceBuffer = await fileOrBlob.arrayBuffer();
@@ -347,6 +406,10 @@ function clearDecryptedMediaCache() {
     });
     decryptedMediaCacheByMessageId.clear();
 }
+
+window.addEventListener("beforeunload", () => {
+    clearDecryptedMediaCache();
+});
 
 function buildGroupToken(groupId) {
     return `group:${groupId}`;
@@ -705,7 +768,10 @@ async function fetchAndImportGroupCryptoKey(groupId) {
         throw new Error("Failed to decrypt group encryption key");
     }
 
-    return importGroupSymmetricKey(rawGroupKey);
+    const importedKey = await importGroupSymmetricKey(rawGroupKey);
+    const keyVersion = Number(data?.key_version || 1) || 1;
+    groupKeyVersionCache.set(Number(groupId), Math.max(1, keyVersion));
+    return importedKey;
 }
 
 async function getGroupCryptoKey(groupId, forceRefresh = false) {
@@ -1077,6 +1143,7 @@ async function sendGroupTextMessage(groupId, text, replyToMessageId = null, forw
     } catch (error) {
         groupTextCryptoKeyCache.delete(Number(groupId));
         groupTextCryptoKeyInflight.delete(Number(groupId));
+        groupKeyVersionCache.delete(Number(groupId));
         groupKey = await getGroupCryptoKey(groupId, true);
     }
     const encryptedGroupMessage = await encryptGroupMessage(text, groupKey);
@@ -2039,10 +2106,13 @@ async function addMessageToChat(msg, prepend = false) {
         let fileName = "Encrypted file";
         try {
             const mediaMeta = await getDecryptedMediaMetadata(msg);
-            fileName = String(mediaMeta?.file_name || "").trim() || fileName;
+            fileName = sanitizeAttachmentFileName(
+                String(mediaMeta?.file_name || "").trim(),
+                fileName
+            );
         } catch (error) {}
         const fileSize = msg.file_size ? formatFileSize(msg.file_size) : "";
-        const escapedFileName = fileName.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const safeFileName = escapeHtml(fileName);
 
         const isDownloaded = await isFileDownloaded(msg.id);
         const downloadIconClass = isDownloaded ? "fa-check-circle" : "fa-download";
@@ -2057,7 +2127,7 @@ async function addMessageToChat(msg, prepend = false) {
               <i class="fas fa-file"></i>
             </div>
             <div class="file-info">
-                            <div class="file-name">${escapedFileName}</div>
+                            <div class="file-name">${safeFileName}</div>
               ${fileSize ? `<div class="file-size">${fileSize}</div>` : ""}
             </div>
             <div class="file-download-icon">
@@ -2532,9 +2602,10 @@ async function downloadAndOpenFile(messageId) {
     let fileName = `attachment_${messageId}`;
     try {
         const metadata = await getDecryptedMediaMetadata(messageMeta);
-        fileName =
-            String(metadata?.file_name || metadata?.name || "").trim() ||
-            fileName;
+        fileName = sanitizeAttachmentFileName(
+            String(metadata?.file_name || metadata?.name || "").trim(),
+            fileName
+        );
     } catch (error) {}
 
     // Check if file was previously downloaded
@@ -3671,6 +3742,7 @@ async function loadChatList(force = false) {
                 groupDetailsCache.delete(groupId);
                 groupTextCryptoKeyCache.delete(Number(groupId));
                 groupTextCryptoKeyInflight.delete(Number(groupId));
+                groupKeyVersionCache.delete(Number(groupId));
                 document.getElementById(chatListItemId(token))?.remove();
             }
         });
@@ -3845,6 +3917,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
         closeGroupInfoPanel();
         groupTextCryptoKeyCache.delete(Number(groupId));
         groupTextCryptoKeyInflight.delete(Number(groupId));
+        groupKeyVersionCache.delete(Number(groupId));
         groupInfoBtn.hidden = true;
         groupInfoBtn.setAttribute("aria-expanded", "false");
         currentChatUser = null;
@@ -4163,6 +4236,16 @@ async function sendFileMessage(file) {
 
     if (file.size > FILE_UPLOAD_MAX_BYTES) {
         showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.fileTooLargeBody, "warning");
+        return;
+    }
+
+    const extension = getFileExtension(file?.name || "");
+    if (extension && BLOCKED_ATTACHMENT_EXTENSIONS.has(extension)) {
+        showModal(
+            I18N_TEXT.invalidFileTypeTitle,
+            "This file type is blocked for security reasons.",
+            "warning"
+        );
         return;
     }
 

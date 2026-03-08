@@ -96,6 +96,7 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - `messages.message` and `messages.message_for_sender` hold encrypted media envelopes (wrapped media key + encrypted metadata JSON).
 - For direct chats, envelope key wrapping is recipient-specific (`message`) and sender-specific (`message_for_sender`).
 - For groups, envelope wrapping is based on the shared group key model and guarded by membership checks on send/fetch.
+- Envelope includes key-version marker (`kv`) so clients can refresh and resolve group keys safely when versions diverge.
 
 ### Auth / Session
 - `UNAUTHORIZED` → user session missing/invalid.

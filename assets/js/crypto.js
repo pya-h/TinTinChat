@@ -315,16 +315,20 @@ async function decryptMediaMetadata(payload, aesKey) {
     return parsed && typeof parsed === "object" ? parsed : {};
 }
 
-function buildMediaEnvelopePayload(wrappedMediaKey, encryptedMetadata) {
+function buildMediaEnvelopePayload(wrappedMediaKey, encryptedMetadata, keyVersion = 1) {
+    const normalizedKeyVersion = Number.isFinite(Number(keyVersion))
+        ? Math.max(1, Number(keyVersion))
+        : 1;
     return JSON.stringify({
         v: MEDIA_ENVELOPE_VERSION,
         k: String(wrappedMediaKey || ""),
         m: String(encryptedMetadata || ""),
+        kv: normalizedKeyVersion,
     });
 }
 
 function parseMediaEnvelopePayload(payload) {
-    const fallback = { k: "", m: "" };
+    const fallback = { k: "", m: "", kv: 1 };
     if (typeof payload !== "string" || !payload.trim().length) {
         throw new Error("Missing encrypted media envelope");
     }
@@ -347,6 +351,7 @@ function parseMediaEnvelopePayload(payload) {
     return {
         k: parsed.k,
         m: parsed.m,
+        kv: Number.isFinite(Number(parsed.kv)) ? Math.max(1, Number(parsed.kv)) : 1,
     };
 }
 

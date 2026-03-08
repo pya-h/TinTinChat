@@ -22,7 +22,7 @@ $pdo->beginTransaction();
 try {
     groupEnsureMemberHasSharedKey($pdo, $groupId, $userId);
 
-    $stmt = $pdo->prepare('SELECT encrypted_group_key, updated_at FROM group_member_keys WHERE group_id = ? AND user_id = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT encrypted_group_key, updated_at, 1 AS key_version FROM group_member_keys WHERE group_id = ? AND user_id = ? LIMIT 1');
     $stmt->execute([$groupId, $userId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -35,6 +35,7 @@ try {
     apiSuccess([
         'group_id' => $groupId,
         'encrypted_group_key' => (string) $row['encrypted_group_key'],
+        'key_version' => (int) ($row['key_version'] ?? 1),
         'updated_at' => $row['updated_at'] ?? null,
     ]);
 } catch (Throwable $ex) {
