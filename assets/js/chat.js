@@ -2796,6 +2796,7 @@ function renderMessageReactions(messageElement, messageData) {
     }
 
     messageElement.querySelectorAll(".message-reactions").forEach((node) => node.remove());
+    messageElement.classList.remove("message-has-reactions");
 
     if (!Array.isArray(messageData?.reactions) || !messageData.reactions.length) {
         return;
@@ -2838,6 +2839,7 @@ function renderMessageReactions(messageElement, messageData) {
         return;
     }
     hostElement.appendChild(container);
+    messageElement.classList.add("message-has-reactions");
 }
 
 async function addMessageToChat(msg, prepend = false) {

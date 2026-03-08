@@ -554,6 +554,7 @@ nav.navbar:hover::after {
 }
 
 .group-message-content {
+    position: relative;
     min-width: 0;
     flex: 1;
     background: var(--surface-color);
@@ -865,11 +866,16 @@ nav.navbar:hover::after {
 }
 
 .message-reactions {
+    position: absolute;
+    left: 50%;
+    bottom: -0.85rem;
+    transform: translateX(-50%);
+    z-index: 4;
     display: flex;
     flex-wrap: wrap;
     gap: 0.3rem;
-    margin-top: 0.35rem;
-    justify-content: flex-start;
+    margin-top: 0;
+    justify-content: center;
 }
 
 .message-reaction-chip {
@@ -959,6 +965,10 @@ nav.navbar:hover::after {
 .reaction-picker-emoji {
     font-size: 1rem;
     line-height: 1;
+}
+
+.message.message-has-reactions {
+    margin-bottom: 1.55rem;
 }
 
 .group-message-content .message-reactions {
