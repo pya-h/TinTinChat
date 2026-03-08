@@ -87,6 +87,9 @@ $csrfToken = generateCsrfToken();
                         <button type="button" id="groupInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Group details" title="Group details" hidden>
                             <i class="fas fa-users"></i>
                         </button>
+                        <button type="button" id="quickConversationSearchBtn" class="btn btn-sm btn-outline-secondary" aria-label="Search in this chat" title="Search in this chat">
+                            <i class="fas fa-search"></i>
+                        </button>
                         <button type="button" id="chatSettingsBtn" class="btn btn-sm btn-outline-secondary" aria-label="Chat settings" aria-haspopup="true" aria-expanded="false" title="Chat settings">
                             <i class="fas fa-sliders-h"></i>
                         </button>

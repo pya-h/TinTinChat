@@ -32,6 +32,7 @@ const videoCaptureCloseBtn = document.getElementById("videoCaptureClose");
 const videoCaptureTimer = document.getElementById("videoCaptureTimer");
 const composerToolsToggleBtn = document.getElementById("composerToolsToggle");
 const settingsButton = document.getElementById("chatSettingsBtn");
+const quickConversationSearchBtn = document.getElementById("quickConversationSearchBtn");
 const settingsPanel = document.getElementById("chatSettingsPanel");
 const settingNotificationSound = document.getElementById("settingNotificationSound");
 const settingAutoScroll = document.getElementById("settingAutoScroll");
@@ -1133,6 +1134,12 @@ function bindSettingsUiEvents() {
         });
     }
 
+    quickConversationSearchBtn?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleSettingsPanel(false);
+        openConversationSearchBar();
+    });
+
     if (settingNotificationSound) {
         settingNotificationSound.addEventListener("change", (event) => {
             appSettings.notificationSoundEnabled = Boolean(event.target.checked);
@@ -1176,7 +1183,11 @@ function bindSettingsUiEvents() {
         if (!settingsPanel || settingsPanel.hidden) {
             return;
         }
-        if (!event.target.closest("#chatSettingsPanel") && !event.target.closest("#chatSettingsBtn")) {
+        if (
+            !event.target.closest("#chatSettingsPanel") &&
+            !event.target.closest("#chatSettingsBtn") &&
+            !event.target.closest("#quickConversationSearchBtn")
+        ) {
             toggleSettingsPanel(false);
         }
     });
@@ -1907,7 +1918,7 @@ function getReactionHostElement(messageElement) {
     return messageElement;
 }
 
-function triggerReactionSubmitBurst(messageElement, emoji) {
+function triggerReactionSubmitBurst(messageElement, emoji, { kind = "add" } = {}) {
     const hostElement = getReactionHostElement(messageElement);
     const normalizedEmoji = String(emoji || "").trim();
     if (!hostElement || !normalizedEmoji) {
@@ -1918,6 +1929,9 @@ function triggerReactionSubmitBurst(messageElement, emoji) {
 
     const burst = document.createElement("div");
     burst.className = "reaction-submit-burst";
+    if (kind === "remove") {
+        burst.classList.add("is-remove");
+    }
     burst.setAttribute("aria-hidden", "true");
     burst.innerHTML = `
         <span class="reaction-submit-burst-core">${escapeHtml(normalizedEmoji)}</span>
@@ -1931,10 +1945,14 @@ function triggerReactionSubmitBurst(messageElement, emoji) {
     `;
 
     hostElement.appendChild(burst);
-    window.setTimeout(() => burst.remove(), 620);
+    window.setTimeout(() => burst.remove(), kind === "remove" ? 980 : 860);
 }
 
-function applyMessageReactionsUpdate(messageId, reactions = [], { flashEmoji = "" } = {}) {
+function applyMessageReactionsUpdate(
+    messageId,
+    reactions = [],
+    { flashEmoji = "", removedEmoji = "" } = {}
+) {
     const normalizedMessageId = Number(messageId || 0);
     if (!normalizedMessageId) {
         return;
@@ -1963,9 +1981,25 @@ function applyMessageReactionsUpdate(messageId, reactions = [], { flashEmoji = "
         flashEmoji: normalizedFlashEmoji,
     });
 
+    const normalizedRemovedEmoji = String(removedEmoji || "").trim();
     if (normalizedFlashEmoji) {
-        triggerReactionSubmitBurst(messageElement, normalizedFlashEmoji);
+        triggerReactionSubmitBurst(messageElement, normalizedFlashEmoji, { kind: "add" });
+    } else if (normalizedRemovedEmoji) {
+        triggerReactionSubmitBurst(messageElement, normalizedRemovedEmoji, { kind: "remove" });
     }
+}
+
+function getCurrentUserReactionEmoji(messageId) {
+    const normalizedMessageId = Number(messageId || 0);
+    if (!normalizedMessageId) {
+        return "";
+    }
+    const meta = messageMetaById.get(normalizedMessageId);
+    if (!Array.isArray(meta?.reactions)) {
+        return "";
+    }
+    const mine = meta.reactions.find((item) => item?.reacted_by_me && item?.emoji);
+    return String(mine?.emoji || "").trim();
 }
 
 async function toggleMessageReaction(messageId, reaction) {
@@ -1973,6 +2007,7 @@ async function toggleMessageReaction(messageId, reaction) {
         message_id: Number(messageId || 0),
         reaction: String(reaction || "").trim(),
     };
+    const previousReaction = getCurrentUserReactionEmoji(payload.message_id);
     const data = await window.ApiService.jsonOk("api/toggle_message_reaction.php", {
         method: "POST",
         headers: {
@@ -1984,6 +2019,7 @@ async function toggleMessageReaction(messageId, reaction) {
     const reactions = Array.isArray(data?.reactions) ? data.reactions : [];
     applyMessageReactionsUpdate(payload.message_id, reactions, {
         flashEmoji: payload.reaction,
+        removedEmoji: payload.reaction ? "" : previousReaction,
     });
     return reactions;
 }
