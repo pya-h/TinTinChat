@@ -1905,7 +1905,7 @@ async function addMessageToChat(msg, prepend = false) {
         hasContextActions = true;
         canCopy = true;
         canForward = true;
-        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-head"><span class="group-message-avatar">${senderInitial}</span><span class="group-message-name">${senderUsername}</span></div><div class="group-message-content">${messageBodyContent}</div>` : messageBodyContent}${newDateTag(msg, {
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-row"><div class="group-message-identity"><span class="group-message-avatar">${senderInitial}</span><span class="group-message-name">${senderUsername}</span></div><div class="group-message-content">${messageBodyContent}</div></div>` : messageBodyContent}${newDateTag(msg, {
             atLeft: isPersian,
             strictMargins: true,
             topSpace: 3,
