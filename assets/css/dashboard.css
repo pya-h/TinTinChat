@@ -250,6 +250,35 @@ nav.navbar:hover::after {
 
 .chat-list-wrapper {
     display: block;
+    position: relative;
+    padding-bottom: 4.25rem;
+}
+
+.admin-actions {
+    margin-bottom: 0.6rem;
+}
+
+.group-actions {
+    position: absolute;
+    left: 0.8rem;
+    bottom: 0.8rem;
+    z-index: 8;
+}
+
+.create-group-fab {
+    width: 3rem;
+    height: 3rem;
+    min-width: 3rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    padding: 0;
+}
+
+.create-group-fab i {
+    font-size: 1rem;
 }
 
 .chat-list li {
@@ -424,8 +453,26 @@ nav.navbar:hover::after {
     font-size: 0.7rem;
 }
 
+.group-info-actions {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.35rem;
+}
+
+.group-info-actions .btn {
+    border-radius: 0.65rem;
+    padding: 0.42rem 0.62rem;
+    font-size: 0.78rem;
+}
+
+.group-management-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+    gap: 0.45rem;
+}
+
 .group-management-actions .btn {
-    flex: 1;
+    width: 100%;
 }
 
 .group-info-members {
@@ -433,11 +480,40 @@ nav.navbar:hover::after {
     min-height: 0;
 }
 
-.group-message-sender {
-    font-size: 0.74rem;
+.group-incoming-message {
+    padding: 0.62rem 0.8rem;
+}
+
+.group-message-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.32rem;
+}
+
+.group-message-name {
+    font-size: 0.77rem;
     font-weight: 700;
-    margin-bottom: 0.3rem;
-    opacity: 0.85;
+    color: var(--subtle-text-color);
+}
+
+.group-message-avatar {
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: var(--sent-bg);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+}
+
+.group-message-content .message-text-content {
+    display: block;
+    margin-top: 0.2rem;
 }
 
 .chat-list li::before {
@@ -1530,6 +1606,7 @@ nav.navbar:hover::after {
         overflow-x: auto;
         padding-bottom: 1rem;
         scrollbar-width: none;
+        padding-bottom: 4rem;
     }
 
     .chat-list-wrapper::-webkit-scrollbar {
@@ -3012,6 +3089,11 @@ nav.navbar:hover::after {
         position: relative;
         z-index: 1;
         display: none;
+    }
+
+    .group-actions {
+        left: 0.65rem;
+        bottom: 0.65rem;
     }
 
     .chat-area {

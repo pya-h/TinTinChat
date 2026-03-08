@@ -1587,11 +1587,14 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
 }
 
 async function loadCurrentChatsRecentMessages() {
-    if (isLoadingMessages) return;
+    if (isLoadingMessages || !currentChatUser) return;
 
     try {
         isLoadingMessages = true;
-        const offsetMsgId = currentChatRecentMessages[currentChatRecentMessages.length - 1].id;
+        const offsetMsgId =
+            Array.isArray(currentChatRecentMessages) && currentChatRecentMessages.length
+                ? Number(currentChatRecentMessages[currentChatRecentMessages.length - 1].id || 0)
+                : 0;
         const query = buildChatQueryParams(currentChatUser, {
             offsetMsgId,
         });
@@ -1891,17 +1894,18 @@ async function addMessageToChat(msg, prepend = false) {
         }
         const isPersian = isTextPersian(decryptedText.trim());
         const safeText = escapeHtml(decryptedText);
-        const senderHeader =
-            isGroupMessage && msg.sender_id != CURRENT_USER_ID
-                ? `<div class="group-message-sender">${escapeHtml(
-                      msg.sender_username || "Member"
-                  )}</div>`
-                : "";
+        const isIncomingGroup = isGroupMessage && msg.sender_id != CURRENT_USER_ID;
+        const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
+        const senderInitial = escapeHtml(String((msg.sender_username || "M")[0] || "M").toUpperCase());
+        const messageBodyContent = `${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>`;
         div.classList.add("is-text-message");
+        if (isIncomingGroup) {
+            div.classList.add("group-incoming-message");
+        }
         hasContextActions = true;
         canCopy = true;
         canForward = true;
-        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${senderHeader}${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${newDateTag(msg, {
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-head"><span class="group-message-avatar">${senderInitial}</span><span class="group-message-name">${senderUsername}</span></div><div class="group-message-content">${messageBodyContent}</div>` : messageBodyContent}${newDateTag(msg, {
             atLeft: isPersian,
             strictMargins: true,
             topSpace: 3,

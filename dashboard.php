@@ -62,17 +62,21 @@ $csrfToken = generateCsrfToken();
                     <div id="searchSuggestions" class="search-suggestions" style="display: none;" role="listbox" aria-label="User suggestions"></div>
                 </div>
                 <div id='chatListWrapper' class="chat-list-wrapper">
-                    <div class="group-actions mb-2">
-                        <button type="button" id="createGroupBtn" class="btn btn-sm btn-primary w-100" aria-label="Create group">
-                            <i class="fas fa-users me-1"></i>Create Group
-                        </button>
-                        <?php if ($is_admin): ?>
-                        <button type="button" id="groupKeyHealthBtn" class="btn btn-sm btn-outline-secondary w-100 mt-2" aria-label="Run group key health check">
+                    <?php if ($is_admin): ?>
+                    <div class="admin-actions mb-2">
+                        <button type="button" id="groupKeyHealthBtn" class="btn btn-sm btn-outline-secondary w-100" aria-label="Run group key health check">
                             <i class="fas fa-shield-alt me-1"></i>Group Key Health Check
                         </button>
-                        <?php endif; ?>
                     </div>
+                    <?php endif; ?>
+
                     <ul class="chat-list" id="chatList" role="list" aria-label="Chats"></ul>
+
+                    <div class="group-actions" aria-hidden="false">
+                        <button type="button" id="createGroupBtn" class="btn btn-primary create-group-fab" aria-label="Create group" title="Create group">
+                            <i class="fas fa-users"></i>
+                        </button>
+                    </div>
                 </div>
             </aside>
 
