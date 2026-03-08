@@ -71,6 +71,9 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - Auth/session: login/logout/session restoration
 - Keys: public/private key fetch + key save
 - Messaging (direct + group text): send/fetch/recent/seen/delete
+- Messaging extras:
+  - reactions: `toggle_message_reaction.php`
+  - delete for everyone mode in `delete_messages.php` (`delete_for_everyone: true`, sender-only hard delete)
 - Media/files (direct + group): image/voice/file send + retrieval
 - Discovery: user search/check + chat list
 - Typing status (private):
@@ -125,6 +128,11 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 ### Data / Persistence
 - `SEND_FAILED` → write operation rejected/failure.
 - `DB_SAVE_FAILED` / `DB_ERROR` → database operation failure.
+- `DELETE_FOR_EVERYONE_FORBIDDEN` → requester attempted sender-only delete-for-everyone on a message they did not send.
+
+### Reactions
+- `INVALID_REACTION` → unsupported reaction emoji.
+- `INVALID_MESSAGE_ID` / `MESSAGE_NOT_FOUND` → bad/missing reaction target.
 
 ### Security / Access
 - `FORBIDDEN` (or endpoint-specific equivalent) → resource exists but user not permitted.

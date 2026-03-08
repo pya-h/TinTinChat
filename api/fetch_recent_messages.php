@@ -55,6 +55,56 @@ $stmt = $pdo->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.group_id, m.me
   WHERE $whereClause ORDER BY m.created_at ASC");
 $stmt->execute($params);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+if (!empty($messages)) {
+  $messageIds = array_values(array_filter(array_map(static function ($row) {
+    return isset($row['id']) ? (int) $row['id'] : 0;
+  }, $messages), static function ($id) {
+    return $id > 0;
+  }));
+
+  if (!empty($messageIds)) {
+    $placeholders = implode(',', array_fill(0, count($messageIds), '?'));
+    $reactionStmt = $pdo->prepare(
+      "SELECT message_id, reaction, user_id
+       FROM message_reactions
+       WHERE message_id IN ($placeholders)"
+    );
+    $reactionStmt->execute($messageIds);
+    $reactionRows = $reactionStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $reactionsByMessage = [];
+    foreach ($reactionRows as $reactionRow) {
+      $messageId = isset($reactionRow['message_id']) ? (int) $reactionRow['message_id'] : 0;
+      $emoji = isset($reactionRow['reaction']) ? trim((string) $reactionRow['reaction']) : '';
+      if ($messageId <= 0 || $emoji === '') {
+        continue;
+      }
+      if (!isset($reactionsByMessage[$messageId])) {
+        $reactionsByMessage[$messageId] = [];
+      }
+      if (!isset($reactionsByMessage[$messageId][$emoji])) {
+        $reactionsByMessage[$messageId][$emoji] = [
+          'emoji' => $emoji,
+          'count' => 0,
+          'reacted_by_me' => false,
+        ];
+      }
+      $reactionsByMessage[$messageId][$emoji]['count']++;
+      if ((int) ($reactionRow['user_id'] ?? 0) === $user_id) {
+        $reactionsByMessage[$messageId][$emoji]['reacted_by_me'] = true;
+      }
+    }
+
+    foreach ($messages as &$messageRow) {
+      $mid = isset($messageRow['id']) ? (int) $messageRow['id'] : 0;
+      $messageRow['reactions'] = $mid > 0 && isset($reactionsByMessage[$mid])
+        ? array_values($reactionsByMessage[$mid])
+        : [];
+    }
+    unset($messageRow);
+  }
+}
 apiSuccess([
   'messages' => $messages,
 ]);

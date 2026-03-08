@@ -75,6 +75,7 @@ const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
 const TYPING_IDLE_TIMEOUT_MS = 1800;
 const TYPING_UPDATE_THROTTLE_MS = 750;
+const REACTION_EMOJI_SET = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
     "php", "phtml", "php3", "php4", "php5", "phar",
     "exe", "msi", "bat", "cmd", "com", "scr",
@@ -120,6 +121,11 @@ const I18N_TEXT = {
     fileTooLargeBody: "File size must be less than 50MB.",
     imageSendErrorTitle: "Image Send Error",
     imageSendErrorBody: "Image send error: {error}",
+    reactTitle: "React to Message",
+    reactFailedTitle: "Reaction Failed",
+    reactFailedBody: "Unable to update reaction.",
+    deleteForEveryoneConfirm: "Delete this message for everyone?",
+    deleteForEveryoneFailedTitle: "Delete for Everyone Failed",
 };
 
 let currentChatUser = null;
@@ -1649,31 +1655,125 @@ async function forwardMessageText(messageElement) {
     openMessageActionModal(I18N_TEXT.forwardTitle, content);
 }
 
-async function deleteMessageById(messageId) {
+function getMessageElementById(messageId) {
+    return chatMessagesElem.querySelector(`.message[data-message-id="${messageId}"]`);
+}
+
+function applyMessageReactionsUpdate(messageId, reactions = []) {
+    const normalizedMessageId = Number(messageId || 0);
+    if (!normalizedMessageId) {
+        return;
+    }
+
+    const meta = messageMetaById.get(normalizedMessageId);
+    if (meta) {
+        meta.reactions = Array.isArray(reactions) ? reactions : [];
+        messageMetaById.set(normalizedMessageId, meta);
+    }
+
+    if (Array.isArray(currentChatRecentMessages)) {
+        currentChatRecentMessages = currentChatRecentMessages.map((item) =>
+            Number(item?.id || 0) === normalizedMessageId
+                ? { ...item, reactions: Array.isArray(reactions) ? reactions : [] }
+                : item
+        );
+    }
+
+    const messageElement = getMessageElementById(normalizedMessageId);
+    if (!messageElement) {
+        return;
+    }
+    renderMessageReactions(messageElement, meta || { id: normalizedMessageId, reactions });
+}
+
+async function toggleMessageReaction(messageId, reaction) {
+    const payload = {
+        message_id: Number(messageId || 0),
+        reaction: String(reaction || "").trim(),
+    };
+    const data = await window.ApiService.jsonOk("api/toggle_message_reaction.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...getCsrfHeaders(),
+        },
+        body: JSON.stringify(payload),
+    });
+    const reactions = Array.isArray(data?.reactions) ? data.reactions : [];
+    applyMessageReactionsUpdate(payload.message_id, reactions);
+    return reactions;
+}
+
+function buildReactionPickerContent(messageElement, messageData = null) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "forward-target-list";
+
+    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const reactions = Array.isArray(messageData?.reactions) ? messageData.reactions : [];
+
+    REACTION_EMOJI_SET.forEach((emoji) => {
+        const reactionMeta = reactions.find((item) => item?.emoji === emoji) || null;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "forward-target-item";
+        button.innerHTML = `<span class="forward-target-avatar">${emoji}</span><span class="forward-target-name">${emoji}</span>`;
+        if (reactionMeta?.reacted_by_me) {
+            button.classList.add("is-forwarding");
+        }
+
+        button.addEventListener("click", async () => {
+            try {
+                button.disabled = true;
+                const nextReaction = reactionMeta?.reacted_by_me ? "" : emoji;
+                await toggleMessageReaction(messageId, nextReaction);
+                closeMessageActionModal();
+            } catch (error) {
+                showModal(I18N_TEXT.reactFailedTitle, error.message || I18N_TEXT.reactFailedBody, "error");
+            } finally {
+                button.disabled = false;
+            }
+        });
+        wrapper.appendChild(button);
+    });
+
+    return wrapper;
+}
+
+function openReactionPickerFromContext(messageElement, messageData = null) {
+    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const latestMeta = messageMetaById.get(messageId) || messageData;
+    const content = buildReactionPickerContent(messageElement, latestMeta);
+    openMessageActionModal(I18N_TEXT.reactTitle, content);
+}
+
+async function deleteMessageById(messageId, { deleteForEveryone = false } = {}) {
     await window.ApiService.jsonOk("api/delete_messages.php", {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
             ...getCsrfHeaders(),
         },
-        body: JSON.stringify({ messages: [messageId] }),
+        body: JSON.stringify({ messages: [messageId], delete_for_everyone: deleteForEveryone }),
     });
 }
 
-async function deleteMessageFromContext(messageElement) {
+async function deleteMessageFromContext(messageElement, { forEveryone = false } = {}) {
     const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
     if (!messageId) {
         showModal("Delete Failed", "Invalid message id.", "warning");
         return;
     }
 
-    const confirmed = window.confirm("Delete this message?");
+    const confirmed = window.confirm(
+        forEveryone ? I18N_TEXT.deleteForEveryoneConfirm : "Delete this message?"
+    );
     if (!confirmed) {
         return;
     }
 
     try {
-        await deleteMessageById(messageId);
+        await deleteMessageById(messageId, { deleteForEveryone: forEveryone });
+
         messageElement.remove();
 
         if (currentReplyTarget?.messageId === messageId) {
@@ -1696,6 +1796,8 @@ function addMessageActionHandlers(
     {
         canReply = true,
         canDelete = true,
+        canDeleteEveryone = false,
+        canReact = false,
         canCopy = false,
         canForward = false,
         canDetails = true,
@@ -1760,6 +1862,18 @@ function addMessageActionHandlers(
             appendMenuAction(forwardBtn);
         }
 
+        if (canReact) {
+            const reactBtn = document.createElement("button");
+            reactBtn.type = "button";
+            reactBtn.className = "message-context-menu-item";
+            reactBtn.innerHTML = '<i class="fas fa-face-smile me-2"></i>React';
+            reactBtn.addEventListener("click", () => {
+                closeMessageContextMenu();
+                openReactionPickerFromContext(messageElement, messageData);
+            });
+            appendMenuAction(reactBtn);
+        }
+
         if (canDelete) {
             const deleteBtn = document.createElement("button");
             deleteBtn.type = "button";
@@ -1770,6 +1884,19 @@ function addMessageActionHandlers(
                 closeMessageContextMenu();
             });
             appendMenuAction(deleteBtn);
+        }
+
+        if (canDeleteEveryone) {
+            const deleteEveryoneBtn = document.createElement("button");
+            deleteEveryoneBtn.type = "button";
+            deleteEveryoneBtn.className = "message-context-menu-item";
+            deleteEveryoneBtn.innerHTML =
+                '<i class="fas fa-trash-can me-2"></i>Delete for everyone';
+            deleteEveryoneBtn.addEventListener("click", async () => {
+                await deleteMessageFromContext(messageElement, { forEveryone: true });
+                closeMessageContextMenu();
+            });
+            appendMenuAction(deleteEveryoneBtn);
         }
 
         if (canDetails) {
@@ -2599,17 +2726,70 @@ function bindConversationSearchEvents() {
     });
 }
 
+function renderMessageReactions(messageElement, messageData) {
+    if (!messageElement) {
+        return;
+    }
+
+    const existingContainer = messageElement.querySelector(".message-reactions");
+    if (existingContainer) {
+        existingContainer.remove();
+    }
+
+    if (!Array.isArray(messageData?.reactions) || !messageData.reactions.length) {
+        return;
+    }
+
+    const container = document.createElement("div");
+    container.className = "message-reactions";
+
+    messageData.reactions.forEach((reactionItem) => {
+        const emoji = String(reactionItem?.emoji || "").trim();
+        const count = Math.max(0, Number(reactionItem?.count || 0));
+        if (!emoji || !count) {
+            return;
+        }
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "message-reaction-chip";
+        chip.setAttribute("aria-label", `Reaction ${emoji} (${count})`);
+        chip.innerHTML = `<span class="message-reaction-emoji">${emoji}</span><span class="message-reaction-count">${count}</span>`;
+        if (reactionItem?.reacted_by_me) {
+            chip.classList.add("is-active");
+        }
+        chip.addEventListener("click", async (event) => {
+            event.stopPropagation();
+            const currentEmoji = reactionItem?.reacted_by_me ? "" : emoji;
+            try {
+                await toggleMessageReaction(Number(messageData?.id || 0), currentEmoji);
+            } catch (error) {
+                showModal(I18N_TEXT.reactFailedTitle, error.message || I18N_TEXT.reactFailedBody, "error");
+            }
+        });
+        container.appendChild(chip);
+    });
+
+    if (!container.children.length) {
+        return;
+    }
+    messageElement.appendChild(container);
+}
+
 async function addMessageToChat(msg, prepend = false) {
     let div = document.createElement("div");
     let hasContextActions = false;
     let canCopy = false;
     let canForward = false;
+    let canReact = false;
+    let canDeleteEveryone = false;
     div.classList.add("message");
     div.classList.add(msg.sender_id == CURRENT_USER_ID ? "sent" : "received");
 
     if (msg.message_type === "voice" && msg.voice_file_path) {
+
         div.classList.add("is-voice-message");
         hasContextActions = true;
+        canReact = true;
 
         div.innerHTML = `
           <div class="voice-player-container">
@@ -2634,6 +2814,7 @@ async function addMessageToChat(msg, prepend = false) {
     } else if (msg.message_type === "image" && msg.image_file_path) {
         div.classList.add("is-image-message");
         hasContextActions = true;
+        canReact = true;
 
         div.innerHTML = `<a href="#" class="image-message-link" title="View full image">
                 <img src="" class="message-image" alt="Encrypted image" data-ready="0" style="display:none;">
@@ -2667,6 +2848,7 @@ async function addMessageToChat(msg, prepend = false) {
     } else if (msg.message_type === "file" && msg.any_file_path) {
         div.classList.add("is-file-message");
         hasContextActions = true;
+        canReact = true;
 
         let fileName = "Encrypted file";
         try {
@@ -2770,6 +2952,7 @@ async function addMessageToChat(msg, prepend = false) {
         hasContextActions = true;
         canCopy = true;
         canForward = true;
+        canReact = true;
         div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-row"><span class="group-message-avatar">${senderInitial}</span><div class="group-message-content"><span class="group-message-name">${senderUsername}</span>${messageBodyContent}</div></div>` : messageBodyContent}${outsideDateTag}`;
         div.setAttribute("data-message-id", msg.id);
         if (isPersian && !isIncomingGroup) {
@@ -2803,6 +2986,10 @@ async function addMessageToChat(msg, prepend = false) {
         }
     }
 
+    if (Number(msg.sender_id || 0) === Number(CURRENT_USER_ID)) {
+        canDeleteEveryone = true;
+    }
+
     if (msg.sender_id == CURRENT_USER_ID && !Number(msg.group_id || 0)) {
         const tickContainer = document.createElement("span");
         tickContainer.className = msg.seen_at
@@ -2832,12 +3019,16 @@ async function addMessageToChat(msg, prepend = false) {
         addMessageActionHandlers(div, {
             canReply: true,
             canDelete: true,
+            canDeleteEveryone,
+            canReact,
             canCopy,
             canForward,
             canDetails: true,
             messageData: msg,
         });
     }
+
+    renderMessageReactions(div, msg);
 
     if (prepend) {
         const loadMoreBtn = document.getElementById("loadMoreBtn");

@@ -162,12 +162,9 @@ Legend:
 - [x] (`P2`) Add migration/backfill policy for legacy unencrypted group media/files.
 
 ### Phase F — Chatroom Parity Features (Recommended) (`P2/P3`)
-- [x] (`P2`) Typing indicator.
-- [x] (`P2`) Unread counter per chat.
-- [x] (`P2`) Better per-message timestamp formatting and grouping.
-- [ ] (`P2`) Search inside current conversation.
-- [ ] (`P3`) Message reactions (minimal emoji set).
-- [ ] (`P3`) Optional delete-for-everyone policy (with permissions).
+- [x] (`P2`) Search inside current conversation.
+- [x] (`P3`) Message reactions (minimal emoji set).
+- [x] (`P3`) Optional delete-for-everyone policy (with permissions).
 
 ### Phase F.5 — Avatar Assignment (Small) (`P2`)
 - [ ] (`P2`) DB migration for user avatar metadata/path.

@@ -845,6 +845,77 @@ nav.navbar:hover::after {
     padding: 0 0.85rem 0.85rem;
 }
 
+.camera-capture-actions .btn {
+    border-radius: 999px;
+    min-width: 7.8rem;
+    height: 2.2rem;
+    padding: 0 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: var(--transition-fast);
+}
+
+.camera-capture-actions .btn-primary {
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--secondary-color) 30%, transparent);
+}
+
+.camera-capture-actions .btn-primary:hover,
+.camera-capture-actions .btn-outline-secondary:hover {
+    transform: translateY(-1px);
+}
+
+.message-reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+}
+
+.message.sent .message-reactions {
+    justify-content: flex-end;
+}
+
+.message-reaction-chip {
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+    color: var(--text-color);
+    border-radius: 999px;
+    min-height: 1.35rem;
+    padding: 0.04rem 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.24rem;
+    font-size: 0.74rem;
+    line-height: 1;
+}
+
+.message-reaction-chip.is-active {
+    border-color: color-mix(in srgb, var(--secondary-color) 45%, var(--border-color));
+    background: color-mix(in srgb, var(--secondary-color) 14%, transparent);
+}
+
+.message.sent .message-reaction-chip {
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.message.sent .message-reaction-chip.is-active {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.message-reaction-chip:hover {
+    transform: translateY(-1px);
+}
+
+.message-reaction-emoji {
+    font-size: 0.82rem;
+}
+
+.message-reaction-count {
+    font-weight: 700;
+}
+
 .chat-item-unread-badge {
     margin-left: auto;
     min-width: 1.4rem;
@@ -1734,6 +1805,12 @@ nav.navbar:hover::after {
     .chat-input {
         gap: 0.55rem;
         padding: 0.75rem;
+    }
+
+    .camera-capture-actions .btn {
+        min-width: 6.4rem;
+        height: 2rem;
+        font-size: 0.76rem;
     }
 
     #composerToolsToggle {

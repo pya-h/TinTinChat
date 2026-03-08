@@ -99,6 +99,22 @@ CREATE TABLE IF NOT EXISTS chat_typing_status (
     ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS message_reactions (
+  message_id INT NOT NULL,
+  user_id INT NOT NULL,
+  reaction VARCHAR(16) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (message_id, user_id),
+  KEY idx_message_reactions_reaction (reaction),
+  CONSTRAINT fk_message_reactions_message
+    FOREIGN KEY (message_id) REFERENCES messages(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_message_reactions_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
 -- Speeds up chat lookup between two users
 CREATE INDEX idx_sender_receiver_created_at
   ON messages (sender_id, receiver_id, created_at);
@@ -118,3 +134,8 @@ CREATE INDEX idx_messages_forwarded_from ON messages(forwarded_from_message_id);
 CREATE INDEX idx_messages_forwarded_by ON messages(forwarded_by_user_id);
 
 CREATE INDEX idx_messages_group_created_at ON messages(group_id, created_at);
+
+CREATE INDEX idx_users_ident ON users(ident);
+
+CREATE INDEX idx_messages_receiver_seen_created_at
+  ON messages(receiver_id, seen_at, created_at);
