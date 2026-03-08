@@ -1676,7 +1676,8 @@ nav.navbar:hover::after {
 }
 
 .message.sent.is-voice-message .message-status-indicator,
-.message.sent.is-image-message .message-status-indicator {
+.message.sent.is-image-message .message-status-indicator,
+.message.sent.is-video-message .message-status-indicator {
     position: absolute;
     bottom: -0.4rem;
     right: 1.3rem;
@@ -3026,6 +3027,8 @@ nav.navbar:hover::after {
     padding: 0;
     box-shadow: none;
     white-space: normal;
+    width: fit-content;
+    max-width: min(31rem, 88vw);
 }
 
 .video-message-container {

@@ -74,7 +74,9 @@ function apiUploadErrorMessage(int $uploadError): string
     switch ($uploadError) {
         case UPLOAD_ERR_INI_SIZE:
         case UPLOAD_ERR_FORM_SIZE:
-            return 'The uploaded file exceeds the server maximum file size limit.';
+            $uploadMaxSize = ini_get('upload_max_filesize');
+            $postMaxSize = ini_get('post_max_size');
+            return "The uploaded file exceeds the server maximum file size limit (upload_max_filesize: {$uploadMaxSize}, post_max_size: {$postMaxSize}).";
         case UPLOAD_ERR_PARTIAL:
             return 'The uploaded file was only partially uploaded.';
         case UPLOAD_ERR_NO_FILE:
@@ -139,7 +141,12 @@ function apiGuardOversizedPostBody(): void
     $contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $contentLength > 0) {
         $postMaxSize = ini_get('post_max_size');
-        apiError('UPLOAD_TOO_LARGE', "Uploaded data exceeds server limit (post_max_size: {$postMaxSize})", 400);
+        $uploadMaxSize = ini_get('upload_max_filesize');
+        apiError(
+            'UPLOAD_TOO_LARGE',
+            "Uploaded data exceeds server limit (post_max_size: {$postMaxSize}, upload_max_filesize: {$uploadMaxSize}). Restart local server with: php -d upload_max_filesize=110M -d post_max_size=120M -S localhost:8080",
+            400
+        );
     }
 }
 

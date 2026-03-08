@@ -194,7 +194,12 @@ Legend:
 	- basic moderation control (`is_active` flag for admin disable).
 - [ ] (`P2`) Add UX states for sticker flow (loading, empty, upload progress, error/retry).
 
-### Phase H — Nice to Have (Power UX) (`P3`)
+
+### Phase H - Tests
+- [ ] (`P2`) Unit Tests for important operations/actions.
+- [ ] (`P1`) E2E Tests
+
+### Phase I — Nice to Have (Power UX) (`P3`)
 - [ ] (`P3`) Add **Select messages** action to message context menu.
 - [ ] (`P3`) Implement select mode behavior:
 	- tap/click messages to multi-select,
