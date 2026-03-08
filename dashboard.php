@@ -99,10 +99,28 @@ $csrfToken = generateCsrfToken();
                                 <input type="checkbox" id="settingAutoScroll" checked>
                                 <span>Auto-scroll to latest</span>
                             </label>
+                            <button type="button" id="openConversationSearchBtn" class="chat-setting-item chat-setting-button" aria-label="Search inside current conversation">
+                                <i class="fas fa-search"></i>
+                                <span>Search in this chat</span>
+                            </button>
                         </div>
                     </div>
                 </div>
                 <div id="typingIndicator" class="typing-indicator" aria-live="polite" aria-atomic="true"></div>
+                <div id="conversationSearchBar" class="conversation-search-bar" hidden>
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input type="text" id="conversationSearchInput" class="form-control" placeholder="Search this conversation" aria-label="Search inside current conversation">
+                    <span id="conversationSearchCount" class="conversation-search-count" aria-live="polite">0 / 0</span>
+                    <button type="button" id="conversationSearchPrev" class="btn btn-sm btn-outline-secondary" aria-label="Previous result">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <button type="button" id="conversationSearchNext" class="btn btn-sm btn-outline-secondary" aria-label="Next result">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <button type="button" id="conversationSearchClose" class="btn btn-sm btn-outline-secondary" aria-label="Close conversation search">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <div id="groupInfoPanel" class="group-info-panel" role="region" aria-label="Group details" hidden>
                     <div class="group-page-header">
                         <button type="button" id="groupInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back to group chat" title="Back to group chat">
@@ -216,6 +234,25 @@ $csrfToken = generateCsrfToken();
                     <button type="submit" id="createGroupSubmitBtn" class="btn btn-primary">Create Group</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="cameraCaptureOverlay" class="camera-capture-overlay" hidden>
+        <div class="camera-capture-modal" role="dialog" aria-modal="true" aria-labelledby="cameraCaptureTitle">
+            <div class="camera-capture-header">
+                <h5 id="cameraCaptureTitle" class="camera-capture-title">Take a new image</h5>
+                <button type="button" id="cameraCaptureClose" class="camera-capture-close" aria-label="Close camera capture">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="camera-capture-body">
+                <video id="cameraCaptureVideo" class="camera-capture-video" autoplay playsinline muted></video>
+                <canvas id="cameraCaptureCanvas" class="camera-capture-canvas" hidden></canvas>
+            </div>
+            <div class="camera-capture-actions">
+                <button type="button" id="cameraCaptureTake" class="btn btn-primary">Capture & Send</button>
+                <button type="button" id="cameraCaptureCancel" class="btn btn-outline-secondary">Cancel</button>
+            </div>
         </div>
     </div>
 

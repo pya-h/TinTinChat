@@ -146,7 +146,6 @@ Legend:
 	- lightweight “new in group” badge in list,
 	- accessibility parity (keyboard + screen reader labels).
 	- run full regression for direct chat flows (reply/forward/seen/media) before closing Phase E.
-	- QA closure log: `docs/GROUP_E10_QA_2026-03-07.md`.
 
 ### Phase E.1 — Group Text Encryption (`P1`)
 - [x] (`P1`) Implement shared group text encryption key model (single encrypted payload per group message).

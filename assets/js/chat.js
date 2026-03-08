@@ -12,11 +12,18 @@ const imageUploadBtn = document.getElementById("imageUploadBtn");
 const imageSourceMenu = document.getElementById("imageSourceMenu");
 const imageSourceGalleryBtn = document.getElementById("imageSourceGalleryBtn");
 const imageSourceCameraBtn = document.getElementById("imageSourceCameraBtn");
+const cameraCaptureOverlay = document.getElementById("cameraCaptureOverlay");
+const cameraCaptureVideo = document.getElementById("cameraCaptureVideo");
+const cameraCaptureCanvas = document.getElementById("cameraCaptureCanvas");
+const cameraCaptureTakeBtn = document.getElementById("cameraCaptureTake");
+const cameraCaptureCancelBtn = document.getElementById("cameraCaptureCancel");
+const cameraCaptureCloseBtn = document.getElementById("cameraCaptureClose");
 const composerToolsToggleBtn = document.getElementById("composerToolsToggle");
 const settingsButton = document.getElementById("chatSettingsBtn");
 const settingsPanel = document.getElementById("chatSettingsPanel");
 const settingNotificationSound = document.getElementById("settingNotificationSound");
 const settingAutoScroll = document.getElementById("settingAutoScroll");
+const openConversationSearchBtn = document.getElementById("openConversationSearchBtn");
 const messageActionsHintElem = document.getElementById("messageActionsHint");
 const messageActionModalOverlay = document.getElementById("messageActionModalOverlay");
 const messageActionModalTitle = document.getElementById("messageActionModalTitle");
@@ -40,6 +47,12 @@ const groupTransferOwnerBtn = document.getElementById("groupTransferOwnerBtn");
 const groupLeaveBtn = document.getElementById("groupLeaveBtn");
 const chatAreaElem = document.querySelector(".chat-area");
 const typingIndicatorElem = document.getElementById("typingIndicator");
+const conversationSearchBar = document.getElementById("conversationSearchBar");
+const conversationSearchInput = document.getElementById("conversationSearchInput");
+const conversationSearchCount = document.getElementById("conversationSearchCount");
+const conversationSearchPrevBtn = document.getElementById("conversationSearchPrev");
+const conversationSearchNextBtn = document.getElementById("conversationSearchNext");
+const conversationSearchCloseBtn = document.getElementById("conversationSearchClose");
 const createGroupModalOverlay = document.getElementById("createGroupModalOverlay");
 const createGroupModalClose = document.getElementById("createGroupModalClose");
 const createGroupForm = document.getElementById("createGroupForm");
@@ -150,6 +163,11 @@ let typingStopTimer = null;
 let messageActionsHintTimer = null;
 let hasShownMessageActionsHint = false;
 let imageSourceMenuHideTimer = null;
+let cameraStream = null;
+let isCameraCaptureBusy = false;
+let hasVideoInputDevice = null;
+let conversationSearchResults = [];
+let conversationSearchResultIndex = -1;
 
 const appSettings = {
     notificationSoundEnabled: true,
@@ -680,6 +698,160 @@ function closeImageSourceMenu({ restoreFocus = false } = {}) {
     }
 }
 
+function canUseNativeCameraCapture() {
+    if (!imageCaptureInput) {
+        return false;
+    }
+    const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches;
+    const mobileUserAgent = /Android|iPhone|iPad|iPod|Mobile/i.test(String(navigator.userAgent || ""));
+    return Boolean(coarsePointer || mobileUserAgent);
+}
+
+function canUseBrowserCameraCapture() {
+    const secureContext = window.isSecureContext || window.location.hostname === "localhost";
+    return Boolean(
+        secureContext &&
+            navigator.mediaDevices &&
+            typeof navigator.mediaDevices.getUserMedia === "function"
+    );
+}
+
+async function detectVideoInputDevice() {
+    if (hasVideoInputDevice !== null) {
+        return hasVideoInputDevice;
+    }
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.enumerateDevices !== "function") {
+        hasVideoInputDevice = false;
+        return false;
+    }
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        hasVideoInputDevice = devices.some((device) => device.kind === "videoinput");
+        return hasVideoInputDevice;
+    } catch (error) {
+        hasVideoInputDevice = null;
+        return true;
+    }
+}
+
+function stopCameraCaptureStream() {
+    if (!cameraStream) {
+        return;
+    }
+    cameraStream.getTracks().forEach((track) => track.stop());
+    cameraStream = null;
+    if (cameraCaptureVideo) {
+        cameraCaptureVideo.srcObject = null;
+    }
+}
+
+function closeCameraCaptureOverlay() {
+    if (!cameraCaptureOverlay) {
+        return;
+    }
+    stopCameraCaptureStream();
+    cameraCaptureOverlay.hidden = true;
+    isCameraCaptureBusy = false;
+    if (cameraCaptureTakeBtn) {
+        cameraCaptureTakeBtn.disabled = false;
+    }
+}
+
+async function openCameraCaptureOverlay() {
+    if (!cameraCaptureOverlay || !cameraCaptureVideo || !canUseBrowserCameraCapture()) {
+        setComposerStatus("Camera capture is not supported in this browser/device.", "warning");
+        return false;
+    }
+
+    try {
+        const preferRear = { video: { facingMode: { ideal: "environment" } }, audio: false };
+        let stream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia(preferRear);
+        } catch (initialError) {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+        cameraStream = stream;
+        cameraCaptureVideo.srcObject = stream;
+        cameraCaptureOverlay.hidden = false;
+        await cameraCaptureVideo.play();
+        setComposerStatus("Camera ready", "success");
+        return true;
+    } catch (error) {
+        closeCameraCaptureOverlay();
+        setComposerStatus("Unable to access camera. Check browser permission settings.", "warning");
+        return false;
+    }
+}
+
+async function captureImageFromCameraAndSend() {
+    if (!cameraCaptureVideo || !cameraCaptureCanvas || !cameraStream || isCameraCaptureBusy) {
+        return;
+    }
+
+    const width = cameraCaptureVideo.videoWidth || 1280;
+    const height = cameraCaptureVideo.videoHeight || 720;
+    if (!width || !height) {
+        setComposerStatus("Camera is still initializing. Please try again.", "warning");
+        return;
+    }
+
+    isCameraCaptureBusy = true;
+    cameraCaptureTakeBtn && (cameraCaptureTakeBtn.disabled = true);
+
+    const context = cameraCaptureCanvas.getContext("2d");
+    if (!context) {
+        closeCameraCaptureOverlay();
+        setComposerStatus("Unable to process captured image.", "error");
+        return;
+    }
+
+    cameraCaptureCanvas.width = width;
+    cameraCaptureCanvas.height = height;
+    context.drawImage(cameraCaptureVideo, 0, 0, width, height);
+
+    cameraCaptureCanvas.toBlob(
+        (blob) => {
+            if (!blob) {
+                closeCameraCaptureOverlay();
+                setComposerStatus("Camera capture failed.", "error");
+                return;
+            }
+            if (blob.size > IMAGE_UPLOAD_MAX_BYTES) {
+                closeCameraCaptureOverlay();
+                showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.imageTooLargeBody, "warning");
+                return;
+            }
+            const capturedFile = new File([blob], `camera_${Date.now()}.jpg`, {
+                type: "image/jpeg",
+            });
+            closeCameraCaptureOverlay();
+            void sendImageMessage(capturedFile);
+        },
+        "image/jpeg",
+        0.92
+    );
+}
+
+async function syncImageSourceMenuCapabilities() {
+    if (!imageSourceCameraBtn) {
+        return;
+    }
+    const supportsMobileCapture = canUseNativeCameraCapture();
+    const supportsWebcam = canUseBrowserCameraCapture();
+    let hasCamera = false;
+    if (supportsMobileCapture) {
+        hasCamera = true;
+    } else if (supportsWebcam) {
+        hasCamera = await detectVideoInputDevice();
+    }
+    const supported = supportsMobileCapture || (supportsWebcam && hasCamera);
+    imageSourceCameraBtn.disabled = !supported;
+    imageSourceCameraBtn.title = supported
+        ? "Take a new image"
+        : "No camera available on this device/browser";
+}
+
 function openImageSourceMenu() {
     if (!imageSourceMenu) {
         imageUploadInput?.click();
@@ -689,6 +861,7 @@ function openImageSourceMenu() {
         window.clearTimeout(imageSourceMenuHideTimer);
         imageSourceMenuHideTimer = null;
     }
+    void syncImageSourceMenuCapabilities();
     imageSourceMenu.hidden = false;
     imageUploadBtn?.setAttribute("aria-expanded", "true");
     window.requestAnimationFrame(() => {
@@ -750,6 +923,11 @@ function bindSettingsUiEvents() {
         });
     }
 
+    openConversationSearchBtn?.addEventListener("click", () => {
+        toggleSettingsPanel(false);
+        openConversationSearchBar();
+    });
+
     if (composerToolsToggleBtn) {
         composerToolsToggleBtn.addEventListener("click", () => {
             appSettings.mobileComposerExpanded = !appSettings.mobileComposerExpanded;
@@ -807,6 +985,7 @@ document.addEventListener("DOMContentLoaded", () => {
     applySettingsUi();
     bindSettingsUiEvents();
     bindMessageActionModalEvents();
+    bindConversationSearchEvents();
     bindCreateGroupModalEvents();
     notificationPlayer.preloadCustom();
 });
@@ -1861,6 +2040,7 @@ async function selectChatTarget(target) {
     chatInput.value = "";
     setComposerStatus("");
     clearReplyState();
+    closeConversationSearchBar({ clearInput: true });
     chatMessagesElem.innerHTML = "";
     pendingSeenMessageIds.clear();
     messageMetaById.clear();
@@ -2286,6 +2466,139 @@ function rebuildMessageDaySeparators() {
     });
 }
 
+function resetConversationSearchHighlights() {
+    const textNodes = chatMessagesElem.querySelectorAll(".message-text-content");
+    textNodes.forEach((node) => {
+        const originalText = node.getAttribute("data-original-text");
+        if (originalText !== null) {
+            node.textContent = originalText;
+            node.removeAttribute("data-original-text");
+        }
+    });
+    conversationSearchResults = [];
+    conversationSearchResultIndex = -1;
+    if (conversationSearchCount) {
+        conversationSearchCount.textContent = "0 / 0";
+    }
+}
+
+function updateConversationSearchCounter() {
+    if (!conversationSearchCount) {
+        return;
+    }
+    if (!conversationSearchResults.length) {
+        conversationSearchCount.textContent = "0 / 0";
+        return;
+    }
+    conversationSearchCount.textContent = `${conversationSearchResultIndex + 1} / ${conversationSearchResults.length}`;
+}
+
+function focusConversationSearchResult(index) {
+    if (!conversationSearchResults.length) {
+        updateConversationSearchCounter();
+        return;
+    }
+    conversationSearchResults.forEach((node) => node.classList.remove("is-active"));
+
+    const normalizedIndex =
+        ((index % conversationSearchResults.length) + conversationSearchResults.length) %
+        conversationSearchResults.length;
+    conversationSearchResultIndex = normalizedIndex;
+
+    const activeNode = conversationSearchResults[conversationSearchResultIndex];
+    activeNode.classList.add("is-active");
+    activeNode.scrollIntoView({ behavior: "smooth", block: "center" });
+    updateConversationSearchCounter();
+}
+
+function runConversationSearch() {
+    const query = String(conversationSearchInput?.value || "").trim();
+    resetConversationSearchHighlights();
+    if (!query.length) {
+        return;
+    }
+
+    const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${safeQuery})`, "gi");
+    const messageTextNodes = chatMessagesElem.querySelectorAll(".message-text-content");
+
+    messageTextNodes.forEach((node) => {
+        const originalText = node.textContent || "";
+        if (!originalText || !regex.test(originalText)) {
+            regex.lastIndex = 0;
+            return;
+        }
+        regex.lastIndex = 0;
+        node.setAttribute("data-original-text", originalText);
+        node.innerHTML = escapeHtml(originalText).replace(regex, "<mark class=\"chat-search-hit\">$1</mark>");
+        conversationSearchResults.push(...node.querySelectorAll(".chat-search-hit"));
+    });
+
+    if (!conversationSearchResults.length) {
+        updateConversationSearchCounter();
+        setComposerStatus("No results in this conversation", "warning");
+        return;
+    }
+    focusConversationSearchResult(0);
+}
+
+function openConversationSearchBar() {
+    if (!conversationSearchBar || !currentChatUser) {
+        return;
+    }
+    conversationSearchBar.hidden = false;
+    conversationSearchInput?.focus();
+    conversationSearchInput?.select();
+}
+
+function closeConversationSearchBar({ clearInput = true } = {}) {
+    if (!conversationSearchBar) {
+        return;
+    }
+    conversationSearchBar.hidden = true;
+    resetConversationSearchHighlights();
+    if (clearInput && conversationSearchInput) {
+        conversationSearchInput.value = "";
+    }
+}
+
+function bindConversationSearchEvents() {
+    conversationSearchInput?.addEventListener("input", runConversationSearch);
+
+    conversationSearchInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            focusConversationSearchResult(conversationSearchResultIndex + 1);
+        } else if (event.key === "Escape") {
+            event.preventDefault();
+            closeConversationSearchBar();
+        }
+    });
+
+    conversationSearchPrevBtn?.addEventListener("click", () => {
+        focusConversationSearchResult(conversationSearchResultIndex - 1);
+    });
+
+    conversationSearchNextBtn?.addEventListener("click", () => {
+        focusConversationSearchResult(conversationSearchResultIndex + 1);
+    });
+
+    conversationSearchCloseBtn?.addEventListener("click", () => {
+        closeConversationSearchBar();
+    });
+
+    document.addEventListener("keydown", (event) => {
+        const wantsSearch = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f";
+        if (wantsSearch && currentChatUser) {
+            event.preventDefault();
+            openConversationSearchBar();
+        }
+        if (event.key === "Escape" && conversationSearchBar && !conversationSearchBar.hidden) {
+            closeConversationSearchBar();
+        }
+    });
+}
+
 async function addMessageToChat(msg, prepend = false) {
     let div = document.createElement("div");
     let hasContextActions = false;
@@ -2538,6 +2851,9 @@ async function addMessageToChat(msg, prepend = false) {
     }
 
     rebuildMessageDaySeparators();
+    if (conversationSearchBar && !conversationSearchBar.hidden && conversationSearchInput?.value.trim()) {
+        runConversationSearch();
+    }
 }
 
 window.loadMoreMessages = loadMoreMessages;
@@ -4454,7 +4770,15 @@ imageSourceGalleryBtn?.addEventListener("click", () => {
 
 imageSourceCameraBtn?.addEventListener("click", () => {
     closeImageSourceMenu();
-    imageCaptureInput?.click();
+    if (canUseNativeCameraCapture()) {
+        imageCaptureInput?.click();
+        return;
+    }
+    if (canUseBrowserCameraCapture()) {
+        void openCameraCaptureOverlay();
+        return;
+    }
+    setComposerStatus("Camera capture is not available on this device/browser.", "warning");
 });
 
 imageUploadInput.addEventListener("change", (e) => {
@@ -4477,6 +4801,22 @@ document.addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && imageSourceMenu && !imageSourceMenu.hidden) {
         closeImageSourceMenu({ restoreFocus: true });
+    }
+    if (event.key === "Escape" && cameraCaptureOverlay && !cameraCaptureOverlay.hidden) {
+        closeCameraCaptureOverlay();
+    }
+});
+
+cameraCaptureTakeBtn?.addEventListener("click", () => {
+    void captureImageFromCameraAndSend();
+});
+
+cameraCaptureCancelBtn?.addEventListener("click", closeCameraCaptureOverlay);
+cameraCaptureCloseBtn?.addEventListener("click", closeCameraCaptureOverlay);
+
+cameraCaptureOverlay?.addEventListener("click", (event) => {
+    if (event.target === cameraCaptureOverlay) {
+        closeCameraCaptureOverlay();
     }
 });
 
