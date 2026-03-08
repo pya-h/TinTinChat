@@ -135,7 +135,7 @@ $csrfToken = generateCsrfToken();
                         </div>
                     </div>
                 </div>
-                <div id="messageActionsHint" class="message-actions-hint" aria-live="polite">
+                <div id="messageActionsHint" class="message-actions-hint is-hidden" aria-live="polite" hidden>
                     Tip: Right-click (desktop) or long-press (mobile) any message to open actions.
                 </div>
                 <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-relevant="additions"></div>
@@ -146,15 +146,28 @@ $csrfToken = generateCsrfToken();
                         <textarea id="chatInput" class="form-control" placeholder="Type a message..." rows="1" aria-label="Message input"></textarea>
                         
                         <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
+                        <input type="file" id="imageCaptureInput" accept="image/*" capture="environment" style="display: none;">
                         <input type="file" id="fileUploadInput" style="display: none;">
 
                         <button type="button" id="composerToolsToggle" class="btn btn-secondary ms-2" title="Show or hide media actions" aria-label="Toggle media actions">
                             <i class="fas fa-plus"></i>
                         </button>
 
-                        <button type="button" id="imageUploadBtn" class="btn btn-secondary ms-2" title="Send an image" aria-label="Send image">
-                            <i class="fas fa-image"></i>
-                        </button>
+                        <div class="composer-image-source">
+                            <button type="button" id="imageUploadBtn" class="btn btn-secondary ms-2" title="Send an image" aria-label="Send image" aria-haspopup="menu" aria-expanded="false">
+                                <i class="fas fa-image"></i>
+                            </button>
+                            <div id="imageSourceMenu" class="image-source-menu" role="menu" aria-label="Choose image source" hidden>
+                                <button type="button" id="imageSourceGalleryBtn" class="image-source-menu-item" role="menuitem">
+                                    <i class="fas fa-images"></i>
+                                    <span>Gallery</span>
+                                </button>
+                                <button type="button" id="imageSourceCameraBtn" class="image-source-menu-item" role="menuitem">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Take new image</span>
+                                </button>
+                            </div>
+                        </div>
 
                         <button type="button" id="voiceBtn" class="btn btn-secondary ms-2" title="Record voice message" aria-label="Record voice message">
                             <i class="fas fa-microphone"></i>

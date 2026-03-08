@@ -165,7 +165,7 @@ Legend:
 ### Phase F — Chatroom Parity Features (Recommended) (`P2/P3`)
 - [x] (`P2`) Typing indicator.
 - [x] (`P2`) Unread counter per chat.
-- [ ] (`P2`) Better per-message timestamp formatting and grouping.
+- [x] (`P2`) Better per-message timestamp formatting and grouping.
 - [ ] (`P2`) Search inside current conversation.
 - [ ] (`P3`) Message reactions (minimal emoji set).
 - [ ] (`P3`) Optional delete-for-everyone policy (with permissions).

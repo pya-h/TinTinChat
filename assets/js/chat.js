@@ -7,7 +7,11 @@ const composerStatusElem = document.getElementById("composerStatus");
 const chatWithElem = document.getElementById("chatWith");
 const searchUserInput = document.getElementById("searchUser");
 const imageUploadInput = document.getElementById("imageUploadInput");
+const imageCaptureInput = document.getElementById("imageCaptureInput");
 const imageUploadBtn = document.getElementById("imageUploadBtn");
+const imageSourceMenu = document.getElementById("imageSourceMenu");
+const imageSourceGalleryBtn = document.getElementById("imageSourceGalleryBtn");
+const imageSourceCameraBtn = document.getElementById("imageSourceCameraBtn");
 const composerToolsToggleBtn = document.getElementById("composerToolsToggle");
 const settingsButton = document.getElementById("chatSettingsBtn");
 const settingsPanel = document.getElementById("chatSettingsPanel");
@@ -52,8 +56,8 @@ const FILE_UPLOAD_MAX_BYTES = Number(appConstants.uploadFileMaxBytes) || 50 * 10
 const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
-const SETTINGS_HINT_DISMISSED_KEY = "tintinchat.messageActionsHint.dismissed";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
+const MESSAGE_ACTIONS_HINT_AUTO_HIDE_MS = 4200;
 const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
 const TYPING_IDLE_TIMEOUT_MS = 1800;
@@ -143,6 +147,9 @@ const decryptedMediaCacheByMessageId = new Map();
 let lastTypingSentAt = 0;
 let localTypingState = false;
 let typingStopTimer = null;
+let messageActionsHintTimer = null;
+let hasShownMessageActionsHint = false;
+let imageSourceMenuHideTimer = null;
 
 const appSettings = {
     notificationSoundEnabled: true,
@@ -604,18 +611,89 @@ function syncMobileComposerActions() {
     voiceBtn.style.display = showTools ? "inline-flex" : "none";
     chatForm.classList.toggle("mobile-tools-visible", showTools);
     composerToolsToggleBtn.setAttribute("aria-expanded", showTools ? "true" : "false");
+    if (!showTools) {
+        closeImageSourceMenu();
+    }
+}
+
+function hideMessageActionsHint(immediate = false) {
+    if (!messageActionsHintElem) {
+        return;
+    }
+    if (messageActionsHintTimer) {
+        window.clearTimeout(messageActionsHintTimer);
+        messageActionsHintTimer = null;
+    }
+    messageActionsHintElem.classList.remove("is-visible");
+    messageActionsHintElem.classList.add("is-hidden");
+    if (immediate) {
+        messageActionsHintElem.hidden = true;
+        return;
+    }
+    window.setTimeout(() => {
+        if (messageActionsHintElem.classList.contains("is-hidden")) {
+            messageActionsHintElem.hidden = true;
+        }
+    }, 220);
 }
 
 function updateMessageActionsHintVisibility(forceDismiss = false) {
     if (!messageActionsHintElem) {
         return;
     }
-    const dismissed =
-        forceDismiss || localStorage.getItem(SETTINGS_HINT_DISMISSED_KEY) === "true";
-    messageActionsHintElem.style.display = dismissed ? "none" : "block";
     if (forceDismiss) {
-        localStorage.setItem(SETTINGS_HINT_DISMISSED_KEY, "true");
+        hasShownMessageActionsHint = true;
+        hideMessageActionsHint(true);
+        return;
     }
+    if (hasShownMessageActionsHint) {
+        hideMessageActionsHint(true);
+        return;
+    }
+    hasShownMessageActionsHint = true;
+    messageActionsHintElem.hidden = false;
+    messageActionsHintElem.classList.remove("is-hidden");
+    void messageActionsHintElem.offsetWidth;
+    messageActionsHintElem.classList.add("is-visible");
+    messageActionsHintTimer = window.setTimeout(() => {
+        hideMessageActionsHint();
+    }, MESSAGE_ACTIONS_HINT_AUTO_HIDE_MS);
+}
+
+function closeImageSourceMenu({ restoreFocus = false } = {}) {
+    if (!imageSourceMenu) {
+        return;
+    }
+    if (imageSourceMenuHideTimer) {
+        window.clearTimeout(imageSourceMenuHideTimer);
+        imageSourceMenuHideTimer = null;
+    }
+    imageSourceMenu.classList.remove("is-open");
+    imageUploadBtn?.setAttribute("aria-expanded", "false");
+    imageSourceMenuHideTimer = window.setTimeout(() => {
+        if (!imageSourceMenu.classList.contains("is-open")) {
+            imageSourceMenu.hidden = true;
+        }
+    }, 170);
+    if (restoreFocus) {
+        imageUploadBtn?.focus();
+    }
+}
+
+function openImageSourceMenu() {
+    if (!imageSourceMenu) {
+        imageUploadInput?.click();
+        return;
+    }
+    if (imageSourceMenuHideTimer) {
+        window.clearTimeout(imageSourceMenuHideTimer);
+        imageSourceMenuHideTimer = null;
+    }
+    imageSourceMenu.hidden = false;
+    imageUploadBtn?.setAttribute("aria-expanded", "true");
+    window.requestAnimationFrame(() => {
+        imageSourceMenu.classList.add("is-open");
+    });
 }
 
 function applySettingsUi() {
@@ -2117,17 +2195,95 @@ function newDateTag(
     msg,
     { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "" }
 ) {
+    const timeLabel = formatMessageTimeLabel(msg.created_at);
     const margins = strictMargins ? `mt-${topSpace}` : `mt-0 mt-lg-${topSpace} mt-md-${topSpace}`;
     return `<span class="message-meta-time mx-2 ${margins}" style="font-size: ${fontSize}px; float: ${
         atLeft ? "left" : "right"
-    };${extraStyles}">${new Date(msg.created_at).toLocaleString("default", {
+    };${extraStyles}">${escapeHtml(timeLabel)}</span>`;
+}
+
+function formatMessageTimeLabel(createdAt) {
+    const createdAtDate = new Date(createdAt);
+    if (Number.isNaN(createdAtDate.getTime())) {
+        return "--:--";
+    }
+    return createdAtDate.toLocaleTimeString("default", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+}
+
+function toMessageDayKey(createdAt) {
+    if (!createdAt) {
+        return "";
+    }
+    const date = new Date(createdAt);
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function formatMessageDayLabel(createdAt) {
+    const date = new Date(createdAt);
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+
+    if (target.getTime() === today.getTime()) {
+        return "Today";
+    }
+    if (target.getTime() === yesterday.getTime()) {
+        return "Yesterday";
+    }
+
+    return target.toLocaleDateString("default", {
         year: "numeric",
         month: "short",
         day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hour12: false,
-    })}</span>`;
+    });
+}
+
+function rebuildMessageDaySeparators() {
+    if (!chatMessagesElem) {
+        return;
+    }
+
+    chatMessagesElem
+        .querySelectorAll(".message-day-separator")
+        .forEach((separator) => separator.remove());
+
+    const messageElements = Array.from(chatMessagesElem.querySelectorAll(".message"));
+    let previousDayKey = "";
+
+    messageElements.forEach((messageElement) => {
+        const createdAt = messageElement.getAttribute("data-created-at") || "";
+        const dayKey = toMessageDayKey(createdAt);
+        if (!dayKey || dayKey === previousDayKey) {
+            return;
+        }
+
+        const label = formatMessageDayLabel(createdAt);
+        if (!label) {
+            return;
+        }
+
+        const separator = document.createElement("div");
+        separator.className = "message-day-separator";
+        separator.innerHTML = `<span class="message-day-separator-label">${escapeHtml(label)}</span>`;
+        chatMessagesElem.insertBefore(separator, messageElement);
+        previousDayKey = dayKey;
+    });
 }
 
 async function addMessageToChat(msg, prepend = false) {
@@ -2284,15 +2440,7 @@ async function addMessageToChat(msg, prepend = false) {
         const isIncomingGroup = isGroupMessage && msg.sender_id != CURRENT_USER_ID;
         const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
         const senderInitial = escapeHtml(String((msg.sender_username || "M")[0] || "M").toUpperCase());
-        const groupDateLabel = new Date(msg.created_at).toLocaleString("default", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-            hour12: false,
-        });
-        const groupDateTag = `<span class="message-meta-time group-message-meta-time">${escapeHtml(groupDateLabel)}</span>`;
+        const groupDateTag = `<span class="message-meta-time group-message-meta-time">${escapeHtml(formatMessageTimeLabel(msg.created_at))}</span>`;
         const messageBodyContent = `${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${isIncomingGroup ? groupDateTag : ""}`;
         const outsideDateTag = isIncomingGroup
             ? ""
@@ -2388,6 +2536,8 @@ async function addMessageToChat(msg, prepend = false) {
     } else {
         chatMessagesElem.appendChild(div);
     }
+
+    rebuildMessageDaySeparators();
 }
 
 window.loadMoreMessages = loadMoreMessages;
@@ -4268,28 +4418,66 @@ imageUploadBtn.addEventListener("click", () => {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
     }
-    imageUploadInput.click();
+    if (imageSourceMenu && !imageSourceMenu.hidden && imageSourceMenu.classList.contains("is-open")) {
+        closeImageSourceMenu({ restoreFocus: true });
+        return;
+    }
+    openImageSourceMenu();
 });
 
-imageUploadInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
+function handleSelectedImageFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = null;
+    if (!file) {
+        return;
+    }
+
     if (file) {
         if (!file.type.startsWith("image/")) {
             showModal(I18N_TEXT.invalidFileTypeTitle, I18N_TEXT.invalidFileTypeImageBody, "warning");
-            e.target.value = null;
             return;
         }
 
         if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
             showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.imageTooLargeBody, "warning");
-            e.target.value = null;
             return;
         }
 
         sendImageMessage(file);
     }
+}
 
-    e.target.value = null;
+imageSourceGalleryBtn?.addEventListener("click", () => {
+    closeImageSourceMenu();
+    imageUploadInput?.click();
+});
+
+imageSourceCameraBtn?.addEventListener("click", () => {
+    closeImageSourceMenu();
+    imageCaptureInput?.click();
+});
+
+imageUploadInput.addEventListener("change", (e) => {
+    handleSelectedImageFile(e);
+});
+
+imageCaptureInput?.addEventListener("change", (e) => {
+    handleSelectedImageFile(e);
+});
+
+document.addEventListener("click", (event) => {
+    if (imageSourceMenu?.hidden) {
+        return;
+    }
+    if (!event.target.closest("#imageSourceMenu") && !event.target.closest("#imageUploadBtn")) {
+        closeImageSourceMenu();
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && imageSourceMenu && !imageSourceMenu.hidden) {
+        closeImageSourceMenu({ restoreFocus: true });
+    }
 });
 
 async function sendImageMessage(imageFile) {
