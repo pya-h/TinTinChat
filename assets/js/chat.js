@@ -1923,11 +1923,11 @@ function triggerReactionSubmitBurst(messageElement, emoji) {
         <span class="reaction-submit-burst-core">${escapeHtml(normalizedEmoji)}</span>
         <span class="reaction-submit-burst-ring"></span>
         <span class="reaction-submit-particle p1">✨</span>
-        <span class="reaction-submit-particle p2">✦</span>
-        <span class="reaction-submit-particle p3">✶</span>
+        <span class="reaction-submit-particle p2">⭐</span>
+        <span class="reaction-submit-particle p3">💫</span>
         <span class="reaction-submit-particle p4">✨</span>
-        <span class="reaction-submit-particle p5">✦</span>
-        <span class="reaction-submit-particle p6">✶</span>
+        <span class="reaction-submit-particle p5">⭐</span>
+        <span class="reaction-submit-particle p6">💫</span>
     `;
 
     hostElement.appendChild(burst);

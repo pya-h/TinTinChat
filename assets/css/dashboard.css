@@ -997,7 +997,7 @@ nav.navbar:hover::after {
     width: 3.3rem;
     height: 3.3rem;
     pointer-events: none;
-    z-index: 5;
+    z-index: 7;
 }
 
 .reaction-submit-burst-core {
@@ -1024,48 +1024,48 @@ nav.navbar:hover::after {
     position: absolute;
     left: 50%;
     top: 50%;
-    font-size: 0.68rem;
+    font-size: 0.95rem;
     line-height: 1;
-    color: color-mix(in srgb, var(--secondary-color) 75%, #fff);
-    text-shadow: 0 0 4px color-mix(in srgb, var(--secondary-color) 38%, transparent);
+    color: #ffe38a;
+    text-shadow: 0 0 6px rgba(255, 204, 80, 0.65);
     transform: translate(-50%, -50%);
     opacity: 0;
-    animation: reactionBurstParticle 0.72s ease-out forwards;
+    animation: reactionBurstParticle 0.86s ease-out forwards;
 }
 
 .reaction-submit-particle.p1 {
-    --x: 1.15rem;
-    --y: -1.05rem;
+    --x: 1.45rem;
+    --y: -1.25rem;
     animation-delay: 0.02s;
 }
 
 .reaction-submit-particle.p2 {
-    --x: 1.4rem;
-    --y: 0rem;
+    --x: 1.65rem;
+    --y: -0.05rem;
     animation-delay: 0.05s;
 }
 
 .reaction-submit-particle.p3 {
-    --x: 1.05rem;
-    --y: 1.05rem;
+    --x: 1.2rem;
+    --y: 1.25rem;
     animation-delay: 0.08s;
 }
 
 .reaction-submit-particle.p4 {
-    --x: -1.15rem;
-    --y: -1.05rem;
+    --x: -1.45rem;
+    --y: -1.25rem;
     animation-delay: 0.02s;
 }
 
 .reaction-submit-particle.p5 {
-    --x: -1.4rem;
-    --y: 0rem;
+    --x: -1.65rem;
+    --y: -0.05rem;
     animation-delay: 0.05s;
 }
 
 .reaction-submit-particle.p6 {
-    --x: -1.05rem;
-    --y: 1.05rem;
+    --x: -1.2rem;
+    --y: 1.25rem;
     animation-delay: 0.08s;
 }
 
@@ -3027,8 +3027,8 @@ nav.navbar:hover::after {
     padding: 0;
     box-shadow: none;
     white-space: normal;
-    width: fit-content;
-    max-width: min(31rem, 88vw);
+    width: min(40rem, 88vw);
+    max-width: 40rem;
 }
 
 .video-message-container {
@@ -3037,8 +3037,9 @@ nav.navbar:hover::after {
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
     background: color-mix(in srgb, var(--surface-color) 92%, transparent);
     border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+    width: 100%;
     min-width: 14rem;
-    max-width: min(31rem, 88vw);
+    max-width: 100%;
     transition: var(--transition-fast);
 }
 
