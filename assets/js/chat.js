@@ -35,6 +35,12 @@ const groupRotateJoinLinkBtn = document.getElementById("groupRotateJoinLinkBtn")
 const groupTransferOwnerBtn = document.getElementById("groupTransferOwnerBtn");
 const groupLeaveBtn = document.getElementById("groupLeaveBtn");
 const chatAreaElem = document.querySelector(".chat-area");
+const createGroupModalOverlay = document.getElementById("createGroupModalOverlay");
+const createGroupModalClose = document.getElementById("createGroupModalClose");
+const createGroupForm = document.getElementById("createGroupForm");
+const createGroupTitleInput = document.getElementById("createGroupTitleInput");
+const createGroupDetailsInput = document.getElementById("createGroupDetailsInput");
+const createGroupSubmitBtn = document.getElementById("createGroupSubmitBtn");
 
 const appConstants = window.APP_CONSTANTS || {};
 
@@ -437,6 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
     applySettingsUi();
     bindSettingsUiEvents();
     bindMessageActionModalEvents();
+    bindCreateGroupModalEvents();
     notificationPlayer.preloadCustom();
 });
 
@@ -468,6 +475,70 @@ function openGroupInfoPanel() {
         groupInfoBtn.setAttribute("aria-expanded", "true");
     }
     chatAreaElem?.classList.add("group-panel-open");
+}
+
+function openCreateGroupModal() {
+    if (!createGroupModalOverlay) {
+        return;
+    }
+    createGroupModalOverlay.hidden = false;
+    if (createGroupForm) {
+        createGroupForm.reset();
+    }
+    createGroupSubmitBtn && (createGroupSubmitBtn.disabled = false);
+    setTimeout(() => {
+        createGroupTitleInput?.focus();
+    }, 0);
+}
+
+function closeCreateGroupModal() {
+    if (!createGroupModalOverlay) {
+        return;
+    }
+    createGroupModalOverlay.hidden = true;
+    if (createGroupForm) {
+        createGroupForm.reset();
+    }
+    createGroupSubmitBtn && (createGroupSubmitBtn.disabled = false);
+}
+
+function bindCreateGroupModalEvents() {
+    createGroupModalClose?.addEventListener("click", closeCreateGroupModal);
+    createGroupModalOverlay?.addEventListener("click", (event) => {
+        if (event.target === createGroupModalOverlay) {
+            closeCreateGroupModal();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && createGroupModalOverlay && !createGroupModalOverlay.hidden) {
+            event.preventDefault();
+            closeCreateGroupModal();
+        }
+    });
+
+    createGroupForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const title = String(createGroupTitleInput?.value || "").trim();
+        const description = String(createGroupDetailsInput?.value || "").trim();
+
+        if (!title) {
+            createGroupTitleInput?.focus();
+            setComposerStatus("Group title is required", "warning");
+            return;
+        }
+
+        try {
+            if (createGroupSubmitBtn) {
+                createGroupSubmitBtn.disabled = true;
+            }
+            await createGroupFlow(title, description);
+            closeCreateGroupModal();
+        } catch (error) {
+            createGroupSubmitBtn && (createGroupSubmitBtn.disabled = false);
+            showModal("Create Group Failed", error.message || "Unable to create group", "error");
+        }
+    });
 }
 
 async function fetchAndImportGroupCryptoKey(groupId) {
@@ -1901,18 +1972,21 @@ async function addMessageToChat(msg, prepend = false) {
         div.classList.add("is-text-message");
         if (isIncomingGroup) {
             div.classList.add("group-incoming-message");
+            div.classList.add(isPersian ? "group-incoming-rtl" : "group-incoming-ltr");
         }
         hasContextActions = true;
         canCopy = true;
         canForward = true;
-        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-row"><div class="group-message-identity"><span class="group-message-avatar">${senderInitial}</span><span class="group-message-name">${senderUsername}</span></div><div class="group-message-content">${messageBodyContent}</div></div>` : messageBodyContent}${newDateTag(msg, {
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-row"><span class="group-message-avatar">${senderInitial}</span><div class="group-message-content"><span class="group-message-name">${senderUsername}</span>${messageBodyContent}</div></div>` : messageBodyContent}${newDateTag(msg, {
             atLeft: isPersian,
             strictMargins: true,
             topSpace: 3,
         })}`;
         div.setAttribute("data-message-id", msg.id);
-        if (isPersian) {
+        if (isPersian && !isIncomingGroup) {
             div.dir = "rtl";
+        } else {
+            div.removeAttribute("dir");
         }
 
         const copyBtn = div.querySelector(".message-copy-btn");
@@ -3057,13 +3131,7 @@ async function renderGroupInfoPanel(groupId) {
     }
 }
 
-async function createGroupFlow() {
-    const title = window.prompt("Group title:", "");
-    if (!title || !title.trim()) {
-        return;
-    }
-    const description = window.prompt("Group description (optional):", "") || "";
-
+async function createGroupFlow(title, description = "") {
     const data = await window.ApiService.jsonOk("api/create_group.php", {
         method: "POST",
         headers: {
@@ -3431,12 +3499,8 @@ async function loadChatList(force = false) {
 loadChatList();
 handleJoinGroupFromUrl();
 
-createGroupBtn?.addEventListener("click", async () => {
-    try {
-        await createGroupFlow();
-    } catch (error) {
-        showModal("Create Group Failed", error.message || "Unable to create group", "error");
-    }
+createGroupBtn?.addEventListener("click", () => {
+    openCreateGroupModal();
 });
 
 groupKeyHealthBtn?.addEventListener("click", async () => {

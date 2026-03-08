@@ -122,13 +122,13 @@ $csrfToken = generateCsrfToken();
                     </div>
 
                     <div class="group-info-actions">
-                        <button type="button" id="groupAddMemberBtn" class="btn btn-outline-primary w-100 mb-2">Add Member</button>
                         <div class="input-group input-group-sm">
                             <input type="text" id="groupJoinLinkInput" class="form-control" readonly aria-label="Group join link">
                             <button type="button" id="groupCopyJoinLinkBtn" class="btn btn-outline-secondary">Copy</button>
                             <button type="button" id="groupRotateJoinLinkBtn" class="btn btn-outline-secondary">Rotate</button>
                         </div>
                         <div class="group-management-actions mt-2 d-flex gap-2">
+                            <button type="button" id="groupAddMemberBtn" class="btn btn-sm btn-outline-primary" hidden>Add Member</button>
                             <button type="button" id="groupTransferOwnerBtn" class="btn btn-sm btn-outline-warning" hidden>Transfer Ownership</button>
                             <button type="button" id="groupLeaveBtn" class="btn btn-sm btn-outline-danger">Leave Group</button>
                         </div>
@@ -180,6 +180,30 @@ $csrfToken = generateCsrfToken();
         </div>
     </div>
     <div id="messageActionModalAnnouncer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="createGroupModalOverlay" class="create-group-modal-overlay" hidden>
+        <div class="create-group-modal" role="dialog" aria-modal="true" aria-labelledby="createGroupModalTitle">
+            <div class="create-group-modal-header">
+                <h5 id="createGroupModalTitle" class="create-group-modal-title">Create Group</h5>
+                <button type="button" id="createGroupModalClose" class="create-group-modal-close" aria-label="Close create group modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="createGroupForm" class="create-group-modal-body">
+                <label class="create-group-field" for="createGroupTitleInput">
+                    <span>Title</span>
+                    <input type="text" id="createGroupTitleInput" class="form-control" maxlength="120" required>
+                </label>
+                <label class="create-group-field" for="createGroupDetailsInput">
+                    <span>Details</span>
+                    <textarea id="createGroupDetailsInput" class="form-control" rows="3" maxlength="500"></textarea>
+                </label>
+                <div class="create-group-modal-actions">
+                    <button type="submit" id="createGroupSubmitBtn" class="btn btn-primary">Create Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <?php require_once __DIR__ . '/includes/modal.php' ?>
     <script src="assets/js/ext/bootstrap.bundle.min.js"></script>

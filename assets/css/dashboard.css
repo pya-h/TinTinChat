@@ -261,7 +261,7 @@ nav.navbar:hover::after {
 .group-actions {
     position: fixed;
     left: 1rem;
-    bottom: 1rem;
+    bottom: 1.65rem;
     z-index: 120;
 }
 
@@ -466,27 +466,30 @@ nav.navbar:hover::after {
     line-height: 1.2;
 }
 
-.group-info-actions #groupAddMemberBtn {
-    width: fit-content !important;
-    min-width: 7.5rem;
-    justify-self: start;
-}
-
 .group-info-actions .input-group .btn {
     min-width: 3.6rem;
 }
 
 .group-management-actions {
     display: flex !important;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.45rem;
     align-items: center;
+    justify-content: flex-end;
 }
 
 .group-management-actions .btn {
     flex: 0 1 auto;
-    min-width: 9rem;
+    min-width: 8.5rem;
     width: auto;
+    border-radius: 999px;
+    padding: 0.42rem 0.88rem;
+    font-size: 0.76rem;
+}
+
+#groupAddMemberBtn {
+    margin-right: auto;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--secondary-color) 20%, transparent);
 }
 
 .group-info-members {
@@ -495,28 +498,36 @@ nav.navbar:hover::after {
 }
 
 .group-incoming-message {
-    padding: 0.56rem 0.72rem;
+    padding: 0.25rem 0.35rem 1.35rem;
+    position: relative;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    max-width: 42rem;
+}
+
+.message.received.group-incoming-message {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
 }
 
 .group-message-row {
     display: flex;
     align-items: flex-start;
     gap: 0.6rem;
-}
-
-.group-message-identity {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.42rem;
-    min-width: 0;
-    flex-shrink: 0;
+    direction: ltr;
 }
 
 .group-message-name {
+    display: block;
     font-size: 0.74rem;
     font-weight: 700;
     color: var(--subtle-text-color);
-    max-width: 5.8rem;
+    margin-bottom: 0.24rem;
+    line-height: 1.2;
+    max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -534,6 +545,7 @@ nav.navbar:hover::after {
     font-weight: 700;
     font-size: 0.72rem;
     flex-shrink: 0;
+    margin-top: 0.2rem;
 }
 
 .group-message-content .message-text-content {
@@ -544,6 +556,57 @@ nav.navbar:hover::after {
 .group-message-content {
     min-width: 0;
     flex: 1;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    padding: 0.5rem 0.72rem;
+    text-align: left;
+}
+
+.group-incoming-message .message-copy-btn {
+    position: absolute;
+    bottom: 0.28rem;
+    right: 0.45rem;
+    margin: 0;
+}
+
+.group-incoming-message.group-incoming-rtl .group-message-content {
+    text-align: right;
+    direction: rtl;
+}
+
+.group-incoming-message.group-incoming-rtl .group-message-name {
+    text-align: right;
+}
+
+.group-incoming-message.group-incoming-rtl .message-copy-btn {
+    right: auto;
+    left: 0.45rem;
+}
+
+#groupInfoBtn,
+#chatSettingsBtn {
+    border-radius: 999px;
+    min-width: 2.15rem;
+    height: 2.15rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-color: color-mix(in srgb, var(--secondary-color) 22%, var(--border-color));
+    background: color-mix(in srgb, var(--surface-color) 88%, transparent);
+    color: var(--secondary-color);
+    transition: var(--transition-fast);
+}
+
+#groupInfoBtn:hover,
+#chatSettingsBtn:hover,
+#groupInfoBtn:focus-visible,
+#chatSettingsBtn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--secondary-color) 22%, transparent);
+    border-color: color-mix(in srgb, var(--secondary-color) 45%, var(--border-color));
 }
 
 .chat-list li::before {
@@ -3123,13 +3186,36 @@ nav.navbar:hover::after {
 
     .group-actions {
         left: 0.8rem;
-        bottom: 0.8rem;
+        bottom: calc(5.35rem + env(safe-area-inset-bottom, 0px));
     }
 
     .create-group-fab {
         width: 3rem;
         height: 3rem;
         min-width: 3rem;
+    }
+
+    .group-management-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        margin-top: 0.18rem !important;
+        row-gap: 0.4rem;
+    }
+
+    .group-management-actions.mt-2 {
+        margin-top: 0.18rem !important;
+    }
+
+    #groupAddMemberBtn {
+        margin-right: 0;
+    }
+
+    .group-info-actions {
+        gap: 0.25rem;
+    }
+
+    .group-info-actions .input-group {
+        margin-bottom: 0;
     }
 
     .chat-area {
@@ -3151,4 +3237,98 @@ nav.navbar:hover::after {
         z-index: 50;
     }
 
+}
+
+.create-group-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.create-group-modal {
+    width: min(30rem, 100%);
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.create-group-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.create-group-modal-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.create-group-modal-close {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 88%, var(--background-color));
+    color: var(--subtle-text-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-group-modal-body {
+    display: grid;
+    gap: 0.7rem;
+    padding: 0.85rem 0.9rem 0.95rem;
+}
+
+.create-group-field {
+    display: grid;
+    gap: 0.3rem;
+}
+
+.create-group-field>span {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--subtle-text-color);
+}
+
+.create-group-field .form-control {
+    border-radius: 0.7rem;
+    border-color: var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 90%, var(--background-color));
+    color: var(--text-color);
+}
+
+.create-group-field textarea.form-control {
+    resize: vertical;
+    min-height: 5.4rem;
+}
+
+.create-group-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.15rem;
+}
+
+@media (max-width: 767.98px) {
+    .create-group-modal-overlay {
+        align-items: flex-end;
+        padding: 0.6rem;
+    }
+
+    .create-group-modal {
+        width: 100%;
+        border-radius: 0.95rem;
+    }
 }
