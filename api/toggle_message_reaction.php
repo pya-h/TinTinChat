@@ -17,7 +17,7 @@ if ($messageId <= 0) {
     apiError('INVALID_MESSAGE_ID', 'Invalid message id', 400);
 }
 
-$allowedReactions = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+$allowedReactions = ['👍', '❤️', '😂', '😮', '😢', '🔥', '🐠'];
 if ($reaction !== '' && !in_array($reaction, $allowedReactions, true)) {
     apiError('INVALID_REACTION', 'Unsupported reaction', 400);
 }

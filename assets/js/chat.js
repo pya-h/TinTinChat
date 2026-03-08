@@ -75,7 +75,7 @@ const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
 const TYPING_IDLE_TIMEOUT_MS = 1800;
 const TYPING_UPDATE_THROTTLE_MS = 750;
-const REACTION_EMOJI_SET = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+const REACTION_EMOJI_SET = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🐠"];
 const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
     "php", "phtml", "php3", "php4", "php5", "phar",
     "exe", "msi", "bat", "cmd", "com", "scr",
@@ -1668,7 +1668,38 @@ function getMessageElementById(messageId) {
     return chatMessagesElem.querySelector(`.message[data-message-id="${messageId}"]`);
 }
 
-function applyMessageReactionsUpdate(messageId, reactions = []) {
+function getReactionHostElement(messageElement) {
+    if (!messageElement) {
+        return null;
+    }
+    if (messageElement.classList.contains("group-incoming-message")) {
+        return messageElement.querySelector(".group-message-content") || messageElement;
+    }
+    return messageElement;
+}
+
+function triggerReactionSubmitBurst(messageElement, emoji) {
+    const hostElement = getReactionHostElement(messageElement);
+    const normalizedEmoji = String(emoji || "").trim();
+    if (!hostElement || !normalizedEmoji) {
+        return;
+    }
+
+    hostElement.querySelector(".reaction-submit-burst")?.remove();
+
+    const burst = document.createElement("div");
+    burst.className = "reaction-submit-burst";
+    burst.setAttribute("aria-hidden", "true");
+    burst.innerHTML = `
+        <span class="reaction-submit-burst-core">${escapeHtml(normalizedEmoji)}</span>
+        <span class="reaction-submit-burst-ring"></span>
+    `;
+
+    hostElement.appendChild(burst);
+    window.setTimeout(() => burst.remove(), 620);
+}
+
+function applyMessageReactionsUpdate(messageId, reactions = [], { flashEmoji = "" } = {}) {
     const normalizedMessageId = Number(messageId || 0);
     if (!normalizedMessageId) {
         return;
@@ -1692,7 +1723,14 @@ function applyMessageReactionsUpdate(messageId, reactions = []) {
     if (!messageElement) {
         return;
     }
-    renderMessageReactions(messageElement, meta || { id: normalizedMessageId, reactions });
+    const normalizedFlashEmoji = String(flashEmoji || "").trim();
+    renderMessageReactions(messageElement, meta || { id: normalizedMessageId, reactions }, {
+        flashEmoji: normalizedFlashEmoji,
+    });
+
+    if (normalizedFlashEmoji) {
+        triggerReactionSubmitBurst(messageElement, normalizedFlashEmoji);
+    }
 }
 
 async function toggleMessageReaction(messageId, reaction) {
@@ -1709,7 +1747,9 @@ async function toggleMessageReaction(messageId, reaction) {
         body: JSON.stringify(payload),
     });
     const reactions = Array.isArray(data?.reactions) ? data.reactions : [];
-    applyMessageReactionsUpdate(payload.message_id, reactions);
+    applyMessageReactionsUpdate(payload.message_id, reactions, {
+        flashEmoji: payload.reaction,
+    });
     return reactions;
 }
 
@@ -2790,7 +2830,7 @@ function bindConversationSearchEvents() {
     });
 }
 
-function renderMessageReactions(messageElement, messageData) {
+function renderMessageReactions(messageElement, messageData, { flashEmoji = "" } = {}) {
     if (!messageElement) {
         return;
     }
@@ -2802,9 +2842,8 @@ function renderMessageReactions(messageElement, messageData) {
         return;
     }
 
-    const hostElement = messageElement.classList.contains("group-incoming-message")
-        ? messageElement.querySelector(".group-message-content") || messageElement
-        : messageElement;
+    const hostElement = getReactionHostElement(messageElement);
+    const normalizedFlashEmoji = String(flashEmoji || "").trim();
 
     const container = document.createElement("div");
     container.className = "message-reactions";
@@ -2822,6 +2861,9 @@ function renderMessageReactions(messageElement, messageData) {
         chip.innerHTML = `<span class="message-reaction-emoji">${emoji}</span><span class="message-reaction-count">${count}</span>`;
         if (reactionItem?.reacted_by_me) {
             chip.classList.add("is-active");
+        }
+        if (normalizedFlashEmoji && normalizedFlashEmoji === emoji) {
+            chip.classList.add("is-pop");
         }
         chip.addEventListener("click", async (event) => {
             event.stopPropagation();

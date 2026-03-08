@@ -868,7 +868,7 @@ nav.navbar:hover::after {
 .message-reactions {
     position: absolute;
     left: 50%;
-    bottom: -0.85rem;
+    bottom: -0.95rem;
     transform: translateX(-50%);
     z-index: 4;
     display: flex;
@@ -909,6 +909,10 @@ nav.navbar:hover::after {
 
 .message-reaction-chip:hover {
     transform: translateY(-1px);
+}
+
+.message-reaction-chip.is-pop {
+    animation: reactionChipPop 0.34s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 .message-reaction-emoji {
@@ -968,11 +972,76 @@ nav.navbar:hover::after {
 }
 
 .message.message-has-reactions {
-    margin-bottom: 1.55rem;
+    margin-bottom: 1.7rem;
 }
 
-.group-message-content .message-reactions {
-    margin-top: 0.42rem;
+.reaction-submit-burst {
+    position: absolute;
+    left: 50%;
+    bottom: -0.35rem;
+    transform: translateX(-50%);
+    width: 2.4rem;
+    height: 2.4rem;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.reaction-submit-burst-core {
+    position: absolute;
+    inset: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.12rem;
+    animation: reactionBurstCore 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.reaction-submit-burst-ring {
+    position: absolute;
+    inset: 0.42rem;
+    border: 2px solid color-mix(in srgb, var(--secondary-color) 55%, transparent);
+    border-radius: 50%;
+    opacity: 0;
+    animation: reactionBurstRing 0.58s ease-out forwards;
+}
+
+@keyframes reactionChipPop {
+    0% {
+        transform: scale(0.86);
+    }
+    55% {
+        transform: scale(1.14);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes reactionBurstCore {
+    0% {
+        opacity: 0;
+        transform: scale(0.4) translateY(0.2rem);
+    }
+    35% {
+        opacity: 1;
+        transform: scale(1.12) translateY(-0.18rem);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1) translateY(-0.65rem);
+    }
+}
+
+@keyframes reactionBurstRing {
+    0% {
+        opacity: 0.62;
+        transform: scale(0.35);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.2);
+    }
 }
 
 .chat-item-unread-badge {
