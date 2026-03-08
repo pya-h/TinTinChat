@@ -1,6 +1,6 @@
 # TinTinChat API Contract & Error Codes
 
-Last updated: 2026-03-07
+Last updated: 2026-03-08
 Audience: developers extending `api/*.php` and frontend consumers in `assets/js/*`.
 
 ## 1) Response Envelope
@@ -71,7 +71,7 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - Auth/session: login/logout/session restoration
 - Keys: public/private key fetch + key save
 - Messaging (direct + group text): send/fetch/recent/seen/delete
-- Media/files (direct): image/voice/file send + retrieval
+- Media/files (direct + group): image/voice/file send + retrieval
 - Discovery: user search/check + chat list
 - Groups:
   - `create_group.php`
@@ -90,6 +90,12 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 ---
 
 ## 5) Common Error Codes
+
+### Encrypted Media Envelope
+- Media payloads are uploaded as encrypted binary blobs (`application/octet-stream` on retrieval).
+- `messages.message` and `messages.message_for_sender` hold encrypted media envelopes (wrapped media key + encrypted metadata JSON).
+- For direct chats, envelope key wrapping is recipient-specific (`message`) and sender-specific (`message_for_sender`).
+- For groups, envelope wrapping is based on the shared group key model and guarded by membership checks on send/fetch.
 
 ### Auth / Session
 - `UNAUTHORIZED` → user session missing/invalid.

@@ -129,6 +129,7 @@ let lastContextMenuMessageElement = null;
 let lastFocusedElementBeforeActionModal = null;
 const pendingSeenMessageIds = new Set();
 const messageMetaById = new Map();
+const decryptedMediaCacheByMessageId = new Map();
 
 const appSettings = {
     notificationSoundEnabled: true,
@@ -203,6 +204,149 @@ const notificationPlayer = window.ChatNotificationService?.createPlayer({
 };
 
 const playNotificationSound = () => notificationPlayer.play();
+
+function getMediaEndpointForType(messageType, messageId) {
+    if (messageType === "image") {
+        return `api/get_image.php?id=${messageId}`;
+    }
+    if (messageType === "voice") {
+        return `api/get_voice_message.php?id=${messageId}`;
+    }
+    return `api/get_file_message.php?id=${messageId}`;
+}
+
+function getMediaEnvelopePayloadForMessage(msg) {
+    const isGroupMessage = Number(msg?.group_id || 0) > 0;
+    if (isGroupMessage) {
+        return String(msg?.message || msg?.message_for_sender || "");
+    }
+    return Number(msg?.sender_id) === Number(CURRENT_USER_ID)
+        ? String(msg?.message_for_sender || "")
+        : String(msg?.message || "");
+}
+
+async function resolveMediaAesKey(msg, wrappedKeyPayload) {
+    const isGroupMessage = Number(msg?.group_id || 0) > 0;
+    if (isGroupMessage) {
+        const groupId = Number(msg?.group_id || 0);
+        const groupKey = await getGroupCryptoKey(groupId);
+        return unwrapMediaKeyFromGroupWrapped(wrappedKeyPayload, groupKey);
+    }
+    await ensurePrivateKeyLoaded();
+    return unwrapMediaKeyFromPrivateWrapped(wrappedKeyPayload);
+}
+
+async function getDecryptedMediaResource(msg) {
+    const messageId = Number(msg?.id || 0);
+    if (!messageId) {
+        throw new Error("Invalid media message");
+    }
+
+    if (decryptedMediaCacheByMessageId.has(messageId)) {
+        return decryptedMediaCacheByMessageId.get(messageId);
+    }
+
+    const envelopePayload = getMediaEnvelopePayloadForMessage(msg);
+    const envelope = parseMediaEnvelopePayload(envelopePayload);
+    const mediaKey = await resolveMediaAesKey(msg, envelope.k);
+    const metadata = await decryptMediaMetadata(envelope.m, mediaKey);
+
+    const endpoint = getMediaEndpointForType(String(msg.message_type || "file"), messageId);
+    const response = await fetch(endpoint, { cache: "no-store" });
+    if (!response.ok) {
+        throw new Error(`Failed to fetch media (${response.status})`);
+    }
+
+    const encryptedBytes = new Uint8Array(await response.arrayBuffer());
+    const decryptedBytes = await decryptBinaryWithAesKey(encryptedBytes, mediaKey);
+    const mimeType =
+        String(metadata?.mime_type || metadata?.mime || "").trim() ||
+        "application/octet-stream";
+    const fileName =
+        String(metadata?.file_name || metadata?.name || "").trim() ||
+        `attachment_${messageId}`;
+
+    const blob = new Blob([decryptedBytes], { type: mimeType });
+    const objectUrl = URL.createObjectURL(blob);
+    const resource = { blob, objectUrl, metadata: { ...metadata, mime_type: mimeType, file_name: fileName } };
+    decryptedMediaCacheByMessageId.set(messageId, resource);
+    return resource;
+}
+
+async function getDecryptedMediaMetadata(msg) {
+    const messageId = Number(msg?.id || 0);
+    if (messageId && decryptedMediaCacheByMessageId.has(messageId)) {
+        return decryptedMediaCacheByMessageId.get(messageId).metadata || {};
+    }
+    const envelopePayload = getMediaEnvelopePayloadForMessage(msg);
+    const envelope = parseMediaEnvelopePayload(envelopePayload);
+    const mediaKey = await resolveMediaAesKey(msg, envelope.k);
+    return decryptMediaMetadata(envelope.m, mediaKey);
+}
+
+async function encryptMediaForMessage(fileOrBlob, metadata, context = {}) {
+    const mediaKey = await generateAesGcmKey();
+    const encryptedMetadata = await encryptMediaMetadata(metadata, mediaKey);
+    const isGroupMessage = Boolean(context.groupId);
+
+    let recipientEnvelopePayload = "";
+    let senderEnvelopePayload = "";
+    if (isGroupMessage) {
+        const groupKey = await getGroupCryptoKey(Number(context.groupId));
+        const wrappedForGroup = await wrapMediaKeyForGroup(mediaKey, groupKey);
+        recipientEnvelopePayload = buildMediaEnvelopePayload(wrappedForGroup, encryptedMetadata);
+        senderEnvelopePayload = recipientEnvelopePayload;
+    } else {
+        const recipientPublicKey = await getPublicKey(String(context.targetUsername || ""));
+        const senderPublicKey = await getPublicKey(CURRENT_USER);
+        const wrappedForRecipient = await wrapMediaKeyForPublicKey(mediaKey, recipientPublicKey);
+        const wrappedForSender = await wrapMediaKeyForPublicKey(mediaKey, senderPublicKey);
+        recipientEnvelopePayload = buildMediaEnvelopePayload(wrappedForRecipient, encryptedMetadata);
+        senderEnvelopePayload = buildMediaEnvelopePayload(wrappedForSender, encryptedMetadata);
+    }
+
+    const sourceBuffer = await fileOrBlob.arrayBuffer();
+    const encryptedBytes = await encryptBinaryWithAesKey(sourceBuffer, mediaKey);
+    const encryptedBlob = new Blob([encryptedBytes], { type: "application/octet-stream" });
+
+    return {
+        encryptedBlob,
+        messageForRecipient: recipientEnvelopePayload,
+        messageForSender: senderEnvelopePayload,
+    };
+}
+
+async function hydrateImageMessageElement(messageElement, msg) {
+    const imageElem = messageElement.querySelector(".message-image");
+    const loadingElem = messageElement.querySelector(".image-message-loading");
+    if (!imageElem) {
+        return;
+    }
+
+    try {
+        const mediaResource = await getDecryptedMediaResource(msg);
+        imageElem.src = mediaResource.objectUrl;
+        imageElem.style.display = "block";
+        imageElem.setAttribute("data-ready", "1");
+        if (loadingElem) {
+            loadingElem.style.display = "none";
+        }
+    } catch (error) {
+        imageElem.style.display = "none";
+        if (loadingElem) {
+            loadingElem.textContent = "Unable to decrypt image";
+        }
+    }
+}
+
+function clearDecryptedMediaCache() {
+    decryptedMediaCacheByMessageId.forEach((resource) => {
+        if (resource?.objectUrl) {
+            URL.revokeObjectURL(resource.objectUrl);
+        }
+    });
+    decryptedMediaCacheByMessageId.clear();
+}
 
 function buildGroupToken(groupId) {
     return `group:${groupId}`;
@@ -1483,6 +1627,7 @@ async function selectChatTarget(target) {
     chatMessagesElem.innerHTML = "";
     pendingSeenMessageIds.clear();
     messageMetaById.clear();
+    clearDecryptedMediaCache();
     toggleSettingsPanel(false);
 
     messageOffset = 0;
@@ -1858,10 +2003,9 @@ async function addMessageToChat(msg, prepend = false) {
         div.classList.add("is-image-message");
         hasContextActions = true;
 
-        const imageUrl = `api/get_image.php?id=${msg.id}`;
-        div.innerHTML = `<a href="${imageUrl}" class="image-message-link" data-image-url="${imageUrl}" title="View full image">
-                <img src="${imageUrl}" class="message-image" alt="Image from ${msg.sender_id}" 
-                    onerror="this.parentNode.innerHTML='<div style=\\'padding: 20px; text-align: center; color: #6c757d;\\'>Image not available</div>'">
+        div.innerHTML = `<a href="#" class="image-message-link" title="View full image">
+                <img src="" class="message-image" alt="Encrypted image" data-ready="0" style="display:none;">
+                <div class="image-message-loading" style="padding: 20px; text-align: center; color: #6c757d;">Decrypting image...</div>
                 </a>${newDateTag(msg, {
                     atLeft: msg.sender_id == CURRENT_USER_ID,
                     topSpace: 1,
@@ -1871,26 +2015,32 @@ async function addMessageToChat(msg, prepend = false) {
                 div.setAttribute("data-message-id", msg.id);
 
         const imageLink = div.querySelector(".image-message-link");
+        const imageElement = div.querySelector(".message-image");
         if (imageLink) {
-            imageLink.addEventListener("click", (e) => {
+            imageLink.addEventListener("click", async (e) => {
                 e.preventDefault();
-                openImageModal(imageUrl);
+                if (!imageElement) {
+                    return;
+                }
+                if (imageElement.getAttribute("data-ready") !== "1") {
+                    await hydrateImageMessageElement(div, msg);
+                }
+                if (imageElement.getAttribute("data-ready") === "1") {
+                    openImageModal(imageElement.src);
+                }
             });
         }
+
+        hydrateImageMessageElement(div, msg);
     } else if (msg.message_type === "file" && msg.any_file_path) {
         div.classList.add("is-file-message");
         hasContextActions = true;
 
-        const fileUrl = `api/get_file_message.php?id=${msg.id}`;
-        let fileName = msg.any_file_path;
-        if (fileName.includes("_")) {
-            const parts = fileName.split("_");
-            if (parts.length > 2) {
-                fileName = parts.slice(2).join("_");
-            } else {
-                fileName = parts[parts.length - 1];
-            }
-        }
+        let fileName = "Encrypted file";
+        try {
+            const mediaMeta = await getDecryptedMediaMetadata(msg);
+            fileName = String(mediaMeta?.file_name || "").trim() || fileName;
+        } catch (error) {}
         const fileSize = msg.file_size ? formatFileSize(msg.file_size) : "";
         const escapedFileName = fileName.replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
@@ -1900,14 +2050,14 @@ async function addMessageToChat(msg, prepend = false) {
         const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
 
         div.innerHTML = `
-          <div class="file-message-container" data-file-msg-id="${
-              msg.id
-          }" onclick="downloadAndOpenFile(${msg.id}, '${escapedFileName}')" ${cacheTitle}>
+                    <div class="file-message-container" data-file-msg-id="${
+                            msg.id
+                    }" onclick="downloadAndOpenFile(${msg.id})" ${cacheTitle}>
             <div class="file-icon">
               <i class="fas fa-file"></i>
             </div>
             <div class="file-info">
-              <div class="file-name">${fileName}</div>
+                            <div class="file-name">${escapedFileName}</div>
               ${fileSize ? `<div class="file-size">${fileSize}</div>` : ""}
             </div>
             <div class="file-download-icon">
@@ -2372,7 +2522,21 @@ async function openCachedFileBlob(cachedFile) {
     }
 }
 
-async function downloadAndOpenFile(messageId, fileName) {
+async function downloadAndOpenFile(messageId) {
+    const messageMeta = messageMetaById.get(Number(messageId));
+    if (!messageMeta) {
+        showModal(I18N_TEXT.downloadErrorTitle, "Message metadata not found.", "error");
+        return;
+    }
+
+    let fileName = `attachment_${messageId}`;
+    try {
+        const metadata = await getDecryptedMediaMetadata(messageMeta);
+        fileName =
+            String(metadata?.file_name || metadata?.name || "").trim() ||
+            fileName;
+    } catch (error) {}
+
     // Check if file was previously downloaded
     const fileDownloaded = await isFileDownloaded(messageId);
     const fileIcon = document.querySelector(
@@ -2402,14 +2566,8 @@ async function downloadAndOpenFile(messageId, fileName) {
     }
 
     try {
-        const fileUrl = `api/get_file_message.php?id=${messageId}`;
-        const response = await fetch(fileUrl);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const fileBlob = await response.blob();
+        const mediaResource = await getDecryptedMediaResource(messageMeta);
+        const fileBlob = mediaResource.blob;
 
         await saveDownloadedFile(messageId, fileName, fileBlob);
 
@@ -2499,9 +2657,15 @@ chatMessagesElem.addEventListener("scroll", () => {
     }
 });
 
-window.playVoiceMessage = function (messageId) {
+window.playVoiceMessage = async function (messageId) {
     const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
     if (!messageDiv) return;
+
+    const messageMeta = messageMetaById.get(Number(messageId));
+    if (!messageMeta) {
+        showModal("Audio Error", "Unable to load voice metadata.", "error");
+        return;
+    }
 
     const playBtn = messageDiv.querySelector(".voice-play-btn");
     const durationDisplay = messageDiv.querySelector(".voice-duration-display");
@@ -2513,7 +2677,17 @@ window.playVoiceMessage = function (messageId) {
         }
 
         audio = document.createElement("audio");
-        audio.src = `api/get_voice_message.php?id=${messageId}`;
+        try {
+            const mediaResource = await getDecryptedMediaResource(messageMeta);
+            audio.src = mediaResource.objectUrl;
+        } catch (error) {
+            showModal(
+                "Audio Error",
+                "Unable to decrypt voice message.",
+                "error"
+            );
+            return;
+        }
         audio.preload = "metadata";
         audio.style.display = "none"; // Hide the actual audio element
         messageDiv.appendChild(audio);
@@ -3676,6 +3850,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
         currentChatUser = null;
         currentChatRecentMessages = null;
         chatMessagesElem.innerHTML = "";
+        clearDecryptedMediaCache();
         chatWithElem.textContent = "Select a chat";
         chatInput.value = "";
         chatInput.disabled = true;
@@ -3710,10 +3885,6 @@ setInterval(() => {
 voiceBtn.addEventListener("click", async () => {
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
-        return;
-    }
-    if (isGroupToken(currentChatUser)) {
-        showModal("Group Media", "Voice messages for groups will be added soon.", "info");
         return;
     }
     if (!isRecording) {
@@ -3840,11 +4011,26 @@ async function sendVoiceMessage(audioBlob) {
             chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
         }, 100);
 
+        const groupId = parseGroupIdFromToken(currentChatUser);
+        const mediaPayload = await encryptMediaForMessage(
+            audioBlob,
+            {
+                file_name: "voice_message.webm",
+                mime_type: String(audioBlob?.type || "audio/webm"),
+                file_size: Number(audioBlob?.size || 0),
+            },
+            groupId > 0 ? { groupId } : { targetUsername: currentChatUser }
+        );
+
         const formData = new FormData();
-        formData.append("target", currentChatUser);
-        formData.append("message", null); // TODO: Add caption for voice messages
-        formData.append("message_for_sender", null);
-        formData.append("voice_file", audioBlob, "voice_message.webm");
+        if (groupId > 0) {
+            formData.append("group_id", String(groupId));
+        } else {
+            formData.append("target", currentChatUser);
+        }
+        formData.append("message", mediaPayload.messageForRecipient);
+        formData.append("message_for_sender", mediaPayload.messageForSender);
+        formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
 
         await window.ApiService.jsonOk("api/send_voice_message.php", {
             method: "POST",
@@ -3854,7 +4040,9 @@ async function sendVoiceMessage(audioBlob) {
 
         sendingIndicator.remove();
 
-        addUserToChatList(currentChatUser);
+        if (!isGroupToken(currentChatUser)) {
+            addUserToChatList(currentChatUser);
+        }
         loadCurrentChatsRecentMessages();
         setComposerStatus("Voice message sent", "success");
     } catch (err) {
@@ -3873,10 +4061,6 @@ async function sendVoiceMessage(audioBlob) {
 imageUploadBtn.addEventListener("click", () => {
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
-        return;
-    }
-    if (isGroupToken(currentChatUser)) {
-        showModal("Group Media", "Image uploads for groups will be added soon.", "info");
         return;
     }
     imageUploadInput.click();
@@ -3922,11 +4106,26 @@ async function sendImageMessage(imageFile) {
 
         imageUploadBtn.disabled = true;
 
+        const groupId = parseGroupIdFromToken(currentChatUser);
+        const mediaPayload = await encryptMediaForMessage(
+            imageFile,
+            {
+                file_name: String(imageFile?.name || "image"),
+                mime_type: String(imageFile?.type || "image/jpeg"),
+                file_size: Number(imageFile?.size || 0),
+            },
+            groupId > 0 ? { groupId } : { targetUsername: currentChatUser }
+        );
+
         const formData = new FormData();
-        formData.append("target", currentChatUser);
-        formData.append("message", null); // TODO: Add caption for image messages
-        formData.append("message_for_sender", null);
-        formData.append("image_file", imageFile, imageFile.name);
+        if (groupId > 0) {
+            formData.append("group_id", String(groupId));
+        } else {
+            formData.append("target", currentChatUser);
+        }
+        formData.append("message", mediaPayload.messageForRecipient);
+        formData.append("message_for_sender", mediaPayload.messageForSender);
+        formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
 
         await window.ApiService.jsonOk("api/send_image_message.php", {
             method: "POST",
@@ -3936,7 +4135,9 @@ async function sendImageMessage(imageFile) {
 
         sendingIndicator.remove();
 
-        addUserToChatList(currentChatUser);
+        if (!isGroupToken(currentChatUser)) {
+            addUserToChatList(currentChatUser);
+        }
         loadCurrentChatsRecentMessages();
         setComposerStatus("Image sent", "success");
     } catch (err) {
@@ -3957,11 +4158,6 @@ async function sendImageMessage(imageFile) {
 async function sendFileMessage(file) {
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
-        return;
-    }
-
-    if (isGroupToken(currentChatUser)) {
-        showModal("Group Media", "File uploads for groups will be added soon.", "info");
         return;
     }
 
@@ -3986,11 +4182,26 @@ async function sendFileMessage(file) {
             chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
         }, 100);
 
+        const groupId = parseGroupIdFromToken(currentChatUser);
+        const mediaPayload = await encryptMediaForMessage(
+            file,
+            {
+                file_name: String(file?.name || "file"),
+                mime_type: String(file?.type || "application/octet-stream"),
+                file_size: Number(file?.size || 0),
+            },
+            groupId > 0 ? { groupId } : { targetUsername: currentChatUser }
+        );
+
         const formData = new FormData();
-        formData.append("target", currentChatUser);
-        formData.append("message", null);
-        formData.append("message_for_sender", null);
-        formData.append("file", file, file.name);
+        if (groupId > 0) {
+            formData.append("group_id", String(groupId));
+        } else {
+            formData.append("target", currentChatUser);
+        }
+        formData.append("message", mediaPayload.messageForRecipient);
+        formData.append("message_for_sender", mediaPayload.messageForSender);
+        formData.append("file", mediaPayload.encryptedBlob, "file.enc");
 
         await window.ApiService.jsonOk("api/send_file_message.php", {
             method: "POST",
@@ -4000,7 +4211,9 @@ async function sendFileMessage(file) {
 
         sendingIndicator.remove();
 
-        addUserToChatList(currentChatUser);
+        if (!isGroupToken(currentChatUser)) {
+            addUserToChatList(currentChatUser);
+        }
         loadCurrentChatsRecentMessages();
         setComposerStatus("File sent", "success");
     } catch (err) {

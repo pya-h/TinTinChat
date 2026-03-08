@@ -1,6 +1,8 @@
 const ENCRYPTION_CHARACTER_LIMIT = 190,
     DECRYPTION_CHARACTER_LIMIT = 344,
-    GROUP_MESSAGE_PREFIX = "gcm1";
+    GROUP_MESSAGE_PREFIX = "gcm1",
+    MEDIA_METADATA_PREFIX = "mmd1",
+    MEDIA_ENVELOPE_VERSION = "med1";
 const textEncoder = new TextEncoder();
 
 function uint8ArrayToBase64(bytes) {
@@ -197,6 +199,155 @@ async function importGroupSymmetricKey(groupKeyBase64) {
         false,
         ["encrypt", "decrypt"]
     );
+}
+
+async function generateAesGcmKey() {
+    return window.crypto.subtle.generateKey(
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+    );
+}
+
+async function exportAesKeyBase64(aesKey) {
+    const raw = await window.crypto.subtle.exportKey("raw", aesKey);
+    return uint8ArrayToBase64(new Uint8Array(raw));
+}
+
+async function importAesKeyFromBase64(base64Key) {
+    const keyBytes = base64ToUint8Array(base64Key);
+    return window.crypto.subtle.importKey(
+        "raw",
+        keyBytes,
+        { name: "AES-GCM" },
+        false,
+        ["encrypt", "decrypt"]
+    );
+}
+
+async function wrapMediaKeyForPublicKey(aesKey, recipientPublicKey) {
+    const exportedKeyBase64 = await exportAesKeyBase64(aesKey);
+    return encryptMessage(exportedKeyBase64, recipientPublicKey);
+}
+
+async function unwrapMediaKeyFromPrivateWrapped(wrappedKey) {
+    const exportedKeyBase64 = await decryptMessage(wrappedKey);
+    return importAesKeyFromBase64(exportedKeyBase64);
+}
+
+async function wrapMediaKeyForGroup(aesKey, groupKey) {
+    const exportedKeyBase64 = await exportAesKeyBase64(aesKey);
+    return encryptGroupMessage(exportedKeyBase64, groupKey);
+}
+
+async function unwrapMediaKeyFromGroupWrapped(wrappedKey, groupKey) {
+    const exportedKeyBase64 = await decryptGroupMessage(wrappedKey, groupKey);
+    return importAesKeyFromBase64(exportedKeyBase64);
+}
+
+async function encryptBinaryWithAesKey(inputBuffer, aesKey) {
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const encrypted = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        aesKey,
+        inputBuffer
+    );
+    const cipherBytes = new Uint8Array(encrypted);
+    const payload = new Uint8Array(iv.length + cipherBytes.length);
+    payload.set(iv, 0);
+    payload.set(cipherBytes, iv.length);
+    return payload;
+}
+
+async function decryptBinaryWithAesKey(encryptedBuffer, aesKey) {
+    const encryptedBytes =
+        encryptedBuffer instanceof Uint8Array
+            ? encryptedBuffer
+            : new Uint8Array(encryptedBuffer || new ArrayBuffer(0));
+
+    if (encryptedBytes.length < 13) {
+        throw new Error("Invalid encrypted media payload");
+    }
+
+    const iv = encryptedBytes.slice(0, 12);
+    const cipherBytes = encryptedBytes.slice(12);
+    const decrypted = await window.crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        aesKey,
+        cipherBytes
+    );
+
+    return new Uint8Array(decrypted);
+}
+
+async function encryptMediaMetadata(metadata, aesKey) {
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const metadataBytes = new TextEncoder().encode(JSON.stringify(metadata || {}));
+    const encrypted = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        aesKey,
+        metadataBytes
+    );
+    return `${MEDIA_METADATA_PREFIX}:${uint8ArrayToBase64(iv)}:${uint8ArrayToBase64(
+        new Uint8Array(encrypted)
+    )}`;
+}
+
+async function decryptMediaMetadata(payload, aesKey) {
+    if (typeof payload !== "string" || !payload.startsWith(`${MEDIA_METADATA_PREFIX}:`)) {
+        throw new Error("Invalid encrypted media metadata format");
+    }
+
+    const parts = payload.split(":");
+    if (parts.length !== 3 || parts[0] !== MEDIA_METADATA_PREFIX) {
+        throw new Error("Invalid encrypted media metadata payload");
+    }
+
+    const iv = base64ToUint8Array(parts[1]);
+    const cipherBytes = base64ToUint8Array(parts[2]);
+    const decrypted = await window.crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        aesKey,
+        cipherBytes
+    );
+    const asText = new TextDecoder().decode(decrypted);
+    const parsed = JSON.parse(asText);
+    return parsed && typeof parsed === "object" ? parsed : {};
+}
+
+function buildMediaEnvelopePayload(wrappedMediaKey, encryptedMetadata) {
+    return JSON.stringify({
+        v: MEDIA_ENVELOPE_VERSION,
+        k: String(wrappedMediaKey || ""),
+        m: String(encryptedMetadata || ""),
+    });
+}
+
+function parseMediaEnvelopePayload(payload) {
+    const fallback = { k: "", m: "" };
+    if (typeof payload !== "string" || !payload.trim().length) {
+        throw new Error("Missing encrypted media envelope");
+    }
+
+    let parsed;
+    try {
+        parsed = JSON.parse(payload);
+    } catch (error) {
+        throw new Error("Invalid encrypted media envelope format");
+    }
+
+    if (!parsed || typeof parsed !== "object") {
+        return fallback;
+    }
+
+    if (parsed.v !== MEDIA_ENVELOPE_VERSION || typeof parsed.k !== "string" || typeof parsed.m !== "string") {
+        throw new Error("Unsupported encrypted media envelope");
+    }
+
+    return {
+        k: parsed.k,
+        m: parsed.m,
+    };
 }
 
 async function encryptGroupMessage(plainText, groupKey) {

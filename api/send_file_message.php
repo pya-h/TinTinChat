@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
+require_once __DIR__ . '/../includes/group_helpers.php';
 
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
@@ -25,17 +26,25 @@ const BLOCKED_FILE_MIME_TYPES = [
     'text/javascript',
 ];
 
-$target = apiNormalizeUsername($_POST['target'] ?? '', 'INVALID_TARGET_USERNAME');
-$messageEncryptedForRecipient = $_POST['message'] ?? null;
-$messageEncryptedForSender = $_POST['message_for_sender'] ?? null;
+$groupId = groupParseId($_POST['group_id'] ?? null);
+$target = $groupId > 0
+    ? ''
+    : apiNormalizeUsername($_POST['target'] ?? '', 'INVALID_TARGET_USERNAME');
+$messageEncryptedForRecipient = trim((string) ($_POST['message'] ?? ''));
+$messageEncryptedForSender = trim((string) ($_POST['message_for_sender'] ?? ''));
 
 $file = apiRequireUploadedFile('file');
 
-if ((int) $file['size'] > TTC_UPLOAD_FILE_MAX_BYTES) {
+if ($messageEncryptedForRecipient === '' || $messageEncryptedForSender === '') {
+    apiError('MISSING_PARAMETERS', 'Missing encrypted media envelope', 400);
+}
+
+if ((int) $file['size'] > TTC_UPLOAD_FILE_MAX_BYTES + 64) {
     apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 50MB', 400);
 }
 
-$fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+$uploadedName = (string) ($file['name'] ?? '');
+$fileExtension = strtolower(pathinfo($uploadedName, PATHINFO_EXTENSION));
 if ($fileExtension && in_array($fileExtension, BLOCKED_FILE_EXTENSIONS, true)) {
     apiError('BLOCKED_FILE_TYPE', 'This file type is not allowed for security reasons', 400);
 }
@@ -45,12 +54,18 @@ if (in_array($detectedMime, BLOCKED_FILE_MIME_TYPES, true)) {
     apiError('BLOCKED_FILE_TYPE', 'This file MIME type is not allowed for security reasons', 400);
 }
 
-$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
-$stmt->execute([$target]);
-$targetUser = $stmt->fetch();
+$receiverId = null;
+if ($groupId > 0) {
+    groupRequireMembership($pdo, $groupId, $userId);
+} else {
+    $stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
+    $stmt->execute([$target]);
+    $targetUser = $stmt->fetch();
 
-if (!$targetUser) {
-    apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
+    if (!$targetUser) {
+        apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
+    }
+    $receiverId = (int) $targetUser['id'];
 }
 
 $uploadsDir = __DIR__ . '/../uploads';
@@ -59,19 +74,19 @@ $filesDir = __DIR__ . '/../uploads/files';
 apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
 apiEnsureWritableDirectory($filesDir, 'files directory');
 
-$originalFileName = pathinfo($file['name'], PATHINFO_FILENAME);
-$uniqueFilename = uniqid('file_', true) . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalFileName) . ($fileExtension ? '.' . $fileExtension : '');
+$uniqueFilename = uniqid('file_enc_', true) . '.bin';
 $uploadPath = $filesDir . '/' . $uniqueFilename;
 
 if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
     apiError('FILE_SAVE_FAILED', 'Failed to save file', 500);
 }
 
-$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, message_for_sender, message_type, any_file_path, file_size) VALUES (?, ?, ?, ?, 'file', ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, any_file_path, file_size) VALUES (?, ?, ?, ?, ?, 'file', ?, ?)");
 if (
     !$stmt->execute([
         $userId,
-        $targetUser['id'],
+        $receiverId,
+        $groupId > 0 ? $groupId : null,
         $messageEncryptedForRecipient,
         $messageEncryptedForSender,
         $uniqueFilename,

@@ -1,18 +1,11 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
+require_once __DIR__ . '/../includes/group_helpers.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    exit('Invalid request method');
-}
-
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    exit('Not authorized');
-}
-
-$userId = $_SESSION['user_id'];
+apiRequireMethod('GET');
+$userId = apiRequireAuth();
 $messageId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if (!$messageId) {
@@ -20,11 +13,19 @@ if (!$messageId) {
     exit('Missing message id');
 }
 
-$stmt = $pdo->prepare("SELECT * FROM messages WHERE id = ? AND message_type = 'file'");
+$stmt = $pdo->prepare("SELECT sender_id, receiver_id, group_id, any_file_path FROM messages WHERE id = ? AND message_type = 'file'");
 $stmt->execute([$messageId]);
 $message = $stmt->fetch();
 
-if (!$message || ($message['sender_id'] != $userId && $message['receiver_id'] != $userId)) {
+if (!$message) {
+    http_response_code(404);
+    exit('Not found');
+}
+
+$groupId = isset($message['group_id']) ? (int) $message['group_id'] : 0;
+if ($groupId > 0) {
+    groupRequireMembership($pdo, $groupId, $userId);
+} elseif ((int) $message['sender_id'] !== $userId && (int) $message['receiver_id'] !== $userId) {
     http_response_code(403);
     exit('Forbidden');
 }
@@ -38,20 +39,10 @@ if (!$fullPath || strpos($fullPath, $uploadsDir) !== 0 || !file_exists($fullPath
     exit('File not found');
 }
 
-$originalFileName = $filePath;
-if (strpos($filePath, '_') !== false) {
-    $parts = explode('_', $filePath);
-    if (count($parts) > 2) {
-        $originalFileName = implode('_', array_slice($parts, 2));
-    } else {
-        $originalFileName = $parts[count($parts) - 1];
-    }
-}
-
-$mimeType = mime_content_type($fullPath);
-header('Content-Type: ' . $mimeType);
+header('X-Content-Type-Options: nosniff');
+header('Content-Type: application/octet-stream');
 header('Content-Length: ' . filesize($fullPath));
-header('Content-Disposition: attachment; filename="' . basename($originalFileName) . '"');
+header('Content-Disposition: attachment; filename="file.enc"');
 readfile($fullPath);
 exit;
 

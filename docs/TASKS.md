@@ -155,9 +155,10 @@ Legend:
 - [x] (`P1`) Expand encrypted text storage capacity (`messages.message`, `messages.message_for_sender`) to `MEDIUMTEXT` for larger payload support.
 
 ### Phase E.2 — Group Media/File Encryption (Separate) (`P1/P2`)
-- [ ] (`P1`) Encrypt group voice message payloads with shared group key.
-- [ ] (`P1`) Encrypt group image payloads (at-rest + transport metadata policy).
-- [ ] (`P1`) Encrypt group generic file payloads with secure key handling.
+- [x] (`P1`) Encrypt group voice message payloads with shared group key.
+- [x] (`P1`) Encrypt group image payloads (at-rest + transport metadata policy).
+- [x] (`P1`) Encrypt group generic file payloads with secure key handling.
+- [x] (`P1`) Apply full media encryption parity to direct/private chats (voice/image/file) using same envelope model.
 - [ ] (`P2`) Add key-versioning/rotation strategy for non-text encrypted attachments.
 - [ ] (`P2`) Add migration/backfill policy for legacy unencrypted group media/files.
 

@@ -1,28 +1,21 @@
 <?php
 session_start();
 
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    exit('Invalid request method');
-}
-
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(403);
-    exit('Access Denied');
-}
-
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
+require_once __DIR__ . '/../includes/group_helpers.php';
+
+apiRequireMethod('GET');
+$user_id = apiRequireAuth();
 
 $message_id = $_GET['id'] ?? null;
-$user_id = $_SESSION['user_id'];
-
-if (!$message_id) {
+if (!$message_id || !is_numeric($message_id)) {
     http_response_code(400);
     exit('Bad Request: Missing message ID');
 }
 
-$stmt = $pdo->prepare("SELECT sender_id, receiver_id, image_file_path FROM messages WHERE id = ? AND message_type = 'image'");
-$stmt->execute([$message_id]);
+$stmt = $pdo->prepare("SELECT sender_id, receiver_id, group_id, image_file_path FROM messages WHERE id = ? AND message_type = 'image'");
+$stmt->execute([(int) $message_id]);
 $message = $stmt->fetch();
 
 if (!$message) {
@@ -30,7 +23,10 @@ if (!$message) {
     exit('Not Found: Image message not found.');
 }
 
-if ($message['sender_id'] != $user_id && $message['receiver_id'] != $user_id) {
+$groupId = isset($message['group_id']) ? (int) $message['group_id'] : 0;
+if ($groupId > 0) {
+    groupRequireMembership($pdo, $groupId, $user_id);
+} elseif ((int) $message['sender_id'] !== $user_id && (int) $message['receiver_id'] !== $user_id) {
     http_response_code(403);
     exit('Access Denied: You do not have permission to view this image.');
 }
@@ -44,11 +40,9 @@ if (!$fullPath || !$uploadsDir || strpos($fullPath, $uploadsDir) !== 0 || !file_
     exit('Not Found: The image file is missing from the server.');
 }
 
-$finfo = finfo_open(FILEINFO_MIME_TYPE);
-$mime_type = finfo_file($finfo, $fullPath);
-finfo_close($finfo);
-
-header('Content-Type: ' . $mime_type);
+header('X-Content-Type-Options: nosniff');
+header('Content-Type: application/octet-stream');
 header('Content-Length: ' . filesize($fullPath));
+header('Content-Disposition: inline; filename="image.enc"');
 readfile($fullPath);
 exit;
