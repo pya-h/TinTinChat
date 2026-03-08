@@ -846,6 +846,20 @@ nav.navbar:hover::after {
     padding: 0 0.85rem 0.85rem;
 }
 
+.video-capture-timer {
+    margin-right: auto;
+    min-width: 3.1rem;
+    padding: 0.24rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+    color: var(--subtle-text-color);
+    font-weight: 700;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    text-align: center;
+}
+
 .camera-capture-actions .btn {
     border-radius: 999px;
     min-width: 7.8rem;
@@ -978,10 +992,10 @@ nav.navbar:hover::after {
 .reaction-submit-burst {
     position: absolute;
     left: 50%;
-    bottom: -0.35rem;
+    bottom: -0.45rem;
     transform: translateX(-50%);
-    width: 2.4rem;
-    height: 2.4rem;
+    width: 3.3rem;
+    height: 3.3rem;
     pointer-events: none;
     z-index: 5;
 }
@@ -992,18 +1006,67 @@ nav.navbar:hover::after {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.12rem;
-    animation: reactionBurstCore 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    font-size: 1.45rem;
+    animation: reactionBurstCore 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
 }
 
 .reaction-submit-burst-ring {
     position: absolute;
-    inset: 0.42rem;
-    border: 2px solid color-mix(in srgb, var(--secondary-color) 55%, transparent);
+    inset: 0.36rem;
+    border: 2.5px solid color-mix(in srgb, var(--secondary-color) 55%, transparent);
     border-radius: 50%;
     opacity: 0;
-    animation: reactionBurstRing 0.58s ease-out forwards;
+    animation: reactionBurstRing 0.68s ease-out forwards;
+}
+
+.reaction-submit-particle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 0.68rem;
+    line-height: 1;
+    color: color-mix(in srgb, var(--secondary-color) 75%, #fff);
+    text-shadow: 0 0 4px color-mix(in srgb, var(--secondary-color) 38%, transparent);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    animation: reactionBurstParticle 0.72s ease-out forwards;
+}
+
+.reaction-submit-particle.p1 {
+    --x: 1.15rem;
+    --y: -1.05rem;
+    animation-delay: 0.02s;
+}
+
+.reaction-submit-particle.p2 {
+    --x: 1.4rem;
+    --y: 0rem;
+    animation-delay: 0.05s;
+}
+
+.reaction-submit-particle.p3 {
+    --x: 1.05rem;
+    --y: 1.05rem;
+    animation-delay: 0.08s;
+}
+
+.reaction-submit-particle.p4 {
+    --x: -1.15rem;
+    --y: -1.05rem;
+    animation-delay: 0.02s;
+}
+
+.reaction-submit-particle.p5 {
+    --x: -1.4rem;
+    --y: 0rem;
+    animation-delay: 0.05s;
+}
+
+.reaction-submit-particle.p6 {
+    --x: -1.05rem;
+    --y: 1.05rem;
+    animation-delay: 0.08s;
 }
 
 @keyframes reactionChipPop {
@@ -1029,7 +1092,7 @@ nav.navbar:hover::after {
     }
     100% {
         opacity: 0;
-        transform: scale(1) translateY(-0.65rem);
+        transform: scale(1) translateY(-0.85rem);
     }
 }
 
@@ -1040,7 +1103,21 @@ nav.navbar:hover::after {
     }
     100% {
         opacity: 0;
-        transform: scale(1.2);
+        transform: scale(1.55);
+    }
+}
+
+@keyframes reactionBurstParticle {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3);
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--x, 0px)), calc(-50% + var(--y, 0px))) scale(1.12);
     }
 }
 
@@ -1789,6 +1866,15 @@ nav.navbar:hover::after {
 .image-source-menu-item[disabled]:hover,
 .image-source-menu-item[disabled]:focus-visible {
     background: transparent;
+}
+
+.image-source-menu-hint {
+    margin-top: 0.22rem;
+    padding: 0.34rem 0.46rem 0.16rem;
+    border-top: 1px dashed color-mix(in srgb, var(--border-color) 78%, transparent);
+    color: var(--subtle-text-color);
+    font-size: 0.7rem;
+    line-height: 1.35;
 }
 
 .composer-status {
@@ -2933,6 +3019,47 @@ nav.navbar:hover::after {
     text-align: center;
     color: #6c757d;
     font-size: 0.9rem;
+}
+
+.message.is-video-message {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    white-space: normal;
+}
+
+.video-message-container {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
+    background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+    min-width: 14rem;
+    max-width: min(31rem, 88vw);
+    transition: var(--transition-fast);
+}
+
+.video-message-container:hover {
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.14);
+    transform: translateY(-1px);
+}
+
+.message-video {
+    width: 100%;
+    display: block;
+    max-height: 26rem;
+    background: #000;
+}
+
+.video-message-loading {
+    padding: 1rem;
+    text-align: center;
+    color: var(--subtle-text-color);
+    font-size: 0.86rem;
+}
+
+.message.sent .video-message-container {
+    background: color-mix(in srgb, var(--sent-bg) 22%, var(--surface-color));
 }
 
 .load-more-container {

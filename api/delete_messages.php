@@ -72,7 +72,7 @@ foreach ($rows as $row) {
         $filesToDelete[] = ['dir' => __DIR__ . '/../uploads/voice_messages', 'name' => (string) $row['voice_file_path']];
     } elseif ($messageType === 'image' && !empty($row['image_file_path'])) {
         $filesToDelete[] = ['dir' => __DIR__ . '/../uploads/images', 'name' => (string) $row['image_file_path']];
-    } elseif ($messageType === 'file' && !empty($row['any_file_path'])) {
+    } elseif (($messageType === 'file' || $messageType === 'video') && !empty($row['any_file_path'])) {
         $filesToDelete[] = ['dir' => __DIR__ . '/../uploads/files', 'name' => (string) $row['any_file_path']];
     }
 }

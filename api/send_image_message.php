@@ -41,7 +41,7 @@ $upload_dir = __DIR__ . '/../uploads/images/';
 apiEnsureWritableDirectory($upload_dir, 'images directory');
 
 if ((int) $image_file['size'] > TTC_UPLOAD_IMAGE_MAX_BYTES + 64) {
-    apiError('FILE_TOO_LARGE', 'Image file is too large. Max 5MB allowed.', 400);
+    apiError('FILE_TOO_LARGE', 'Image file is too large. Max 20MB allowed.', 400);
 }
 
 $unique_filename = uniqid('img_enc_', true) . '.' . ENCRYPTED_IMAGE_EXTENSION;

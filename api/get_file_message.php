@@ -13,7 +13,7 @@ if (!$messageId) {
     exit('Missing message id');
 }
 
-$stmt = $pdo->prepare("SELECT sender_id, receiver_id, group_id, any_file_path FROM messages WHERE id = ? AND message_type = 'file'");
+$stmt = $pdo->prepare("SELECT sender_id, receiver_id, group_id, any_file_path FROM messages WHERE id = ? AND message_type IN ('file', 'video')");
 $stmt->execute([$messageId]);
 $message = $stmt->fetch();
 

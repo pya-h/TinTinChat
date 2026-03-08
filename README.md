@@ -149,7 +149,8 @@ CREATE TABLE messages (
 ## 📱 Deployment Tips
 
 * Use HTTPS to secure key transmission (required by Web Crypto API).
-* Set PHP `upload_max_filesize` and `post_max_size` to support 5MB+ media uploads.
+* Set PHP `upload_max_filesize` and `post_max_size` to support your configured media limits (image 20MB, file/video 100MB, voice 10MB).
+* For local PHP server, run with larger limits, e.g. `php -d upload_max_filesize=110M -d post_max_size=120M -S localhost:8080`.
 * For production, disable `.env` parsing on public directory or secure it.
 * If hosting on shared hosting, ensure file permissions are correct and outgoing access to Web APIs is allowed.
 

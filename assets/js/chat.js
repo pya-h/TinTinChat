@@ -8,16 +8,28 @@ const chatWithElem = document.getElementById("chatWith");
 const searchUserInput = document.getElementById("searchUser");
 const imageUploadInput = document.getElementById("imageUploadInput");
 const imageCaptureInput = document.getElementById("imageCaptureInput");
+const videoUploadInput = document.getElementById("videoUploadInput");
+const videoCaptureInput = document.getElementById("videoCaptureInput");
 const imageUploadBtn = document.getElementById("imageUploadBtn");
 const imageSourceMenu = document.getElementById("imageSourceMenu");
+const imageSourceMenuHint = document.getElementById("imageSourceMenuHint");
 const imageSourceGalleryBtn = document.getElementById("imageSourceGalleryBtn");
 const imageSourceCameraBtn = document.getElementById("imageSourceCameraBtn");
+const imageSourceSelectVideoBtn = document.getElementById("imageSourceSelectVideoBtn");
+const imageSourceRecordVideoBtn = document.getElementById("imageSourceRecordVideoBtn");
 const cameraCaptureOverlay = document.getElementById("cameraCaptureOverlay");
 const cameraCaptureVideo = document.getElementById("cameraCaptureVideo");
 const cameraCaptureCanvas = document.getElementById("cameraCaptureCanvas");
 const cameraCaptureTakeBtn = document.getElementById("cameraCaptureTake");
 const cameraCaptureCancelBtn = document.getElementById("cameraCaptureCancel");
 const cameraCaptureCloseBtn = document.getElementById("cameraCaptureClose");
+const videoCaptureOverlay = document.getElementById("videoCaptureOverlay");
+const videoCaptureVideo = document.getElementById("videoCaptureVideo");
+const videoCaptureStartBtn = document.getElementById("videoCaptureStart");
+const videoCaptureStopBtn = document.getElementById("videoCaptureStop");
+const videoCaptureCancelBtn = document.getElementById("videoCaptureCancel");
+const videoCaptureCloseBtn = document.getElementById("videoCaptureClose");
+const videoCaptureTimer = document.getElementById("videoCaptureTimer");
 const composerToolsToggleBtn = document.getElementById("composerToolsToggle");
 const settingsButton = document.getElementById("chatSettingsBtn");
 const settingsPanel = document.getElementById("chatSettingsPanel");
@@ -117,8 +129,8 @@ const I18N_TEXT = {
     invalidFileTypeTitle: "Invalid File Type",
     invalidFileTypeImageBody: "Please select an image file.",
     fileTooLargeTitle: "File Too Large",
-    imageTooLargeBody: "Image file size must be less than 5MB.",
-    fileTooLargeBody: "File size must be less than 50MB.",
+    imageTooLargeBody: "Image file size must be less than 20MB.",
+    fileTooLargeBody: "File size must be less than 100MB.",
     imageSendErrorTitle: "Image Send Error",
     imageSendErrorBody: "Image send error: {error}",
     reactTitle: "React to Message",
@@ -173,6 +185,13 @@ let imageSourceMenuHideTimer = null;
 let cameraStream = null;
 let isCameraCaptureBusy = false;
 let hasVideoInputDevice = null;
+let videoCaptureStream = null;
+let videoCaptureRecorder = null;
+let videoCaptureChunks = [];
+let videoCaptureTimerIntervalId = null;
+let videoCaptureStartedAt = 0;
+let shouldSendVideoCapture = false;
+let conversationSearchToken = 0;
 let conversationSearchResults = [];
 let conversationSearchResultIndex = -1;
 
@@ -432,6 +451,28 @@ async function hydrateImageMessageElement(messageElement, msg) {
         imageElem.style.display = "none";
         if (loadingElem) {
             loadingElem.textContent = "Unable to decrypt image";
+        }
+    }
+}
+
+async function hydrateVideoMessageElement(messageElement, msg) {
+    const videoElem = messageElement.querySelector(".message-video");
+    const loadingElem = messageElement.querySelector(".video-message-loading");
+    if (!videoElem) {
+        return;
+    }
+
+    try {
+        const mediaResource = await getDecryptedMediaResource(msg);
+        videoElem.src = mediaResource.objectUrl;
+        videoElem.style.display = "block";
+        if (loadingElem) {
+            loadingElem.style.display = "none";
+        }
+    } catch (error) {
+        videoElem.style.display = "none";
+        if (loadingElem) {
+            loadingElem.textContent = "Unable to decrypt video";
         }
     }
 }
@@ -723,6 +764,10 @@ function canUseBrowserCameraCapture() {
     );
 }
 
+function canUseBrowserVideoCapture() {
+    return canUseBrowserCameraCapture() && typeof window.MediaRecorder !== "undefined";
+}
+
 async function detectVideoInputDevice() {
     if (hasVideoInputDevice !== null) {
         return hasVideoInputDevice;
@@ -752,6 +797,44 @@ function stopCameraCaptureStream() {
     }
 }
 
+function stopVideoCaptureStream() {
+    if (!videoCaptureStream) {
+        return;
+    }
+    videoCaptureStream.getTracks().forEach((track) => track.stop());
+    videoCaptureStream = null;
+    if (videoCaptureVideo) {
+        videoCaptureVideo.srcObject = null;
+    }
+}
+
+function stopVideoCaptureTimer() {
+    if (videoCaptureTimerIntervalId) {
+        window.clearInterval(videoCaptureTimerIntervalId);
+        videoCaptureTimerIntervalId = null;
+    }
+    if (videoCaptureTimer) {
+        videoCaptureTimer.textContent = "00:00";
+    }
+}
+
+function startVideoCaptureTimer() {
+    stopVideoCaptureTimer();
+    videoCaptureStartedAt = Date.now();
+    if (!videoCaptureTimer) {
+        return;
+    }
+    videoCaptureTimerIntervalId = window.setInterval(() => {
+        const elapsedMs = Date.now() - videoCaptureStartedAt;
+        const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+        const minutes = Math.floor(totalSeconds / 60)
+            .toString()
+            .padStart(2, "0");
+        const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+        videoCaptureTimer.textContent = `${minutes}:${seconds}`;
+    }, 250);
+}
+
 function closeCameraCaptureOverlay() {
     if (!cameraCaptureOverlay) {
         return;
@@ -761,6 +844,23 @@ function closeCameraCaptureOverlay() {
     isCameraCaptureBusy = false;
     if (cameraCaptureTakeBtn) {
         cameraCaptureTakeBtn.disabled = false;
+    }
+}
+
+function closeVideoCaptureOverlay() {
+    stopVideoCaptureTimer();
+    shouldSendVideoCapture = false;
+    videoCaptureChunks = [];
+    videoCaptureRecorder = null;
+    stopVideoCaptureStream();
+    if (videoCaptureOverlay) {
+        videoCaptureOverlay.hidden = true;
+    }
+    if (videoCaptureStartBtn) {
+        videoCaptureStartBtn.disabled = false;
+    }
+    if (videoCaptureStopBtn) {
+        videoCaptureStopBtn.disabled = true;
     }
 }
 
@@ -789,6 +889,120 @@ async function openCameraCaptureOverlay() {
         setComposerStatus("Unable to access camera. Check browser permission settings.", "warning");
         return false;
     }
+}
+
+function pickVideoRecordingMimeType() {
+    if (typeof window.MediaRecorder === "undefined") {
+        return "";
+    }
+    const candidates = [
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm",
+    ];
+    return candidates.find((type) => window.MediaRecorder.isTypeSupported?.(type)) || "";
+}
+
+async function openVideoCaptureOverlay() {
+    if (!videoCaptureOverlay || !videoCaptureVideo || !canUseBrowserVideoCapture()) {
+        setComposerStatus("Video recording is not supported in this browser/device.", "warning");
+        return false;
+    }
+
+    try {
+        const preferRear = { video: { facingMode: { ideal: "environment" } }, audio: true };
+        let stream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia(preferRear);
+        } catch (initialError) {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        }
+
+        videoCaptureStream = stream;
+        videoCaptureChunks = [];
+        shouldSendVideoCapture = false;
+        videoCaptureVideo.srcObject = stream;
+        videoCaptureOverlay.hidden = false;
+        if (videoCaptureStartBtn) {
+            videoCaptureStartBtn.disabled = false;
+        }
+        if (videoCaptureStopBtn) {
+            videoCaptureStopBtn.disabled = true;
+        }
+        await videoCaptureVideo.play();
+        setComposerStatus("Video recorder ready", "success");
+        return true;
+    } catch (error) {
+        closeVideoCaptureOverlay();
+        setComposerStatus("Unable to access camera/microphone for video recording.", "warning");
+        return false;
+    }
+}
+
+function startVideoCaptureRecording() {
+    if (!videoCaptureStream || !canUseBrowserVideoCapture() || videoCaptureRecorder) {
+        return;
+    }
+
+    try {
+        const recordingType = pickVideoRecordingMimeType();
+        videoCaptureChunks = [];
+        shouldSendVideoCapture = false;
+        const recorder = recordingType
+            ? new MediaRecorder(videoCaptureStream, { mimeType: recordingType })
+            : new MediaRecorder(videoCaptureStream);
+
+        recorder.ondataavailable = (event) => {
+            if (event?.data?.size) {
+                videoCaptureChunks.push(event.data);
+            }
+        };
+
+        recorder.onstop = async () => {
+            const capturedChunks = videoCaptureChunks.slice();
+            const shouldSend = shouldSendVideoCapture;
+            const mimeType = recorder.mimeType || "video/webm";
+
+            closeVideoCaptureOverlay();
+
+            if (!shouldSend || !capturedChunks.length) {
+                return;
+            }
+
+            const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+            const videoBlob = new Blob(capturedChunks, { type: mimeType });
+            const videoFile = new File([videoBlob], `video_${Date.now()}.${extension}`, {
+                type: mimeType,
+            });
+            await sendFileMessage(videoFile, { asVideo: true });
+        };
+
+        recorder.start(300);
+        videoCaptureRecorder = recorder;
+        startVideoCaptureTimer();
+        if (videoCaptureStartBtn) {
+            videoCaptureStartBtn.disabled = true;
+        }
+        if (videoCaptureStopBtn) {
+            videoCaptureStopBtn.disabled = false;
+        }
+    } catch (error) {
+        closeVideoCaptureOverlay();
+        setComposerStatus("Unable to start video recording.", "error");
+    }
+}
+
+function stopVideoCaptureRecording({ send = false } = {}) {
+    shouldSendVideoCapture = Boolean(send);
+    if (!videoCaptureRecorder) {
+        closeVideoCaptureOverlay();
+        return;
+    }
+    if (videoCaptureRecorder.state === "recording") {
+        videoCaptureRecorder.stop();
+        return;
+    }
+    closeVideoCaptureOverlay();
 }
 
 async function captureImageFromCameraAndSend() {
@@ -846,6 +1060,7 @@ async function syncImageSourceMenuCapabilities() {
     }
     const supportsMobileCapture = canUseNativeCameraCapture();
     const supportsWebcam = canUseBrowserCameraCapture();
+    const supportsVideoRecording = canUseBrowserVideoCapture();
     let hasCamera = false;
     if (supportsMobileCapture) {
         hasCamera = true;
@@ -855,8 +1070,16 @@ async function syncImageSourceMenuCapabilities() {
     const supported = supportsMobileCapture || (supportsWebcam && hasCamera);
     imageSourceCameraBtn.disabled = !supported;
     imageSourceCameraBtn.title = supported
-        ? "Take a new image"
+        ? "Take a new photo"
         : "No camera available on this device/browser";
+
+    if (imageSourceRecordVideoBtn) {
+        const supportsRecordVideo = supportsMobileCapture || (supportsVideoRecording && hasCamera);
+        imageSourceRecordVideoBtn.disabled = !supportsRecordVideo;
+        imageSourceRecordVideoBtn.title = supportsRecordVideo
+            ? "Record new video"
+            : "Video recording is unavailable on this device/browser";
+    }
 }
 
 function openImageSourceMenu() {
@@ -868,6 +1091,12 @@ function openImageSourceMenu() {
         window.clearTimeout(imageSourceMenuHideTimer);
         imageSourceMenuHideTimer = null;
     }
+    if (imageSourceMenuHint) {
+        const imageLimitMb = Math.max(1, Math.round(IMAGE_UPLOAD_MAX_BYTES / (1024 * 1024)));
+        const fileLimitMb = Math.max(1, Math.round(FILE_UPLOAD_MAX_BYTES / (1024 * 1024)));
+        imageSourceMenuHint.textContent = `Photo up to ${imageLimitMb}MB • Video up to ${fileLimitMb}MB`;
+    }
+
     void syncImageSourceMenuCapabilities();
     imageSourceMenu.hidden = false;
     imageUploadBtn?.setAttribute("aria-expanded", "true");
@@ -1693,6 +1922,12 @@ function triggerReactionSubmitBurst(messageElement, emoji) {
     burst.innerHTML = `
         <span class="reaction-submit-burst-core">${escapeHtml(normalizedEmoji)}</span>
         <span class="reaction-submit-burst-ring"></span>
+        <span class="reaction-submit-particle p1">✨</span>
+        <span class="reaction-submit-particle p2">✦</span>
+        <span class="reaction-submit-particle p3">✶</span>
+        <span class="reaction-submit-particle p4">✨</span>
+        <span class="reaction-submit-particle p5">✦</span>
+        <span class="reaction-submit-particle p6">✶</span>
     `;
 
     hostElement.appendChild(burst);
@@ -2743,12 +2978,10 @@ function focusConversationSearchResult(index) {
 }
 
 function runConversationSearch() {
-    const query = String(conversationSearchInput?.value || "").trim();
-    resetConversationSearchHighlights();
-    if (!query.length) {
-        return;
-    }
+    void runConversationSearchAsync();
+}
 
+function highlightConversationSearchHits(query) {
     const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`(${safeQuery})`, "gi");
     const messageTextNodes = chatMessagesElem.querySelectorAll(".message-text-content");
@@ -2761,14 +2994,53 @@ function runConversationSearch() {
         }
         regex.lastIndex = 0;
         node.setAttribute("data-original-text", originalText);
-        node.innerHTML = escapeHtml(originalText).replace(regex, "<mark class=\"chat-search-hit\">$1</mark>");
+        node.innerHTML = escapeHtml(originalText).replace(regex, '<mark class="chat-search-hit">$1</mark>');
         conversationSearchResults.push(...node.querySelectorAll(".chat-search-hit"));
     });
+
+    return conversationSearchResults.length;
+}
+
+async function runConversationSearchAsync() {
+    const query = String(conversationSearchInput?.value || "").trim();
+    const token = ++conversationSearchToken;
+    resetConversationSearchHighlights();
+    if (!query.length) {
+        return;
+    }
+
+    let resultCount = highlightConversationSearchHits(query);
+    let loadedOlderBatches = 0;
+
+    while (
+        resultCount === 0 &&
+        hasMoreMessages &&
+        currentChatUser &&
+        String(conversationSearchInput?.value || "").trim() === query &&
+        loadedOlderBatches < 8
+    ) {
+        setComposerStatus("Searching older messages...", "success");
+        await loadMessages(currentChatUser, false, false);
+        if (token !== conversationSearchToken) {
+            return;
+        }
+        resetConversationSearchHighlights();
+        resultCount = highlightConversationSearchHits(query);
+        loadedOlderBatches++;
+    }
+
+    if (token !== conversationSearchToken) {
+        return;
+    }
 
     if (!conversationSearchResults.length) {
         updateConversationSearchCounter();
         setComposerStatus("No results in this conversation", "warning");
         return;
+    }
+
+    if (loadedOlderBatches > 0) {
+        setComposerStatus("Found results including older messages", "success");
     }
     focusConversationSearchResult(0);
 }
@@ -2954,6 +3226,26 @@ async function addMessageToChat(msg, prepend = false) {
         }
 
         hydrateImageMessageElement(div, msg);
+    } else if (msg.message_type === "video" && msg.any_file_path) {
+        div.classList.add("is-video-message");
+        hasContextActions = true;
+        canReact = true;
+
+        div.innerHTML = `
+            <div class="video-message-container">
+                <video class="message-video" controls playsinline preload="metadata" style="display:none;"></video>
+                <div class="video-message-loading">Decrypting video...</div>
+            </div>
+            ${newDateTag(msg, {
+                atLeft: msg.sender_id == CURRENT_USER_ID,
+                topSpace: 1,
+                fontSize: 8.5,
+                extraStyles: "color: var(--text-color); font-weight: 600;",
+            })}
+        `;
+        div.setAttribute("data-message-id", msg.id);
+
+        void hydrateVideoMessageElement(div, msg);
     } else if (msg.message_type === "file" && msg.any_file_path) {
         div.classList.add("is-file-message");
         hasContextActions = true;
@@ -3151,7 +3443,12 @@ async function addMessageToChat(msg, prepend = false) {
     }
 
     rebuildMessageDaySeparators();
-    if (conversationSearchBar && !conversationSearchBar.hidden && conversationSearchInput?.value.trim()) {
+    if (
+        !isLoadingMessages &&
+        conversationSearchBar &&
+        !conversationSearchBar.hidden &&
+        conversationSearchInput?.value.trim()
+    ) {
         runConversationSearch();
     }
 }
@@ -5063,6 +5360,27 @@ function handleSelectedImageFile(e) {
     }
 }
 
+function handleSelectedVideoFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = null;
+    if (!file) {
+        return;
+    }
+
+    const mimeType = String(file.type || "").toLowerCase();
+    if (!mimeType.startsWith("video/")) {
+        showModal(I18N_TEXT.invalidFileTypeTitle, "Please select a video file.", "warning");
+        return;
+    }
+
+    if (file.size > FILE_UPLOAD_MAX_BYTES) {
+        showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.fileTooLargeBody, "warning");
+        return;
+    }
+
+    void sendFileMessage(file, { asVideo: true });
+}
+
 imageSourceGalleryBtn?.addEventListener("click", () => {
     closeImageSourceMenu();
     imageUploadInput?.click();
@@ -5081,12 +5399,38 @@ imageSourceCameraBtn?.addEventListener("click", () => {
     setComposerStatus("Camera capture is not available on this device/browser.", "warning");
 });
 
+imageSourceSelectVideoBtn?.addEventListener("click", () => {
+    closeImageSourceMenu();
+    videoUploadInput?.click();
+});
+
+imageSourceRecordVideoBtn?.addEventListener("click", () => {
+    closeImageSourceMenu();
+    if (canUseNativeCameraCapture()) {
+        videoCaptureInput?.click();
+        return;
+    }
+    if (canUseBrowserVideoCapture()) {
+        void openVideoCaptureOverlay();
+        return;
+    }
+    setComposerStatus("Video recording is not available on this device/browser.", "warning");
+});
+
 imageUploadInput.addEventListener("change", (e) => {
     handleSelectedImageFile(e);
 });
 
 imageCaptureInput?.addEventListener("change", (e) => {
     handleSelectedImageFile(e);
+});
+
+videoUploadInput?.addEventListener("change", (e) => {
+    handleSelectedVideoFile(e);
+});
+
+videoCaptureInput?.addEventListener("change", (e) => {
+    handleSelectedVideoFile(e);
 });
 
 document.addEventListener("click", (event) => {
@@ -5105,6 +5449,9 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && cameraCaptureOverlay && !cameraCaptureOverlay.hidden) {
         closeCameraCaptureOverlay();
     }
+    if (event.key === "Escape" && videoCaptureOverlay && !videoCaptureOverlay.hidden) {
+        stopVideoCaptureRecording({ send: false });
+    }
 });
 
 cameraCaptureTakeBtn?.addEventListener("click", () => {
@@ -5113,10 +5460,20 @@ cameraCaptureTakeBtn?.addEventListener("click", () => {
 
 cameraCaptureCancelBtn?.addEventListener("click", closeCameraCaptureOverlay);
 cameraCaptureCloseBtn?.addEventListener("click", closeCameraCaptureOverlay);
+videoCaptureStartBtn?.addEventListener("click", startVideoCaptureRecording);
+videoCaptureStopBtn?.addEventListener("click", () => stopVideoCaptureRecording({ send: true }));
+videoCaptureCancelBtn?.addEventListener("click", () => stopVideoCaptureRecording({ send: false }));
+videoCaptureCloseBtn?.addEventListener("click", () => stopVideoCaptureRecording({ send: false }));
 
 cameraCaptureOverlay?.addEventListener("click", (event) => {
     if (event.target === cameraCaptureOverlay) {
         closeCameraCaptureOverlay();
+    }
+});
+
+videoCaptureOverlay?.addEventListener("click", (event) => {
+    if (event.target === videoCaptureOverlay) {
+        stopVideoCaptureRecording({ send: false });
     }
 });
 
@@ -5189,10 +5546,18 @@ async function sendImageMessage(imageFile) {
     }
 }
 
-async function sendFileMessage(file) {
+async function sendFileMessage(file, { asVideo = false } = {}) {
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
+    }
+
+    if (asVideo) {
+        const mimeType = String(file?.type || "").toLowerCase();
+        if (!mimeType.startsWith("video/")) {
+            showModal(I18N_TEXT.invalidFileTypeTitle, "Please select a valid video file.", "warning");
+            return;
+        }
     }
 
     if (file.size > FILE_UPLOAD_MAX_BYTES) {
@@ -5216,7 +5581,7 @@ async function sendFileMessage(file) {
         sendingIndicator.innerHTML = `
       <div class="file-message-sending">
         <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-        <span>Sending file...</span>
+                <span>${asVideo ? "Sending video..." : "Sending file..."}</span>
       </div>
     `;
         chatMessagesElem.appendChild(sendingIndicator);
@@ -5245,7 +5610,8 @@ async function sendFileMessage(file) {
         }
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
-        formData.append("file", mediaPayload.encryptedBlob, "file.enc");
+        formData.append("message_type", asVideo ? "video" : "file");
+        formData.append("file", mediaPayload.encryptedBlob, asVideo ? "video.enc" : "file.enc");
 
         await window.ApiService.jsonOk("api/send_file_message.php", {
             method: "POST",
@@ -5260,10 +5626,10 @@ async function sendFileMessage(file) {
             updateTypingStatus(false);
         }
         loadCurrentChatsRecentMessages();
-        setComposerStatus("File sent", "success");
+        setComposerStatus(asVideo ? "Video sent" : "File sent", "success");
     } catch (err) {
-        setComposerStatus("File upload failed. Try again.", "error");
-        showModal("File Send Error", "File send error: " + err.message, "error");
+        setComposerStatus(asVideo ? "Video upload failed. Try again." : "File upload failed. Try again.", "error");
+        showModal(asVideo ? "Video Send Error" : "File Send Error", (asVideo ? "Video" : "File") + " send error: " + err.message, "error");
 
         const sendingIndicator = document.querySelector(".sending-indicator");
         if (sendingIndicator) sendingIndicator.remove();

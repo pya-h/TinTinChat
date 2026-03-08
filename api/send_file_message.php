@@ -30,6 +30,8 @@ $groupId = groupParseId($_POST['group_id'] ?? null);
 $target = $groupId > 0
     ? ''
     : apiNormalizeUsername($_POST['target'] ?? '', 'INVALID_TARGET_USERNAME');
+$messageType = strtolower(trim((string) ($_POST['message_type'] ?? 'file')));
+$messageType = in_array($messageType, ['file', 'video'], true) ? $messageType : 'file';
 $messageEncryptedForRecipient = trim((string) ($_POST['message'] ?? ''));
 $messageEncryptedForSender = trim((string) ($_POST['message_for_sender'] ?? ''));
 
@@ -40,7 +42,7 @@ if ($messageEncryptedForRecipient === '' || $messageEncryptedForSender === '') {
 }
 
 if ((int) $file['size'] > TTC_UPLOAD_FILE_MAX_BYTES + 64) {
-    apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 50MB', 400);
+    apiError('FILE_TOO_LARGE', 'File too large. Maximum size is 100MB', 400);
 }
 
 $uploadedName = (string) ($file['name'] ?? '');
@@ -81,7 +83,7 @@ if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
     apiError('FILE_SAVE_FAILED', 'Failed to save file', 500);
 }
 
-$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, any_file_path, file_size) VALUES (?, ?, ?, ?, ?, 'file', ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, any_file_path, file_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 if (
     !$stmt->execute([
         $userId,
@@ -89,6 +91,7 @@ if (
         $groupId > 0 ? $groupId : null,
         $messageEncryptedForRecipient,
         $messageEncryptedForSender,
+        $messageType,
         $uniqueFilename,
         $file['size'],
     ])

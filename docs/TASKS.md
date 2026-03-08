@@ -165,8 +165,8 @@ Legend:
 - [x] (`P2`) Search inside current conversation.
 - [x] (`P3`) Message reactions (minimal emoji set).
 - [x] (`P3`) Optional delete-for-everyone policy (with permissions).
-- [ ] (`P3`) Improve Search conversation: Allow searching in old messages (for now it just searchs loaded messages only)
-- [ ] (`P3`) Add separate Send Video/Record Video option (Use File mode with video flag or something)
+- [x] (`P3`) Improve Search conversation: Allow searching in old messages (for now it just searchs loaded messages only)
+- [x] (`P3`) Add separate Send Video/Record Video option (Use File mode with video flag or something)
 
 ### Phase F.5 — Avatar Assignment (Small) (`P2`)
 - [ ] (`P2`) DB migration for user avatar metadata/path.

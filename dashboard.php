@@ -165,6 +165,8 @@ $csrfToken = generateCsrfToken();
                         
                         <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
                         <input type="file" id="imageCaptureInput" accept="image/*" capture="environment" style="display: none;">
+                        <input type="file" id="videoUploadInput" accept="video/*" style="display: none;">
+                        <input type="file" id="videoCaptureInput" accept="video/*" capture="environment" style="display: none;">
                         <input type="file" id="fileUploadInput" style="display: none;">
 
                         <button type="button" id="composerToolsToggle" class="btn btn-secondary ms-2" title="Show or hide media actions" aria-label="Toggle media actions">
@@ -172,18 +174,27 @@ $csrfToken = generateCsrfToken();
                         </button>
 
                         <div class="composer-image-source">
-                            <button type="button" id="imageUploadBtn" class="btn btn-secondary ms-2" title="Send an image" aria-label="Send image" aria-haspopup="menu" aria-expanded="false">
+                            <button type="button" id="imageUploadBtn" class="btn btn-secondary ms-2" title="Send media" aria-label="Send media" aria-haspopup="menu" aria-expanded="false">
                                 <i class="fas fa-image"></i>
                             </button>
-                            <div id="imageSourceMenu" class="image-source-menu" role="menu" aria-label="Choose image source" hidden>
-                                <button type="button" id="imageSourceGalleryBtn" class="image-source-menu-item" role="menuitem">
-                                    <i class="fas fa-images"></i>
-                                    <span>Gallery</span>
-                                </button>
+                            <div id="imageSourceMenu" class="image-source-menu" role="menu" aria-label="Choose media source" hidden>
                                 <button type="button" id="imageSourceCameraBtn" class="image-source-menu-item" role="menuitem">
                                     <i class="fas fa-camera"></i>
-                                    <span>Take new image</span>
+                                    <span>Take new photo</span>
                                 </button>
+                                <button type="button" id="imageSourceGalleryBtn" class="image-source-menu-item" role="menuitem">
+                                    <i class="fas fa-images"></i>
+                                    <span>Select photo</span>
+                                </button>
+                                <button type="button" id="imageSourceRecordVideoBtn" class="image-source-menu-item" role="menuitem">
+                                    <i class="fas fa-video"></i>
+                                    <span>Record new video</span>
+                                </button>
+                                <button type="button" id="imageSourceSelectVideoBtn" class="image-source-menu-item" role="menuitem">
+                                    <i class="fas fa-film"></i>
+                                    <span>Select video</span>
+                                </button>
+                                <div id="imageSourceMenuHint" class="image-source-menu-hint" aria-live="polite"></div>
                             </div>
                         </div>
 
@@ -252,6 +263,26 @@ $csrfToken = generateCsrfToken();
             <div class="camera-capture-actions">
                 <button type="button" id="cameraCaptureTake" class="btn btn-primary">Capture & Send</button>
                 <button type="button" id="cameraCaptureCancel" class="btn btn-outline-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="videoCaptureOverlay" class="camera-capture-overlay" hidden>
+        <div class="camera-capture-modal" role="dialog" aria-modal="true" aria-labelledby="videoCaptureTitle">
+            <div class="camera-capture-header">
+                <h5 id="videoCaptureTitle" class="camera-capture-title">Record new video</h5>
+                <button type="button" id="videoCaptureClose" class="camera-capture-close" aria-label="Close video recorder">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="camera-capture-body">
+                <video id="videoCaptureVideo" class="camera-capture-video" autoplay playsinline muted></video>
+            </div>
+            <div class="camera-capture-actions">
+                <span id="videoCaptureTimer" class="video-capture-timer">00:00</span>
+                <button type="button" id="videoCaptureStart" class="btn btn-primary">Start recording</button>
+                <button type="button" id="videoCaptureStop" class="btn btn-danger" disabled>Stop &amp; Send</button>
+                <button type="button" id="videoCaptureCancel" class="btn btn-outline-secondary">Cancel</button>
             </div>
         </div>
     </div>
