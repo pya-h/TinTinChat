@@ -169,11 +169,30 @@ Legend:
 - [x] (`P3`) Add separate Send Video/Record Video option (Use File mode with video flag or something)
 
 ### Phase F.5 — Avatar Assignment (Small) (`P2`)
-- [ ] (`P2`) DB migration for user avatar metadata/path.
-- [ ] (`P2`) Add secure avatar upload endpoint with MIME/size validation.
-- [ ] (`P2`) Add avatar retrieval endpoint + default fallback behavior.
-- [ ] (`P2`) Show avatars in chat list, member lists, and message sender contexts.
-- [ ] (`P2`) Add simple profile/avatar update UI action.
+- [x] (`P2`) DB migration for user avatar metadata/path.
+- [x] (`P2`) Add secure avatar upload endpoint with MIME/size validation.
+- [x] (`P2`) Add avatar retrieval endpoint + default fallback behavior.
+- [x] (`P2`) Show avatars in chat list, member lists, and message sender contexts.
+- [x] (`P2`) Add simple profile/avatar update UI action.
+
+### Phase F.6 — Avatar & User Profile UX Hardening (Pre-Stickers) (`P1/P2`)
+- [ ] (`P1`) Run focused post-Phase-F.5 review and bug sweep:
+	- verify upload/retrieval behavior for valid/invalid avatar files,
+	- verify cache-busting and fallback rendering across desktop/mobile,
+	- verify no regressions in chat list, group members, and sender avatar contexts.
+- [ ] (`P1`) Define user info entry points (from direct chat header and chat list item click/secondary action).
+- [ ] (`P1`) Add **User Info modal** for direct-chat target with minimal profile details:
+	- username,
+	- user ident/metadata that is safe to expose,
+	- current avatar preview in circular style.
+- [ ] (`P1`) Add **Show Avatar** action in the User Info modal.
+- [ ] (`P1`) Implement enlarged avatar viewer (overlay/modal) opened from User Info modal avatar click.
+- [ ] (`P2`) Add close/escape/backdrop interactions and keyboard accessibility for User Info + enlarged avatar views.
+- [ ] (`P2`) Add optional user actions section in User Info modal (planned):
+	- `Delete Chat` (remove all direct-chat messages between current user and target user) with explicit confirmation,
+	- reserve space for future actions (mute/block/report policy, if introduced later).
+- [ ] (`P2`) Define backend/API contract for `Delete Chat` action (scope, auth, audit safety, and response contract) before implementation.
+- [ ] (`P2`) Add regression checklist for this phase (modal behavior, avatar enlarge UX, destructive-action safeguards).
 
 ### Phase G — Sticker Support (Telegram-like) (`P1/P2`)
 - [ ] (`P1`) Define sticker format spec aligned to Telegram style:
@@ -247,9 +266,10 @@ Legend:
 3. UX polishing and accessibility (`P1/P2`)  
 4. Group support foundation + UX (`P1/P2`)  
 5. Optional parity features (`P2/P3`)  
-6. Telegram-like sticker support (`P1/P2`)  
-7. Nice-to-have power UX (`P3`)
-8. Final PWA support rollout (`P1/P2`)
+6. Avatar/profile UX hardening + user info modal (`P1/P2`)
+7. Telegram-like sticker support (`P1/P2`)  
+8. Nice-to-have power UX (`P3`)
+9. Final PWA support rollout (`P1/P2`)
 
 ## 5) Definition of Done (for upcoming feature work)
 

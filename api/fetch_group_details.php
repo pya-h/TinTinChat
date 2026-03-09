@@ -18,7 +18,7 @@ if (!$group) {
 }
 
 $membersStmt = $pdo->prepare(
-    'SELECT gm.user_id, u.username, gm.role, gm.joined_at
+    'SELECT gm.user_id, u.username, u.avatar_path, gm.role, gm.joined_at
      FROM group_members gm
      JOIN users u ON u.id = gm.user_id
      WHERE gm.group_id = ?

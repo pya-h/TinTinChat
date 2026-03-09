@@ -4,6 +4,9 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL,
   public_key TEXT,
   private_key TEXT,
+  avatar_path VARCHAR(255) DEFAULT NULL,
+  avatar_mime VARCHAR(100) DEFAULT NULL,
+  avatar_updated_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   ident VARCHAR(128),
@@ -139,3 +142,5 @@ CREATE INDEX idx_users_ident ON users(ident);
 
 CREATE INDEX idx_messages_receiver_seen_created_at
   ON messages(receiver_id, seen_at, created_at);
+
+CREATE INDEX idx_users_avatar_path ON users(avatar_path);

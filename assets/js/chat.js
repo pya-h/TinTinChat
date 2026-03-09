@@ -37,6 +37,8 @@ const settingsPanel = document.getElementById("chatSettingsPanel");
 const settingNotificationSound = document.getElementById("settingNotificationSound");
 const settingAutoScroll = document.getElementById("settingAutoScroll");
 const openConversationSearchBtn = document.getElementById("openConversationSearchBtn");
+const openAvatarUploadBtn = document.getElementById("openAvatarUploadBtn");
+const avatarUploadInput = document.getElementById("avatarUploadInput");
 const messageActionsHintElem = document.getElementById("messageActionsHint");
 const messageActionModalOverlay = document.getElementById("messageActionModalOverlay");
 const messageActionModalTitle = document.getElementById("messageActionModalTitle");
@@ -79,6 +81,7 @@ const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
 const IMAGE_UPLOAD_MAX_BYTES = Number(appConstants.uploadImageMaxBytes) || 20 * 1024 * 1024;
 const FILE_UPLOAD_MAX_BYTES = Number(appConstants.uploadFileMaxBytes) || 100 * 1024 * 1024;
+const AVATAR_UPLOAD_MAX_BYTES = Number(appConstants.uploadAvatarMaxBytes) || 5 * 1024 * 1024;
 const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
@@ -195,6 +198,7 @@ let shouldSendVideoCapture = false;
 let conversationSearchToken = 0;
 let conversationSearchResults = [];
 let conversationSearchResultIndex = -1;
+let avatarCacheVersion = Date.now();
 
 const appSettings = {
     notificationSoundEnabled: true,
@@ -269,6 +273,35 @@ const notificationPlayer = window.ChatNotificationService?.createPlayer({
 };
 
 const playNotificationSound = () => notificationPlayer.play();
+
+function buildAvatarUrl({ userId = 0, username = "", size = 96 } = {}) {
+    const params = new URLSearchParams();
+    if (Number(userId) > 0) {
+        params.set("user_id", String(Number(userId)));
+    } else if (String(username || "").trim()) {
+        params.set("username", String(username || "").trim());
+    }
+    params.set("size", String(Math.max(32, Number(size) || 96)));
+    params.set("v", String(avatarCacheVersion));
+    return `api/get_avatar.php?${params.toString()}`;
+}
+
+function buildAvatarImageHtml({ userId = 0, username = "", className = "avatar-image", size = 96 } = {}) {
+    const encodedUsername = encodeURIComponent(String(username || ""));
+    const sourceUrl = buildAvatarUrl({ userId, username, size });
+    return `<img class="${className}" src="${sourceUrl}" alt="Avatar" loading="lazy" decoding="async" data-avatar-source="1" data-avatar-user-id="${Number(userId) || 0}" data-avatar-username-uri="${encodedUsername}">`;
+}
+
+function refreshVisibleAvatars() {
+    const avatarImages = document.querySelectorAll("img[data-avatar-source='1']");
+    avatarImages.forEach((img) => {
+        const userId = Number(img.getAttribute("data-avatar-user-id") || 0);
+        const usernameUri = String(img.getAttribute("data-avatar-username-uri") || "");
+        const username = usernameUri ? decodeURIComponent(usernameUri) : "";
+        const size = Number(img.getAttribute("width") || 96) || 96;
+        img.src = buildAvatarUrl({ userId, username, size });
+    });
+}
 
 function getMediaEndpointForType(messageType, messageId) {
     if (messageType === "image") {
@@ -1226,6 +1259,51 @@ function bindSettingsUiEvents() {
     openConversationSearchBtn?.addEventListener("click", () => {
         toggleSettingsPanel(false);
         openConversationSearchBar();
+    });
+
+    openAvatarUploadBtn?.addEventListener("click", () => {
+        toggleSettingsPanel(false);
+        avatarUploadInput?.click();
+    });
+
+    avatarUploadInput?.addEventListener("change", async (event) => {
+        const selectedFile = event.target?.files?.[0];
+        event.target.value = "";
+
+        if (!selectedFile) {
+            return;
+        }
+
+        if (!String(selectedFile.type || "").startsWith("image/")) {
+            showModal("Invalid Avatar", "Please choose an image file.", "warning");
+            return;
+        }
+
+        if (selectedFile.size > AVATAR_UPLOAD_MAX_BYTES) {
+            const avatarLimitMb = Math.max(1, Math.round(AVATAR_UPLOAD_MAX_BYTES / (1024 * 1024)));
+            showModal("Avatar Too Large", `Avatar size must be less than ${avatarLimitMb}MB.`, "warning");
+            return;
+        }
+
+        const payload = new FormData();
+        payload.append("avatar_file", selectedFile);
+
+        try {
+            await window.ApiService.jsonOk("api/upload_avatar.php", {
+                method: "POST",
+                headers: {
+                    ...getCsrfHeaders(),
+                },
+                body: payload,
+            });
+            avatarCacheVersion = Date.now();
+            refreshVisibleAvatars();
+            setComposerStatus("Profile avatar updated", "success");
+            showModal("Avatar Updated", "Your profile avatar was updated successfully.", "success");
+        } catch (error) {
+            showModal("Avatar Update Failed", error?.message || "Failed to update avatar.", "error");
+            setComposerStatus("Unable to update avatar", "error");
+        }
     });
 
     if (composerToolsToggleBtn) {
@@ -2465,8 +2543,15 @@ window.addEventListener("load", () => {
 function addUserToChatList(username, options = {}) {
     if (!username || username === CURRENT_USER) return false;
     const unreadCount = Math.max(0, Number(options.unreadCount) || 0);
+    const userId = Number(options.userId) || 0;
 
     if (chatUsers.has(username)) {
+        const existingItem = document.getElementById(chatListItemId(username));
+        const existingAvatarImage = existingItem?.querySelector(".avatar-image");
+        if (existingAvatarImage && userId > 0) {
+            existingAvatarImage.setAttribute("data-avatar-user-id", String(userId));
+            existingAvatarImage.src = buildAvatarUrl({ userId, username, size: 84 });
+        }
         setUserUnreadBadge(username, unreadCount);
         return false;
     }
@@ -2479,13 +2564,7 @@ function addUserToChatList(username, options = {}) {
     li.setAttribute("aria-label", `Open chat with ${username}`);
     li.style.setProperty("--i", chatListElem.children.length);
 
-    const initials = username
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase();
-
-    li.innerHTML = `<span class="avatar">${initials}</span> <span>${username}</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
+    li.innerHTML = `<span class="avatar">${buildAvatarImageHtml({ userId, username, className: "avatar-image", size: 84 })}</span> <span>${escapeHtml(username)}</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
         username
     )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
     li.id = chatListItemId(username);
@@ -3410,7 +3489,6 @@ async function addMessageToChat(msg, prepend = false) {
         const safeText = escapeHtml(decryptedText);
         const isIncomingGroup = isGroupMessage && msg.sender_id != CURRENT_USER_ID;
         const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
-        const senderInitial = escapeHtml(String((msg.sender_username || "M")[0] || "M").toUpperCase());
         const groupDateTag = `<span class="message-meta-time group-message-meta-time">${escapeHtml(formatMessageTimeLabel(msg.created_at))}</span>`;
         const messageBodyContent = `${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${isIncomingGroup ? groupDateTag : ""}`;
         const outsideDateTag = isIncomingGroup
@@ -3429,7 +3507,7 @@ async function addMessageToChat(msg, prepend = false) {
         canCopy = true;
         canForward = true;
         canReact = true;
-        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-row"><span class="group-message-avatar">${senderInitial}</span><div class="group-message-content"><span class="group-message-name">${senderUsername}</span>${messageBodyContent}</div></div>` : messageBodyContent}${outsideDateTag}`;
+        div.innerHTML = `<button type="button" class="message-copy-btn" title="Copy message" aria-label="Copy message"><i class="fas fa-copy"></i></button>${isIncomingGroup ? `<div class="group-message-row"><span class="group-message-avatar">${buildAvatarImageHtml({ userId: Number(msg.sender_id || 0), username: String(msg.sender_username || "Member"), className: "group-message-avatar-image", size: 64 })}</span><div class="group-message-content"><span class="group-message-name">${senderUsername}</span>${messageBodyContent}</div></div>` : messageBodyContent}${outsideDateTag}`;
         div.setAttribute("data-message-id", msg.id);
         if (isPersian && !isIncomingGroup) {
             div.dir = "rtl";
@@ -3472,12 +3550,11 @@ async function addMessageToChat(msg, prepend = false) {
         String(msg.message_type || "") !== "text";
     if (isIncomingGroupMediaMessage) {
         const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
-        const senderInitial = escapeHtml(String((msg.sender_username || "M")[0] || "M").toUpperCase());
         const mediaBodyContent = div.innerHTML;
         div.classList.add("group-incoming-message", "group-incoming-ltr", "group-incoming-media-message");
         div.innerHTML = `
             <div class="group-message-row">
-                <span class="group-message-avatar">${senderInitial}</span>
+                <span class="group-message-avatar">${buildAvatarImageHtml({ userId: Number(msg.sender_id || 0), username: String(msg.sender_username || "Member"), className: "group-message-avatar-image", size: 64 })}</span>
                 <div class="group-message-content group-message-content-media">
                     <span class="group-message-name">${senderUsername}</span>
                     ${mediaBodyContent}
@@ -4636,7 +4713,6 @@ async function renderGroupInfoPanel(groupId) {
                 const memberRole = String(member.role || "member");
                 const memberUserId = Number(member.user_id || 0);
                 const memberUsername = String(member.username || "Unknown");
-                const memberInitial = (memberUsername[0] || "?").toUpperCase();
                 const canRemove =
                     details?.can_manage &&
                     memberUserId !== Number(CURRENT_USER_ID) &&
@@ -4649,7 +4725,7 @@ async function renderGroupInfoPanel(groupId) {
 
                 li.innerHTML = `
                     <div class="group-member-contact">
-                        <span class="group-member-avatar">${escapeHtml(memberInitial)}</span>
+                        <span class="group-member-avatar">${buildAvatarImageHtml({ userId: memberUserId, username: memberUsername, className: "group-member-avatar-image", size: 64 })}</span>
                         <span class="group-member-info">
                             <span class="group-member-name">${escapeHtml(memberUsername)}</span>
                             <span class="group-member-role">${escapeHtml(memberRole)}</span>
@@ -5040,6 +5116,7 @@ async function loadChatList(force = false) {
             data.chatUserItems.forEach((item) => {
                 addUserToChatList(String(item?.username || ""), {
                     unreadCount: Number(item?.unread_count || 0),
+                    userId: Number(item?.user_id || 0),
                 });
             });
         } else if (data.chatUsers && Array.isArray(data.chatUsers)) {

@@ -9,6 +9,7 @@ $userId = apiRequireAuth();
 
 $stmt = $pdo->prepare('
   SELECT
+      u.id AS user_id,
     u.username,
     MAX(m.created_at) AS last_interaction,
     SUM(CASE WHEN m.receiver_id = ? AND m.seen_at IS NULL THEN 1 ELSE 0 END) AS unread_count
@@ -26,6 +27,7 @@ $userRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $chatUserItems = array_map(
   static function (array $row): array {
     return [
+        'user_id' => (int) ($row['user_id'] ?? 0),
       'username' => (string) ($row['username'] ?? ''),
       'unread_count' => max(0, (int) ($row['unread_count'] ?? 0)),
       'last_interaction' => (string) ($row['last_interaction'] ?? ''),

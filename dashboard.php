@@ -109,6 +109,10 @@ $csrfToken = generateCsrfToken();
                                 <i class="fas fa-search"></i>
                                 <span>Search in this chat</span>
                             </button>
+                            <button type="button" id="openAvatarUploadBtn" class="chat-setting-item chat-setting-button" aria-label="Update profile avatar">
+                                <i class="fas fa-user-circle"></i>
+                                <span>Update profile avatar</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -173,6 +177,7 @@ $csrfToken = generateCsrfToken();
                         <input type="file" id="videoUploadInput" accept="video/*" style="display: none;">
                         <input type="file" id="videoCaptureInput" accept="video/*" capture="environment" style="display: none;">
                         <input type="file" id="fileUploadInput" style="display: none;">
+                        <input type="file" id="avatarUploadInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
 
                         <button type="button" id="composerToolsToggle" class="btn btn-secondary ms-2" title="Show or hide media actions" aria-label="Toggle media actions">
                             <i class="fas fa-plus"></i>
