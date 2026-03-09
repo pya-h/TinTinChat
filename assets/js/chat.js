@@ -3302,24 +3302,6 @@ async function addMessageToChat(msg, prepend = false) {
                 })}`;
                 div.setAttribute("data-message-id", msg.id);
 
-        const imageLink = div.querySelector(".image-message-link");
-        const imageElement = div.querySelector(".message-image");
-        if (imageLink) {
-            imageLink.addEventListener("click", async (e) => {
-                e.preventDefault();
-                if (!imageElement) {
-                    return;
-                }
-                if (imageElement.getAttribute("data-ready") !== "1") {
-                    await hydrateImageMessageElement(div, msg);
-                }
-                if (imageElement.getAttribute("data-ready") === "1") {
-                    openImageModal(imageElement.src);
-                }
-            });
-        }
-
-        hydrateImageMessageElement(div, msg);
     } else if (msg.message_type === "video" && msg.any_file_path) {
         div.classList.add("is-video-message");
         hasContextActions = true;
@@ -3339,7 +3321,6 @@ async function addMessageToChat(msg, prepend = false) {
         `;
         div.setAttribute("data-message-id", msg.id);
 
-        void hydrateVideoMessageElement(div, msg);
     } else if (msg.message_type === "file" && msg.any_file_path) {
         div.classList.add("is-file-message");
         hasContextActions = true;
@@ -3483,6 +3464,48 @@ async function addMessageToChat(msg, prepend = false) {
 
     if (Number(msg.sender_id || 0) === Number(CURRENT_USER_ID) && Number(msg.group_id || 0) > 0) {
         canDeleteEveryone = true;
+    }
+
+    const isIncomingGroupMediaMessage =
+        Number(msg.group_id || 0) > 0 &&
+        Number(msg.sender_id || 0) !== Number(CURRENT_USER_ID) &&
+        String(msg.message_type || "") !== "text";
+    if (isIncomingGroupMediaMessage) {
+        const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
+        const senderInitial = escapeHtml(String((msg.sender_username || "M")[0] || "M").toUpperCase());
+        const mediaBodyContent = div.innerHTML;
+        div.classList.add("group-incoming-message", "group-incoming-ltr", "group-incoming-media-message");
+        div.innerHTML = `
+            <div class="group-message-row">
+                <span class="group-message-avatar">${senderInitial}</span>
+                <div class="group-message-content group-message-content-media">
+                    <span class="group-message-name">${senderUsername}</span>
+                    ${mediaBodyContent}
+                </div>
+            </div>
+        `;
+    }
+
+    if (msg.message_type === "image" && msg.image_file_path) {
+        const imageLink = div.querySelector(".image-message-link");
+        if (imageLink) {
+            imageLink.addEventListener("click", async (e) => {
+                e.preventDefault();
+                const imageElement = div.querySelector(".message-image");
+                if (!imageElement) {
+                    return;
+                }
+                if (imageElement.getAttribute("data-ready") !== "1") {
+                    await hydrateImageMessageElement(div, msg);
+                }
+                if (imageElement.getAttribute("data-ready") === "1") {
+                    openImageModal(imageElement.src);
+                }
+            });
+        }
+        void hydrateImageMessageElement(div, msg);
+    } else if (msg.message_type === "video" && msg.any_file_path) {
+        void hydrateVideoMessageElement(div, msg);
     }
 
     if (msg.sender_id == CURRENT_USER_ID && !Number(msg.group_id || 0)) {

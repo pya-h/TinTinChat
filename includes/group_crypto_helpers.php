@@ -8,6 +8,7 @@ function groupGenerateSharedKey(): string
         return base64_encode(random_bytes(32));
     } catch (Throwable $ex) {
         apiError('GROUP_KEY_GENERATION_FAILED', 'Unable to generate group encryption key', 500);
+        throw new RuntimeException('Unable to generate group encryption key', 500, $ex);
     }
 }
 

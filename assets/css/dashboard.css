@@ -587,6 +587,62 @@ nav.navbar:hover::after {
     text-align: left;
 }
 
+.group-incoming-media-message .group-message-content.group-message-content-media {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    flex: 0 1 auto;
+    width: auto;
+    max-width: min(36rem, 78vw);
+}
+
+.group-incoming-media-message .group-message-name {
+    margin-bottom: 0.3rem;
+}
+
+.group-incoming-media-message.is-image-message,
+.group-incoming-media-message.is-video-message,
+.group-incoming-media-message.is-file-message,
+.group-incoming-media-message.is-voice-message {
+    max-width: 42rem;
+}
+
+.group-incoming-media-message .image-message-link,
+.group-incoming-media-message .video-message-container,
+.group-incoming-media-message .file-message-container,
+.group-incoming-media-message .voice-player-container,
+.group-incoming-media-message .message-image {
+    width: 100%;
+    max-width: 100%;
+}
+
+.group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media {
+    flex: 1 1 auto;
+    width: min(32rem, 76vw);
+    max-width: min(32rem, 76vw);
+}
+
+.group-incoming-media-message.is-voice-message .voice-player-container {
+    width: 100%;
+    min-width: 15.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .group-incoming-media-message .group-message-content.group-message-content-media {
+        max-width: min(75vw, 23rem);
+    }
+
+    .group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media {
+        width: min(75vw, 23rem);
+        max-width: min(75vw, 23rem);
+    }
+
+    .group-incoming-media-message.is-voice-message .voice-player-container {
+        min-width: 0;
+    }
+}
+
 .group-incoming-message .message-copy-btn {
     position: absolute;
     top: 0.52rem;
@@ -761,6 +817,7 @@ nav.navbar:hover::after {
 
 .chat-title-stack {
     min-width: 0;
+    flex: 1;
     display: inline-flex;
     flex-direction: column;
     align-items: flex-start;
@@ -798,7 +855,7 @@ nav.navbar:hover::after {
     border: 1px solid color-mix(in srgb, var(--secondary-color) 20%, var(--border-color));
     background: color-mix(in srgb, var(--surface-color) 90%, transparent);
     box-shadow: 0 1px 5px color-mix(in srgb, var(--text-color) 7%, transparent);
-    max-width: min(72%, 26rem);
+    max-width: min(84vw, 32rem);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3414,7 +3471,7 @@ nav.navbar:hover::after {
     }
 
     #chatWith {
-        max-width: min(62%, 16rem);
+        max-width: min(70vw, 20rem);
         font-size: 0.86rem;
         padding: 0.2rem 0.55rem;
     }
@@ -3463,7 +3520,7 @@ nav.navbar:hover::after {
 
 @media (max-width: 480px) {
     #chatWith {
-        max-width: min(58%, 13.5rem);
+        max-width: min(64vw, 16rem);
         font-size: 0.82rem;
     }
 
