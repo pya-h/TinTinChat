@@ -82,7 +82,10 @@ $csrfToken = generateCsrfToken();
 
             <section class="chat-area d-flex flex-column">
                 <div class="chat-header">
-                    <h5 id="chatWith">Select a chat</h5>
+                    <div class="chat-title-stack">
+                        <h5 id="chatWith">Select a chat</h5>
+                        <div id="typingIndicator" class="typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
+                    </div>
                     <div class="chat-header-actions ms-auto">
                         <button type="button" id="groupInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Group details" title="Group details" hidden>
                             <i class="fas fa-users"></i>
@@ -109,7 +112,6 @@ $csrfToken = generateCsrfToken();
                         </div>
                     </div>
                 </div>
-                <div id="typingIndicator" class="typing-indicator" aria-live="polite" aria-atomic="true"></div>
                 <div id="conversationSearchBar" class="conversation-search-bar" hidden>
                     <i class="fas fa-search" aria-hidden="true"></i>
                     <input type="text" id="conversationSearchInput" class="form-control" placeholder="Search this conversation" aria-label="Search inside current conversation">

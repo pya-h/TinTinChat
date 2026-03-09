@@ -544,8 +544,34 @@ function setTypingIndicator(text = "") {
     if (!typingIndicatorElem) {
         return;
     }
-    typingIndicatorElem.textContent = text;
-    typingIndicatorElem.classList.toggle("active", Boolean(text));
+    const normalizedText = String(text || "").trim();
+    const isActive = normalizedText.length > 0;
+
+    typingIndicatorElem.textContent = "";
+    if (isActive) {
+        const textSpan = document.createElement("span");
+        textSpan.className = "typing-indicator-text";
+        textSpan.textContent = normalizedText;
+
+        const dots = document.createElement("span");
+        dots.className = "typing-dots";
+        dots.setAttribute("aria-hidden", "true");
+
+        for (let index = 0; index < 3; index += 1) {
+            const dot = document.createElement("span");
+            dot.className = "typing-dot";
+            dots.appendChild(dot);
+        }
+
+        typingIndicatorElem.appendChild(textSpan);
+        typingIndicatorElem.appendChild(dots);
+        typingIndicatorElem.setAttribute("aria-label", normalizedText);
+    } else {
+        typingIndicatorElem.removeAttribute("aria-label");
+    }
+
+    typingIndicatorElem.classList.toggle("active", isActive);
+    typingIndicatorElem.hidden = !isActive;
 }
 
 function setUserUnreadBadge(username, unreadCount = 0) {
@@ -569,8 +595,9 @@ function setUserUnreadBadge(username, unreadCount = 0) {
     badge.textContent = count > 99 ? "99+" : String(count);
 }
 
-async function updateTypingStatus(isTyping) {
-    if (!currentChatUser || isGroupToken(currentChatUser)) {
+async function updateTypingStatus(isTyping, chatTargetOverride = null) {
+    const chatTarget = String(chatTargetOverride || currentChatUser || "");
+    if (!chatTarget) {
         return;
     }
 
@@ -580,16 +607,21 @@ async function updateTypingStatus(isTyping) {
     }
 
     try {
+        const payload = {
+            is_typing: Boolean(isTyping),
+        };
+        if (isGroupToken(chatTarget)) {
+            payload.group_id = parseGroupIdFromToken(chatTarget);
+        } else {
+            payload.target = chatTarget;
+        }
         await window.ApiService.jsonOk("api/update_typing_status.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 ...getCsrfHeaders(),
             },
-            body: JSON.stringify({
-                target: currentChatUser,
-                is_typing: Boolean(isTyping),
-            }),
+            body: JSON.stringify(payload),
         });
         localTypingState = Boolean(isTyping);
         lastTypingSentAt = now;
@@ -597,12 +629,37 @@ async function updateTypingStatus(isTyping) {
 }
 
 async function refreshTypingIndicator() {
-    if (!currentChatUser || isGroupToken(currentChatUser)) {
+    if (!currentChatUser) {
         setTypingIndicator("");
         return;
     }
 
     try {
+        if (isGroupToken(currentChatUser)) {
+            const groupId = parseGroupIdFromToken(currentChatUser);
+            if (!groupId) {
+                setTypingIndicator("");
+                return;
+            }
+            const data = await window.ApiService.json(
+                `api/fetch_typing_status.php?group_id=${encodeURIComponent(groupId)}`,
+                { cache: "no-store" }
+            );
+            const typers = Array.isArray(data?.typers)
+                ? data.typers.map((item) => String(item || "").trim()).filter(Boolean)
+                : [];
+            if (!typers.length) {
+                setTypingIndicator("");
+            } else if (typers.length === 1) {
+                setTypingIndicator(`${typers[0]} is typing...`);
+            } else if (typers.length === 2) {
+                setTypingIndicator(`${typers[0]} and ${typers[1]} are typing...`);
+            } else {
+                setTypingIndicator(`${typers[0]} and ${typers.length - 1} others are typing...`);
+            }
+            return;
+        }
+
         const data = await window.ApiService.json(
             `api/fetch_typing_status.php?with=${encodeURIComponent(currentChatUser)}`,
             { cache: "no-store" }
@@ -1264,6 +1321,7 @@ function openGroupInfoPanel() {
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "true");
     }
+    closeConversationSearchBar({ clearInput: false });
     chatAreaElem?.classList.add("group-panel-open");
 }
 
@@ -2525,8 +2583,8 @@ function updateLoadingSpinnerState(chatTarget, show = false) {
 
 async function selectChatTarget(target) {
     const previousChatTarget = currentChatUser;
-    if (previousChatTarget && !isGroupToken(previousChatTarget) && localTypingState) {
-        updateTypingStatus(false);
+    if (previousChatTarget && localTypingState) {
+        updateTypingStatus(false, previousChatTarget);
     }
 
     if (currentChatUser?.length) {
@@ -4232,7 +4290,7 @@ chatInput.addEventListener("keydown", async (e) => {
 chatInput.addEventListener("input", () => {
     chatInput.dir = isTextPersian(chatInput.value) ? "rtl" : "ltr";
 
-    if (!currentChatUser || isGroupToken(currentChatUser)) {
+    if (!currentChatUser) {
         return;
     }
 
@@ -5175,7 +5233,7 @@ setInterval(async () => {
     }
     await Promise.all([
         currentChatUser?.length && forceFetchCurrentChatMessages(),
-        currentChatUser?.length && !isGroupToken(currentChatUser) && refreshTypingIndicator(),
+        currentChatUser?.length && refreshTypingIndicator(),
         !(chatListTriggerTime % 10) && loadChatList(),
     ]);
     chatListTriggerTime = ++chatListTriggerTime % 10;
