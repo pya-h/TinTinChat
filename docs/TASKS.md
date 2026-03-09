@@ -228,6 +228,18 @@ Legend:
 	- `Ctrl/Cmd + Enter` to save edit.
 - [ ] (`P3`) Add guardrails for destructive bulk actions (confirm dialogs + clear success/error summaries).
 
+### Phase J — PWA Support (Final Phase) (`P1/P2`)
+- [ ] (`P1`) Add web app manifest (`name`, `short_name`, icons, theme/background, display mode).
+- [ ] (`P1`) Register service worker with safe versioned update strategy.
+- [ ] (`P1`) Implement core app-shell caching strategy for offline launch.
+- [ ] (`P1`) Define runtime caching policies for API calls (network-first for chat data, stale fallback rules).
+- [ ] (`P1`) Define secure caching policy for encrypted media/file payloads (no plaintext persistence beyond policy).
+- [ ] (`P2`) Add installability UX (install prompt handling + fallback guidance).
+- [ ] (`P2`) Add push notification readiness checklist (permissions flow + backend token lifecycle plan).
+- [ ] (`P2`) Add iOS/Android/browser compatibility QA checklist for PWA behavior.
+- [ ] (`P2`) Add offline/poor-network UX states for message fetch/send retry.
+- [ ] (`P2`) Add PWA release runbook (cache busting, rollback, update rollout).
+
 ## 4) Suggested Execution Order
 
 1. Security and endpoint consistency (`P0`)  
@@ -237,6 +249,7 @@ Legend:
 5. Optional parity features (`P2/P3`)  
 6. Telegram-like sticker support (`P1/P2`)  
 7. Nice-to-have power UX (`P3`)
+8. Final PWA support rollout (`P1/P2`)
 
 ## 5) Definition of Done (for upcoming feature work)
 

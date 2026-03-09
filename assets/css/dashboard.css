@@ -619,8 +619,8 @@ nav.navbar:hover::after {
 
 .group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media {
     flex: 1 1 auto;
-    width: min(32rem, 76vw);
-    max-width: min(32rem, 76vw);
+    width: min(34rem, 80vw);
+    max-width: min(34rem, 80vw);
 }
 
 .group-incoming-media-message.is-voice-message .voice-player-container {
@@ -634,8 +634,8 @@ nav.navbar:hover::after {
     }
 
     .group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media {
-        width: min(75vw, 23rem);
-        max-width: min(75vw, 23rem);
+        width: min(78vw, 24rem);
+        max-width: min(78vw, 24rem);
     }
 
     .group-incoming-media-message.is-voice-message .voice-player-container {
