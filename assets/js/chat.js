@@ -488,6 +488,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
             const originalLabel = deleteChatButton.innerHTML;
             deleteChatButton.disabled = true;
             deleteChatButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+            setComposerStatus("Deleting chat history...", "warning");
 
             try {
                 const response = await window.ApiService.jsonOk("api/delete_chat.php", {
@@ -505,7 +506,34 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                 const deletedFiles = Number(response?.files_deleted || 0);
 
                 if (currentChatUser === String(profile.username || "")) {
-                    await loadMessages(currentChatUser, true, true);
+                    currentChatRecentMessages = null;
+                    messageOffset = 0;
+                    hasMoreMessages = true;
+                    hasLoadedMoreMessages = false;
+                    pendingSeenMessageIds.clear();
+                    messageMetaById.clear();
+                    clearDecryptedMediaCache();
+                    chatMessagesElem.innerHTML = "";
+
+                    let waitAttempts = 0;
+                    while (isLoadingMessages && waitAttempts < 12) {
+                        await new Promise((resolve) => setTimeout(resolve, 120));
+                        waitAttempts += 1;
+                    }
+
+                    if (!isLoadingMessages) {
+                        await loadMessages(currentChatUser, true, true);
+                    } else {
+                        setTimeout(async () => {
+                            if (currentChatUser === String(profile.username || "")) {
+                                currentChatRecentMessages = null;
+                                messageOffset = 0;
+                                hasMoreMessages = true;
+                                hasLoadedMoreMessages = false;
+                                await loadMessages(currentChatUser, true, true);
+                            }
+                        }, 250);
+                    }
                 }
                 await loadChatList(true);
 
