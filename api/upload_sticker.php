@@ -156,7 +156,6 @@ if ($existing) {
         $reactivateStmt = $pdo->prepare('UPDATE stickers SET is_active = 1 WHERE id = ?');
         $reactivateStmt->execute([$existingId]);
     }
-    @unlink($tempOutputFile);
     apiSuccess([
         'sticker' => [
             'id' => $existingId,
@@ -188,10 +187,8 @@ $relativePath = 'uploads/stickers/' . $fileName;
 $finalPath = $uploadDir . $fileName;
 
 if (@file_put_contents($finalPath, $finalBytes) === false) {
-    @unlink($tempOutputFile);
     apiError('FILE_SAVE_FAILED', 'Unable to persist sticker file.', 500);
 }
-@unlink($tempOutputFile);
 
 try {
     $insert = $pdo->prepare(

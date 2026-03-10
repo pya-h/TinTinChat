@@ -10,6 +10,13 @@ INDEX_B="${WORK_DIR}/index_b.html"
 DASH_A="${WORK_DIR}/dash_a.html"
 RESP_SEND="${WORK_DIR}/send.json"
 RESP_FETCH="${WORK_DIR}/fetch.json"
+RESP_REACT="${WORK_DIR}/react.json"
+RESP_DELETE="${WORK_DIR}/delete.json"
+RESP_FETCH_AFTER_DELETE="${WORK_DIR}/fetch_after_delete.json"
+RESP_UPLOAD_STICKER="${WORK_DIR}/upload_sticker.json"
+RESP_SEND_STICKER="${WORK_DIR}/send_sticker.json"
+RESP_FETCH_AFTER_STICKER="${WORK_DIR}/fetch_after_sticker.json"
+STICKER_FILE="${WORK_DIR}/tiny.png"
 
 cleanup() {
   rm -rf "${WORK_DIR}"
@@ -134,6 +141,17 @@ php -r '
   fwrite(STDOUT, "[PASS] send_message response ok\n");
 ' "$RESP_SEND"
 
+TEXT_MESSAGE_ID="$(php -r '
+  $json = json_decode(file_get_contents($argv[1]), true);
+  if (!is_array($json) || ($json["status"] ?? "") !== "ok" || empty($json["message_id"])) {
+    exit(1);
+  }
+  echo (int) $json["message_id"];
+' "$RESP_SEND")" || {
+  echo "[FAIL] Unable to extract text message id" >&2
+  exit 1
+}
+
 code=$(curl -sS -o "$RESP_FETCH" -w "%{http_code}" -c "$COOKIE_B" -b "$COOKIE_B" \
   "${BASE_URL}/api/fetch_messages.php?with=${USER_A}&limit=20")
 assert_http_ok "$code" "fetch messages"
@@ -157,5 +175,139 @@ php -r '
   }
   fwrite(STDOUT, "[PASS] receiver fetched sent message\n");
 ' "$RESP_FETCH"
+
+code=$(curl -sS -o "$RESP_REACT" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
+  -X POST "${BASE_URL}/api/toggle_message_reaction.php" \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: ${CSRF_A}" \
+  -d "{\"message_id\":${TEXT_MESSAGE_ID},\"reaction\":\"👍\"}")
+assert_http_ok "$code" "toggle reaction"
+
+php -r '
+  $json = json_decode(file_get_contents($argv[1]), true);
+  if (!is_array($json) || ($json["status"] ?? "") !== "ok" || !isset($json["reactions"])) {
+    fwrite(STDERR, "[FAIL] reaction response invalid\n");
+    exit(1);
+  }
+  $found = false;
+  foreach ((array) $json["reactions"] as $reaction) {
+    if (($reaction["emoji"] ?? "") === "👍" && (int) ($reaction["count"] ?? 0) >= 1) {
+      $found = true;
+      break;
+    }
+  }
+  if (!$found) {
+    fwrite(STDERR, "[FAIL] expected reaction summary not found\n");
+    exit(1);
+  }
+  fwrite(STDOUT, "[PASS] reaction toggle validated\n");
+' "$RESP_REACT"
+
+code=$(curl -sS -o "$RESP_DELETE" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
+  -X DELETE "${BASE_URL}/api/delete_messages.php" \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: ${CSRF_A}" \
+  -d "{\"messages\":[${TEXT_MESSAGE_ID}],\"delete_for_everyone\":true}")
+assert_http_ok "$code" "delete message for everyone"
+
+php -r '
+  $json = json_decode(file_get_contents($argv[1]), true);
+  if (!is_array($json) || ($json["status"] ?? "") !== "ok") {
+    fwrite(STDERR, "[FAIL] delete_messages response invalid\n");
+    exit(1);
+  }
+  if ((int) ($json["messages_deleted"] ?? 0) < 1) {
+    fwrite(STDERR, "[FAIL] delete_messages did not delete expected message\n");
+    exit(1);
+  }
+  fwrite(STDOUT, "[PASS] delete message validated\n");
+' "$RESP_DELETE"
+
+code=$(curl -sS -o "$RESP_FETCH_AFTER_DELETE" -w "%{http_code}" -c "$COOKIE_B" -b "$COOKIE_B" \
+  "${BASE_URL}/api/fetch_messages.php?with=${USER_A}&limit=20")
+assert_http_ok "$code" "fetch messages after delete"
+
+php -r '
+  $json = json_decode(file_get_contents($argv[1]), true);
+  if (!is_array($json) || ($json["status"] ?? "") !== "ok" || !isset($json["messages"]) || !is_array($json["messages"])) {
+    fwrite(STDERR, "[FAIL] fetch after delete response invalid\n");
+    exit(1);
+  }
+  foreach ($json["messages"] as $m) {
+    if ((int) ($m["id"] ?? 0) === (int) $argv[2]) {
+      fwrite(STDERR, "[FAIL] deleted message still present in receiver fetch\n");
+      exit(1);
+    }
+  }
+  fwrite(STDOUT, "[PASS] deleted message not present in receiver fetch\n");
+' "$RESP_FETCH_AFTER_DELETE" "$TEXT_MESSAGE_ID"
+
+printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO6VYvwAAAAASUVORK5CYII=' | base64 -d > "$STICKER_FILE"
+
+code=$(curl -sS -o "$RESP_UPLOAD_STICKER" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
+  -X POST "${BASE_URL}/api/upload_sticker.php" \
+  -H "X-CSRF-Token: ${CSRF_A}" \
+  -F "sticker_file=@${STICKER_FILE};type=image/png")
+assert_http_ok "$code" "upload sticker"
+
+STICKER_ID="$(php -r '
+  $json = json_decode(file_get_contents($argv[1]), true);
+  if (!is_array($json) || ($json["status"] ?? "") !== "ok" || !isset($json["sticker"]["id"])) {
+    fwrite(STDERR, "[FAIL] upload_sticker response invalid\n");
+    exit(1);
+  }
+  echo (int) $json["sticker"]["id"];
+' "$RESP_UPLOAD_STICKER")" || {
+  echo "[FAIL] Unable to extract sticker id" >&2
+  exit 1
+}
+echo "[PASS] sticker upload validated"
+
+code=$(curl -sS -o "$RESP_SEND_STICKER" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
+  -X POST "${BASE_URL}/api/send_sticker_message.php" \
+  -H "X-CSRF-Token: ${CSRF_A}" \
+  --data-urlencode "target=${USER_B}" \
+  --data-urlencode "sticker_id=${STICKER_ID}")
+assert_http_ok "$code" "send sticker"
+
+STICKER_MESSAGE_ID="$(php -r '
+  $json = json_decode(file_get_contents($argv[1]), true);
+  if (!is_array($json) || ($json["status"] ?? "") !== "ok" || empty($json["message_id"])) {
+    fwrite(STDERR, "[FAIL] send_sticker_message response invalid\n");
+    exit(1);
+  }
+  echo (int) $json["message_id"];
+' "$RESP_SEND_STICKER")" || {
+  echo "[FAIL] Unable to extract sticker message id" >&2
+  exit 1
+}
+
+code=$(curl -sS -o "$RESP_FETCH_AFTER_STICKER" -w "%{http_code}" -c "$COOKIE_B" -b "$COOKIE_B" \
+  "${BASE_URL}/api/fetch_messages.php?with=${USER_A}&limit=30")
+assert_http_ok "$code" "fetch messages after sticker"
+
+php -r '
+  $json = json_decode(file_get_contents($argv[1]), true);
+  $expectedMessageId = (int) $argv[2];
+  $expectedStickerId = (int) $argv[3];
+  if (!is_array($json) || ($json["status"] ?? "") !== "ok" || !isset($json["messages"]) || !is_array($json["messages"])) {
+    fwrite(STDERR, "[FAIL] fetch after sticker response invalid\n");
+    exit(1);
+  }
+  $found = false;
+  foreach ($json["messages"] as $m) {
+    if ((int) ($m["id"] ?? 0) === $expectedMessageId
+      && ($m["message_type"] ?? "") === "sticker"
+      && (int) ($m["sticker_id"] ?? 0) === $expectedStickerId) {
+      $found = true;
+      break;
+    }
+  }
+  if (!$found) {
+    fwrite(STDERR, "[FAIL] receiver fetch missing sent sticker message\n");
+    exit(1);
+  }
+  fwrite(STDOUT, "[PASS] sticker send/fetch validated\n");
+' "$RESP_FETCH_AFTER_STICKER" "$STICKER_MESSAGE_ID" "$STICKER_ID"
 
 echo "All authenticated chat smoke checks passed"

@@ -59,6 +59,7 @@ A lightweight, self-hostable web chat application built with native PHP and vani
    - `./tests/e2e/api_guard_smoke.sh http://localhost:8080`
 - Run authenticated chat smoke checks (creates temp users and validates login/send/fetch flow):
    - `./tests/e2e/authenticated_chat_smoke.sh http://localhost:8080`
+   - Coverage includes: message send/fetch, reaction toggle, delete-for-everyone, and sticker upload/send/fetch.
 
 ## Security Notes
 
