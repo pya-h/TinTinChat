@@ -60,6 +60,9 @@ A lightweight, self-hostable web chat application built with native PHP and vani
 - Run authenticated chat smoke checks (creates temp users and validates login/send/fetch flow):
    - `./tests/e2e/authenticated_chat_smoke.sh http://localhost:8080`
    - Coverage includes: message send/fetch, reaction toggle, delete-for-everyone, and sticker upload/send/fetch.
+- Run group chat smoke checks (creates temp users and validates group lifecycle + group messaging):
+   - `./tests/e2e/group_chat_smoke.sh http://localhost:8080`
+   - Coverage includes: group create/fetch/join, group text send/fetch, and member leave flow.
 
 ## Security Notes
 
@@ -110,3 +113,6 @@ This is a project-level attribution statement, not a legal ownership transfer.
 - **2026-03-10 — Phase H bootstrap started**
    - Added lightweight unit test runner and helper-function tests.
    - Added API guard smoke test script for unauthenticated endpoint checks.
+- **2026-03-10 — Phase H coverage expanded**
+   - Added unit tests for group crypto helper operations (shared key generation and RSA encrypt/decrypt roundtrip checks).
+   - Added authenticated group smoke script covering create/join/fetch details/send group text/leave flows.
