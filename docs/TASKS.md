@@ -224,6 +224,9 @@ Legend:
 - [x] (`P1`) Extend authenticated smoke flow with reaction/delete/sticker coverage.
 - [x] (`P2`) Unit Tests for important operations/actions.
 - [x] (`P1`) E2E Tests
+- [ ] (`P1`) Extend tests by adding new unit and e2e tests
+- [ ] (`P1`) Add scripts and tools to setup whole testing requirements and run all tests easily.
+
 
 ### Phase I — Nice to Have (Power UX) (`P3`)
 - [ ] (`P3`) Add **Select messages** action to message context menu.

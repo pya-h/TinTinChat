@@ -1361,6 +1361,94 @@ function canvasToBlob(canvas, type, quality) {
     });
 }
 
+function removeEdgeBlackWhiteBackground(ctx, canvasSize, drawRegion) {
+    if (!ctx || !drawRegion) {
+        return;
+    }
+
+    const width = Number(canvasSize) || 0;
+    const height = Number(canvasSize) || 0;
+    if (width <= 0 || height <= 0) {
+        return;
+    }
+
+    const startX = Math.max(0, Math.floor(Number(drawRegion.x) || 0));
+    const startY = Math.max(0, Math.floor(Number(drawRegion.y) || 0));
+    const endX = Math.min(width - 1, startX + Math.max(0, Math.floor(Number(drawRegion.width) || 0)) - 1);
+    const endY = Math.min(height - 1, startY + Math.max(0, Math.floor(Number(drawRegion.height) || 0)) - 1);
+
+    if (endX < startX || endY < startY) {
+        return;
+    }
+
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    const visited = new Uint8Array(width * height);
+    const queue = [];
+
+    const isCandidate = (pixelIndex) => {
+        const alpha = pixels[pixelIndex + 3];
+        if (alpha < 16) {
+            return false;
+        }
+
+        const red = pixels[pixelIndex];
+        const green = pixels[pixelIndex + 1];
+        const blue = pixels[pixelIndex + 2];
+        const maxValue = Math.max(red, green, blue);
+        const minValue = Math.min(red, green, blue);
+        const average = (red + green + blue) / 3;
+        const spread = maxValue - minValue;
+
+        const nearWhite = minValue >= 240 || (average >= 232 && spread <= 28);
+        const nearBlack = maxValue <= 22 || (average <= 24 && spread <= 28);
+        return nearWhite || nearBlack;
+    };
+
+    const enqueue = (x, y) => {
+        if (x < startX || x > endX || y < startY || y > endY) {
+            return;
+        }
+        const flatIndex = y * width + x;
+        if (visited[flatIndex]) {
+            return;
+        }
+        visited[flatIndex] = 1;
+
+        const pixelIndex = flatIndex * 4;
+        if (!isCandidate(pixelIndex)) {
+            return;
+        }
+
+        queue.push(flatIndex);
+    };
+
+    for (let x = startX; x <= endX; x++) {
+        enqueue(x, startY);
+        enqueue(x, endY);
+    }
+    for (let y = startY; y <= endY; y++) {
+        enqueue(startX, y);
+        enqueue(endX, y);
+    }
+
+    let head = 0;
+    while (head < queue.length) {
+        const current = queue[head++];
+        const pixelIndex = current * 4;
+        pixels[pixelIndex + 3] = 0;
+
+        const x = current % width;
+        const y = Math.floor(current / width);
+        enqueue(x - 1, y);
+        enqueue(x + 1, y);
+        enqueue(x, y - 1);
+        enqueue(x, y + 1);
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+}
+
 async function normalizeStickerUploadFile(file, onProgress = null) {
     const reportProgress = (percent, step) => {
         if (typeof onProgress === "function") {
@@ -1398,6 +1486,14 @@ async function normalizeStickerUploadFile(file, onProgress = null) {
     const offsetX = Math.floor((STICKER_CANVAS_SIZE - targetWidth) / 2);
     const offsetY = Math.floor((STICKER_CANVAS_SIZE - targetHeight) / 2);
     ctx.drawImage(image, 0, 0, sourceWidth, sourceHeight, offsetX, offsetY, targetWidth, targetHeight);
+
+    reportProgress(38, "Cleaning background");
+    removeEdgeBlackWhiteBackground(ctx, STICKER_CANVAS_SIZE, {
+        x: offsetX,
+        y: offsetY,
+        width: targetWidth,
+        height: targetHeight,
+    });
 
     let bestBlob = null;
     const qualityLevels = [0.86, 0.78, 0.7, 0.62, 0.55];
