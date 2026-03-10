@@ -220,6 +220,7 @@ Legend:
 
 ### Phase H - Tests
 - [x] (`P2`) Phase H bootstrap: add lightweight local test harness and first smoke checks.
+- [x] (`P1`) Add authenticated endpoint smoke flow for login/session + send/fetch message.
 - [ ] (`P2`) Unit Tests for important operations/actions.
 - [ ] (`P1`) E2E Tests
 
