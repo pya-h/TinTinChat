@@ -43,7 +43,7 @@ $csrfToken = generateCsrfToken();
             <a class="navbar-brand" href="#">TinTinChat</a>
             <div class="ms-auto d-flex align-items-center">
                 <span class="me-3 logged-in-as">Logged in as <strong><?= htmlspecialchars($username) ?></strong></span>
-                <a href="api/logout.php" class="btn btn-logout btn-sm">
+                <a href="api/auth/logout.php" class="btn btn-logout btn-sm">
                     <i class="fas fa-sign-out-alt me-1"></i>Logout
                 </a>
             </div>

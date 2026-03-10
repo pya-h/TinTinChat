@@ -66,5 +66,5 @@ if ($oldAvatarPath !== '') {
 
 apiSuccess([
     'message' => 'Avatar updated successfully',
-    'avatar_url' => 'api/get_avatar.php?user_id=' . $userId . '&v=' . time(),
+    'avatar_url' => 'api/users/get_avatar.php?user_id=' . $userId . '&v=' . time(),
 ]);

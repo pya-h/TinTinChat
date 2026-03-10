@@ -308,7 +308,7 @@ function buildAvatarUrl({ userId = 0, username = "", size = 96 } = {}) {
     }
     params.set("size", String(Math.max(32, Number(size) || 96)));
     params.set("v", String(avatarCacheVersion));
-    return `api/get_avatar.php?${params.toString()}`;
+    return `api/users/get_avatar.php?${params.toString()}`;
 }
 
 function buildAvatarImageHtml({ userId = 0, username = "", className = "avatar-image", size = 96 } = {}) {
@@ -353,7 +353,7 @@ async function fetchUserProfile({ userId = 0, username = "" } = {}) {
         throw new Error("Missing user reference");
     }
 
-    const response = await window.ApiService.json(`api/get_user_profile.php?${params.toString()}`);
+    const response = await window.ApiService.json(`api/users/get_profile.php?${params.toString()}`);
     if (!response?.user) {
         throw new Error("User profile data is unavailable");
     }
@@ -504,7 +504,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
             setComposerStatus("Deleting chat history...", "warning");
 
             try {
-                const response = await window.ApiService.jsonOk("api/delete_chat.php", {
+                const response = await window.ApiService.jsonOk("api/chats/delete.php", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -573,12 +573,12 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
 
 function getMediaEndpointForType(messageType, messageId) {
     if (messageType === "image") {
-        return `api/get_image.php?id=${messageId}`;
+        return `api/messages/media/get_image.php?id=${messageId}`;
     }
     if (messageType === "voice") {
-        return `api/get_voice_message.php?id=${messageId}`;
+        return `api/messages/media/get_voice.php?id=${messageId}`;
     }
-    return `api/get_file_message.php?id=${messageId}`;
+    return `api/messages/media/get_file.php?id=${messageId}`;
 }
 
 function sanitizeAttachmentFileName(fileName, fallback = "attachment") {
@@ -916,7 +916,7 @@ async function updateTypingStatus(isTyping, chatTargetOverride = null) {
         } else {
             payload.target = chatTarget;
         }
-        await window.ApiService.jsonOk("api/update_typing_status.php", {
+        await window.ApiService.jsonOk("api/typing/update.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -943,7 +943,7 @@ async function refreshTypingIndicator() {
                 return;
             }
             const data = await window.ApiService.json(
-                `api/fetch_typing_status.php?group_id=${encodeURIComponent(groupId)}`,
+                `api/typing/fetch.php?group_id=${encodeURIComponent(groupId)}`,
                 { cache: "no-store" }
             );
             const typers = Array.isArray(data?.typers)
@@ -962,7 +962,7 @@ async function refreshTypingIndicator() {
         }
 
         const data = await window.ApiService.json(
-            `api/fetch_typing_status.php?with=${encodeURIComponent(currentChatUser)}`,
+            `api/typing/fetch.php?with=${encodeURIComponent(currentChatUser)}`,
             { cache: "no-store" }
         );
         setTypingIndicator(data?.is_typing ? `${currentChatUser} is typing...` : "");
@@ -1199,7 +1199,7 @@ async function loadStickers({ force = false } = {}) {
     setStickerPickerProgress(0, { visible: false });
     setStickerPickerState("Loading stickers...");
     try {
-        const response = await window.ApiService.jsonOk("api/fetch_stickers.php?limit=200");
+        const response = await window.ApiService.jsonOk("api/messages/stickers/fetch.php?limit=200");
         stickersCache = Array.isArray(response?.stickers) ? response.stickers : [];
         hasLoadedStickers = true;
         renderStickerPickerItems(stickersCache);
@@ -1245,7 +1245,7 @@ async function sendStickerMessage(stickerId) {
         }
         payload.set("sticker_id", String(normalizedStickerId));
 
-        await window.ApiService.jsonOk("api/send_sticker_message.php", {
+        await window.ApiService.jsonOk("api/messages/stickers/send.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -1310,7 +1310,7 @@ async function uploadSticker(file) {
     try {
         setStickerPickerState("Uploading sticker...");
         setStickerPickerProgress(92, { visible: true });
-        const response = await window.ApiService.jsonOk("api/upload_sticker.php", {
+        const response = await window.ApiService.jsonOk("api/messages/stickers/upload.php", {
             method: "POST",
             headers: getCsrfHeaders(),
             body: payload,
@@ -1882,7 +1882,7 @@ function bindSettingsUiEvents() {
         payload.append("avatar_file", selectedFile);
 
         try {
-            await window.ApiService.jsonOk("api/upload_avatar.php", {
+            await window.ApiService.jsonOk("api/users/upload_avatar.php", {
                 method: "POST",
                 headers: {
                     ...getCsrfHeaders(),
@@ -2164,7 +2164,7 @@ function bindCreateGroupModalEvents() {
 }
 
 async function fetchAndImportGroupCryptoKey(groupId) {
-    const data = await window.ApiService.jsonOk("api/get_group_key.php", {
+    const data = await window.ApiService.jsonOk("api/keys/get_group.php", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -2550,7 +2550,7 @@ async function sendEncryptedTextMessage(
         formData.append("forwarded_from_message_id", String(forwardedFromMessageId));
     }
 
-    const json = await window.ApiService.jsonOk("api/send_message.php", {
+    const json = await window.ApiService.jsonOk("api/messages/send_text.php", {
         method: "POST",
         headers: getCsrfHeaders(),
         body: formData,
@@ -2583,7 +2583,7 @@ async function sendGroupTextMessage(groupId, text, replyToMessageId = null, forw
         formData.append("forwarded_from_message_id", String(forwardedFromMessageId));
     }
 
-    const json = await window.ApiService.jsonOk("api/send_message.php", {
+    const json = await window.ApiService.jsonOk("api/messages/send_text.php", {
         method: "POST",
         headers: getCsrfHeaders(),
         body: formData,
@@ -2840,7 +2840,7 @@ async function toggleMessageReaction(messageId, reaction) {
         reaction: String(reaction || "").trim(),
     };
     const previousReaction = getCurrentUserReactionEmoji(payload.message_id);
-    const data = await window.ApiService.jsonOk("api/toggle_message_reaction.php", {
+    const data = await window.ApiService.jsonOk("api/messages/toggle_reaction.php", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -2932,7 +2932,7 @@ function openReactionPickerFromContext(messageElement, messageData = null) {
 }
 
 async function deleteMessageById(messageId, { deleteForEveryone = false } = {}) {
-    await window.ApiService.jsonOk("api/delete_messages.php", {
+    await window.ApiService.jsonOk("api/messages/delete.php", {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
@@ -3457,7 +3457,7 @@ async function updateMessagesStatus(messages) {
     if (!messagesNewlySeen?.length) {
         return false;
     }
-    await window.ApiService.jsonOk("api/see_messages.php", {
+    await window.ApiService.jsonOk("api/messages/see.php", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -3485,7 +3485,7 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             offset,
         });
 
-        const data = await window.ApiService.json(`api/fetch_messages.php?${query.toString()}`);
+        const data = await window.ApiService.json(`api/messages/fetch.php?${query.toString()}`);
         clearInlineChatState();
         setComposerStatus("");
 
@@ -3579,7 +3579,7 @@ async function loadCurrentChatsRecentMessages() {
             offsetMsgId,
         });
         const data = await window.ApiService.json(
-            `api/fetch_recent_messages.php?${query.toString()}`
+            `api/messages/fetch_recent.php?${query.toString()}`
         );
 
         if (!data?.messages?.length) {
@@ -3630,7 +3630,7 @@ async function refreshPendingSeenStates() {
     const query = buildChatQueryParams(currentChatUser, { message_ids: ids.join(",") });
 
     try {
-        const data = await window.ApiService.json(`api/fetch_seen_status.php?${query.toString()}`, {
+        const data = await window.ApiService.json(`api/messages/fetch_seen.php?${query.toString()}`, {
             cache: "no-store",
         });
         if (!data || data.status !== "ok") {
@@ -4168,7 +4168,7 @@ async function addMessageToChat(msg, prepend = false) {
         } else {
             div.innerHTML = `
                 <button type="button" class="sticker-message-button" aria-label="Open sticker" title="Open sticker">
-                    <img src="api/get_sticker.php?id=${stickerId}" class="sticker-message-image" alt="Sticker" loading="lazy" decoding="async" />
+                    <img src="api/messages/stickers/get.php?id=${stickerId}" class="sticker-message-image" alt="Sticker" loading="lazy" decoding="async" />
                 </button>
                 ${newDateTag(msg, {
                     atLeft: msg.sender_id == CURRENT_USER_ID,
@@ -5209,7 +5209,7 @@ async function searchForUser(selectUser = false) {
 
     try {
         const data = await window.ApiService.json(
-            `api/check_user_exists.php?username=${encodeURIComponent(val)}`
+            `api/users/check_exists.php?username=${encodeURIComponent(val)}`
         );
 
         if (data.exists) {
@@ -5285,7 +5285,7 @@ async function searchUserSuggestions(query) {
 
     try {
         const data = await window.ApiService.json(
-            `api/search_users.php?query=${encodeURIComponent(query)}`
+            `api/users/search.php?query=${encodeURIComponent(query)}`
         );
 
         if (data.users && data.users.length > 0) {
@@ -5423,7 +5423,7 @@ async function loadGroupDetails(groupId, force = false) {
     }
 
     const data = await window.ApiService.json(
-        `api/fetch_group_details.php?group_id=${encodeURIComponent(groupId)}`
+        `api/groups/fetch_details.php?group_id=${encodeURIComponent(groupId)}`
     );
     groupDetailsCache.set(groupId, data);
     return data;
@@ -5513,7 +5513,7 @@ async function renderGroupInfoPanel(groupId) {
 }
 
 async function createGroupFlow(title, description = "") {
-    const data = await window.ApiService.jsonOk("api/create_group.php", {
+    const data = await window.ApiService.jsonOk("api/groups/create.php", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -5540,7 +5540,7 @@ async function handleJoinGroupFromUrl() {
     }
 
     try {
-        const data = await window.ApiService.jsonOk("api/join_group.php", {
+        const data = await window.ApiService.jsonOk("api/groups/join.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -5576,7 +5576,7 @@ async function runGroupKeyHealthCheck() {
 
     try {
         setComposerStatus("Running group key health check...");
-        const data = await window.ApiService.jsonOk("api/group_key_health.php", {
+        const data = await window.ApiService.jsonOk("api/keys/group_health.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -5647,7 +5647,7 @@ function createAddMemberPickerContent(groupId, details) {
                 button.classList.add("is-forwarding");
                 setComposerStatus("Adding member...");
 
-                await window.ApiService.jsonOk("api/add_group_member.php", {
+                await window.ApiService.jsonOk("api/groups/add_member.php", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -5853,7 +5853,7 @@ function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt
 
 async function loadChatList(force = false) {
     try {
-        const data = await window.ApiService.json("api/fetch_chats.php");
+        const data = await window.ApiService.json("api/chats/fetch.php");
         const incomingGroups = Array.isArray(data.chatGroups) ? data.chatGroups : [];
         const incomingGroupIds = new Set(incomingGroups.map((group) => Number(group.id || 0)));
         if (Array.isArray(data.chatUserItems) && data.chatUserItems.length) {
@@ -5933,7 +5933,7 @@ groupRotateJoinLinkBtn?.addEventListener("click", async () => {
     }
     try {
         setComposerStatus("Rotating join link...");
-        const data = await window.ApiService.jsonOk("api/rotate_group_join_link.php", {
+        const data = await window.ApiService.jsonOk("api/groups/rotate_join_link.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -5971,7 +5971,7 @@ groupInfoMembers?.addEventListener("click", async (event) => {
             return;
         }
         try {
-            await window.ApiService.jsonOk("api/remove_group_member.php", {
+            await window.ApiService.jsonOk("api/groups/remove_member.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -5995,7 +5995,7 @@ groupInfoMembers?.addEventListener("click", async (event) => {
             return;
         }
         try {
-            await window.ApiService.jsonOk("api/transfer_group_owner.php", {
+            await window.ApiService.jsonOk("api/groups/transfer_owner.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -6036,7 +6036,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
     }
 
     try {
-        await window.ApiService.jsonOk("api/leave_group.php", {
+        await window.ApiService.jsonOk("api/groups/leave.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -6237,7 +6237,7 @@ async function sendVoiceMessage(audioBlob) {
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
 
-        await window.ApiService.jsonOk("api/send_voice_message.php", {
+        await window.ApiService.jsonOk("api/messages/media/send_voice.php", {
             method: "POST",
             headers: getCsrfHeaders(),
             body: formData,
@@ -6490,7 +6490,7 @@ async function sendImageMessage(imageFile) {
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
 
-        await window.ApiService.jsonOk("api/send_image_message.php", {
+        await window.ApiService.jsonOk("api/messages/media/send_image.php", {
             method: "POST",
             headers: getCsrfHeaders(),
             body: formData,
@@ -6586,7 +6586,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         formData.append("message_type", asVideo ? "video" : "file");
         formData.append("file", mediaPayload.encryptedBlob, asVideo ? "video.enc" : "file.enc");
 
-        await window.ApiService.jsonOk("api/send_file_message.php", {
+        await window.ApiService.jsonOk("api/messages/media/send_file.php", {
             method: "POST",
             headers: getCsrfHeaders(),
             body: formData,

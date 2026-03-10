@@ -39,6 +39,6 @@ apiSuccess([
         'public_ident' => 'usr-' . $targetUserId,
         'member_since' => (string) ($userRow['created_at'] ?? ''),
         'is_current_user' => $targetUserId === $currentUserId,
-        'avatar_url' => 'api/get_avatar.php?user_id=' . $targetUserId . '&size=256&v=' . urlencode($avatarVersion),
+        'avatar_url' => 'api/users/get_avatar.php?user_id=' . $targetUserId . '&size=256&v=' . urlencode($avatarVersion),
     ],
 ]);

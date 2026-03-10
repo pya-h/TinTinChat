@@ -44,8 +44,16 @@ function groupBuildJoinLink(string $token): string
     $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
     $basePath = '/';
     if ($scriptName !== '') {
-        $apiDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
-        $projectBase = rtrim(str_replace('\\', '/', dirname($apiDir)), '/');
+        $normalizedScript = str_replace('\\', '/', $scriptName);
+        $apiPos = strpos($normalizedScript, '/api/');
+
+        if ($apiPos !== false) {
+            $projectBase = rtrim(substr($normalizedScript, 0, $apiPos), '/');
+        } else {
+            $apiDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+            $projectBase = rtrim(str_replace('\\', '/', dirname($apiDir)), '/');
+        }
+
         $basePath = $projectBase === '' ? '/' : $projectBase . '/';
     }
 

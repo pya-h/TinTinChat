@@ -101,7 +101,7 @@ login_user() {
   }
 
   code=$(curl -sS -o /dev/null -w "%{http_code}" -c "$cookie_file" -b "$cookie_file" \
-    -X POST "${BASE_URL}/api/login.php" \
+    -X POST "${BASE_URL}/api/auth/login.php" \
     --data-urlencode "username=${user}" \
     --data-urlencode "password=${pass}" \
     --data-urlencode "csrf_token=${csrf}")
@@ -125,7 +125,7 @@ CSRF_A="$(extract_dashboard_csrf "$DASH_A")" || {
 echo "[PASS] User A dashboard csrf token extracted"
 
 code=$(curl -sS -o "$RESP_SEND" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
-  -X POST "${BASE_URL}/api/send_message.php" \
+  -X POST "${BASE_URL}/api/messages/send_text.php" \
   -H "X-CSRF-Token: ${CSRF_A}" \
   --data-urlencode "target=${USER_B}" \
   --data-urlencode "message=phase_h_smoke_message" \
@@ -153,7 +153,7 @@ TEXT_MESSAGE_ID="$(php -r '
 }
 
 code=$(curl -sS -o "$RESP_FETCH" -w "%{http_code}" -c "$COOKIE_B" -b "$COOKIE_B" \
-  "${BASE_URL}/api/fetch_messages.php?with=${USER_A}&limit=20")
+  "${BASE_URL}/api/messages/fetch.php?with=${USER_A}&limit=20")
 assert_http_ok "$code" "fetch messages"
 
 php -r '
@@ -177,7 +177,7 @@ php -r '
 ' "$RESP_FETCH"
 
 code=$(curl -sS -o "$RESP_REACT" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
-  -X POST "${BASE_URL}/api/toggle_message_reaction.php" \
+  -X POST "${BASE_URL}/api/messages/toggle_reaction.php" \
   -H "Content-Type: application/json" \
   -H "X-CSRF-Token: ${CSRF_A}" \
   -d "{\"message_id\":${TEXT_MESSAGE_ID},\"reaction\":\"👍\"}")
@@ -204,7 +204,7 @@ php -r '
 ' "$RESP_REACT"
 
 code=$(curl -sS -o "$RESP_DELETE" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
-  -X DELETE "${BASE_URL}/api/delete_messages.php" \
+  -X DELETE "${BASE_URL}/api/messages/delete.php" \
   -H "Content-Type: application/json" \
   -H "X-CSRF-Token: ${CSRF_A}" \
   -d "{\"messages\":[${TEXT_MESSAGE_ID}],\"delete_for_everyone\":true}")
@@ -224,7 +224,7 @@ php -r '
 ' "$RESP_DELETE"
 
 code=$(curl -sS -o "$RESP_FETCH_AFTER_DELETE" -w "%{http_code}" -c "$COOKIE_B" -b "$COOKIE_B" \
-  "${BASE_URL}/api/fetch_messages.php?with=${USER_A}&limit=20")
+  "${BASE_URL}/api/messages/fetch.php?with=${USER_A}&limit=20")
 assert_http_ok "$code" "fetch messages after delete"
 
 php -r '
@@ -245,7 +245,7 @@ php -r '
 printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO6VYvwAAAAASUVORK5CYII=' | base64 -d > "$STICKER_FILE"
 
 code=$(curl -sS -o "$RESP_UPLOAD_STICKER" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
-  -X POST "${BASE_URL}/api/upload_sticker.php" \
+  -X POST "${BASE_URL}/api/messages/stickers/upload.php" \
   -H "X-CSRF-Token: ${CSRF_A}" \
   -F "sticker_file=@${STICKER_FILE};type=image/png")
 assert_http_ok "$code" "upload sticker"
@@ -264,7 +264,7 @@ STICKER_ID="$(php -r '
 echo "[PASS] sticker upload validated"
 
 code=$(curl -sS -o "$RESP_SEND_STICKER" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
-  -X POST "${BASE_URL}/api/send_sticker_message.php" \
+  -X POST "${BASE_URL}/api/messages/stickers/send.php" \
   -H "X-CSRF-Token: ${CSRF_A}" \
   --data-urlencode "target=${USER_B}" \
   --data-urlencode "sticker_id=${STICKER_ID}")
@@ -283,7 +283,7 @@ STICKER_MESSAGE_ID="$(php -r '
 }
 
 code=$(curl -sS -o "$RESP_FETCH_AFTER_STICKER" -w "%{http_code}" -c "$COOKIE_B" -b "$COOKIE_B" \
-  "${BASE_URL}/api/fetch_messages.php?with=${USER_A}&limit=30")
+  "${BASE_URL}/api/messages/fetch.php?with=${USER_A}&limit=30")
 assert_http_ok "$code" "fetch messages after sticker"
 
 php -r '

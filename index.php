@@ -40,7 +40,7 @@ $csrfToken = generateCsrfToken();
             </div>
         <?php endif; ?>
 
-        <form method="post" action="api/login.php" novalidate id="loginForm">
+        <form method="post" action="api/auth/login.php" novalidate id="loginForm">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>" />
             <div class="form-group">
                 <label for="username" class="form-label">Username</label>

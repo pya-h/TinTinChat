@@ -34,7 +34,7 @@ return [
     'groupBuildJoinLink composes dashboard join URL' => static function () use ($assertTrue): void {
         $_SERVER['HTTPS'] = 'on';
         $_SERVER['HTTP_HOST'] = 'chat.local';
-        $_SERVER['SCRIPT_NAME'] = '/api/create_group.php';
+        $_SERVER['SCRIPT_NAME'] = '/api/groups/create.php';
         $link = groupBuildJoinLink('abc123');
         $assertTrue($link === 'https://chat.local/dashboard.php?join_group=abc123', 'join link format mismatch');
     },

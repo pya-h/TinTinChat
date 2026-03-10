@@ -162,7 +162,7 @@ if ($existing) {
             'width' => (int) ($existing['width'] ?? TTC_STICKER_CANVAS_SIZE),
             'height' => (int) ($existing['height'] ?? TTC_STICKER_CANVAS_SIZE),
             'mime' => (string) ($existing['file_mime'] ?? $targetMime),
-            'url' => 'api/get_sticker.php?id=' . $existingId,
+            'url' => 'api/messages/stickers/get.php?id=' . $existingId,
         ],
         'duplicate' => true,
     ]);
@@ -216,7 +216,7 @@ try {
             'width' => $finalWidth,
             'height' => $finalHeight,
             'mime' => $targetMime,
-            'url' => 'api/get_sticker.php?id=' . $stickerId,
+            'url' => 'api/messages/stickers/get.php?id=' . $stickerId,
         ],
         'duplicate' => false,
     ]);

@@ -31,7 +31,7 @@ $stickers = array_map(static function ($row) {
         'mime' => isset($row['file_mime']) ? (string) $row['file_mime'] : 'image/webp',
         'created_at' => isset($row['created_at']) ? (string) $row['created_at'] : null,
         'uploaded_by_username' => isset($row['uploaded_by_username']) ? (string) $row['uploaded_by_username'] : '',
-        'url' => 'api/get_sticker.php?id=' . $id,
+        'url' => 'api/messages/stickers/get.php?id=' . $id,
     ];
 }, $rows ?: []);
 

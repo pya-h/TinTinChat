@@ -24,9 +24,9 @@ check_endpoint() {
 }
 
 echo "Running API guard smoke checks against ${BASE_URL}"
-check_endpoint GET "/api/fetch_chats.php" "401"
-check_endpoint GET "/api/fetch_messages.php?with=testuser" "401"
-check_endpoint POST "/api/send_message.php" "401"
-check_endpoint GET "/api/fetch_stickers.php" "401"
+check_endpoint GET "/api/chats/fetch.php" "401"
+check_endpoint GET "/api/messages/fetch.php?with=testuser" "401"
+check_endpoint POST "/api/messages/send_text.php" "401"
+check_endpoint GET "/api/messages/stickers/fetch.php" "401"
 
 echo "All API guard smoke checks passed"

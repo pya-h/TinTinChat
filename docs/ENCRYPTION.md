@@ -33,7 +33,7 @@ Stored in `messages.message` / `messages.message_for_sender`.
 
 1. Client fetches recipient and sender public keys.
 2. Client encrypts plaintext twice (recipient payload + sender copy).
-3. Client posts encrypted fields to `api/send_message.php`.
+3. Client posts encrypted fields to `api/messages/send_text.php`.
 
 ### Receive
 
@@ -57,7 +57,7 @@ Group lifecycle APIs create/maintain per-member wrapped shared keys in `group_me
 
 ### Send/receive
 
-1. Client loads/imports current group key from `api/get_group_key.php`.
+1. Client loads/imports current group key from `api/keys/get_group.php`.
 2. Text is encrypted with group AES-GCM key (`gcm1`).
 3. On fetch, members decrypt with same group key.
 
@@ -78,7 +78,7 @@ Server-side membership checks gate all group reads/writes.
 1. Select proper envelope (`message` or `message_for_sender`).
 2. Unwrap media key with client private key.
 3. Decrypt metadata.
-4. Fetch encrypted blob via `api/get_image.php`, `api/get_voice_message.php`, or `api/get_file_message.php`.
+4. Fetch encrypted blob via `api/messages/media/get_image.php`, `api/messages/media/get_voice.php`, or `api/messages/media/get_file.php`.
 5. Decrypt blob and render/play/download.
 
 ## 6) Group Media Flow
@@ -102,7 +102,7 @@ Server-side membership checks gate all group reads/writes.
 
 - Current behavior writes `kv` for media envelopes.
 - Direct chats currently use baseline `kv=1`.
-- Group media/text should use active group key version from `api/get_group_key.php`.
+- Group media/text should use active group key version from `api/keys/get_group.php`.
 - On decrypt, clients refresh key if envelope `kv` and cache diverge.
 
 Operational guidance:

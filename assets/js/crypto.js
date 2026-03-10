@@ -84,7 +84,7 @@ async function fetchApiJson(url, options = {}) {
 }
 
 async function fetchAndImportPrivateKey() {
-    const data = await fetchApiJson("api/get_private_key.php");
+    const data = await fetchApiJson("api/keys/get_private.php");
     if (!data.privateKeyPem) throw new Error("No private key PEM found");
     privateKey = await importRsaPrivateKey(data.privateKeyPem);
     privateKeySha1 = await importRsaPrivateKeySha1(data.privateKeyPem);
@@ -102,7 +102,7 @@ async function getPublicKey(username) {
     if (publicKeyCache.has(username)) return publicKeyCache.get(username);
 
     const data = await fetchApiJson(
-        `api/get_public_key.php?username=${encodeURIComponent(username)}`
+        `api/keys/get_public.php?username=${encodeURIComponent(username)}`
     );
     if (!data.publicKey) throw new Error("Public key missing");
 

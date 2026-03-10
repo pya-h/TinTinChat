@@ -31,13 +31,13 @@ Design priority: keep implementation lightweight and deployable on constrained/s
   - `uploads/images`, `uploads/voice_messages`, `uploads/files`
 
 ### 2.2 Runtime Flow
-1. User authenticates at `index.php` -> `api/login.php`.
+1. User authenticates at `index.php` -> `api/auth/login.php`.
 2. Session established; user lands on `dashboard.php`.
-3. Frontend loads private key via `api/get_private_key.php` and chat list via `api/fetch_chats.php`.
-4. Selecting a user or group triggers `api/fetch_messages.php` with pagination.
-5. New messages fetched by polling (`api/fetch_recent_messages.php`).
-6. Sending text calls `api/send_message.php` for direct/group targets; media/files remain direct-chat endpoints in current scope.
-7. Seen status updated via `api/see_messages.php`.
+3. Frontend loads private key via `api/keys/get_private.php` and chat list via `api/chats/fetch.php`.
+4. Selecting a user or group triggers `api/messages/fetch.php` with pagination.
+5. New messages fetched by polling (`api/messages/fetch_recent.php`).
+6. Sending text calls `api/messages/send_text.php` for direct/group targets; media/files remain direct-chat endpoints in current scope.
+7. Seen status updated via `api/messages/see.php`.
 
 ## 3) Data Model
 

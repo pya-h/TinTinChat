@@ -29,7 +29,7 @@ function configSession()
             const ident = localStorage.getItem('ident');
             if (ident) {
                 fetch(
-                    'api/get_user_by_ident.php?ident=' + encodeURIComponent(ident)
+                    'api/users/get_by_ident.php?ident=' + encodeURIComponent(ident)
                 ).then((res) => {
                     if(res.ok) {
                         res.json().then(() => window.location.reload());
