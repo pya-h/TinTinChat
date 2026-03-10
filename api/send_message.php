@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
 require_once __DIR__ . '/../includes/group_helpers.php';
+require_once __DIR__ . '/../includes/block_helpers.php';
 
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
@@ -33,6 +34,7 @@ if ($groupId > 0) {
     if (!$targetUser) {
         apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
     }
+    blockEnforceSenderAllowed($pdo, $userId, (int) $targetUser['id']);
 }
 
 if ($replyToMessageId) {

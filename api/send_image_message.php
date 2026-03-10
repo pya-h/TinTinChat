@@ -4,6 +4,7 @@ session_start();
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
 require_once __DIR__ . '/../includes/group_helpers.php';
+require_once __DIR__ . '/../includes/block_helpers.php';
 
 apiRequireMethod('POST');
 $sender_id = apiRequireAuth();
@@ -35,6 +36,7 @@ if ($groupId > 0) {
         apiError('TARGET_NOT_FOUND', 'Target user not found', 404);
     }
     $receiver_id = (int) $receiver['id'];
+    blockEnforceSenderAllowed($pdo, $sender_id, $receiver_id);
 }
 
 $upload_dir = __DIR__ . '/../uploads/images/';

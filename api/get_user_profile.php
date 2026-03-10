@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
+require_once __DIR__ . '/../includes/block_helpers.php';
 
 apiRequireMethod('GET');
 $currentUserId = apiRequireAuth();
@@ -31,6 +32,10 @@ $targetUserId = (int) ($userRow['id'] ?? 0);
 $targetUsername = (string) ($userRow['username'] ?? '');
 $avatarUpdatedAt = (string) ($userRow['avatar_updated_at'] ?? '');
 $avatarVersion = $avatarUpdatedAt !== '' ? (string) strtotime($avatarUpdatedAt) : (string) time();
+$isBlockedByMe = false;
+if ($targetUserId > 0 && $targetUserId !== $currentUserId) {
+    $isBlockedByMe = blockIsUserBlockedBy($pdo, $currentUserId, $targetUserId);
+}
 
 apiSuccess([
     'user' => [
@@ -39,6 +44,7 @@ apiSuccess([
         'public_ident' => 'usr-' . $targetUserId,
         'member_since' => (string) ($userRow['created_at'] ?? ''),
         'is_current_user' => $targetUserId === $currentUserId,
+        'is_blocked_by_me' => $isBlockedByMe,
         'avatar_url' => 'api/users/get_avatar.php?user_id=' . $targetUserId . '&size=256&v=' . urlencode($avatarVersion),
     ],
 ]);

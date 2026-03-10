@@ -63,6 +63,14 @@ A lightweight, self-hostable web chat application built with native PHP and vani
 - Run group chat smoke checks (creates temp users and validates group lifecycle + group messaging):
    - `./tests/e2e/group_chat_smoke.sh http://localhost:8080`
    - Coverage includes: group create/fetch/join, group text send/fetch, and member leave flow.
+- Run group authorization smoke checks (ensures non-members cannot read protected group data):
+   - `./tests/e2e/group_authorization_smoke.sh http://localhost:8080`
+- Run block-user smoke checks (validates block/unblock send restrictions):
+   - `./tests/e2e/block_user_smoke.sh http://localhost:8080`
+- Run one-command full test suite:
+   - `./tests/run_all_tests.sh http://localhost:8080`
+- Run test environment setup/check helper:
+   - `./tests/setup_test_env.sh http://localhost:8080`
 
 ## Security Notes
 
@@ -116,3 +124,11 @@ This is a project-level attribution statement, not a legal ownership transfer.
 - **2026-03-10 — Phase H coverage expanded**
    - Added unit tests for group crypto helper operations (shared key generation and RSA encrypt/decrypt roundtrip checks).
    - Added authenticated group smoke script covering create/join/fetch details/send group text/leave flows.
+- **2026-03-10 — Phase H completion**
+   - Added additional unit coverage for API helper upload error mapping.
+   - Added group authorization smoke coverage for non-member access denial.
+   - Added test tooling scripts (`tests/setup_test_env.sh`, `tests/run_all_tests.sh`) for repeatable full-suite execution.
+- **2026-03-10 — Phase I started (Block user)**
+   - Added user block/unblock APIs and profile action button.
+   - Enforced direct-message send denial when receiver has blocked sender.
+   - Added block-user E2E smoke coverage.

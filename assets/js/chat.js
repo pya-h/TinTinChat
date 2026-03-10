@@ -446,6 +446,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
         const memberSince = escapeHtml(formatMemberSinceLabel(profile.member_since));
         const avatarUrl = String(profile.avatar_url || "");
         const isCurrentUser = Boolean(profile.is_current_user);
+        const isBlockedByMe = Boolean(profile.is_blocked_by_me);
 
         card.innerHTML = `
             <div class="user-profile-main">
@@ -468,9 +469,9 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                 <button type="button" class="btn btn-outline-danger" data-user-profile-action="delete-chat" ${isCurrentUser ? "disabled" : ""}>
                     <i class="fas fa-trash-alt me-1"></i>${isCurrentUser ? "Delete Chat unavailable" : "Delete Chat"}
                 </button>
-            </div>
-            <div class="user-profile-placeholder">
-                More user actions (mute/block/report) can be added here in future phases.
+                <button type="button" class="btn btn-outline-warning" data-user-profile-action="toggle-block" ${isCurrentUser ? "disabled" : ""}>
+                    <i class="fas fa-user-slash me-1"></i>${isCurrentUser ? "Block unavailable" : isBlockedByMe ? "Unblock User" : "Block User"}
+                </button>
             </div>
         `;
 
@@ -481,6 +482,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
         const showAvatarButton = card.querySelector('[data-user-profile-action="show-avatar"]');
         const sendMessageButton = card.querySelector('[data-user-profile-action="send-message"]');
         const deleteChatButton = card.querySelector('[data-user-profile-action="delete-chat"]');
+        const toggleBlockButton = card.querySelector('[data-user-profile-action="toggle-block"]');
 
         avatarButton?.addEventListener("click", () => openAvatarViewer(profile));
         showAvatarButton?.addEventListener("click", () => openAvatarViewer(profile));
@@ -570,6 +572,60 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                 deleteChatButton.innerHTML = originalLabel;
                 showModal("Delete Chat Failed", error?.message || "Unable to delete chat history.", "error");
                 setComposerStatus("Unable to delete chat history", "error");
+            }
+        });
+
+        toggleBlockButton?.addEventListener("click", async () => {
+            if (isCurrentUser) {
+                return;
+            }
+
+            const willBlock = !Boolean(profile.is_blocked_by_me);
+            const targetUsername = String(profile.username || "this user");
+            const confirmed = window.confirm(
+                willBlock
+                    ? `Block ${targetUsername}? They will not be able to send messages to you.`
+                    : `Unblock ${targetUsername}?`
+            );
+            if (!confirmed) {
+                return;
+            }
+
+            const originalLabel = toggleBlockButton.innerHTML;
+            toggleBlockButton.disabled = true;
+            toggleBlockButton.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i>${willBlock ? "Blocking..." : "Unblocking..."}`;
+
+            try {
+                const endpoint = willBlock ? "api/users/block.php" : "api/users/unblock.php";
+                const response = await window.ApiService.jsonOk(endpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({
+                        target_user_id: Number(profile.user_id || 0),
+                    }),
+                });
+
+                profile.is_blocked_by_me = Boolean(response?.is_blocked);
+                toggleBlockButton.innerHTML = `<i class="fas fa-user-slash me-1"></i>${profile.is_blocked_by_me ? "Unblock User" : "Block User"}`;
+                toggleBlockButton.disabled = false;
+                showModal(
+                    profile.is_blocked_by_me ? "User Blocked" : "User Unblocked",
+                    profile.is_blocked_by_me
+                        ? `${targetUsername} can no longer send messages to you.`
+                        : `${targetUsername} can send messages to you again.`,
+                    "success"
+                );
+            } catch (error) {
+                toggleBlockButton.innerHTML = originalLabel;
+                toggleBlockButton.disabled = false;
+                showModal(
+                    willBlock ? "Block Failed" : "Unblock Failed",
+                    error?.message || "Unable to update block status.",
+                    "error"
+                );
             }
         });
 

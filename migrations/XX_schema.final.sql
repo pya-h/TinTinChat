@@ -137,6 +137,20 @@ CREATE TABLE IF NOT EXISTS message_reactions (
     ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS user_blocks (
+  blocker_user_id INT NOT NULL,
+  blocked_user_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (blocker_user_id, blocked_user_id),
+  KEY idx_user_blocks_blocked (blocked_user_id),
+  CONSTRAINT fk_user_blocks_blocker
+    FOREIGN KEY (blocker_user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_user_blocks_blocked
+    FOREIGN KEY (blocked_user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
 -- Speeds up chat lookup between two users
 CREATE INDEX idx_sender_receiver_created_at
   ON messages (sender_id, receiver_id, created_at);

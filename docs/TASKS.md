@@ -224,12 +224,12 @@ Legend:
 - [x] (`P1`) Extend authenticated smoke flow with reaction/delete/sticker coverage.
 - [x] (`P2`) Unit Tests for important operations/actions.
 - [x] (`P1`) E2E Tests
-- [ ] (`P1`) Extend tests by adding new unit and e2e tests
-- [ ] (`P1`) Add scripts and tools to setup whole testing requirements and run all tests easily.
+- [x] (`P1`) Extend tests by adding new unit and e2e tests
+- [x] (`P1`) Add scripts and tools to setup whole testing requirements and run all tests easily.
 
 
 ### Phase I — Nice to Have (Power UX) (`P3`)
-- [ ] (`P3`) Add Block user: Blocked user is not able to send message to the blocker anymore.
+- [x] (`P3`) Add Block user: Blocked user is not able to send message to the blocker anymore.
 - [ ] (`P3`) Add **Select messages** action to message context menu.
 - [ ] (`P3`) Implement select mode behavior:
 	- tap/click messages to multi-select,
