@@ -182,10 +182,12 @@ $csrfToken = generateCsrfToken();
                                     <span>Stickers</span>
                                     <button type="button" id="stickerUploadBtn" class="sticker-picker-upload" aria-label="Add sticker">
                                         <i class="fas fa-plus"></i>
-                                        <span>Add</span>
                                     </button>
                                 </div>
                                 <div id="stickerPickerState" class="sticker-picker-state" aria-live="polite">Loading stickers...</div>
+                                <div id="stickerPickerProgress" class="sticker-picker-progress" hidden>
+                                    <div id="stickerPickerProgressFill" class="sticker-picker-progress-fill"></div>
+                                </div>
                                 <div id="stickerPickerGrid" class="sticker-picker-grid" role="list"></div>
                             </div>
                         </div>
@@ -197,7 +199,7 @@ $csrfToken = generateCsrfToken();
                         <input type="file" id="videoCaptureInput" accept="video/*" capture="environment" style="display: none;">
                         <input type="file" id="fileUploadInput" style="display: none;">
                         <input type="file" id="avatarUploadInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
-                        <input type="file" id="stickerUploadInput" accept="image/webp,image/png" style="display: none;">
+                        <input type="file" id="stickerUploadInput" accept="image/*" style="display: none;">
 
                         <button type="button" id="composerToolsToggle" class="btn btn-secondary ms-2" title="Show or hide media actions" aria-label="Toggle media actions">
                             <i class="fas fa-plus"></i>

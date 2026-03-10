@@ -6,6 +6,8 @@ const stickerPickerBtn = document.getElementById("stickerPickerBtn");
 const stickerPickerMenu = document.getElementById("stickerPickerMenu");
 const stickerPickerGrid = document.getElementById("stickerPickerGrid");
 const stickerPickerState = document.getElementById("stickerPickerState");
+const stickerPickerProgress = document.getElementById("stickerPickerProgress");
+const stickerPickerProgressFill = document.getElementById("stickerPickerProgressFill");
 const stickerUploadBtn = document.getElementById("stickerUploadBtn");
 const stickerUploadInput = document.getElementById("stickerUploadInput");
 const replyPreviewElem = document.getElementById("replyPreview");
@@ -1128,6 +1130,15 @@ function setStickerPickerState(message = "", { isError = false, hidden = false }
     stickerPickerState.hidden = Boolean(hidden);
 }
 
+function setStickerPickerProgress(percent = 0, { visible = false } = {}) {
+    if (!stickerPickerProgress || !stickerPickerProgressFill) {
+        return;
+    }
+    const safePercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+    stickerPickerProgress.hidden = !visible;
+    stickerPickerProgressFill.style.width = `${safePercent}%`;
+}
+
 function renderStickerPickerItems(stickers) {
     if (!stickerPickerGrid) {
         return;
@@ -1139,7 +1150,7 @@ function renderStickerPickerItems(stickers) {
         return;
     }
 
-    setStickerPickerState("", { hidden: true });
+    setStickerPickerState("Tap any sticker to send.");
     const fragment = document.createDocumentFragment();
     stickers.forEach((sticker) => {
         const stickerId = Number(sticker?.id || 0);
@@ -1150,7 +1161,12 @@ function renderStickerPickerItems(stickers) {
         item.type = "button";
         item.className = "sticker-picker-item";
         item.setAttribute("role", "listitem");
-        item.setAttribute("aria-label", `Send sticker ${stickerId}`);
+        const uploadedBy = String(sticker?.uploaded_by_username || "").trim();
+        item.setAttribute(
+            "aria-label",
+            uploadedBy ? `Send sticker by ${uploadedBy}` : `Send sticker ${stickerId}`
+        );
+        item.title = uploadedBy ? `Send sticker • by ${uploadedBy}` : "Send sticker";
         item.setAttribute("data-sticker-id", String(stickerId));
         item.innerHTML = `<img src="${escapeHtml(String(sticker?.url || ""))}" alt="Sticker" loading="lazy" decoding="async" />`;
         item.addEventListener("click", async () => {
@@ -1171,6 +1187,7 @@ async function loadStickers({ force = false } = {}) {
     }
 
     isStickersLoading = true;
+    setStickerPickerProgress(0, { visible: false });
     setStickerPickerState("Loading stickers...");
     try {
         const response = await window.ApiService.jsonOk("api/fetch_stickers.php?limit=200");
@@ -1246,20 +1263,43 @@ async function uploadSticker(file) {
         return;
     }
     const type = String(file.type || "").toLowerCase();
-    if (type !== "image/webp" && type !== "image/png") {
-        showModal("Invalid Sticker", "Sticker must be WEBP or PNG.", "warning");
+    if (type && !type.startsWith("image/")) {
+        showModal("Invalid Sticker", "Please choose a valid image file.", "warning");
         return;
     }
-    if (file.size > STICKER_UPLOAD_MAX_BYTES) {
+    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+        showModal("Sticker Too Large", "Sticker source image must be 20MB or smaller.", "warning");
+        return;
+    }
+
+    let preparedStickerFile = file;
+    try {
+        setStickerPickerProgress(0, { visible: true });
+        setStickerPickerState("Preparing sticker... 0%");
+        preparedStickerFile = await normalizeStickerUploadFile(file, (percent, step) => {
+            const safePercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+            const safeStep = String(step || "Preparing").trim();
+            setStickerPickerState(`${safeStep}... ${safePercent}%`);
+            setStickerPickerProgress(Math.min(85, safePercent), { visible: true });
+        });
+    } catch (error) {
+        setStickerPickerState(String(error?.message || "Unable to prepare sticker."), { isError: true });
+        setStickerPickerProgress(0, { visible: false });
+        setComposerStatus("Sticker preparation failed", "error");
+        return;
+    }
+
+    if (preparedStickerFile.size > STICKER_UPLOAD_MAX_BYTES) {
         showModal("Sticker Too Large", "Sticker must be 512KB or smaller.", "warning");
         return;
     }
 
     const payload = new FormData();
-    payload.append("sticker_file", file);
+    payload.append("sticker_file", preparedStickerFile);
 
     try {
         setStickerPickerState("Uploading sticker...");
+        setStickerPickerProgress(92, { visible: true });
         const response = await window.ApiService.jsonOk("api/upload_sticker.php", {
             method: "POST",
             headers: getCsrfHeaders(),
@@ -1268,10 +1308,116 @@ async function uploadSticker(file) {
         await loadStickers({ force: true });
         const duplicate = Boolean(response?.duplicate);
         setComposerStatus(duplicate ? "Sticker already exists and is ready to use" : "Sticker uploaded", "success");
+        setStickerPickerState("Tap any sticker to send.");
+        setStickerPickerProgress(100, { visible: true });
+        window.setTimeout(() => {
+            setStickerPickerProgress(0, { visible: false });
+        }, 450);
     } catch (error) {
         setStickerPickerState(String(error?.message || "Sticker upload failed."), { isError: true });
+        setStickerPickerProgress(0, { visible: false });
         setComposerStatus("Sticker upload failed", "error");
     }
+}
+
+function loadImageElementFromFile(file) {
+    return new Promise((resolve, reject) => {
+        const imageUrl = URL.createObjectURL(file);
+        const image = new Image();
+        image.onload = () => {
+            URL.revokeObjectURL(imageUrl);
+            resolve(image);
+        };
+        image.onerror = () => {
+            URL.revokeObjectURL(imageUrl);
+            reject(new Error("Unable to read image file."));
+        };
+        image.src = imageUrl;
+    });
+}
+
+function canvasToBlob(canvas, type, quality) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => {
+                if (!blob) {
+                    reject(new Error("Unable to build sticker image."));
+                    return;
+                }
+                resolve(blob);
+            },
+            type,
+            quality
+        );
+    });
+}
+
+async function normalizeStickerUploadFile(file, onProgress = null) {
+    const reportProgress = (percent, step) => {
+        if (typeof onProgress === "function") {
+            onProgress(percent, step);
+        }
+    };
+
+    if (typeof document === "undefined") {
+        reportProgress(100, "Prepared");
+        return file;
+    }
+
+    reportProgress(10, "Loading image");
+    const image = await loadImageElementFromFile(file);
+    const sourceWidth = Number(image.naturalWidth || image.width || 0);
+    const sourceHeight = Number(image.naturalHeight || image.height || 0);
+    if (sourceWidth <= 0 || sourceHeight <= 0) {
+        throw new Error("Invalid image dimensions.");
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = STICKER_CANVAS_SIZE;
+    canvas.height = STICKER_CANVAS_SIZE;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+        throw new Error("Canvas is not available in this browser.");
+    }
+
+    reportProgress(28, "Drawing canvas");
+    ctx.clearRect(0, 0, STICKER_CANVAS_SIZE, STICKER_CANVAS_SIZE);
+
+    const scale = Math.min(STICKER_CANVAS_SIZE / sourceWidth, STICKER_CANVAS_SIZE / sourceHeight);
+    const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+    const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
+    const offsetX = Math.floor((STICKER_CANVAS_SIZE - targetWidth) / 2);
+    const offsetY = Math.floor((STICKER_CANVAS_SIZE - targetHeight) / 2);
+    ctx.drawImage(image, 0, 0, sourceWidth, sourceHeight, offsetX, offsetY, targetWidth, targetHeight);
+
+    let bestBlob = null;
+    const qualityLevels = [0.86, 0.78, 0.7, 0.62, 0.55];
+    for (let index = 0; index < qualityLevels.length; index++) {
+        const quality = qualityLevels[index];
+        const scanPercent = 45 + ((index + 1) / qualityLevels.length) * 45;
+        reportProgress(scanPercent, "Optimizing size");
+        const candidate = await canvasToBlob(canvas, "image/webp", quality);
+        if (candidate.size <= STICKER_UPLOAD_MAX_BYTES) {
+            bestBlob = candidate;
+            break;
+        }
+        if (!bestBlob || candidate.size < bestBlob.size) {
+            bestBlob = candidate;
+        }
+    }
+
+    if (!bestBlob) {
+        throw new Error("Unable to prepare sticker image.");
+    }
+
+    if (bestBlob.size > STICKER_UPLOAD_MAX_BYTES) {
+        throw new Error("Prepared sticker is larger than 512KB. Try a simpler image.");
+    }
+
+    reportProgress(100, "Prepared");
+    return new File([bestBlob], `sticker_${Date.now()}.webp`, {
+        type: "image/webp",
+    });
 }
 
 function canUseNativeCameraCapture() {

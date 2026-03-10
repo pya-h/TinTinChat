@@ -131,7 +131,7 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - `DIRECTORY_CREATE_FAILED` / `DIRECTORY_NOT_WRITABLE` → storage path issues.
 - `FILE_MOVE_FAILED` / `FILE_SAVE_FAILED` → failed move/write.
 - `MIME_CHECK_FAILED` → MIME detection failure.
-- `INVALID_STICKER_TYPE` / `INVALID_STICKER_FILE` / `INVALID_STICKER_DIMENSIONS` → invalid sticker payload.
+- `INVALID_STICKER_TYPE` / `INVALID_STICKER_FILE` / `INVALID_STICKER_DIMENSIONS` → invalid sticker image payload.
 - `STICKER_PROCESSING_UNAVAILABLE` / `STICKER_RESIZE_FAILED` / `STICKER_CANVAS_FAILED` / `STICKER_SAVE_FAILED` → server-side sticker processing failure.
 - `STICKER_OUTPUT_TOO_LARGE` → processed sticker exceeds sticker size policy.
 
