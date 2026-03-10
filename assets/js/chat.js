@@ -805,6 +805,8 @@ async function hydrateImageMessageElement(messageElement, msg) {
         return;
     }
 
+    const shouldStickToBottom = isChatNearBottom(180);
+
     try {
         const mediaResource = await getDecryptedMediaResource(msg);
         imageElem.src = mediaResource.objectUrl;
@@ -812,6 +814,9 @@ async function hydrateImageMessageElement(messageElement, msg) {
         imageElem.setAttribute("data-ready", "1");
         if (loadingElem) {
             loadingElem.style.display = "none";
+        }
+        if (shouldStickToBottom && appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
+            scheduleSnapToBottom();
         }
     } catch (error) {
         imageElem.style.display = "none";
@@ -828,12 +833,17 @@ async function hydrateVideoMessageElement(messageElement, msg) {
         return;
     }
 
+    const shouldStickToBottom = isChatNearBottom(180);
+
     try {
         const mediaResource = await getDecryptedMediaResource(msg);
         videoElem.src = mediaResource.objectUrl;
         videoElem.style.display = "block";
         if (loadingElem) {
             loadingElem.style.display = "none";
+        }
+        if (shouldStickToBottom && appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
+            scheduleSnapToBottom();
         }
     } catch (error) {
         videoElem.style.display = "none";
@@ -4397,6 +4407,23 @@ function renderMessageReactions(messageElement, messageData, { flashEmoji = "" }
 }
 
 async function addMessageToChat(msg, prepend = false) {
+    const normalizedMessageId = Number(msg?.id || 0);
+    if (normalizedMessageId > 0) {
+        const existingMessageElement = chatMessagesElem.querySelector(
+            `.message[data-message-id="${normalizedMessageId}"]`
+        );
+        if (existingMessageElement) {
+            messageMetaById.set(normalizedMessageId, msg);
+            renderMessageReactions(existingMessageElement, msg);
+            updateMessageTickStatus(
+                normalizedMessageId,
+                Boolean(msg.seen_at),
+                msg.seen_at || ""
+            );
+            return;
+        }
+    }
+
     let div = document.createElement("div");
     let hasContextActions = false;
     let canCopy = false;
@@ -4775,11 +4802,19 @@ function snapChatToBottom() {
     chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
 }
 
+function isChatNearBottom(threshold = 100) {
+    return (
+        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >=
+        chatMessagesElem.scrollHeight - threshold
+    );
+}
+
 function scheduleSnapToBottom() {
     snapChatToBottom();
     requestAnimationFrame(snapChatToBottom);
     setTimeout(snapChatToBottom, 80);
     setTimeout(snapChatToBottom, 220);
+    setTimeout(snapChatToBottom, 420);
 }
 
 function removeGoToLatestButton() {
@@ -4795,9 +4830,7 @@ function updateGoToLatestButton() {
         return;
     }
 
-    const isNearBottom =
-        chatMessagesElem.scrollTop + chatMessagesElem.clientHeight >=
-        chatMessagesElem.scrollHeight - 100;
+    const isNearBottom = isChatNearBottom(100);
 
     if (isNearBottom) {
         removeGoToLatestButton();
