@@ -230,6 +230,8 @@ let lastFocusedElementBeforeUserProfileModal = null;
 let stickersCache = [];
 let isStickersLoading = false;
 let hasLoadedStickers = false;
+let snapToBottomRafId = 0;
+let snapToBottomTimerIds = [];
 
 const chatUserIdsByUsername = new Map();
 
@@ -3908,15 +3910,16 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             for (const msg of data.messages) {
                 await addMessageToChat(msg);
             }
+
+            if (hasMoreMessages) {
+                addLoadMoreButton();
+            }
+
             if (appSettings.autoScrollEnabled) {
                 scheduleSnapToBottom();
                 removeGoToLatestButton();
             } else {
                 addGoToLatestButton();
-            }
-
-            if (hasMoreMessages) {
-                addLoadMoreButton();
             }
         } else {
             for (let i = data.messages.length - 1; i >= 0; i--) {
@@ -4810,11 +4813,27 @@ function isChatNearBottom(threshold = 100) {
 }
 
 function scheduleSnapToBottom() {
+    if (snapToBottomRafId) {
+        cancelAnimationFrame(snapToBottomRafId);
+        snapToBottomRafId = 0;
+    }
+    if (snapToBottomTimerIds.length) {
+        snapToBottomTimerIds.forEach((timerId) => clearTimeout(timerId));
+        snapToBottomTimerIds = [];
+    }
+
     snapChatToBottom();
-    requestAnimationFrame(snapChatToBottom);
-    setTimeout(snapChatToBottom, 80);
-    setTimeout(snapChatToBottom, 220);
-    setTimeout(snapChatToBottom, 420);
+
+    snapToBottomRafId = requestAnimationFrame(() => {
+        snapToBottomRafId = 0;
+        snapChatToBottom();
+    });
+
+    snapToBottomTimerIds = [
+        setTimeout(snapChatToBottom, 80),
+        setTimeout(snapChatToBottom, 220),
+        setTimeout(snapChatToBottom, 420),
+    ];
 }
 
 function removeGoToLatestButton() {
@@ -4854,6 +4873,11 @@ function scrollToLatest() {
 window.scrollToLatest = scrollToLatest;
 
 function updateMessageTickStatus(messageId, isSeen, seenAtOverride = "") {
+    const shouldStickToBottom =
+        appSettings.autoScrollEnabled &&
+        !hasLoadedMoreMessages &&
+        isChatNearBottom(220);
+
     const messageDiv = Array.from(chatMessagesElem.children).find(
         (el) =>
             el.getAttribute("data-message-id") == messageId ||
@@ -4881,6 +4905,10 @@ function updateMessageTickStatus(messageId, isSeen, seenAtOverride = "") {
         }
     } else {
         pendingSeenMessageIds.add(Number(messageId));
+    }
+
+    if (shouldStickToBottom) {
+        scheduleSnapToBottom();
     }
 }
 

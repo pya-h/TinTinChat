@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PID_FILE="/tmp/tintin_test_server.pid"
-PORT=""
+PORT="8080"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -28,6 +28,15 @@ kill_pid() {
   local pid="$1"
   if [[ -n "${pid}" ]] && kill -0 "${pid}" >/dev/null 2>&1; then
     kill "${pid}" >/dev/null 2>&1 || true
+    for _ in {1..10}; do
+      if ! kill -0 "${pid}" >/dev/null 2>&1; then
+        break
+      fi
+      sleep 0.1
+    done
+    if kill -0 "${pid}" >/dev/null 2>&1; then
+      kill -9 "${pid}" >/dev/null 2>&1 || true
+    fi
     wait "${pid}" 2>/dev/null || true
     killed_any=1
   fi
@@ -39,13 +48,23 @@ if [[ -f "${PID_FILE}" ]]; then
   rm -f "${PID_FILE}" || true
 fi
 
-if [[ -n "${PORT}" ]] && command -v lsof >/dev/null 2>&1; then
+if [[ -n "${PORT}" ]]; then
+  discovered_pids=""
+
+  if command -v lsof >/dev/null 2>&1; then
+    discovered_pids="$(lsof -ti tcp:"${PORT}" 2>/dev/null || true)"
+  elif command -v ss >/dev/null 2>&1; then
+    discovered_pids="$(ss -lptn "sport = :${PORT}" 2>/dev/null | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' | sort -u || true)"
+  elif command -v fuser >/dev/null 2>&1; then
+    discovered_pids="$(fuser -n tcp "${PORT}" 2>/dev/null | tr ' ' '\n' || true)"
+  fi
+
   while IFS= read -r pid; do
     [[ -z "${pid}" ]] && continue
-    if ps -p "${pid}" -o command= 2>/dev/null | grep -q "php.* -S "; then
+    if ps -p "${pid}" -o command= 2>/dev/null | grep -E -q "php( |$).* -S "; then
       kill_pid "${pid}"
     fi
-  done < <(lsof -ti tcp:"${PORT}" 2>/dev/null || true)
+  done <<< "${discovered_pids}"
 fi
 
 if [[ "${killed_any}" -eq 1 ]]; then
