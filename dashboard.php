@@ -379,7 +379,7 @@ $csrfToken = generateCsrfToken();
     <script src="assets/js/chat-utils.js"></script>
     <script src="assets/js/chat-notifications.js"></script>
     <script src="assets/js/crypto.js"></script>
-    <script src="assets/js/chat.js"></script>
+    <script src="assets/js/chat.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat.js')); ?>"></script>
 </body>
 
 </html>

@@ -1260,7 +1260,7 @@ async function sendStickerMessage(stickerId) {
             updateTypingStatus(false);
         }
         loadCurrentChatsRecentMessages();
-        setComposerStatus("Sticker sent", "success");
+        setComposerStatus("");
     } catch (error) {
         setComposerStatus("Unable to send sticker", "error");
         showModal("Sticker Send Error", error?.message || "Failed to send sticker.", "error");
@@ -4990,7 +4990,7 @@ const sendTextMessage = async () => {
     const sendBtn = chatForm.querySelector('button[type="submit"]');
     sendBtn.disabled = true;
     sendBtn.classList.add("btn-pressed");
-    setComposerStatus("Sending message...");
+    setComposerStatus("");
 
     try {
         if (isGroupToken(currentChatUser)) {
@@ -5012,7 +5012,7 @@ const sendTextMessage = async () => {
             }
             updateTypingStatus(false);
         }
-        setComposerStatus("Message sent", "success");
+        setComposerStatus("");
     } catch (err) {
         const errorMessage =
             (err && typeof err === "object" && "message" in err && String(err.message || "").trim())
@@ -6250,7 +6250,7 @@ async function sendVoiceMessage(audioBlob) {
             updateTypingStatus(false);
         }
         loadCurrentChatsRecentMessages();
-        setComposerStatus("Voice message sent", "success");
+        setComposerStatus("");
     } catch (err) {
         setComposerStatus("Voice message failed. Try again.", "error");
         showModal(
@@ -6503,7 +6503,7 @@ async function sendImageMessage(imageFile) {
             updateTypingStatus(false);
         }
         loadCurrentChatsRecentMessages();
-        setComposerStatus("Image sent", "success");
+        setComposerStatus("");
     } catch (err) {
         setComposerStatus("Image upload failed. Try again.", "error");
         showModal(
@@ -6599,7 +6599,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
             updateTypingStatus(false);
         }
         loadCurrentChatsRecentMessages();
-        setComposerStatus(asVideo ? "Video sent" : "File sent", "success");
+        setComposerStatus("");
     } catch (err) {
         setComposerStatus(asVideo ? "Video upload failed. Try again." : "File upload failed. Try again.", "error");
         showModal(asVideo ? "Video Send Error" : "File Send Error", (asVideo ? "Video" : "File") + " send error: " + err.message, "error");
