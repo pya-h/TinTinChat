@@ -103,14 +103,10 @@ $csrfToken = generateCsrfToken();
                             <i class="fas fa-sliders-h"></i>
                         </button>
                         <div id="chatSettingsPanel" class="chat-settings-panel" hidden>
-                            <label class="chat-setting-item">
-                                <input type="checkbox" id="settingNotificationSound" checked>
-                                <span>Notification sound</span>
-                            </label>
-                            <label class="chat-setting-item">
-                                <input type="checkbox" id="settingAutoScroll" checked>
-                                <span>Auto-scroll to latest</span>
-                            </label>
+                            <button type="button" id="openUiSettingsBtn" class="chat-setting-item chat-setting-button" aria-label="Open settings modal">
+                                <i class="fas fa-sliders-h"></i>
+                                <span>Open settings</span>
+                            </button>
                             <button type="button" id="openConversationSearchBtn" class="chat-setting-item chat-setting-button" aria-label="Search inside current conversation">
                                 <i class="fas fa-search"></i>
                                 <span>Search in this chat</span>
@@ -170,6 +166,16 @@ $csrfToken = generateCsrfToken();
                 </div>
                 <div id="messageActionsHint" class="message-actions-hint is-hidden" aria-live="polite" hidden>
                     Tip: Right-click (desktop) or long-press (mobile) any message to open actions.
+                </div>
+                <div id="selectModeBar" class="select-mode-bar" role="region" aria-label="Selected messages actions" hidden>
+                    <div class="select-mode-meta">
+                        <span id="selectModeCount" class="select-mode-count">0 selected</span>
+                    </div>
+                    <div class="select-mode-actions">
+                        <button type="button" id="selectModeCancelBtn" class="btn btn-sm btn-outline-secondary" aria-label="Cancel selection">Cancel</button>
+                        <button type="button" id="selectModeForwardBtn" class="btn btn-sm btn-outline-primary" aria-label="Forward selected messages">Forward</button>
+                        <button type="button" id="selectModeDeleteBtn" class="btn btn-sm btn-outline-danger" aria-label="Delete selected messages">Delete</button>
+                    </div>
                 </div>
                 <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-relevant="additions"></div>
                 <div class="chat-input p-3">
@@ -258,6 +264,57 @@ $csrfToken = generateCsrfToken();
         </div>
     </div>
     <div id="messageActionModalAnnouncer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="chatUiSettingsOverlay" class="message-action-modal-overlay" hidden>
+        <div class="message-action-modal" role="dialog" aria-modal="true" aria-labelledby="chatUiSettingsTitle">
+            <div class="message-action-modal-header">
+                <h5 id="chatUiSettingsTitle" class="message-action-modal-title">Settings</h5>
+                <button type="button" id="chatUiSettingsClose" class="message-action-modal-close" aria-label="Close settings">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="message-action-modal-body">
+                <div class="chat-ui-settings-list">
+                    <label class="chat-ui-settings-item" for="settingThemeMode">
+                        <span>Theme mode</span>
+                        <select id="settingThemeMode" class="form-select form-select-sm" aria-label="Theme mode">
+                            <option value="system">System</option>
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </label>
+
+                    <label class="chat-ui-settings-item" for="settingDensityMode">
+                        <span>Message density</span>
+                        <select id="settingDensityMode" class="form-select form-select-sm" aria-label="Message density">
+                            <option value="comfortable">Comfortable</option>
+                            <option value="compact">Compact</option>
+                        </select>
+                    </label>
+
+                    <label class="chat-ui-settings-item">
+                        <input type="checkbox" id="settingShowTimestamps" checked>
+                        <span>Show message timestamps</span>
+                    </label>
+
+                    <label class="chat-ui-settings-item">
+                        <input type="checkbox" id="settingReduceMotion">
+                        <span>Reduce motion</span>
+                    </label>
+
+                    <label class="chat-ui-settings-item">
+                        <input type="checkbox" id="settingNotificationSound" checked>
+                        <span>Notification sound</span>
+                    </label>
+
+                    <label class="chat-ui-settings-item">
+                        <input type="checkbox" id="settingAutoScroll" checked>
+                        <span>Auto-scroll to latest</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="userProfileModalOverlay" class="user-profile-modal-overlay" hidden aria-hidden="true">
         <div class="user-profile-modal" role="dialog" aria-modal="true" aria-labelledby="userProfileModalTitle">

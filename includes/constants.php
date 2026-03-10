@@ -26,6 +26,7 @@ const TTC_GROUP_JOIN_TOKEN_BYTES = 24;
 
 const TTC_CHAT_REFRESH_POLL_MS = 1000;
 const TTC_SEEN_STATUS_POLL_MS = 3000;
+const TTC_MESSAGE_EDIT_WINDOW_SECONDS = 15 * 60;
 
 function tintinchatFrontendConstants(): array
 {
@@ -42,5 +43,6 @@ function tintinchatFrontendConstants(): array
         'stickerCanvasSize' => TTC_STICKER_CANVAS_SIZE,
         'chatRefreshPollMs' => TTC_CHAT_REFRESH_POLL_MS,
         'seenStatusPollMs' => TTC_SEEN_STATUS_POLL_MS,
+        'messageEditWindowMs' => TTC_MESSAGE_EDIT_WINDOW_SECONDS * 1000,
     ];
 }

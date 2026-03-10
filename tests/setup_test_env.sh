@@ -26,13 +26,29 @@ echo "[PASS] Upload directories are present"
 
 php -r '
 require_once $argv[1] . "/includes/db.php";
-$sql = file_get_contents($argv[1] . "/migrations/15_add_user_block_support.sql");
-if ($sql === false || trim($sql) === "") {
-  fwrite(STDERR, "[FAIL] Unable to read block migration SQL\n");
-  exit(1);
+$migrations = [
+  ["15_add_user_block_support.sql", "user_blocks migration ensured"],
+  ["16_add_message_edit_support.sql", "message edit migration ensured"],
+];
+
+foreach ($migrations as [$fileName, $label]) {
+  $sql = file_get_contents($argv[1] . "/migrations/" . $fileName);
+  if ($sql === false || trim($sql) === "") {
+    fwrite(STDERR, "[FAIL] Unable to read migration SQL: {$fileName}\n");
+    exit(1);
+  }
+
+  try {
+    $pdo->exec($sql);
+  } catch (PDOException $exception) {
+    $errorCode = (string) ($exception->errorInfo[1] ?? "");
+    if (!in_array($errorCode, ["1060", "1061", "1050"], true)) {
+      throw $exception;
+    }
+  }
+
+  fwrite(STDOUT, "[PASS] {$label}\n");
 }
-$pdo->exec($sql);
-fwrite(STDOUT, "[PASS] user_blocks migration ensured\n");
 ' "${ROOT_DIR}"
 
 health_code=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}/index.php" || true)

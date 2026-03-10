@@ -61,6 +61,7 @@ CREATE TABLE messages (
   forwarded_from_message_id INT NULL,
   forwarded_by_user_id INT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  edited_at TIMESTAMP DEFAULT NULL,
   seen_at TIMESTAMP DEFAULT NULL,
   FOREIGN KEY (sender_id) REFERENCES users(id),
   FOREIGN KEY (receiver_id) REFERENCES users(id),

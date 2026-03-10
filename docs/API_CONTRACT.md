@@ -86,6 +86,7 @@ All routes use organized domains under `api/<domain>/...`.
   - `api/chats/delete.php`
 - Messages:
   - `api/messages/send_text.php`
+  - `api/messages/edit.php`
   - `api/messages/fetch.php`
   - `api/messages/fetch_recent.php`
   - `api/messages/see.php`
@@ -166,6 +167,8 @@ All routes use organized domains under `api/<domain>/...`.
 
 ### Data / Persistence
 - `SEND_FAILED` → write operation rejected/failure.
+- `EDIT_UNSUPPORTED_TYPE` → edit attempted for non-text message type.
+- `EDIT_WINDOW_EXPIRED` → edit attempted after the allowed edit window.
 - `DB_SAVE_FAILED` / `DB_ERROR` → database operation failure.
 - `DELETE_FOR_EVERYONE_FORBIDDEN` → requester attempted sender-only delete-for-everyone on a message they did not send.
 - `DELETE_CHAT_FAILED` → direct chat history deletion failed server-side.

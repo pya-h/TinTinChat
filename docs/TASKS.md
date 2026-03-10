@@ -245,33 +245,33 @@ Legend:
 
 ### Phase I — Nice to Have (Power UX) (`P3`)
 - [x] (`P3`) Add Block user: Blocked user is not able to send message to the blocker anymore.
-- [ ] (`P3`) Add **Select messages** action to message context menu.
-- [ ] (`P3`) Implement select mode behavior:
+- [x] (`P3`) Add **Select messages** action to message context menu.
+- [x] (`P3`) Implement select mode behavior:
 	- tap/click messages to multi-select,
 	- show selected count,
 	- clear visual selected state on cancel/success.
-- [ ] (`P3`) In select mode, show top action bar with:
+- [x] (`P3`) In select mode, show top action bar with:
 	- `Cancel`,
 	- `Forward`,
 	- `Delete`.
-- [ ] (`P3`) Implement bulk actions for selected messages:
+- [x] (`P3`) Implement bulk actions for selected messages:
 	- bulk forward to chosen target chat,
 	- bulk delete with confirmation and partial-failure handling.
-- [ ] (`P3`) Add **Edit message** (text only) with time limit and edited marker:
+- [x] (`P3`) Add **Edit message** (text only) with time limit and edited marker:
 	- context menu item `Edit` on eligible sent text messages,
 	- composer enters edit mode with save/cancel,
 	- show `edited` metadata in message bubble.
-- [ ] (`P3`) Add **Settings modal** with user UI preferences:
+- [x] (`P3`) Add **Settings modal** with user UI preferences:
 	- theme mode (`System` / `Light` / `Dark`),
 	- compact vs comfortable density,
 	- show/hide message timestamps,
 	- animation/reduced motion toggle.
-- [ ] (`P3`) Add persistence for UI preferences (localStorage first, optional server sync later).
-- [ ] (`P3`) Add keyboard shortcuts for power users:
+- [x] (`P3`) Add persistence for UI preferences (localStorage first, optional server sync later).
+- [x] (`P3`) Add keyboard shortcuts for power users:
 	- `Esc` to exit select/edit mode,
 	- `Ctrl/Cmd + A` for select-all visible (when in select mode),
 	- `Ctrl/Cmd + Enter` to save edit.
-- [ ] (`P3`) Add guardrails for destructive bulk actions (confirm dialogs + clear success/error summaries).
+- [x] (`P3`) Add guardrails for destructive bulk actions (confirm dialogs + clear success/error summaries).
 
 ### Phase J — PWA Support (Final Phase) (`P1/P2`)
 - [ ] (`P1`) Add web app manifest (`name`, `short_name`, icons, theme/background, display mode).

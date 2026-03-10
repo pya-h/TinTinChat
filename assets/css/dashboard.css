@@ -25,6 +25,23 @@
     --glow-secondary: rgba(37, 117, 252, 0.15);
 }
 
+:root[data-theme="dark"] {
+    --background-color: #18191a;
+    --surface-color: #242526;
+    --text-color: #e4e6eb;
+    --subtle-text-color: #b0b3b8;
+    --border-color: #3a3b3c;
+    --received-bg: #3a3b3c;
+}
+
+:root.reduced-motion-enabled,
+:root.reduced-motion-enabled * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #18191a;
@@ -1626,6 +1643,38 @@ nav.navbar:hover::after {
     outline-offset: 2px;
 }
 
+.select-mode-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+    padding: 0.45rem 0.7rem;
+}
+
+.select-mode-count {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.select-mode-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.chat-messages.is-select-mode .message {
+    cursor: pointer;
+}
+
+.chat-messages.is-select-mode .message.is-selected {
+    outline: 2px solid color-mix(in srgb, var(--secondary-color) 62%, transparent);
+    outline-offset: 2px;
+}
+
 .message-action-modal-overlay {
     position: fixed;
     inset: 0;
@@ -1995,6 +2044,26 @@ nav.navbar:hover::after {
     color: var(--text-color);
     font-weight: 600;
     text-align: right;
+}
+
+.chat-ui-settings-list {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.chat-ui-settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    padding: 0.48rem 0.6rem;
+    font-size: 0.86rem;
+}
+
+.chat-ui-settings-item input[type="checkbox"] {
+    accent-color: var(--primary-color);
 }
 
 .group-health-modal {
@@ -2680,6 +2749,31 @@ nav.navbar:hover::after {
 .message-meta-time {
     opacity: 0.72;
     letter-spacing: 0.01em;
+}
+
+.chat-messages.hide-message-timestamps .message-meta-time,
+.chat-messages.hide-message-timestamps .group-message-meta-time {
+    display: none !important;
+}
+
+.message-edited-marker {
+    display: inline-flex;
+    margin-left: 0.4rem;
+    font-size: 0.68rem;
+    opacity: 0.82;
+    text-transform: lowercase;
+}
+
+:root[data-density="compact"] .message {
+    padding: 0.45rem 0.6rem;
+}
+
+:root[data-density="compact"] .chat-input {
+    padding: 0.75rem 1rem;
+}
+
+:root[data-density="compact"] .chat-messages {
+    gap: 0.35rem;
 }
 
 .message-day-separator {
