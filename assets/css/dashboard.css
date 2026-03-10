@@ -3686,33 +3686,47 @@ nav.navbar:hover::after {
     box-shadow: none;
     white-space: normal;
     animation: stickerPopIn 0.22s ease;
+    width: fit-content;
+    max-width: min(11rem, 44vw);
+}
+
+.message.sent.is-sticker-message {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.message.received.is-sticker-message {
+    margin-right: auto;
+    margin-left: 0;
+    border: 0;
+    box-shadow: none;
 }
 
 .sticker-message-button {
-    border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
-    border-radius: 1rem;
-    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
-    padding: 0.38rem;
+    border: 0;
+    border-radius: 0.85rem;
+    background: transparent;
+    padding: 0;
     display: inline-grid;
     place-items: center;
-    width: min(11rem, 44vw);
-    max-width: 11rem;
-    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    width: auto;
+    max-width: 100%;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
 .sticker-message-button:hover,
 .sticker-message-button:focus-visible {
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 18px color-mix(in srgb, var(--secondary-color) 20%, transparent);
-    border-color: color-mix(in srgb, var(--secondary-color) 56%, transparent);
     outline: none;
 }
 
 .sticker-message-image {
-    width: 100%;
+    width: min(11rem, 44vw);
     height: auto;
     aspect-ratio: 1 / 1;
     object-fit: contain;
+    display: block;
 }
 
 .sticker-message-unavailable {

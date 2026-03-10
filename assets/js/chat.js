@@ -1013,6 +1013,15 @@ function setComposerStatus(message = "", type = "neutral") {
     }
 }
 
+function showTransientComposerSuccessTick(durationMs = 900) {
+    setComposerStatus("✓", "success");
+    window.setTimeout(() => {
+        if (composerStatusElem && composerStatusElem.textContent === "✓") {
+            setComposerStatus("");
+        }
+    }, Math.max(250, Number(durationMs) || 900));
+}
+
 function isMobileViewport() {
     return window.innerWidth <= MOBILE_BREAKPOINT_WIDTH;
 }
@@ -1291,6 +1300,7 @@ async function uploadSticker(file) {
 
     if (preparedStickerFile.size > STICKER_UPLOAD_MAX_BYTES) {
         showModal("Sticker Too Large", "Sticker must be 512KB or smaller.", "warning");
+        setStickerPickerProgress(0, { visible: false });
         return;
     }
 
@@ -1306,8 +1316,7 @@ async function uploadSticker(file) {
             body: payload,
         });
         await loadStickers({ force: true });
-        const duplicate = Boolean(response?.duplicate);
-        setComposerStatus(duplicate ? "Sticker already exists and is ready to use" : "Sticker uploaded", "success");
+        showTransientComposerSuccessTick();
         setStickerPickerState("Tap any sticker to send.");
         setStickerPickerProgress(100, { visible: true });
         window.setTimeout(() => {
