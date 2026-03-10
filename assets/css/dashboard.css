@@ -450,6 +450,7 @@ nav.navbar:hover::after {
     border-radius: inherit;
     object-fit: cover;
     display: block;
+    cursor: pointer;
 }
 
 .group-member-info {
@@ -584,6 +585,7 @@ nav.navbar:hover::after {
     border-radius: inherit;
     object-fit: cover;
     display: block;
+    cursor: pointer;
 }
 
 .group-message-content .message-text-content {
@@ -694,6 +696,7 @@ nav.navbar:hover::after {
     text-align: left;
 }
 
+#userInfoBtn,
 #groupInfoBtn,
 #quickConversationSearchBtn,
 #chatSettingsBtn {
@@ -710,9 +713,11 @@ nav.navbar:hover::after {
     transition: var(--transition-fast);
 }
 
+#userInfoBtn:hover,
 #groupInfoBtn:hover,
 #quickConversationSearchBtn:hover,
 #chatSettingsBtn:hover,
+#userInfoBtn:focus-visible,
 #groupInfoBtn:focus-visible,
 #quickConversationSearchBtn:focus-visible,
 #chatSettingsBtn:focus-visible {
@@ -893,6 +898,16 @@ nav.navbar:hover::after {
     background: color-mix(in srgb, var(--secondary-color) 72%, var(--primary-color));
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--secondary-color) 16%, transparent);
     flex: 0 0 auto;
+}
+
+#chatWith.direct-chat-clickable {
+    cursor: pointer;
+}
+
+#chatWith.direct-chat-clickable:hover,
+#chatWith.direct-chat-clickable:focus-visible {
+    border-color: color-mix(in srgb, var(--secondary-color) 42%, var(--border-color));
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--secondary-color) 18%, transparent);
 }
 
 .typing-indicator {
@@ -1581,6 +1596,230 @@ nav.navbar:hover::after {
     padding: 0.75rem;
     max-height: 65vh;
     overflow: auto;
+}
+
+.user-profile-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3200;
+    background: color-mix(in srgb, var(--text-color) 38%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.user-profile-modal-overlay.visible {
+    opacity: 1;
+}
+
+.user-profile-modal {
+    width: min(28rem, 100%);
+    max-height: min(82vh, 38rem);
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 18%, var(--border-color));
+    background: linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--surface-color) 96%, transparent),
+        color-mix(in srgb, var(--secondary-color) 7%, var(--surface-color))
+    );
+    box-shadow: var(--shadow-lg);
+    transform: translateY(10px) scale(0.98);
+    transition: transform 0.2s ease;
+    overflow: hidden;
+}
+
+.user-profile-modal-overlay.visible .user-profile-modal {
+    transform: translateY(0) scale(1);
+}
+
+.user-profile-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.82rem 0.95rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-profile-modal-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.user-profile-modal-close {
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--subtle-text-color);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-profile-modal-close:hover {
+    color: var(--primary-color);
+}
+
+.user-profile-modal-body {
+    padding: 0.85rem;
+    max-height: 70vh;
+    overflow: auto;
+}
+
+.user-profile-card {
+    display: grid;
+    gap: 0.78rem;
+}
+
+.user-profile-main {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.78rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+}
+
+.user-profile-avatar-btn {
+    width: 4.2rem;
+    height: 4.2rem;
+    border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--secondary-color) 30%, var(--border-color));
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--secondary-color) 24%, transparent);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-profile-avatar-btn:hover,
+.user-profile-avatar-btn:focus-visible {
+    transform: scale(1.03);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--secondary-color) 30%, transparent);
+}
+
+.user-profile-avatar-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.user-profile-main-meta {
+    min-width: 0;
+    display: grid;
+    gap: 0.2rem;
+}
+
+.user-profile-name {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-profile-ident,
+.user-profile-since {
+    margin: 0;
+    color: var(--subtle-text-color);
+    font-size: 0.8rem;
+}
+
+.user-profile-actions {
+    display: grid;
+    gap: 0.42rem;
+}
+
+.user-profile-actions .btn {
+    border-radius: 0.72rem;
+    padding: 0.46rem 0.62rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.user-profile-placeholder {
+    border: 1px dashed var(--border-color);
+    border-radius: 0.75rem;
+    padding: 0.56rem 0.65rem;
+    font-size: 0.78rem;
+    color: var(--subtle-text-color);
+    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+}
+
+.avatar-viewer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3300;
+    background: color-mix(in srgb, var(--text-color) 66%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.avatar-viewer-overlay.visible {
+    opacity: 1;
+}
+
+.avatar-viewer-content {
+    position: relative;
+    width: min(92vw, 33rem);
+    display: grid;
+    gap: 0.7rem;
+    justify-items: center;
+    transform: translateY(8px) scale(0.98);
+    transition: transform 0.2s ease;
+}
+
+.avatar-viewer-overlay.visible .avatar-viewer-content {
+    transform: translateY(0) scale(1);
+}
+
+.avatar-viewer-image {
+    width: min(72vw, 22rem);
+    height: min(72vw, 22rem);
+    border-radius: 50%;
+    border: 3px solid color-mix(in srgb, var(--secondary-color) 55%, transparent);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
+    object-fit: cover;
+    background: var(--surface-color);
+}
+
+.avatar-viewer-title {
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.avatar-viewer-close {
+    position: absolute;
+    top: -0.3rem;
+    right: -0.3rem;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    background: rgba(0, 0, 0, 0.35);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-viewer-close:hover {
+    background: rgba(0, 0, 0, 0.55);
 }
 
 .forward-target-list {

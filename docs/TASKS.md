@@ -176,23 +176,27 @@ Legend:
 - [x] (`P2`) Add simple profile/avatar update UI action.
 
 ### Phase F.6 — Avatar & User Profile UX Hardening (Pre-Stickers) (`P1/P2`)
-- [ ] (`P1`) Run focused post-Phase-F.5 review and bug sweep:
+- [x] (`P1`) Run focused post-Phase-F.5 review and bug sweep:
 	- verify upload/retrieval behavior for valid/invalid avatar files,
 	- verify cache-busting and fallback rendering across desktop/mobile,
 	- verify no regressions in chat list, group members, and sender avatar contexts.
-- [ ] (`P1`) Define user info entry points (from direct chat header and chat list item click/secondary action).
-- [ ] (`P1`) Add **User Info modal** for direct-chat target with minimal profile details:
+- [x] (`P1`) Define user info entry points (from direct chat header and chat list item click/secondary action).
+- [x] (`P1`) Extend user-info entry points to group context:
+	- click sender avatar/name in incoming group messages,
+	- click member avatar in group details panel.
+- [x] (`P1`) Add **User Info modal** for direct-chat target with minimal profile details:
 	- username,
 	- user ident/metadata that is safe to expose,
 	- current avatar preview in circular style.
-- [ ] (`P1`) Add **Show Avatar** action in the User Info modal.
-- [ ] (`P1`) Implement enlarged avatar viewer (overlay/modal) opened from User Info modal avatar click.
-- [ ] (`P2`) Add close/escape/backdrop interactions and keyboard accessibility for User Info + enlarged avatar views.
-- [ ] (`P2`) Add optional user actions section in User Info modal (planned):
+- [x] (`P1`) Add **Show Avatar** action in the User Info modal.
+- [x] (`P1`) Implement enlarged avatar viewer (overlay/modal) opened from User Info modal avatar click.
+- [x] (`P1`) Add **Send Message** action from User Info modal to jump to private chat with that user.
+- [x] (`P2`) Add close/escape/backdrop interactions and keyboard accessibility for User Info + enlarged avatar views.
+- [x] (`P2`) Add optional user actions section in User Info modal (planned):
 	- `Delete Chat` (remove all direct-chat messages between current user and target user) with explicit confirmation,
 	- reserve space for future actions (mute/block/report policy, if introduced later).
-- [ ] (`P2`) Define backend/API contract for `Delete Chat` action (scope, auth, audit safety, and response contract) before implementation.
-- [ ] (`P2`) Add regression checklist for this phase (modal behavior, avatar enlarge UX, destructive-action safeguards).
+- [x] (`P2`) Define backend/API contract for `Delete Chat` action (scope, auth, audit safety, and response contract) before implementation.
+- [x] (`P2`) Add regression checklist for this phase (modal behavior, avatar enlarge UX, destructive-action safeguards).
 
 ### Phase G — Sticker Support (Telegram-like) (`P1/P2`)
 - [ ] (`P1`) Define sticker format spec aligned to Telegram style:

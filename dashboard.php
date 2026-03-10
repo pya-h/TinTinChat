@@ -87,6 +87,9 @@ $csrfToken = generateCsrfToken();
                         <div id="typingIndicator" class="typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
                     </div>
                     <div class="chat-header-actions ms-auto">
+                        <button type="button" id="userInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="User info" title="User info" hidden>
+                            <i class="fas fa-user"></i>
+                        </button>
                         <button type="button" id="groupInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Group details" title="Group details" hidden>
                             <i class="fas fa-users"></i>
                         </button>
@@ -233,6 +236,28 @@ $csrfToken = generateCsrfToken();
         </div>
     </div>
     <div id="messageActionModalAnnouncer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="userProfileModalOverlay" class="user-profile-modal-overlay" hidden aria-hidden="true">
+        <div class="user-profile-modal" role="dialog" aria-modal="true" aria-labelledby="userProfileModalTitle">
+            <div class="user-profile-modal-header">
+                <h5 id="userProfileModalTitle" class="user-profile-modal-title">User Info</h5>
+                <button type="button" id="userProfileModalClose" class="user-profile-modal-close" aria-label="Close user info">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="userProfileModalBody" class="user-profile-modal-body"></div>
+        </div>
+    </div>
+
+    <div id="avatarViewerOverlay" class="avatar-viewer-overlay" hidden aria-hidden="true">
+        <div class="avatar-viewer-content" role="dialog" aria-modal="true" aria-labelledby="avatarViewerTitle">
+            <button type="button" id="avatarViewerClose" class="avatar-viewer-close" aria-label="Close avatar viewer">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="avatarViewerImage" class="avatar-viewer-image" src="" alt="User avatar" />
+            <div id="avatarViewerTitle" class="avatar-viewer-title"></div>
+        </div>
+    </div>
 
     <div id="createGroupModalOverlay" class="create-group-modal-overlay" hidden>
         <div class="create-group-modal" role="dialog" aria-modal="true" aria-labelledby="createGroupModalTitle">

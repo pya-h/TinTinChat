@@ -74,6 +74,14 @@ const createGroupForm = document.getElementById("createGroupForm");
 const createGroupTitleInput = document.getElementById("createGroupTitleInput");
 const createGroupDetailsInput = document.getElementById("createGroupDetailsInput");
 const createGroupSubmitBtn = document.getElementById("createGroupSubmitBtn");
+const userInfoBtn = document.getElementById("userInfoBtn");
+const userProfileModalOverlay = document.getElementById("userProfileModalOverlay");
+const userProfileModalClose = document.getElementById("userProfileModalClose");
+const userProfileModalBody = document.getElementById("userProfileModalBody");
+const avatarViewerOverlay = document.getElementById("avatarViewerOverlay");
+const avatarViewerClose = document.getElementById("avatarViewerClose");
+const avatarViewerImage = document.getElementById("avatarViewerImage");
+const avatarViewerTitle = document.getElementById("avatarViewerTitle");
 
 const appConstants = window.APP_CONSTANTS || {};
 
@@ -199,6 +207,10 @@ let conversationSearchToken = 0;
 let conversationSearchResults = [];
 let conversationSearchResultIndex = -1;
 let avatarCacheVersion = Date.now();
+let activeUserProfile = null;
+let lastFocusedElementBeforeUserProfileModal = null;
+
+const chatUserIdsByUsername = new Map();
 
 const appSettings = {
     notificationSoundEnabled: true,
@@ -301,6 +313,221 @@ function refreshVisibleAvatars() {
         const size = Number(img.getAttribute("width") || 96) || 96;
         img.src = buildAvatarUrl({ userId, username, size });
     });
+}
+
+function formatMemberSinceLabel(rawTimestamp) {
+    if (!rawTimestamp) {
+        return "Unknown";
+    }
+    const parsed = new Date(rawTimestamp);
+    if (Number.isNaN(parsed.getTime())) {
+        return "Unknown";
+    }
+    return parsed.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+
+async function fetchUserProfile({ userId = 0, username = "" } = {}) {
+    const params = new URLSearchParams();
+    if (Number(userId) > 0) {
+        params.set("user_id", String(Number(userId)));
+    } else if (String(username || "").trim()) {
+        params.set("username", String(username).trim());
+    } else {
+        throw new Error("Missing user reference");
+    }
+
+    const response = await window.ApiService.json(`api/get_user_profile.php?${params.toString()}`);
+    if (!response?.user) {
+        throw new Error("User profile data is unavailable");
+    }
+    return response.user;
+}
+
+function closeAvatarViewer() {
+    if (!avatarViewerOverlay) {
+        return;
+    }
+    avatarViewerOverlay.classList.remove("visible");
+    avatarViewerOverlay.setAttribute("aria-hidden", "true");
+    setTimeout(() => {
+        if (!avatarViewerOverlay.classList.contains("visible")) {
+            avatarViewerOverlay.hidden = true;
+        }
+    }, 200);
+}
+
+function openAvatarViewer(profile) {
+    if (!avatarViewerOverlay || !avatarViewerImage || !avatarViewerTitle || !profile) {
+        return;
+    }
+    avatarViewerImage.src = String(profile.avatar_url || "");
+    avatarViewerImage.alt = `${String(profile.username || "User")} avatar`;
+    avatarViewerTitle.textContent = String(profile.username || "User");
+
+    avatarViewerOverlay.hidden = false;
+    avatarViewerOverlay.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => {
+        avatarViewerOverlay.classList.add("visible");
+    });
+}
+
+function closeUserProfileModal() {
+    if (!userProfileModalOverlay) {
+        return;
+    }
+    userProfileModalOverlay.classList.remove("visible");
+    userProfileModalOverlay.setAttribute("aria-hidden", "true");
+    setTimeout(() => {
+        if (!userProfileModalOverlay.classList.contains("visible")) {
+            userProfileModalOverlay.hidden = true;
+            if (userProfileModalBody) {
+                userProfileModalBody.innerHTML = "";
+            }
+            if (
+                lastFocusedElementBeforeUserProfileModal &&
+                document.contains(lastFocusedElementBeforeUserProfileModal)
+            ) {
+                lastFocusedElementBeforeUserProfileModal.focus();
+            }
+            lastFocusedElementBeforeUserProfileModal = null;
+            activeUserProfile = null;
+        }
+    }, 200);
+}
+
+async function openUserProfileModal({ userId = 0, username = "" } = {}) {
+    if (!userProfileModalOverlay || !userProfileModalBody) {
+        return;
+    }
+
+    lastFocusedElementBeforeUserProfileModal =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    userProfileModalBody.innerHTML = '<div class="chat-inline-state chat-inline-state-info"><span class="chat-inline-state-text">Loading user info...</span></div>';
+    userProfileModalOverlay.hidden = false;
+    userProfileModalOverlay.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => {
+        userProfileModalOverlay.classList.add("visible");
+    });
+
+    try {
+        const profile = await fetchUserProfile({ userId, username });
+        activeUserProfile = profile;
+
+        const card = document.createElement("div");
+        card.className = "user-profile-card";
+
+        const safeUsername = escapeHtml(String(profile.username || "Unknown"));
+        const safeIdent = escapeHtml(String(profile.public_ident || "-"));
+        const memberSince = escapeHtml(formatMemberSinceLabel(profile.member_since));
+        const avatarUrl = String(profile.avatar_url || "");
+        const isCurrentUser = Boolean(profile.is_current_user);
+
+        card.innerHTML = `
+            <div class="user-profile-main">
+                <button type="button" class="user-profile-avatar-btn" aria-label="Show enlarged avatar">
+                    <img src="${avatarUrl}" alt="${safeUsername} avatar">
+                </button>
+                <div class="user-profile-main-meta">
+                    <h6 class="user-profile-name">${safeUsername}</h6>
+                    <p class="user-profile-ident">User ID: ${safeIdent}</p>
+                    <p class="user-profile-since">Member since: ${memberSince}</p>
+                </div>
+            </div>
+            <div class="user-profile-actions">
+                <button type="button" class="btn btn-outline-primary" data-user-profile-action="show-avatar">
+                    <i class="fas fa-expand me-1"></i>Show Avatar
+                </button>
+                <button type="button" class="btn btn-primary" data-user-profile-action="send-message" ${isCurrentUser ? "disabled" : ""}>
+                    <i class="fas fa-paper-plane me-1"></i>${isCurrentUser ? "This is you" : "Send Message"}
+                </button>
+                <button type="button" class="btn btn-outline-danger" data-user-profile-action="delete-chat" ${isCurrentUser ? "disabled" : ""}>
+                    <i class="fas fa-trash-alt me-1"></i>${isCurrentUser ? "Delete Chat unavailable" : "Delete Chat"}
+                </button>
+            </div>
+            <div class="user-profile-placeholder">
+                More user actions (mute/block/report) can be added here in future phases.
+            </div>
+        `;
+
+        userProfileModalBody.innerHTML = "";
+        userProfileModalBody.appendChild(card);
+
+        const avatarButton = card.querySelector(".user-profile-avatar-btn");
+        const showAvatarButton = card.querySelector('[data-user-profile-action="show-avatar"]');
+        const sendMessageButton = card.querySelector('[data-user-profile-action="send-message"]');
+        const deleteChatButton = card.querySelector('[data-user-profile-action="delete-chat"]');
+
+        avatarButton?.addEventListener("click", () => openAvatarViewer(profile));
+        showAvatarButton?.addEventListener("click", () => openAvatarViewer(profile));
+        sendMessageButton?.addEventListener("click", async () => {
+            if (isCurrentUser) {
+                return;
+            }
+            addUserToChatList(String(profile.username || ""), {
+                userId: Number(profile.user_id || 0),
+            });
+            await selectChatUser(String(profile.username || ""));
+            closeUserProfileModal();
+        });
+        deleteChatButton?.addEventListener("click", async () => {
+            if (isCurrentUser) {
+                return;
+            }
+
+            const confirmed = window.confirm(
+                `Delete all direct messages between you and ${String(profile.username || "this user")}? This cannot be undone.`
+            );
+            if (!confirmed) {
+                return;
+            }
+
+            const originalLabel = deleteChatButton.innerHTML;
+            deleteChatButton.disabled = true;
+            deleteChatButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+
+            try {
+                const response = await window.ApiService.jsonOk("api/delete_chat.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({
+                        target_username: String(profile.username || ""),
+                    }),
+                });
+
+                const deletedMessages = Number(response?.messages_deleted || 0);
+                const deletedFiles = Number(response?.files_deleted || 0);
+
+                if (currentChatUser === String(profile.username || "")) {
+                    await loadMessages(currentChatUser, true, true);
+                }
+                await loadChatList(true);
+
+                closeUserProfileModal();
+                showModal(
+                    "Chat Deleted",
+                    `Deleted ${deletedMessages} messages${deletedFiles > 0 ? ` and ${deletedFiles} files` : ""}.`,
+                    "success"
+                );
+                setComposerStatus("Chat history deleted", "success");
+            } catch (error) {
+                deleteChatButton.disabled = false;
+                deleteChatButton.innerHTML = originalLabel;
+                showModal("Delete Chat Failed", error?.message || "Unable to delete chat history.", "error");
+                setComposerStatus("Unable to delete chat history", "error");
+            }
+        });
+
+        userProfileModalClose?.focus();
+    } catch (error) {
+        userProfileModalBody.innerHTML = `<div class="chat-inline-state chat-inline-state-error"><span class="chat-inline-state-text">${escapeHtml(String(error?.message || "Failed to load user info."))}</span></div>`;
+    }
 }
 
 function getMediaEndpointForType(messageType, messageId) {
@@ -1343,6 +1570,108 @@ function bindSettingsUiEvents() {
     });
 
     window.addEventListener("resize", syncMobileComposerActions);
+
+    userInfoBtn?.addEventListener("click", async () => {
+        if (!currentChatUser || isGroupToken(currentChatUser)) {
+            return;
+        }
+        const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
+        await openUserProfileModal({ userId, username: currentChatUser });
+    });
+
+    chatWithElem?.addEventListener("click", async () => {
+        if (!currentChatUser || isGroupToken(currentChatUser)) {
+            return;
+        }
+        const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
+        await openUserProfileModal({ userId, username: currentChatUser });
+    });
+
+    chatWithElem?.addEventListener("keydown", async (event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+        if (!currentChatUser || isGroupToken(currentChatUser)) {
+            return;
+        }
+        event.preventDefault();
+        const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
+        await openUserProfileModal({ userId, username: currentChatUser });
+    });
+
+    userProfileModalClose?.addEventListener("click", closeUserProfileModal);
+    userProfileModalOverlay?.addEventListener("click", (event) => {
+        if (event.target === userProfileModalOverlay) {
+            closeUserProfileModal();
+        }
+    });
+
+    avatarViewerClose?.addEventListener("click", closeAvatarViewer);
+    avatarViewerOverlay?.addEventListener("click", (event) => {
+        if (event.target === avatarViewerOverlay) {
+            closeAvatarViewer();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+            return;
+        }
+        if (avatarViewerOverlay && !avatarViewerOverlay.hidden) {
+            closeAvatarViewer();
+            return;
+        }
+        if (userProfileModalOverlay && !userProfileModalOverlay.hidden) {
+            closeUserProfileModal();
+        }
+    });
+
+    chatListElem?.addEventListener("contextmenu", async (event) => {
+        const item = event.target.closest("li.chat-user:not(.chat-group)");
+        if (!item) {
+            return;
+        }
+        const usernameNode = item.querySelector("span:not(.avatar):not(.chat-item-unread-badge)");
+        const username = usernameNode?.textContent?.trim() || "";
+        if (!username) {
+            return;
+        }
+        event.preventDefault();
+        const userId = Number(chatUserIdsByUsername.get(username) || 0);
+        await openUserProfileModal({ userId, username });
+    });
+
+    chatMessagesElem?.addEventListener("click", async (event) => {
+        const avatarImage = event.target.closest(".group-message-avatar-image");
+        const senderName = event.target.closest(".group-message-name");
+        if (!avatarImage && !senderName) {
+            return;
+        }
+        event.preventDefault();
+        const sourceElement = avatarImage || senderName;
+        const messageElement = sourceElement?.closest(".message");
+        const userId = Number(messageElement?.getAttribute("data-sender-id") || 0);
+        const username = String(messageElement?.getAttribute("data-sender-username") || "");
+        if (!userId && !username) {
+            return;
+        }
+        await openUserProfileModal({ userId, username });
+    });
+
+    groupInfoMembers?.addEventListener("click", async (event) => {
+        const avatarImage = event.target.closest(".group-member-avatar-image");
+        if (!avatarImage) {
+            return;
+        }
+        event.preventDefault();
+        const memberItem = avatarImage.closest(".group-member-item");
+        const userId = Number(memberItem?.getAttribute("data-member-user-id") || 0);
+        const username = String(memberItem?.getAttribute("data-member-username") || "");
+        if (!userId && !username) {
+            return;
+        }
+        await openUserProfileModal({ userId, username });
+    });
 }
 
 function bindMessageActionModalEvents() {
@@ -2545,6 +2874,10 @@ function addUserToChatList(username, options = {}) {
     const unreadCount = Math.max(0, Number(options.unreadCount) || 0);
     const userId = Number(options.userId) || 0;
 
+    if (userId > 0) {
+        chatUserIdsByUsername.set(username, userId);
+    }
+
     if (chatUsers.has(username)) {
         const existingItem = document.getElementById(chatListItemId(username));
         const existingAvatarImage = existingItem?.querySelector(".avatar-image");
@@ -2676,6 +3009,8 @@ async function selectChatTarget(target) {
     document.getElementById(chatListItemId(currentChatUser))?.classList.add("selected-chat");
     chatInput.disabled = false;
     chatWithElem.textContent = getCurrentChatDisplayName();
+    chatWithElem.classList.toggle("direct-chat-clickable", !isGroupToken(target));
+    chatWithElem.tabIndex = isGroupToken(target) ? -1 : 0;
     chatInput.value = "";
     setComposerStatus("");
     clearReplyState();
@@ -2693,6 +3028,7 @@ async function selectChatTarget(target) {
 
     const isGroup = isGroupToken(currentChatUser);
     groupInfoBtn.hidden = !isGroup;
+    userInfoBtn && (userInfoBtn.hidden = isGroup || !currentChatUser);
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
@@ -4736,6 +5072,8 @@ async function renderGroupInfoPanel(groupId) {
                         ${canRemove ? `<button type="button" class="btn btn-outline-danger" data-action="remove-member" aria-label="Remove ${escapeHtml(memberUsername)} from group" data-user-id="${memberUserId}" data-username="${escapeHtml(memberUsername)}">Remove</button>` : ""}
                     </span>
                 `;
+                li.setAttribute("data-member-user-id", String(memberUserId));
+                li.setAttribute("data-member-username", memberUsername);
                 groupInfoMembers.appendChild(li);
             });
         }

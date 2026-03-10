@@ -74,6 +74,7 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - Messaging extras:
   - reactions: `toggle_message_reaction.php`
   - delete for everyone mode in `delete_messages.php` (`delete_for_everyone: true`, sender-only hard delete)
+  - delete full direct-chat history in `delete_chat.php` (`target_username`, requester-scoped pair deletion)
 - Media/files (direct + group): image/voice/file send + retrieval
 - Discovery: user search/check + chat list
 - Typing status (private):
@@ -129,6 +130,7 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - `SEND_FAILED` → write operation rejected/failure.
 - `DB_SAVE_FAILED` / `DB_ERROR` → database operation failure.
 - `DELETE_FOR_EVERYONE_FORBIDDEN` → requester attempted sender-only delete-for-everyone on a message they did not send.
+- `DELETE_CHAT_FAILED` → direct chat history deletion failed server-side.
 
 ### Reactions
 - `INVALID_REACTION` → unsupported reaction emoji.
