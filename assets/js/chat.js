@@ -3304,6 +3304,28 @@ function getSelectedMessageElements() {
     return selectedElements;
 }
 
+function toSortableMessageTimestamp(messageElement) {
+    const createdAtRaw = String(messageElement?.getAttribute("data-created-at") || "").trim();
+    const parsed = createdAtRaw ? new Date(createdAtRaw) : null;
+    if (parsed && !Number.isNaN(parsed.getTime())) {
+        return parsed.getTime();
+    }
+    return 0;
+}
+
+function getSelectedMessageElementsSortedBySentTime() {
+    return getSelectedMessageElements().sort((leftElement, rightElement) => {
+        const leftTs = toSortableMessageTimestamp(leftElement);
+        const rightTs = toSortableMessageTimestamp(rightElement);
+        if (leftTs !== rightTs) {
+            return leftTs - rightTs;
+        }
+        const leftId = Number(leftElement.getAttribute("data-message-id") || 0);
+        const rightId = Number(rightElement.getAttribute("data-message-id") || 0);
+        return leftId - rightId;
+    });
+}
+
 function exitSelectMode({ clearSelection = true } = {}) {
     isSelectModeActive = false;
     if (clearSelection) {
@@ -3316,6 +3338,9 @@ function exitSelectMode({ clearSelection = true } = {}) {
 }
 
 function enterSelectMode(seedMessageElement = null) {
+    if (activeEditMessageId) {
+        cancelEditMode();
+    }
     isSelectModeActive = true;
     if (seedMessageElement) {
         toggleMessageSelection(seedMessageElement);
@@ -3351,7 +3376,7 @@ function toggleMessageSelection(messageElement) {
 }
 
 async function bulkForwardSelectedMessages() {
-    const selectedElements = getSelectedMessageElements();
+    const selectedElements = getSelectedMessageElementsSortedBySentTime();
     if (!selectedElements.length) {
         setComposerStatus("Select at least one message to forward.", "warning");
         return;

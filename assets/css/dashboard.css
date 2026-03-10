@@ -654,6 +654,12 @@ nav.navbar:hover::after {
     max-width: 100%;
 }
 
+.group-incoming-media-message.is-sticker-message .sticker-message-button,
+.group-incoming-media-message.is-sticker-message .sticker-message-image {
+    width: auto;
+    max-width: min(11rem, 44vw);
+}
+
 .group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media {
     flex: 1 1 auto;
     width: min(34rem, 80vw);
@@ -1648,22 +1654,51 @@ nav.navbar:hover::after {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    border-top: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
-    padding: 0.45rem 0.7rem;
+    border-top: 1px solid color-mix(in srgb, var(--secondary-color) 28%, var(--border-color));
+    border-bottom: 1px solid color-mix(in srgb, var(--secondary-color) 20%, var(--border-color));
+    background: linear-gradient(
+        120deg,
+        color-mix(in srgb, var(--surface-color) 92%, transparent),
+        color-mix(in srgb, var(--secondary-color) 8%, var(--surface-color))
+    );
+    padding: 0.5rem 0.72rem;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-color) 88%, transparent);
 }
 
 .select-mode-count {
-    font-size: 0.84rem;
-    font-weight: 600;
+    font-size: 0.82rem;
+    font-weight: 700;
     color: var(--text-color);
+    padding: 0.18rem 0.52rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 20%, var(--border-color));
+    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
 }
 
 .select-mode-actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
+}
+
+.select-mode-actions .btn {
+    border-radius: 999px;
+    min-height: 1.9rem;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: var(--transition-fast);
+}
+
+.select-mode-actions .btn:hover:not(:disabled),
+.select-mode-actions .btn:focus-visible:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--secondary-color) 22%, transparent);
+}
+
+.select-mode-actions .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .chat-messages.is-select-mode .message {
