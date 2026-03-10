@@ -1384,6 +1384,7 @@ function removeEdgeBlackWhiteBackground(ctx, canvasSize, drawRegion) {
     const imageData = ctx.getImageData(0, 0, width, height);
     const pixels = imageData.data;
     const visited = new Uint8Array(width * height);
+    const removed = new Uint8Array(width * height);
     const queue = [];
 
     const isCandidate = (pixelIndex) => {
@@ -1437,6 +1438,7 @@ function removeEdgeBlackWhiteBackground(ctx, canvasSize, drawRegion) {
         const current = queue[head++];
         const pixelIndex = current * 4;
         pixels[pixelIndex + 3] = 0;
+        removed[current] = 1;
 
         const x = current % width;
         const y = Math.floor(current / width);
@@ -1444,6 +1446,51 @@ function removeEdgeBlackWhiteBackground(ctx, canvasSize, drawRegion) {
         enqueue(x + 1, y);
         enqueue(x, y - 1);
         enqueue(x, y + 1);
+    }
+
+    for (let y = startY; y <= endY; y++) {
+        for (let x = startX; x <= endX; x++) {
+            const flatIndex = y * width + x;
+            if (removed[flatIndex]) {
+                continue;
+            }
+
+            const pixelIndex = flatIndex * 4;
+            const alpha = pixels[pixelIndex + 3];
+            if (alpha < 20) {
+                continue;
+            }
+
+            const red = pixels[pixelIndex];
+            const green = pixels[pixelIndex + 1];
+            const blue = pixels[pixelIndex + 2];
+            const maxValue = Math.max(red, green, blue);
+            const minValue = Math.min(red, green, blue);
+            const average = (red + green + blue) / 3;
+            const spread = maxValue - minValue;
+            const edgeCandidate =
+                minValue >= 228 ||
+                maxValue <= 34 ||
+                ((average >= 220 || average <= 36) && spread <= 36);
+
+            if (!edgeCandidate) {
+                continue;
+            }
+
+            const left = x > startX ? flatIndex - 1 : -1;
+            const right = x < endX ? flatIndex + 1 : -1;
+            const up = y > startY ? flatIndex - width : -1;
+            const down = y < endY ? flatIndex + width : -1;
+            const touchesRemoved =
+                (left >= 0 && removed[left]) ||
+                (right >= 0 && removed[right]) ||
+                (up >= 0 && removed[up]) ||
+                (down >= 0 && removed[down]);
+
+            if (touchesRemoved) {
+                pixels[pixelIndex + 3] = Math.round(alpha * 0.35);
+            }
+        }
     }
 
     ctx.putImageData(imageData, 0, 0);
@@ -2043,9 +2090,20 @@ function bindSettingsUiEvents() {
     });
 
     chatWithElem?.addEventListener("click", async () => {
-        if (!currentChatUser || isGroupToken(currentChatUser)) {
+        if (!currentChatUser) {
             return;
         }
+
+        if (isGroupToken(currentChatUser)) {
+            const groupId = getCurrentGroupId();
+            if (!groupId) {
+                return;
+            }
+            await renderGroupInfoPanel(groupId);
+            openGroupInfoPanel();
+            return;
+        }
+
         const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
         await openUserProfileModal({ userId, username: currentChatUser });
     });
@@ -2054,10 +2112,21 @@ function bindSettingsUiEvents() {
         if (event.key !== "Enter" && event.key !== " ") {
             return;
         }
-        if (!currentChatUser || isGroupToken(currentChatUser)) {
+        if (!currentChatUser) {
             return;
         }
         event.preventDefault();
+
+        if (isGroupToken(currentChatUser)) {
+            const groupId = getCurrentGroupId();
+            if (!groupId) {
+                return;
+            }
+            await renderGroupInfoPanel(groupId);
+            openGroupInfoPanel();
+            return;
+        }
+
         const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
         await openUserProfileModal({ userId, username: currentChatUser });
     });
@@ -3472,8 +3541,8 @@ async function selectChatTarget(target) {
     document.getElementById(chatListItemId(currentChatUser))?.classList.add("selected-chat");
     chatInput.disabled = false;
     chatWithElem.textContent = getCurrentChatDisplayName();
-    chatWithElem.classList.toggle("direct-chat-clickable", !isGroupToken(target));
-    chatWithElem.tabIndex = isGroupToken(target) ? -1 : 0;
+    chatWithElem.classList.toggle("direct-chat-clickable", Boolean(target));
+    chatWithElem.tabIndex = target ? 0 : -1;
     chatInput.value = "";
     setComposerStatus("");
     clearReplyState();
