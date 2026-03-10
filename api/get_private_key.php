@@ -1,17 +1,2 @@
 <?php
-session_start();
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/api_helpers.php';
-
-apiRequireMethod('GET');
-$userId = apiRequireAuth();
-
-$stmt = $pdo->prepare('SELECT private_key FROM users WHERE id = ?');
-$stmt->execute([$userId]);
-$user = $stmt->fetch();
-
-if (!$user) {
-    apiError('USER_NOT_FOUND', 'User not found', 404);
-}
-
-apiSuccess(['privateKeyPem' => $user['private_key']]);
+require_once __DIR__ . '/keys/get_private.php';

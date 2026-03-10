@@ -3899,10 +3899,8 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                 await addMessageToChat(msg);
             }
             if (appSettings.autoScrollEnabled) {
-                requestAnimationFrame(() => {
-                    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-                    removeGoToLatestButton();
-                });
+                scheduleSnapToBottom();
+                removeGoToLatestButton();
             } else {
                 addGoToLatestButton();
             }
@@ -3975,9 +3973,7 @@ async function loadCurrentChatsRecentMessages() {
         setComposerStatus("");
 
         if (appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
-            requestAnimationFrame(() => {
-                chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-            });
+            scheduleSnapToBottom();
         } else {
             addGoToLatestButton();
         }
@@ -4775,6 +4771,17 @@ function addGoToLatestButton() {
     chatMessagesElem.appendChild(goToLatestBtn);
 }
 
+function snapChatToBottom() {
+    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+}
+
+function scheduleSnapToBottom() {
+    snapChatToBottom();
+    requestAnimationFrame(snapChatToBottom);
+    setTimeout(snapChatToBottom, 80);
+    setTimeout(snapChatToBottom, 220);
+}
+
 function removeGoToLatestButton() {
     const goToLatestBtn = document.getElementById("goToLatestBtn");
     if (goToLatestBtn) {
@@ -4804,6 +4811,8 @@ function scrollToLatest() {
         top: chatMessagesElem.scrollHeight,
         behavior: "smooth",
     });
+    setTimeout(snapChatToBottom, 120);
+    setTimeout(snapChatToBottom, 320);
     setTimeout(() => {
         removeGoToLatestButton();
     }, 100);

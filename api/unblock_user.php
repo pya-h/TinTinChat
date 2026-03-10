@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/users/unblock.php';
+return;
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';

@@ -71,6 +71,8 @@ A lightweight, self-hostable web chat application built with native PHP and vani
    - `./tests/run_all_tests.sh http://localhost:8080`
 - Run test environment setup/check helper:
    - `./tests/setup_test_env.sh http://localhost:8080`
+- Stop managed local test server:
+   - `./tests/stop_test_server.sh --pid-file /tmp/tintin_test_server.pid`
 
 ## Security Notes
 
@@ -132,3 +134,7 @@ This is a project-level attribution statement, not a legal ownership transfer.
    - Added user block/unblock APIs and profile action button.
    - Enforced direct-message send denial when receiver has blocked sender.
    - Added block-user E2E smoke coverage.
+- **2026-03-10 — Ops/test reliability updates**
+   - Fixed auth redirect targets from categorized login/logout endpoints to prevent `/api/index.php` and `/api/dashboard.php` misroutes.
+   - Improved chat auto-scroll bottom snap reliability when async media/layout changes message container height.
+   - Added `tests/stop_test_server.sh` and integrated PID tracking in `tests/run_all_tests.sh` cleanup.

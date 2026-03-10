@@ -5,8 +5,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BASE_URL="${1:-http://localhost:8080}"
 AUTO_SERVER="${2:-auto}"
 SERVER_PID=""
+SERVER_PID_FILE="/tmp/tintin_test_server.pid"
 
 cleanup() {
+  bash "${ROOT_DIR}/tests/stop_test_server.sh" --pid-file "${SERVER_PID_FILE}" >/dev/null 2>&1 || true
   if [[ -n "${SERVER_PID}" ]] && kill -0 "${SERVER_PID}" >/dev/null 2>&1; then
     kill "${SERVER_PID}" >/dev/null 2>&1 || true
     wait "${SERVER_PID}" 2>/dev/null || true
@@ -37,6 +39,7 @@ start_server_if_needed() {
     php -d upload_max_filesize=110M -d post_max_size=120M -S localhost:8080 >/tmp/tintin_test_server.log 2>&1
   ) &
   SERVER_PID=$!
+  echo "${SERVER_PID}" >"${SERVER_PID_FILE}"
 
   for _ in {1..20}; do
     if is_server_up; then

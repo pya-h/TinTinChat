@@ -1,2 +1,5 @@
 <?php
-require_once __DIR__ . '/../logout.php';
+require_once __DIR__ . '/../../includes/db.php';
+require_once __DIR__ . '/../../includes/auth.php';
+logout();
+exit;
