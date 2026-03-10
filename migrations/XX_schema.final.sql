@@ -20,11 +20,12 @@ CREATE TABLE messages (
   group_id INT,
   message MEDIUMTEXT,
   message_for_sender MEDIUMTEXT,
-  message_type ENUM('text', 'voice', 'image', 'video', 'file') DEFAULT 'text',
+  message_type ENUM('text', 'voice', 'image', 'video', 'file', 'sticker') DEFAULT 'text',
   voice_file_path VARCHAR(255),
   image_file_path VARCHAR(255),
   any_file_path VARCHAR(255),
   file_size BIGINT,
+  sticker_id INT NULL,
   reply_to_message_id INT NULL,
   forwarded_from_message_id INT NULL,
   forwarded_by_user_id INT NULL,
@@ -35,7 +36,25 @@ CREATE TABLE messages (
   FOREIGN KEY (reply_to_message_id) REFERENCES messages(id) ON DELETE SET NULL,
   FOREIGN KEY (forwarded_from_message_id) REFERENCES messages(id) ON DELETE SET NULL,
   FOREIGN KEY (forwarded_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (sticker_id) REFERENCES stickers(id) ON DELETE SET NULL,
   FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+);
+
+CREATE TABLE IF NOT EXISTS stickers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  file_path VARCHAR(255) NOT NULL,
+  file_mime VARCHAR(64) NOT NULL,
+  file_hash CHAR(64) NOT NULL,
+  width SMALLINT UNSIGNED NOT NULL,
+  height SMALLINT UNSIGNED NOT NULL,
+  uploaded_by_user_id INT NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_stickers_file_hash (file_hash),
+  KEY idx_stickers_active_created (is_active, created_at),
+  CONSTRAINT fk_stickers_uploaded_by_user
+    FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id)
+    ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS groups (
@@ -135,6 +154,7 @@ CREATE INDEX idx_messages_reply_to ON messages(reply_to_message_id);
 
 CREATE INDEX idx_messages_forwarded_from ON messages(forwarded_from_message_id);
 CREATE INDEX idx_messages_forwarded_by ON messages(forwarded_by_user_id);
+CREATE INDEX idx_messages_sticker_id ON messages(sticker_id);
 
 CREATE INDEX idx_messages_group_created_at ON messages(group_id, created_at);
 

@@ -199,23 +199,23 @@ Legend:
 - [x] (`P2`) Add regression checklist for this phase (modal behavior, avatar enlarge UX, destructive-action safeguards).
 
 ### Phase G — Sticker Support (Telegram-like) (`P1/P2`)
-- [ ] (`P1`) Define sticker format spec aligned to Telegram style:
+- [x] (`P1`) Define sticker format spec aligned to Telegram style:
 	- static sticker image on `512x512` canvas,
 	- one side exactly `512px` (the other side `<=512px`),
 	- preferred `WEBP`, allow `PNG` fallback,
 	- enforce max upload size (target: `<=512KB` per sticker).
-- [ ] (`P1`) DB migration: add `stickers` table (id, file_path, width, height, uploaded_by_user_id, created_at, is_active).
-- [ ] (`P1`) DB migration: add sticker message reference (e.g. `messages.sticker_id` nullable FK).
-- [ ] (`P1`) Add backend endpoint to upload sticker image with validation/resizing to spec.
-- [ ] (`P1`) Add backend endpoint to fetch sticker catalog (global list usable by all users).
-- [ ] (`P1`) Add backend support to send sticker messages and fetch/render them in chat history.
-- [ ] (`P1`) Add sticker picker section in composer area (toggle/button + grid list of stickers).
-- [ ] (`P1`) Add “Add Sticker” button inside sticker section for user uploads.
-- [ ] (`P2`) Add lightweight sticker management safeguards:
+- [x] (`P1`) DB migration: add `stickers` table (id, file_path, width, height, uploaded_by_user_id, created_at, is_active).
+- [x] (`P1`) DB migration: add sticker message reference (e.g. `messages.sticker_id` nullable FK).
+- [x] (`P1`) Add backend endpoint to upload sticker image with validation/resizing to spec.
+- [x] (`P1`) Add backend endpoint to fetch sticker catalog (global list usable by all users).
+- [x] (`P1`) Add backend support to send sticker messages and fetch/render them in chat history.
+- [x] (`P1`) Add sticker picker section in composer area (toggle/button + grid list of stickers).
+- [x] (`P1`) Add “Add Sticker” button inside sticker section for user uploads.
+- [x] (`P2`) Add lightweight sticker management safeguards:
 	- file type + dimension checks,
 	- duplicate/hash check,
 	- basic moderation control (`is_active` flag for admin disable).
-- [ ] (`P2`) Add UX states for sticker flow (loading, empty, upload progress, error/retry).
+- [x] (`P2`) Add UX states for sticker flow (loading, empty, upload progress, error/retry).
 
 
 ### Phase H - Tests

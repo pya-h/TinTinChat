@@ -622,7 +622,8 @@ nav.navbar:hover::after {
 .group-incoming-media-message.is-image-message,
 .group-incoming-media-message.is-video-message,
 .group-incoming-media-message.is-file-message,
-.group-incoming-media-message.is-voice-message {
+.group-incoming-media-message.is-voice-message,
+.group-incoming-media-message.is-sticker-message {
     max-width: 42rem;
 }
 
@@ -630,6 +631,7 @@ nav.navbar:hover::after {
 .group-incoming-media-message .video-message-container,
 .group-incoming-media-message .file-message-container,
 .group-incoming-media-message .voice-player-container,
+.group-incoming-media-message .sticker-message-button,
 .group-incoming-media-message .message-image {
     width: 100%;
     max-width: 100%;
@@ -2159,7 +2161,8 @@ nav.navbar:hover::after {
 
 .message.sent.is-voice-message .message-status-indicator,
 .message.sent.is-image-message .message-status-indicator,
-.message.sent.is-video-message .message-status-indicator {
+.message.sent.is-video-message .message-status-indicator,
+.message.sent.is-sticker-message .message-status-indicator {
     position: absolute;
     bottom: -0.4rem;
     right: 1.3rem;
@@ -2302,6 +2305,125 @@ nav.navbar:hover::after {
 
 .composer-image-source {
     position: relative;
+}
+
+.composer-sticker-source {
+    position: relative;
+    margin-right: 0.1rem;
+}
+
+#stickerPickerBtn {
+    border-color: color-mix(in srgb, var(--secondary-color) 36%, transparent);
+}
+
+#stickerPickerBtn[aria-expanded="true"] {
+    color: #fff;
+    box-shadow: var(--shadow-md);
+}
+
+#stickerPickerBtn[aria-expanded="true"]::before {
+    opacity: 1;
+}
+
+.sticker-picker-menu {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 0.6rem);
+    width: min(20.5rem, 82vw);
+    max-height: min(21rem, 64vh);
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.5rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 94%, transparent);
+    box-shadow: var(--shadow-md);
+    z-index: 35;
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    transform-origin: bottom left;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.sticker-picker-menu.is-open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.sticker-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+    padding: 0.15rem 0.2rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.sticker-picker-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 32%, var(--border-color));
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 0.18rem 0.58rem;
+}
+
+.sticker-picker-upload:hover,
+.sticker-picker-upload:focus-visible {
+    background: color-mix(in srgb, var(--secondary-color) 12%, transparent);
+    outline: none;
+}
+
+.sticker-picker-state {
+    color: var(--subtle-text-color);
+    font-size: 0.78rem;
+    min-height: 1.15rem;
+    padding: 0 0.2rem;
+}
+
+.sticker-picker-state.is-error {
+    color: color-mix(in srgb, var(--primary-color) 65%, var(--text-color));
+}
+
+.sticker-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 0.42rem;
+    overflow: auto;
+    padding: 0.15rem 0.12rem 0.22rem;
+}
+
+.sticker-picker-item {
+    border: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
+    border-radius: 0.72rem;
+    background: color-mix(in srgb, var(--surface-color) 94%, transparent);
+    aspect-ratio: 1 / 1;
+    display: grid;
+    place-items: center;
+    padding: 0.3rem;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.sticker-picker-item:hover,
+.sticker-picker-item:focus-visible {
+    transform: translateY(-2px) scale(1.03);
+    border-color: color-mix(in srgb, var(--secondary-color) 58%, transparent);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--secondary-color) 20%, transparent);
+    outline: none;
+}
+
+.sticker-picker-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .image-source-menu {
@@ -2502,6 +2624,15 @@ nav.navbar:hover::after {
     .image-source-menu-item {
         font-size: 0.78rem;
         padding: 0.35rem 0.45rem;
+    }
+
+    .sticker-picker-menu {
+        width: min(19rem, 86vw);
+        max-height: min(18rem, 58vh);
+    }
+
+    .sticker-picker-grid {
+        grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
     }
 
     .chat-settings-panel {
@@ -3530,6 +3661,61 @@ nav.navbar:hover::after {
     font-size: 0.9rem;
 }
 
+.message.is-sticker-message {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    white-space: normal;
+    animation: stickerPopIn 0.22s ease;
+}
+
+.sticker-message-button {
+    border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+    padding: 0.38rem;
+    display: inline-grid;
+    place-items: center;
+    width: min(11rem, 44vw);
+    max-width: 11rem;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.sticker-message-button:hover,
+.sticker-message-button:focus-visible {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--secondary-color) 20%, transparent);
+    border-color: color-mix(in srgb, var(--secondary-color) 56%, transparent);
+    outline: none;
+}
+
+.sticker-message-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+}
+
+.sticker-message-unavailable {
+    font-size: 0.82rem;
+    color: var(--subtle-text-color);
+    border: 1px dashed var(--border-color);
+    border-radius: 0.75rem;
+    padding: 0.55rem 0.65rem;
+    background: color-mix(in srgb, var(--surface-color) 88%, transparent);
+}
+
+@keyframes stickerPopIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 .message.is-video-message {
     background: transparent;
     padding: 0;
@@ -3754,7 +3940,8 @@ nav.navbar:hover::after {
     }
 
     .message.is-image-message,
-    .message.is-video-message {
+    .message.is-video-message,
+    .message.is-sticker-message {
         width: auto;
         max-width: 75%;
     }

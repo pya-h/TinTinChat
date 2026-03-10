@@ -1,6 +1,6 @@
 # TinTinChat API Contract & Error Codes
 
-Last updated: 2026-03-08
+Last updated: 2026-03-10
 Audience: developers extending `api/*.php` and frontend consumers in `assets/js/*`.
 
 ## 1) Response Envelope
@@ -59,6 +59,7 @@ Centralized in `includes/constants.php`.
 
 Examples:
 - Upload limits: `TTC_UPLOAD_IMAGE_MAX_BYTES`, `TTC_UPLOAD_FILE_MAX_BYTES`, `TTC_UPLOAD_VOICE_MAX_BYTES`
+  - Sticker limit: `TTC_UPLOAD_STICKER_MAX_BYTES` (512KB)
 - Paging limits: `TTC_FETCH_MESSAGES_MIN_LIMIT`, `TTC_FETCH_MESSAGES_MAX_LIMIT`, `TTC_FETCH_MESSAGES_DEFAULT_LIMIT`
 - Search/seen caps: `TTC_SEARCH_USERS_MIN_QUERY_LENGTH`, `TTC_SEARCH_USERS_LIMIT`, `TTC_SEEN_STATUS_MAX_IDS`
 
@@ -76,6 +77,11 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
   - delete for everyone mode in `delete_messages.php` (`delete_for_everyone: true`, sender-only hard delete)
   - delete full direct-chat history in `delete_chat.php` (`target_username`, requester-scoped pair deletion)
 - Media/files (direct + group): image/voice/file send + retrieval
+- Stickers:
+  - `upload_sticker.php`
+  - `fetch_stickers.php`
+  - `send_sticker_message.php`
+  - `get_sticker.php`
 - Discovery: user search/check + chat list
 - Typing status (private):
   - `update_typing_status.php`
@@ -125,12 +131,16 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 - `DIRECTORY_CREATE_FAILED` / `DIRECTORY_NOT_WRITABLE` → storage path issues.
 - `FILE_MOVE_FAILED` / `FILE_SAVE_FAILED` → failed move/write.
 - `MIME_CHECK_FAILED` → MIME detection failure.
+- `INVALID_STICKER_TYPE` / `INVALID_STICKER_FILE` / `INVALID_STICKER_DIMENSIONS` → invalid sticker payload.
+- `STICKER_PROCESSING_UNAVAILABLE` / `STICKER_RESIZE_FAILED` / `STICKER_CANVAS_FAILED` / `STICKER_SAVE_FAILED` → server-side sticker processing failure.
+- `STICKER_OUTPUT_TOO_LARGE` → processed sticker exceeds sticker size policy.
 
 ### Data / Persistence
 - `SEND_FAILED` → write operation rejected/failure.
 - `DB_SAVE_FAILED` / `DB_ERROR` → database operation failure.
 - `DELETE_FOR_EVERYONE_FORBIDDEN` → requester attempted sender-only delete-for-everyone on a message they did not send.
 - `DELETE_CHAT_FAILED` → direct chat history deletion failed server-side.
+- `INVALID_STICKER_ID` / `STICKER_NOT_FOUND` → sticker send/fetch references invalid or inactive sticker.
 
 ### Reactions
 - `INVALID_REACTION` → unsupported reaction emoji.

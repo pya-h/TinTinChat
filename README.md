@@ -11,6 +11,7 @@ A lightweight, self-hostable web chat application built with native PHP and vani
 - User avatars with secure upload/retrieval + fallback avatar rendering.
 - User Info modal + avatar enlargement + send-message shortcut.
 - Delete full direct-chat history from user profile modal.
+- Sticker support with upload, picker, and send flow.
 - Responsive UX with desktop/mobile parity and accessibility-focused interactions.
 
 ## Tech Stack
@@ -76,8 +77,8 @@ This is a project-level attribution statement, not a legal ownership transfer.
 
 ## Status Snapshot
 
-- Completed through Phase F.6 (avatar/profile UX hardening) in [docs/TASKS.md](docs/TASKS.md).
-- Upcoming major phase: Phase G (sticker support), then tests/power UX/PWA.
+- Completed through Phase G (sticker support) in [docs/TASKS.md](docs/TASKS.md).
+- Upcoming major phase: Phase H (tests), then power UX/PWA.
 
 ## Changelog (Recent)
 
@@ -92,3 +93,7 @@ This is a project-level attribution statement, not a legal ownership transfer.
 - **2026-03-09 — Phase F polish**
    - Improved in-conversation search across older messages.
    - Added video send flow parity and reaction UX refinements.
+- **2026-03-10 — Phase G completed**
+   - Added sticker schema migration with `stickers` catalog and `messages.sticker_id` reference.
+   - Added sticker upload/fetch/send/get endpoints with validation, resize-to-canvas, and duplicate hash protection.
+   - Added left-side composer sticker button, animated sticker picker grid, upload action, and sticker message rendering.

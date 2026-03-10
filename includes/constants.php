@@ -16,6 +16,8 @@ const TTC_UPLOAD_IMAGE_MAX_BYTES = 20 * 1024 * 1024;
 const TTC_UPLOAD_FILE_MAX_BYTES = 100 * 1024 * 1024;
 const TTC_UPLOAD_VOICE_MAX_BYTES = 10 * 1024 * 1024;
 const TTC_UPLOAD_AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+const TTC_UPLOAD_STICKER_MAX_BYTES = 512 * 1024;
+const TTC_STICKER_CANVAS_SIZE = 512;
 
 const TTC_GROUP_TITLE_MIN_LENGTH = 3;
 const TTC_GROUP_TITLE_MAX_LENGTH = 80;
@@ -36,6 +38,8 @@ function tintinchatFrontendConstants(): array
         'uploadFileMaxBytes' => TTC_UPLOAD_FILE_MAX_BYTES,
         'uploadVoiceMaxBytes' => TTC_UPLOAD_VOICE_MAX_BYTES,
         'uploadAvatarMaxBytes' => TTC_UPLOAD_AVATAR_MAX_BYTES,
+        'uploadStickerMaxBytes' => TTC_UPLOAD_STICKER_MAX_BYTES,
+        'stickerCanvasSize' => TTC_STICKER_CANVAS_SIZE,
         'chatRefreshPollMs' => TTC_CHAT_REFRESH_POLL_MS,
         'seenStatusPollMs' => TTC_SEEN_STATUS_POLL_MS,
     ];

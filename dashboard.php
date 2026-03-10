@@ -173,6 +173,22 @@ $csrfToken = generateCsrfToken();
                     <div id="replyPreview" class="reply-preview" style="display: none;"></div>
                     <div id="composerStatus" class="composer-status" aria-live="polite"></div>
                     <form id="chatForm" class="d-flex w-100 align-items-center">
+                        <div class="composer-sticker-source">
+                            <button type="button" id="stickerPickerBtn" class="btn btn-secondary" title="Open sticker picker" aria-label="Open sticker picker" aria-haspopup="dialog" aria-expanded="false">
+                                <i class="fas fa-smile"></i>
+                            </button>
+                            <div id="stickerPickerMenu" class="sticker-picker-menu" role="dialog" aria-label="Sticker picker" hidden>
+                                <div class="sticker-picker-header">
+                                    <span>Stickers</span>
+                                    <button type="button" id="stickerUploadBtn" class="sticker-picker-upload" aria-label="Add sticker">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add</span>
+                                    </button>
+                                </div>
+                                <div id="stickerPickerState" class="sticker-picker-state" aria-live="polite">Loading stickers...</div>
+                                <div id="stickerPickerGrid" class="sticker-picker-grid" role="list"></div>
+                            </div>
+                        </div>
                         <textarea id="chatInput" class="form-control" placeholder="Type a message..." rows="1" aria-label="Message input"></textarea>
                         
                         <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
@@ -181,6 +197,7 @@ $csrfToken = generateCsrfToken();
                         <input type="file" id="videoCaptureInput" accept="video/*" capture="environment" style="display: none;">
                         <input type="file" id="fileUploadInput" style="display: none;">
                         <input type="file" id="avatarUploadInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+                        <input type="file" id="stickerUploadInput" accept="image/webp,image/png" style="display: none;">
 
                         <button type="button" id="composerToolsToggle" class="btn btn-secondary ms-2" title="Show or hide media actions" aria-label="Toggle media actions">
                             <i class="fas fa-plus"></i>

@@ -2,6 +2,12 @@ const chatListElem = document.getElementById("chatList");
 const chatMessagesElem = document.getElementById("chatMessages");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
+const stickerPickerBtn = document.getElementById("stickerPickerBtn");
+const stickerPickerMenu = document.getElementById("stickerPickerMenu");
+const stickerPickerGrid = document.getElementById("stickerPickerGrid");
+const stickerPickerState = document.getElementById("stickerPickerState");
+const stickerUploadBtn = document.getElementById("stickerUploadBtn");
+const stickerUploadInput = document.getElementById("stickerUploadInput");
 const replyPreviewElem = document.getElementById("replyPreview");
 const composerStatusElem = document.getElementById("composerStatus");
 const chatWithElem = document.getElementById("chatWith");
@@ -90,6 +96,8 @@ const searchLoading = document.getElementById("searchLoading");
 const IMAGE_UPLOAD_MAX_BYTES = Number(appConstants.uploadImageMaxBytes) || 20 * 1024 * 1024;
 const FILE_UPLOAD_MAX_BYTES = Number(appConstants.uploadFileMaxBytes) || 100 * 1024 * 1024;
 const AVATAR_UPLOAD_MAX_BYTES = Number(appConstants.uploadAvatarMaxBytes) || 5 * 1024 * 1024;
+const STICKER_UPLOAD_MAX_BYTES = Number(appConstants.uploadStickerMaxBytes) || 512 * 1024;
+const STICKER_CANVAS_SIZE = Number(appConstants.stickerCanvasSize) || 512;
 const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
@@ -209,6 +217,9 @@ let conversationSearchResultIndex = -1;
 let avatarCacheVersion = Date.now();
 let activeUserProfile = null;
 let lastFocusedElementBeforeUserProfileModal = null;
+let stickersCache = [];
+let isStickersLoading = false;
+let hasLoadedStickers = false;
 
 const chatUserIdsByUsername = new Map();
 
@@ -1092,6 +1103,177 @@ function closeImageSourceMenu({ restoreFocus = false } = {}) {
     }
 }
 
+function closeStickerPicker({ restoreFocus = false } = {}) {
+    if (!stickerPickerMenu) {
+        return;
+    }
+    stickerPickerMenu.classList.remove("is-open");
+    stickerPickerBtn?.setAttribute("aria-expanded", "false");
+    window.setTimeout(() => {
+        if (!stickerPickerMenu.classList.contains("is-open")) {
+            stickerPickerMenu.hidden = true;
+        }
+    }, 170);
+    if (restoreFocus) {
+        stickerPickerBtn?.focus();
+    }
+}
+
+function setStickerPickerState(message = "", { isError = false, hidden = false } = {}) {
+    if (!stickerPickerState) {
+        return;
+    }
+    stickerPickerState.textContent = message;
+    stickerPickerState.classList.toggle("is-error", Boolean(isError));
+    stickerPickerState.hidden = Boolean(hidden);
+}
+
+function renderStickerPickerItems(stickers) {
+    if (!stickerPickerGrid) {
+        return;
+    }
+    stickerPickerGrid.innerHTML = "";
+
+    if (!Array.isArray(stickers) || !stickers.length) {
+        setStickerPickerState("No stickers yet. Add your first sticker.");
+        return;
+    }
+
+    setStickerPickerState("", { hidden: true });
+    const fragment = document.createDocumentFragment();
+    stickers.forEach((sticker) => {
+        const stickerId = Number(sticker?.id || 0);
+        if (stickerId <= 0) {
+            return;
+        }
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "sticker-picker-item";
+        item.setAttribute("role", "listitem");
+        item.setAttribute("aria-label", `Send sticker ${stickerId}`);
+        item.setAttribute("data-sticker-id", String(stickerId));
+        item.innerHTML = `<img src="${escapeHtml(String(sticker?.url || ""))}" alt="Sticker" loading="lazy" decoding="async" />`;
+        item.addEventListener("click", async () => {
+            await sendStickerMessage(stickerId);
+        });
+        fragment.appendChild(item);
+    });
+    stickerPickerGrid.appendChild(fragment);
+}
+
+async function loadStickers({ force = false } = {}) {
+    if (isStickersLoading) {
+        return;
+    }
+    if (hasLoadedStickers && !force) {
+        renderStickerPickerItems(stickersCache);
+        return;
+    }
+
+    isStickersLoading = true;
+    setStickerPickerState("Loading stickers...");
+    try {
+        const response = await window.ApiService.jsonOk("api/fetch_stickers.php?limit=200");
+        stickersCache = Array.isArray(response?.stickers) ? response.stickers : [];
+        hasLoadedStickers = true;
+        renderStickerPickerItems(stickersCache);
+    } catch (error) {
+        stickersCache = [];
+        setStickerPickerState(String(error?.message || "Failed to load stickers."), { isError: true });
+    } finally {
+        isStickersLoading = false;
+    }
+}
+
+function openStickerPicker() {
+    if (!stickerPickerMenu) {
+        return;
+    }
+    closeImageSourceMenu();
+    stickerPickerMenu.hidden = false;
+    stickerPickerBtn?.setAttribute("aria-expanded", "true");
+    window.requestAnimationFrame(() => {
+        stickerPickerMenu.classList.add("is-open");
+    });
+    void loadStickers();
+}
+
+async function sendStickerMessage(stickerId) {
+    if (!currentChatUser) {
+        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        return;
+    }
+
+    const normalizedStickerId = Number(stickerId || 0);
+    if (normalizedStickerId <= 0) {
+        return;
+    }
+
+    try {
+        const payload = new URLSearchParams();
+        const groupId = parseGroupIdFromToken(currentChatUser);
+        if (groupId > 0) {
+            payload.set("group_id", String(groupId));
+        } else {
+            payload.set("target", String(currentChatUser));
+        }
+        payload.set("sticker_id", String(normalizedStickerId));
+
+        await window.ApiService.jsonOk("api/send_sticker_message.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                ...getCsrfHeaders(),
+            },
+            body: payload.toString(),
+        });
+
+        closeStickerPicker();
+        if (!isGroupToken(currentChatUser)) {
+            addUserToChatList(currentChatUser);
+            updateTypingStatus(false);
+        }
+        loadCurrentChatsRecentMessages();
+        setComposerStatus("Sticker sent", "success");
+    } catch (error) {
+        setComposerStatus("Unable to send sticker", "error");
+        showModal("Sticker Send Error", error?.message || "Failed to send sticker.", "error");
+    }
+}
+
+async function uploadSticker(file) {
+    if (!file) {
+        return;
+    }
+    const type = String(file.type || "").toLowerCase();
+    if (type !== "image/webp" && type !== "image/png") {
+        showModal("Invalid Sticker", "Sticker must be WEBP or PNG.", "warning");
+        return;
+    }
+    if (file.size > STICKER_UPLOAD_MAX_BYTES) {
+        showModal("Sticker Too Large", "Sticker must be 512KB or smaller.", "warning");
+        return;
+    }
+
+    const payload = new FormData();
+    payload.append("sticker_file", file);
+
+    try {
+        setStickerPickerState("Uploading sticker...");
+        const response = await window.ApiService.jsonOk("api/upload_sticker.php", {
+            method: "POST",
+            headers: getCsrfHeaders(),
+            body: payload,
+        });
+        await loadStickers({ force: true });
+        const duplicate = Boolean(response?.duplicate);
+        setComposerStatus(duplicate ? "Sticker already exists and is ready to use" : "Sticker uploaded", "success");
+    } catch (error) {
+        setStickerPickerState(String(error?.message || "Sticker upload failed."), { isError: true });
+        setComposerStatus("Sticker upload failed", "error");
+    }
+}
+
 function canUseNativeCameraCapture() {
     if (!imageCaptureInput) {
         return false;
@@ -1433,6 +1615,7 @@ function openImageSourceMenu() {
         imageUploadInput?.click();
         return;
     }
+    closeStickerPicker();
     if (imageSourceMenuHideTimer) {
         window.clearTimeout(imageSourceMenuHideTimer);
         imageSourceMenuHideTimer = null;
@@ -1590,6 +1773,7 @@ function bindSettingsUiEvents() {
     });
 
     chatInput?.addEventListener("focus", () => {
+        closeStickerPicker();
         if (isMobileViewport()) {
             appSettings.mobileComposerExpanded = false;
             persistAppSettings();
@@ -3048,6 +3232,7 @@ async function selectChatTarget(target) {
     messageMetaById.clear();
     clearDecryptedMediaCache();
     toggleSettingsPanel(false);
+    closeStickerPicker();
 
     messageOffset = 0;
     hasMoreMessages = true;
@@ -3807,6 +3992,44 @@ async function addMessageToChat(msg, prepend = false) {
               extraStyles: "color: var(--text-color); font-weight: 600;",
           })}
         `;
+        div.setAttribute("data-message-id", msg.id);
+    } else if (msg.message_type === "sticker" && Number(msg.sticker_id || 0) > 0) {
+        div.classList.add("is-sticker-message");
+        hasContextActions = true;
+        canReact = true;
+
+        const stickerId = Number(msg.sticker_id || 0);
+        const stickerIsActive = Number(msg.sticker_is_active || 0) === 1;
+        if (!stickerIsActive) {
+            div.innerHTML = `
+                <div class="sticker-message-unavailable">Sticker unavailable</div>
+                ${newDateTag(msg, {
+                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    topSpace: 1,
+                    fontSize: 8.5,
+                    extraStyles: "color: var(--text-color); font-weight: 600;",
+                })}
+            `;
+        } else {
+            div.innerHTML = `
+                <button type="button" class="sticker-message-button" aria-label="Open sticker" title="Open sticker">
+                    <img src="api/get_sticker.php?id=${stickerId}" class="sticker-message-image" alt="Sticker" loading="lazy" decoding="async" />
+                </button>
+                ${newDateTag(msg, {
+                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    topSpace: 1,
+                    fontSize: 8.5,
+                    extraStyles: "color: var(--text-color); font-weight: 600;",
+                })}
+            `;
+            const stickerButton = div.querySelector(".sticker-message-button");
+            const stickerImage = div.querySelector(".sticker-message-image");
+            stickerButton?.addEventListener("click", () => {
+                if (stickerImage?.src) {
+                    openImageModal(stickerImage.src);
+                }
+            });
+        }
         div.setAttribute("data-message-id", msg.id);
     } else {
         const isGroupMessage = Number(msg.group_id || 0) > 0;
@@ -5898,6 +6121,33 @@ imageUploadBtn.addEventListener("click", () => {
     openImageSourceMenu();
 });
 
+stickerPickerBtn?.addEventListener("click", () => {
+    if (!currentChatUser) {
+        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        return;
+    }
+
+    if (stickerPickerMenu && !stickerPickerMenu.hidden && stickerPickerMenu.classList.contains("is-open")) {
+        closeStickerPicker({ restoreFocus: true });
+        return;
+    }
+
+    openStickerPicker();
+});
+
+stickerUploadBtn?.addEventListener("click", () => {
+    stickerUploadInput?.click();
+});
+
+stickerUploadInput?.addEventListener("change", async (event) => {
+    const selectedFile = event.target?.files?.[0];
+    event.target.value = "";
+    if (!selectedFile) {
+        return;
+    }
+    await uploadSticker(selectedFile);
+});
+
 function handleSelectedImageFile(e) {
     const file = e.target.files?.[0];
     e.target.value = null;
@@ -5995,16 +6245,24 @@ videoCaptureInput?.addEventListener("change", (e) => {
 
 document.addEventListener("click", (event) => {
     if (imageSourceMenu?.hidden) {
+    } else if (!event.target.closest("#imageSourceMenu") && !event.target.closest("#imageUploadBtn")) {
+        closeImageSourceMenu();
+    }
+
+    if (stickerPickerMenu?.hidden) {
         return;
     }
-    if (!event.target.closest("#imageSourceMenu") && !event.target.closest("#imageUploadBtn")) {
-        closeImageSourceMenu();
+    if (!event.target.closest("#stickerPickerMenu") && !event.target.closest("#stickerPickerBtn")) {
+        closeStickerPicker();
     }
 });
 
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && imageSourceMenu && !imageSourceMenu.hidden) {
         closeImageSourceMenu({ restoreFocus: true });
+    }
+    if (event.key === "Escape" && stickerPickerMenu && !stickerPickerMenu.hidden) {
+        closeStickerPicker({ restoreFocus: true });
     }
     if (event.key === "Escape" && cameraCaptureOverlay && !cameraCaptureOverlay.hidden) {
         closeCameraCaptureOverlay();
