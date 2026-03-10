@@ -274,16 +274,16 @@ Legend:
 - [x] (`P3`) Add guardrails for destructive bulk actions (confirm dialogs + clear success/error summaries).
 
 ### Phase J — PWA Support (Final Phase) (`P1/P2`)
-- [ ] (`P1`) Add web app manifest (`name`, `short_name`, icons, theme/background, display mode).
-- [ ] (`P1`) Register service worker with safe versioned update strategy.
-- [ ] (`P1`) Implement core app-shell caching strategy for offline launch.
-- [ ] (`P1`) Define runtime caching policies for API calls (network-first for chat data, stale fallback rules).
-- [ ] (`P1`) Define secure caching policy for encrypted media/file payloads (no plaintext persistence beyond policy).
-- [ ] (`P2`) Add installability UX (install prompt handling + fallback guidance).
-- [ ] (`P2`) Add push notification readiness checklist (permissions flow + backend token lifecycle plan).
-- [ ] (`P2`) Add iOS/Android/browser compatibility QA checklist for PWA behavior.
-- [ ] (`P2`) Add offline/poor-network UX states for message fetch/send retry.
-- [ ] (`P2`) Add PWA release runbook (cache busting, rollback, update rollout).
+- [x] (`P1`) Add web app manifest (`name`, `short_name`, icons, theme/background, display mode).
+- [x] (`P1`) Register service worker with safe versioned update strategy.
+- [x] (`P1`) Implement core app-shell caching strategy for offline launch.
+- [x] (`P1`) Define runtime caching policies for API calls (network-first for chat data, stale fallback rules).
+- [x] (`P1`) Define secure caching policy for encrypted media/file payloads (no plaintext persistence beyond policy).
+- [x] (`P2`) Add installability UX (install prompt handling + fallback guidance).
+- [x] (`P2`) Add push notification readiness checklist (permissions flow + backend token lifecycle plan).
+- [x] (`P2`) Add iOS/Android/browser compatibility QA checklist for PWA behavior.
+- [x] (`P2`) Add offline/poor-network UX states for message fetch/send retry.
+- [x] (`P2`) Add PWA release runbook (cache busting, rollback, update rollout).
 
 ### Phase J.2 — Group seen manager & Unread counter (`P2`)
 - [ ] (`P2`) Add the group message seen system (the first user seeing my message, means message is seen)

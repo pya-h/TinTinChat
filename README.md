@@ -121,9 +121,10 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 - Technical architecture/design: `docs/TECHNICAL_DESIGN.md`
 - Product requirements: `docs/PRD.md`
 - Security regression checklist: `docs/SECURITY_CHECKLIST.md`
+- PWA runtime/checklists/runbook: `docs/PWA_RUNBOOK.md`
 
 ## Current Status
 
-- Project is in post-Phase I stabilization.
+- Project is in post-Phase J baseline stabilization.
 - Organized endpoint architecture is enforced (no legacy flat `api/*.php` wrappers).
 - Full automated suite currently passes (`bash tests/run_all_tests.sh`).

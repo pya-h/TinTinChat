@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-label="TinTinChat icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6a11cb"/>
+      <stop offset="100%" stop-color="#2575fc"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="176" height="176" rx="44" fill="url(#g)"/>
+  <path d="M48 58h96c9.94 0 18 8.06 18 18v46c0 9.94-8.06 18-18 18H92l-26 20c-3.95 3.03-9.67.21-9.67-4.76V140H48c-9.94 0-18-8.06-18-18V76c0-9.94 8.06-18 18-18Z" fill="#fff" opacity="0.96"/>
+  <circle cx="73" cy="99" r="8" fill="#6a11cb"/>
+  <circle cx="96" cy="99" r="8" fill="#6a11cb"/>
+  <circle cx="119" cy="99" r="8" fill="#6a11cb"/>
+</svg>

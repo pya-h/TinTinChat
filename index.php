@@ -16,7 +16,10 @@ $csrfToken = generateCsrfToken();
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#6a11cb" />
     <title>TinTinChat Login</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/pwa/icon-192.svg" type="image/svg+xml" />
     <link href="assets/css/ext/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/ext/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/auth.css" rel="stylesheet" />
@@ -81,7 +84,11 @@ $csrfToken = generateCsrfToken();
         </form>
     </div>
 
+    <script>
+        const PWA_SW_VERSION = <?= json_encode((string) @filemtime(__DIR__ . '/service-worker.js')) ?>;
+    </script>
     <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/pwa.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/pwa.js')); ?>"></script>
     <script src="assets/js/ui-enhancements.js"></script>
     <script>
         function isValidUsername(username) {

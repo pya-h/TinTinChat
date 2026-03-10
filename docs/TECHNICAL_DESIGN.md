@@ -28,7 +28,12 @@ The design emphasizes low operational complexity, predictable API contracts, and
 - Frontend:
   - `assets/js/chat.js` (main interaction surface)
   - `assets/js/api-service.js` (request/error normalization)
+  - `assets/js/pwa.js` (PWA registration/install/update handling)
   - additional helper modules
+- PWA baseline:
+  - `manifest.webmanifest`
+  - `service-worker.js`
+  - `offline.html`
 - Storage:
   - MySQL for metadata and message records
   - local `uploads/*` for encrypted media + avatars/stickers
@@ -137,6 +142,5 @@ Reference: `docs/ENCRYPTION.md`
 
 ## 10) Forward Design Priorities
 
-- Complete remaining Phase I power UX items.
-- Add PWA baseline (Phase J).
+- Continue hardening PWA rollout behaviors (cache lifecycle + install UX telemetry).
 - Add group seen/unread behavior refinements (Phase J.2).

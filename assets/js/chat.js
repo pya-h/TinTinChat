@@ -245,6 +245,7 @@ let isStickersLoading = false;
 let hasLoadedStickers = false;
 let snapToBottomRafId = 0;
 let snapToBottomTimerIds = [];
+let retryLastSendAction = null;
 
 const chatUserIdsByUsername = new Map();
 
@@ -6023,6 +6024,24 @@ const sendTextMessage = async () => {
     const text = chatInput.value.trim();
     if (!text) return;
 
+    if (!navigator.onLine) {
+        setComposerStatus("You are offline. Reconnect and retry.", "warning");
+        retryLastSendAction = async () => {
+            await sendTextMessage();
+        };
+        showInlineChatState({
+            message: "Message not sent while offline.",
+            kind: "error",
+            actionLabel: "Retry Send",
+            onAction: () => {
+                if (retryLastSendAction) {
+                    void retryLastSendAction();
+                }
+            },
+        });
+        return;
+    }
+
     const sendBtn = chatForm.querySelector('button[type="submit"]');
     sendBtn.disabled = true;
     sendBtn.classList.add("btn-pressed");
@@ -6057,12 +6076,27 @@ const sendTextMessage = async () => {
             updateTypingStatus(false);
         }
         setComposerStatus("");
+        retryLastSendAction = null;
+        clearInlineChatState();
     } catch (err) {
         const errorMessage =
             (err && typeof err === "object" && "message" in err && String(err.message || "").trim())
                 ? String(err.message)
                 : String(err || "Unknown");
         setComposerStatus("Message failed to send. Try again.", "error");
+        retryLastSendAction = async () => {
+            await sendTextMessage();
+        };
+        showInlineChatState({
+            message: "Message send failed.",
+            kind: "error",
+            actionLabel: "Retry Send",
+            onAction: () => {
+                if (retryLastSendAction) {
+                    void retryLastSendAction();
+                }
+            },
+        });
         showModal(
             I18N_TEXT.sendErrorTitle,
             formatI18nText(I18N_TEXT.sendErrorBody, { error: errorMessage }),

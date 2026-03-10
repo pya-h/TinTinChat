@@ -29,7 +29,10 @@ $csrfToken = generateCsrfToken();
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#6a11cb" />
     <title>TinTinChat Dashboard</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/pwa/icon-192.svg" type="image/svg+xml" />
     <link href="assets/css/ext/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/ext/fontawesome.min.css" rel="stylesheet" />
     <link href="assets/css/dashboard.css" rel="stylesheet" />
@@ -106,6 +109,10 @@ $csrfToken = generateCsrfToken();
                             <button type="button" id="openUiSettingsBtn" class="chat-setting-item chat-setting-button" aria-label="Open settings modal">
                                 <i class="fas fa-sliders-h"></i>
                                 <span>Open settings</span>
+                            </button>
+                            <button type="button" id="installAppBtn" class="chat-setting-item chat-setting-button" aria-label="Install app" hidden>
+                                <i class="fas fa-download"></i>
+                                <span>Install app</span>
                             </button>
                             <button type="button" id="openConversationSearchBtn" class="chat-setting-item chat-setting-button" aria-label="Search inside current conversation">
                                 <i class="fas fa-search"></i>
@@ -432,6 +439,7 @@ $csrfToken = generateCsrfToken();
         const CSRF_TOKEN = <?= json_encode($csrfToken) ?>;
         const APP_CONSTANTS = <?= json_encode(tintinchatFrontendConstants()) ?>;
         const CURRENT_USER_IS_ADMIN = <?= json_encode($is_admin) ?>;
+        const PWA_SW_VERSION = <?= json_encode((string) @filemtime(__DIR__ . '/service-worker.js')) ?>;
         const currentUserIdent = <?= json_encode($user_ident) ?>;
         if(currentUserIdent?.length) {
             localStorage.setItem('ident', currentUserIdent);
@@ -457,6 +465,7 @@ $csrfToken = generateCsrfToken();
     </script>
 
     <script src="assets/js/ui-enhancements.js"></script>
+    <script src="assets/js/pwa.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/pwa.js')); ?>"></script>
     <script src="assets/js/api-service.js"></script>
     <script src="assets/js/chat-utils.js"></script>
     <script src="assets/js/chat-notifications.js"></script>
