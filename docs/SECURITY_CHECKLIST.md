@@ -65,5 +65,12 @@ Use this checklist after every major backend/API change to prevent regressions i
 ### Run: 2026-03-10 (Ops reliability follow-up)
 - Added robust test server stop script behavior to clean orphan `php -S` listeners on port `8080` when PID tracking is missing.
 
+### Run: 2026-03-10 (Auth hardening + cleanup follow-up)
+- Hardened logout from GET-triggered flow to POST + CSRF validated flow.
+- Fixed login failure redirect inconsistency to use route-safe redirect helper uniformly.
+- Removed unused runtime dependency and dead helper code after reference verification.
+- Applied low-risk query optimizations on hot message-fetch endpoints without changing response contracts.
+- Re-ran full suite after each batch; all unit and E2E smoke tests passed.
+
 Current follow-up focus:
 - Continue defense-in-depth review as new features in Phase I/J are implemented.

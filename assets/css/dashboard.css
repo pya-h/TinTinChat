@@ -2905,7 +2905,8 @@ nav.navbar:hover::after {
 }
 
 .chat-input textarea:disabled {
-    background-color: var(--disabled-color);
+    background-color: color-mix(in srgb, var(--background-color) 85%, var(--border-color));
+    color: color-mix(in srgb, var(--text-color) 65%, var(--subtle-text-color));
 }
 
 .chat-input button {
@@ -2925,6 +2926,7 @@ nav.navbar:hover::after {
     color: var(--subtle-text-color);
     position: relative;
     overflow: hidden;
+    isolation: isolate;
 }
 
 .chat-input button::before {
@@ -2938,7 +2940,12 @@ nav.navbar:hover::after {
     background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
     opacity: 0;
     transition: opacity 0.3s ease;
-    z-index: -1;
+    z-index: 0;
+}
+
+.chat-input button > * {
+    position: relative;
+    z-index: 1;
 }
 
 .chat-input button:hover {
@@ -4139,12 +4146,43 @@ nav.navbar:hover::after {
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
 
+    html,
+    body,
+    .chat-messages {
+        scroll-behavior: auto !important;
+    }
+
     *,
     *::before,
     *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+
+    .voice-play-btn.playing,
+    .typing-indicator .typing-dot,
+    .loading-shimmer,
+    .search-suggestions,
+    .search-suggestion-item,
+    #searchUser.searching,
+    #sendBtn i.icon-exit,
+    #sendBtn i.icon-enter,
+    .create-group-modal-overlay,
+    .create-group-modal,
+    .go-to-latest-btn,
+    .chat-list li,
+    .message {
+        animation: none !important;
+    }
+
+    .search-suggestion-item,
+    .chat-list li:hover,
+    .chat-input button:hover,
+    .chat-input button:active,
+    .go-to-latest-btn:hover,
+    .message:hover {
+        transform: none !important;
     }
 }
 

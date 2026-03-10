@@ -48,6 +48,21 @@ Legend:
 - [x] (`P1`) Message details action and modal in context menu.
 - [x] (`P1`) Live seen-tick refresh using targeted seen-status polling.
 
+### Post-Review Maintenance & Optimization (2026-03-10)
+- [x] (`P0`) Harden logout flow to POST + CSRF and remove state-changing GET logout behavior.
+- [x] (`P1`) Fix auth flow consistency issue in login redirect handling.
+- [x] (`P1`) Run frontend cleanup pass:
+	- remove debug logging,
+	- remove unused jQuery runtime dependency,
+	- remove dead/redundant UI-enhancement logic.
+- [x] (`P1`) Run UI harmony/accessibility pass:
+	- composer button layering consistency,
+	- stronger reduced-motion behavior for animation-heavy interactions.
+- [x] (`P1`) Run backend cleanup/optimization pass:
+	- remove unreferenced helper functions,
+	- apply low-risk hot-path query micro-optimizations in message fetch APIs.
+- [x] (`P0`) Validate all changes with full automated test suite reruns.
+
 ## 3) Priority Roadmap (Planned)
 
 ### Phase A — Stabilization & Security (`P0`)

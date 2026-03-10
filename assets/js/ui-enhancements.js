@@ -14,7 +14,6 @@ class UIEnhancements {
         this.setupRippleEffects();
         this.setupScrollReveal();
         this.setupConnectionStatus();
-        this.setupTypingIndicator();
         this.setupEnhancedInteractions();
         this.setupMobileOptimizations();
         this.setupAccessibilityFeatures();
@@ -57,17 +56,29 @@ class UIEnhancements {
     }
 
     setupRippleEffects() {
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            return;
+        }
         const buttons = document.querySelectorAll(
             ".btn, .chat-input button, .chat-list li"
         );
 
         buttons.forEach((button) => {
             button.addEventListener("click", (e) => {
+                if (button.hasAttribute("disabled")) {
+                    return;
+                }
                 const ripple = document.createElement("span");
                 const rect = button.getBoundingClientRect();
                 const size = Math.max(rect.width, rect.height);
-                const x = e.clientX - rect.left - size / 2;
-                const y = e.clientY - rect.top - size / 2;
+                const hasPointerPosition =
+                    typeof e.clientX === "number" &&
+                    typeof e.clientY === "number" &&
+                    (e.clientX !== 0 || e.clientY !== 0);
+                const pointerX = hasPointerPosition ? e.clientX : rect.left + rect.width / 2;
+                const pointerY = hasPointerPosition ? e.clientY : rect.top + rect.height / 2;
+                const x = pointerX - rect.left - size / 2;
+                const y = pointerY - rect.top - size / 2;
 
                 ripple.style.width = ripple.style.height = size + "px";
                 ripple.style.left = x + "px";
@@ -140,19 +151,6 @@ class UIEnhancements {
             clearTimeout(hideTimeout);
             statusIndicator.style.opacity = "1";
         });
-    }
-
-    setupTypingIndicator() {
-        let typingTimeout;
-        const chatInput = document.getElementById("chatInput");
-
-        if (chatInput) {
-            chatInput.addEventListener("input", () => {
-                clearTimeout(typingTimeout);
-
-                typingTimeout = setTimeout(() => {}, 2000);
-            });
-        }
     }
 
     setupEnhancedInteractions() {
@@ -409,8 +407,8 @@ class UIEnhancements {
 
             setTimeout(() => {
                 indicator.remove();
-                if (window.loadMessages && window.currentChatUser) {
-                    window.loadMessages(window.currentChatUser, true, true);
+                if (typeof window.forceFetchCurrentChatMessages === "function") {
+                    window.forceFetchCurrentChatMessages();
                 }
             }, 1500);
         }
@@ -473,22 +471,6 @@ class UIEnhancements {
 
 // CSS for additional animations
 const additionalStyles = `
-.ripple-effect {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
-    transform: scale(0);
-    animation: ripple 0.6s linear;
-    pointer-events: none;
-}
-
-@keyframes ripple {
-    to {
-        transform: scale(4);
-        opacity: 0;
-    }
-}
-
 .refresh-indicator {
     text-align: center;
     padding: 1rem;
@@ -578,9 +560,12 @@ const additionalStyles = `
 `;
 
 // Inject additional styles
-const styleSheet = document.createElement("style");
-styleSheet.textContent = additionalStyles;
-document.head.appendChild(styleSheet);
+if (!document.getElementById("ui-enhancements-inline-styles")) {
+    const styleSheet = document.createElement("style");
+    styleSheet.id = "ui-enhancements-inline-styles";
+    styleSheet.textContent = additionalStyles;
+    document.head.appendChild(styleSheet);
+}
 
 // Initialize UI enhancements when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {

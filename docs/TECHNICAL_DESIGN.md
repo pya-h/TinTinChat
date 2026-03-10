@@ -1,7 +1,7 @@
 # TinTinChat Technical Design
 
 Version: 1.2
-Date: 2026-03-10
+Date: 2026-03-11
 
 ## 1) Overview
 
@@ -74,6 +74,10 @@ For protected mutating routes:
 5. execute domain logic
 6. respond with `apiSuccess(...)` / `apiError(...)`
 
+Auth route note:
+- Login uses POST + CSRF form validation.
+- Logout uses POST + CSRF validation (no state-changing GET logout flow).
+
 ### 4.2 Response envelope
 - Success: `status: ok` + endpoint payload
 - Error: `status: error` + `error_details.code`
@@ -118,7 +122,7 @@ Reference: `docs/ENCRYPTION.md`
   - authenticated chat
   - group chat
   - group authorization
-  - block user
+  - block-user
 - Full runner:
   - `bash tests/run_all_tests.sh`
 

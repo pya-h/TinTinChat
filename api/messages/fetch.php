@@ -13,7 +13,7 @@ $otherUserId = 0;
 if ($groupId > 0) {
 	groupRequireMembership($pdo, $groupId, $userId);
 } else {
-	$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
+	$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
 	$stmt->execute([$otherUsername]);
 	$otherUser = $stmt->fetch();
 
@@ -35,17 +35,17 @@ $limit = max(
 
 $count_query = null;
 if ($groupId > 0) {
-	$count_query = $pdo->prepare('SELECT COUNT(*) as total FROM messages WHERE group_id = ?');
+	$count_query = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE group_id = ?');
 	$count_query->execute([$groupId]);
 } else {
 	$count_query = $pdo->prepare('
-			SELECT COUNT(*) as total
+			SELECT COUNT(*)
 			FROM messages
 			WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
 	');
 	$count_query->execute([$userId, $otherUserId, $otherUserId, $userId]);
 }
-$total_count = $count_query->fetch()['total'];
+$total_count = (int) $count_query->fetchColumn();
 $total_count = max(0, (int) $total_count);
 
 if ($offset >= $total_count) {

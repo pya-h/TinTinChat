@@ -3973,7 +3973,6 @@ async function loadCurrentChatsRecentMessages() {
 
                 playNotificationSound()
             } catch(ex) {
-                console.log(ex);
             }
         }
         currentChatRecentMessages = data.messages;
@@ -3982,7 +3981,7 @@ async function loadCurrentChatsRecentMessages() {
             await addMessageToChat(msg, false, true);
         }
 
-        updateMessagesStatus(data.messages); // Mark as seen on the background
+        updateMessagesStatus(data.messages);
         setComposerStatus("");
 
         if (appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
@@ -4040,6 +4039,7 @@ function forceFetchCurrentChatMessages() {
     }
     return loadCurrentChatsRecentMessages();
 }
+window.forceFetchCurrentChatMessages = forceFetchCurrentChatMessages;
 
 function generateWaveformBars() {
     const bars = [];
@@ -5471,14 +5471,13 @@ const fileUploadInput = document.getElementById("fileUploadInput");
 const sendBtn = document.getElementById("sendBtn");
 
 let longPressTimer = null;
-const LONG_PRESS_DURATION = 500;
 
 sendBtn.addEventListener("mousedown", (e) => {
     longPressTimer = setTimeout(() => {
         e.preventDefault();
         fileUploadInput.click();
         longPressTimer = null;
-    }, LONG_PRESS_DURATION);
+    }, MESSAGE_LONG_PRESS_MS);
 });
 
 sendBtn.addEventListener("mouseup", () => {
@@ -5500,7 +5499,7 @@ sendBtn.addEventListener("touchstart", (e) => {
         e.preventDefault();
         fileUploadInput.click();
         longPressTimer = null;
-    }, LONG_PRESS_DURATION);
+    }, MESSAGE_LONG_PRESS_MS);
 });
 
 sendBtn.addEventListener("touchend", () => {

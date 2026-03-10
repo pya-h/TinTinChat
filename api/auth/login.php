@@ -60,8 +60,7 @@ $user = $stmt->fetch();
 if (!$user) {
 	if (!isValidPassword($password)) {
 		$_SESSION['login_error'] = 'Password must be at least 8 characters and contain at least one digit, one letter, and one special character';
-		header('Location: ../index.php');
-		exit;
+		redirectToApp('/index.php');
 	}
 
 	$config = [

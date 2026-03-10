@@ -17,7 +17,7 @@ $other_user_id = 0;
 if ($groupId > 0) {
 	groupRequireMembership($pdo, $groupId, $user_id);
 } else {
-	$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ?');
+	$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
 	$stmt->execute([$other_username]);
 	$other_user = $stmt->fetch();
 

@@ -1,7 +1,4 @@
 <?php
-function sanitizeString($str) {
-    return stripslashes(htmlentities(strip_tags($str)));
-}
 
 function configSession()
 {

@@ -43,9 +43,12 @@ $csrfToken = generateCsrfToken();
             <a class="navbar-brand" href="#">TinTinChat</a>
             <div class="ms-auto d-flex align-items-center">
                 <span class="me-3 logged-in-as">Logged in as <strong><?= htmlspecialchars($username) ?></strong></span>
-                <a href="api/auth/logout.php" class="btn btn-logout btn-sm">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                </a>
+                <form method="post" action="api/auth/logout.php" class="m-0">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>" />
+                    <button type="submit" class="btn btn-logout btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </button>
+                </form>
             </div>
         </nav>
 
@@ -366,7 +369,6 @@ $csrfToken = generateCsrfToken();
 
     <?php require_once __DIR__ . '/includes/modal.php' ?>
     <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/ext/jquery-3.6.1.min.js"></script>
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
         const CURRENT_USER_ID = <?= json_encode($user_id) ?>;
@@ -379,7 +381,7 @@ $csrfToken = generateCsrfToken();
         }
         const searchUserElement = document.getElementById('searchUser');
 
-        let isMobileDevice = () => $(window).width() < 850
+        let isMobileDevice = () => window.innerWidth < 850
         const chatListWrapperElement = document.getElementById('chatListWrapper');
 
         searchUserElement.addEventListener('focus', function() {

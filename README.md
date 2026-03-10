@@ -64,8 +64,7 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 - `assets/css/` UI styling
 - `migrations/` SQL migration history
 - `docs/` product, API, encryption, technical design, security docs
-- `tests/` unit + e2e smoke + orchestration scripts
- - `tests/` unit + E2E smoke + orchestration scripts
+- `tests/` unit + E2E smoke + orchestration scripts
 - `uploads/` runtime storage for avatars/media/files/stickers
 
 ## Quick Start
@@ -127,4 +126,4 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 
 - Project is in post-Phase I stabilization.
 - Organized endpoint architecture is enforced (no legacy flat `api/*.php` wrappers).
-- Full test suite currently passes.
+- Full automated suite currently passes (`bash tests/run_all_tests.sh`).
