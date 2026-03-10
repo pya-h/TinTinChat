@@ -51,6 +51,13 @@ A lightweight, self-hostable web chat application built with native PHP and vani
 - Voice: 10MB
 - File/Video: 100MB
 
+## Tests (Phase H Bootstrap)
+
+- Run lightweight unit tests:
+   - `php tests/unit/run.php`
+- Run API guard smoke checks (requires local server running):
+   - `./tests/e2e/api_guard_smoke.sh http://localhost:8080`
+
 ## Security Notes
 
 - API guard pattern uses method + auth + CSRF checks for mutating routes.
@@ -97,3 +104,6 @@ This is a project-level attribution statement, not a legal ownership transfer.
    - Added sticker schema migration with `stickers` catalog and `messages.sticker_id` reference.
    - Added sticker upload/fetch/send/get endpoints with validation, resize-to-canvas, and duplicate hash protection.
    - Added left-side composer sticker button, animated sticker picker grid, upload action, and sticker message rendering.
+- **2026-03-10 — Phase H bootstrap started**
+   - Added lightweight unit test runner and helper-function tests.
+   - Added API guard smoke test script for unauthenticated endpoint checks.

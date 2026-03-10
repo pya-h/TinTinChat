@@ -7,10 +7,41 @@ CREATE TABLE users (
   avatar_path VARCHAR(255) DEFAULT NULL,
   avatar_mime VARCHAR(100) DEFAULT NULL,
   avatar_updated_at TIMESTAMP NULL DEFAULT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   ident VARCHAR(128),
   is_admin BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS groups (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(80) NOT NULL,
+  description TEXT NULL,
+  created_by_user_id INT NOT NULL,
+  join_token VARCHAR(128) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_groups_join_token (join_token),
+  CONSTRAINT fk_groups_created_by_user
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS stickers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  file_path VARCHAR(255) NOT NULL,
+  file_mime VARCHAR(64) NOT NULL,
+  file_hash CHAR(64) NOT NULL,
+  width SMALLINT UNSIGNED NOT NULL,
+  height SMALLINT UNSIGNED NOT NULL,
+  uploaded_by_user_id INT NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_stickers_file_hash (file_hash),
+  KEY idx_stickers_active_created (is_active, created_at),
+  CONSTRAINT fk_stickers_uploaded_by_user
+    FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id)
+    ON DELETE CASCADE
 );
 
 CREATE TABLE messages (
@@ -37,38 +68,7 @@ CREATE TABLE messages (
   FOREIGN KEY (forwarded_from_message_id) REFERENCES messages(id) ON DELETE SET NULL,
   FOREIGN KEY (forwarded_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY (sticker_id) REFERENCES stickers(id) ON DELETE SET NULL,
-  FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
-);
-
-CREATE TABLE IF NOT EXISTS stickers (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  file_path VARCHAR(255) NOT NULL,
-  file_mime VARCHAR(64) NOT NULL,
-  file_hash CHAR(64) NOT NULL,
-  width SMALLINT UNSIGNED NOT NULL,
-  height SMALLINT UNSIGNED NOT NULL,
-  uploaded_by_user_id INT NOT NULL,
-  is_active TINYINT(1) NOT NULL DEFAULT 1,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_stickers_file_hash (file_hash),
-  KEY idx_stickers_active_created (is_active, created_at),
-  CONSTRAINT fk_stickers_uploaded_by_user
-    FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id)
-    ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS groups (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(80) NOT NULL,
-  description TEXT NULL,
-  created_by_user_id INT NOT NULL,
-  join_token VARCHAR(128) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_groups_join_token (join_token),
-  CONSTRAINT fk_groups_created_by_user
-    FOREIGN KEY (created_by_user_id) REFERENCES users(id)
-    ON DELETE CASCADE
+  FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS group_members (

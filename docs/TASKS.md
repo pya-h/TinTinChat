@@ -219,6 +219,7 @@ Legend:
 
 
 ### Phase H - Tests
+- [x] (`P2`) Phase H bootstrap: add lightweight local test harness and first smoke checks.
 - [ ] (`P2`) Unit Tests for important operations/actions.
 - [ ] (`P1`) E2E Tests
 
@@ -272,8 +273,9 @@ Legend:
 5. Optional parity features (`P2/P3`)  
 6. Avatar/profile UX hardening + user info modal (`P1/P2`)
 7. Telegram-like sticker support (`P1/P2`)  
-8. Nice-to-have power UX (`P3`)
-9. Final PWA support rollout (`P1/P2`)
+8. Tests foundation + coverage (`P1/P2`)
+9. Nice-to-have power UX (`P3`)
+10. Final PWA support rollout (`P1/P2`)
 
 ## 5) Definition of Done (for upcoming feature work)
 
