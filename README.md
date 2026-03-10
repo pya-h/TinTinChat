@@ -1,140 +1,130 @@
 # TinTinChat
 
-A lightweight, self-hostable web chat application built with native PHP and vanilla JavaScript, focused on secure messaging and practical deployment on constrained/shared hosting.
+TinTinChat is a lightweight, self-hostable web chat app built with native PHP and vanilla JavaScript, designed for practical deployment on constrained/shared hosting while still providing modern chat capabilities.
 
-## Current Highlights
+## Goals
 
-- Direct chat + group chat support.
-- Encrypted text messaging (direct + group) with media/file encryption envelope model.
-- Message actions: reply, copy, forward, details, reactions, delete variants.
-- Media support: image, voice, file, video.
-- User avatars with secure upload/retrieval + fallback avatar rendering.
-- User Info modal + avatar enlargement + send-message shortcut.
-- Delete full direct-chat history from user profile modal.
-- Sticker support with upload, picker, and send flow.
-- Responsive UX with desktop/mobile parity and accessibility-focused interactions.
+- Keep stack and deployment simple (PHP + MySQL + static assets).
+- Provide secure day-to-day messaging for direct and group conversations.
+- Maintain consistent API contracts and predictable frontend behavior.
+- Improve UX incrementally without introducing heavy framework dependencies.
+
+## What’s Implemented
+
+### Core chat
+- Direct (1:1) and group chat.
+- Message pagination with load-more and go-to-latest controls.
+- Poll-based near-real-time updates.
+- Typing indicators for private and group contexts.
+
+### Security and encryption
+- Session auth + CSRF protection on mutating APIs.
+- Text encryption:
+  - private chat: RSA-based client encryption flow
+  - group chat: shared group-key encrypted text flow
+- Media/file encrypted envelope model for image/voice/file/video paths.
+- Endpoint-level authorization guards for protected resources.
+
+### Message actions
+- Reply
+- Copy
+- Forward
+- Message details
+- Reactions
+- Delete (including delete-for-everyone rules where applicable)
+- Delete full direct-chat history from user profile modal
+
+### Media and attachments
+- Image messages
+- Voice messages
+- File/video messages
+- Sticker upload/catalog/send/render pipeline
+- Browser-side cached file handling support
+
+### Users, profile, and moderation
+- Avatar upload/retrieval with safe fallback rendering
+- User Info modal + avatar enlargement + send-message shortcut
+- Block/unblock user flow with send enforcement
 
 ## Tech Stack
 
-- Backend: PHP (PDO), MySQL
-- Frontend: HTML, CSS, vanilla JavaScript
-- Crypto: Web Crypto API + server-assisted key workflows
-- Storage: MySQL + local uploads directories
+- Backend: PHP, PDO, MySQL
+- Frontend: HTML, CSS, Vanilla JavaScript
+- Crypto: Web Crypto + server-assisted key workflows
+- Storage:
+  - MySQL for metadata/messages
+  - local filesystem under `uploads/*` for encrypted media/assets
 
-## Project Structure
+## Repository Structure
 
-- [api](api): endpoint layer
-- [includes](includes): shared backend helpers (auth/session/api/db/group/crypto/constants)
-- [assets/js](assets/js): frontend app logic (`chat.js`, `api-service.js`, helpers)
-- [assets/css](assets/css): UI styles (`dashboard.css`, `modal.css`, auth/style)
-- [migrations](migrations): SQL migration history
-- [docs](docs): product/design/security/API docs
-- [uploads](uploads): user-uploaded encrypted assets and avatars
+- `api/` organized endpoints:
+  - `auth/`, `chats/`, `groups/`, `keys/`, `messages/`, `system/`, `typing/`, `users/`
+- `includes/` shared backend helpers (db/auth/session/api/group/crypto/constants)
+- `assets/js/` frontend logic (`chat.js`, `api-service.js`, helpers)
+- `assets/css/` UI styling
+- `migrations/` SQL migration history
+- `docs/` product, API, encryption, technical design, security docs
+- `tests/` unit + e2e smoke + orchestration scripts
+ - `tests/` unit + E2E smoke + orchestration scripts
+- `uploads/` runtime storage for avatars/media/files/stickers
 
 ## Quick Start
 
-1. Configure database credentials (current project setup uses `includes/db.php`; adjust to your environment).
-2. Apply SQL migrations from [migrations](migrations) in order.
-3. Ensure web server/PHP can write to:
+1. Configure database credentials in `includes/db.php` for your environment.
+2. Apply migrations in order from `migrations/`.
+3. Ensure writable upload directories:
    - `uploads/avatars`
    - `uploads/images`
    - `uploads/voice_messages`
    - `uploads/files`
-4. Run with PHP built-in server for local dev (example):
+   - `uploads/stickers`
+4. Start local server (example):
    - `php -d upload_max_filesize=110M -d post_max_size=120M -S localhost:8080`
-5. Open `index.php` and authenticate.
+5. Open `index.php`.
 
-## Upload Limits (Synced)
+## Upload Limits (synced)
 
 - Avatar: 5MB
 - Image: 20MB
 - Voice: 10MB
 - File/Video: 100MB
+- Sticker output: 512KB
 
-## Tests (Phase H Bootstrap)
+## Testing
 
-- Run lightweight unit tests:
-   - `php tests/unit/run.php`
-- Run API guard smoke checks (requires local server running):
-   - `./tests/e2e/api_guard_smoke.sh http://localhost:8080`
-- Run authenticated chat smoke checks (creates temp users and validates login/send/fetch flow):
-   - `./tests/e2e/authenticated_chat_smoke.sh http://localhost:8080`
-   - Coverage includes: message send/fetch, reaction toggle, delete-for-everyone, and sticker upload/send/fetch.
-- Run group chat smoke checks (creates temp users and validates group lifecycle + group messaging):
-   - `./tests/e2e/group_chat_smoke.sh http://localhost:8080`
-   - Coverage includes: group create/fetch/join, group text send/fetch, and member leave flow.
-- Run group authorization smoke checks (ensures non-members cannot read protected group data):
-   - `./tests/e2e/group_authorization_smoke.sh http://localhost:8080`
-- Run block-user smoke checks (validates block/unblock send restrictions):
-   - `./tests/e2e/block_user_smoke.sh http://localhost:8080`
-- Run one-command full test suite:
-   - `./tests/run_all_tests.sh http://localhost:8080`
-- Run test environment setup/check helper:
-   - `./tests/setup_test_env.sh http://localhost:8080`
-- Stop managed local test server:
-   - `./tests/stop_test_server.sh --pid-file /tmp/tintin_test_server.pid`
+### Full suite
+- `bash tests/run_all_tests.sh`
 
-## Security Notes
+### Individual scripts
+- Environment/setup check:
+  - `bash tests/setup_test_env.sh http://localhost:8080`
+- Unit tests:
+  - `php tests/unit/run.php`
+- E2E smoke tests:
+  - `bash tests/e2e/api_guard_smoke.sh http://localhost:8080`
+  - `bash tests/e2e/authenticated_chat_smoke.sh http://localhost:8080`
+  - `bash tests/e2e/group_chat_smoke.sh http://localhost:8080`
+  - `bash tests/e2e/group_authorization_smoke.sh http://localhost:8080`
+  - `bash tests/e2e/block_user_smoke.sh http://localhost:8080`
 
-- API guard pattern uses method + auth + CSRF checks for mutating routes.
-- Response contract is standardized (`status`, `error_details.code`).
-- Media retrieval endpoints enforce authorization and path safety checks.
-- See [docs/API_CONTRACT.md](docs/API_CONTRACT.md) and [docs/SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md).
+### Test server lifecycle
+- Stop managed/orphan local php test server on default port:
+  - `bash tests/stop_test_server.sh`
+- Optional overrides:
+  - `bash tests/stop_test_server.sh --pid-file /tmp/tintin_test_server.pid --port 8080`
 
-## Key Docs
+## Documentation Index
 
-- Product roadmap: [docs/TASKS.md](docs/TASKS.md)
-- Session bootstrap context: [CONTEXT.md](CONTEXT.md)
-- Technical design: [docs/TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md)
-- Encryption reference: [docs/ENCRYPTION.md](docs/ENCRYPTION.md)
-- API contract: [docs/API_CONTRACT.md](docs/API_CONTRACT.md)
+- Session handoff context: `CONTEXT.md`
+- Product roadmap and phase tracking: `docs/TASKS.md`
+- API response contract and error codes: `docs/API_CONTRACT.md`
+- Encryption model/reference: `docs/ENCRYPTION.md`
+- Technical architecture/design: `docs/TECHNICAL_DESIGN.md`
+- Product requirements: `docs/PRD.md`
+- Security regression checklist: `docs/SECURITY_CHECKLIST.md`
 
-## Development Progress Attribution
+## Current Status
 
-Based on your requested declaration for this repository:
-
-- Developer (pya-h): **40%**
-- AI-assisted implementation: **60%**
-
-This is a project-level attribution statement, not a legal ownership transfer.
-
-## Status Snapshot
-
-- Completed through Phase G (sticker support) in [docs/TASKS.md](docs/TASKS.md).
-- Upcoming major phase: Phase H (tests), then power UX/PWA.
-
-## Changelog (Recent)
-
-- **2026-03-10 — Phase F.6 completed**
-   - Added User Info modal and enlarged avatar viewer.
-   - Added direct/group profile entry points from chat header, group sender avatar/name, and group member avatar.
-   - Added Send Message shortcut from profile modal.
-   - Added Delete Chat action with backend endpoint and immediate UI refresh.
-- **2026-03-09 — Phase F.5 completed**
-   - Added avatar schema migration and secure avatar upload/retrieval endpoints.
-   - Integrated avatars across chat list, group member list, and group sender contexts.
-- **2026-03-09 — Phase F polish**
-   - Improved in-conversation search across older messages.
-   - Added video send flow parity and reaction UX refinements.
-- **2026-03-10 — Phase G completed**
-   - Added sticker schema migration with `stickers` catalog and `messages.sticker_id` reference.
-   - Added sticker upload/fetch/send/get endpoints with validation, resize-to-canvas, and duplicate hash protection.
-   - Added left-side composer sticker button, animated sticker picker grid, upload action, and sticker message rendering.
-- **2026-03-10 — Phase H bootstrap started**
-   - Added lightweight unit test runner and helper-function tests.
-   - Added API guard smoke test script for unauthenticated endpoint checks.
-- **2026-03-10 — Phase H coverage expanded**
-   - Added unit tests for group crypto helper operations (shared key generation and RSA encrypt/decrypt roundtrip checks).
-   - Added authenticated group smoke script covering create/join/fetch details/send group text/leave flows.
-- **2026-03-10 — Phase H completion**
-   - Added additional unit coverage for API helper upload error mapping.
-   - Added group authorization smoke coverage for non-member access denial.
-   - Added test tooling scripts (`tests/setup_test_env.sh`, `tests/run_all_tests.sh`) for repeatable full-suite execution.
-- **2026-03-10 — Phase I started (Block user)**
-   - Added user block/unblock APIs and profile action button.
-   - Enforced direct-message send denial when receiver has blocked sender.
-   - Added block-user E2E smoke coverage.
-- **2026-03-10 — Ops/test reliability updates**
-   - Fixed auth redirect targets from categorized login/logout endpoints to prevent nested API-path misroutes.
-   - Improved chat auto-scroll bottom snap reliability when async media/layout changes message container height.
-   - Added `tests/stop_test_server.sh` and integrated PID tracking in `tests/run_all_tests.sh` cleanup.
+- Project is in post-Phase I stabilization.
+- Organized endpoint architecture is enforced (no legacy flat `api/*.php` wrappers).
+- Full test suite currently passes.

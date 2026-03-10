@@ -1,176 +1,117 @@
 # TinTinChat Product Requirements Document (PRD)
 
-Version: 1.1  
-Date: 2026-03-07  
+Version: 1.2
+Date: 2026-03-10
 Owner: Product + Engineering
 
 ## 1) Product Summary
 
-TinTinChat is a lightweight, self-hostable web chat application built with native PHP, HTML, CSS, and vanilla JavaScript. It is designed to run on limited hosting environments without relying on server-side external frameworks or package ecosystems.
+TinTinChat is a lightweight, self-hostable chat application built with PHP, MySQL, and vanilla JavaScript.
+It targets teams/users who need practical private/group messaging on constrained hosting without heavy framework dependencies.
 
-The product currently supports direct 1:1 chat plus group chat (text-first), with encrypted direct text messaging and media/file exchange for direct conversations. The next stage focuses on parity enhancements and quality improvements while keeping the architecture simple and dependency-light.
+## 2) Product Vision
 
-## 2) Vision
+Provide a secure, usable, low-ops chat platform with modern baseline features (direct/group messaging, encrypted content flows, message actions, media, profile UX, and testable reliability).
 
-Deliver a secure, responsive, easy-to-use chat experience that works on constrained infrastructure and remains maintainable as a pure PHP + vanilla JS codebase.
+## 3) Current Scope (Implemented)
 
-## 3) Goals
+### 3.1 Messaging
+- Direct and group chat
+- Pagination + load-more
+- Poll-based message refresh
+- Typing indicators
+- Seen status flow
 
-### 3.1 Primary Goals
-- Keep the project minimal and host-friendly (no mandatory external backend modules/frameworks).
-- Provide dependable private messaging for text, image, voice, and file content.
-- Strengthen security and consistency across all API endpoints.
-- Improve usability to feel closer to mainstream chat applications.
+### 3.2 Security & Encryption
+- Session auth + CSRF on mutating routes
+- Private text encryption flow
+- Group text shared-key encryption flow
+- Encrypted media envelope model for direct/group media and files
+- Authorization checks on protected retrieval and group membership operations
 
-### 3.2 Near-term Goals (next major milestones)
-- Add message actions and conversation ergonomics:
-	- Reply to message
-	- Copy message (one-click)
-	- Message context menu (right-click / long-press)
-	- Forward message
-- Perform full source review and resolve critical bugs/inconsistencies.
-- Complete security hardening pass for auth, endpoints, uploads, and session handling.
+### 3.3 Message actions
+- Reply
+- Copy
+- Forward
+- Details
+- Reactions
+- Delete modes
+- Delete direct chat history (from profile modal)
 
-### 3.3 Non-Goals (for now)
-- Channels/communities beyond current group-chat scope.
-- Full multi-device synchronization with push infrastructure.
-- Mandatory real-time WebSocket backend migration.
-- End-to-end encryption for large media binaries (text E2EE remains priority).
+### 3.4 Media/attachments
+- Image / voice / file / video flows
+- Sticker upload, catalog fetch, send, and render
 
-## 4) Target Users
+### 3.5 User/profile/moderation
+- Avatar upload/retrieval with fallback avatar rendering
+- User Info modal with avatar enlargement + send-message shortcut
+- Block/unblock with direct-message send enforcement
 
-- Privacy-aware users needing lightweight private chat.
-- Small teams/friends requiring self-hosted messaging with minimal infra.
-- Developers/operators using restricted or shared hosting.
+### 3.6 Quality & reliability
+- Unit + E2E smoke suite and one-command runner
+- Test env setup + test server lifecycle helper scripts
 
-## 5) Current Product Scope (Implemented)
+## 4) Goals (Current and Next)
 
-### 5.1 Authentication & Sessions
-- Username/password authentication.
-- Auto-registration on first login attempt when user does not exist.
-- Password hashing (`password_hash` / `password_verify`).
-- Session-based auth with session regeneration.
-- CSRF protection implemented on login flow.
-- Session ident field for reconnection convenience.
+### 4.1 Active goals
+- Keep endpoint contract and behavior consistent.
+- Reduce UX friction in high-frequency flows (open chat, send, scroll, actions).
+- Maintain direct/group parity for core messaging behaviors.
 
-### 5.2 Messaging
-- 1:1 direct messaging.
-- Group messaging (text-first flow with sender attribution).
-- Client-side RSA-OAEP encryption/decryption for text messages.
-- Read receipt model via `seen_at` and UI ticks.
-- Polling-based updates for recent messages.
-- Message history pagination with load-more behavior.
+### 4.2 Upcoming priorities
+- Finish remaining Phase I power UX items.
+- Phase J PWA baseline (manifest + service worker + offline shell strategy).
+- Phase J.2 group seen/unread refinement.
 
-### 5.3 Media & Files
-- Voice message upload and playback.
-- Image upload + full-screen modal preview.
-- Generic file upload/download.
-- Downloaded file caching in browser IndexedDB.
+## 5) Non-Goals (for now)
 
-### 5.4 Discovery & Navigation
-- Chat list of recent contacts.
-- Group list integrated into chat sidebar.
-- Username search with suggestions and keyboard navigation.
+- Full-scale real-time infrastructure migration (WebSocket-first architecture).
+- Enterprise federation/multi-tenant workspace model.
+- Large plugin ecosystem or framework migration.
 
-### 5.6 Group Support
-- Create group, update group details, and fetch member details.
-- Add/remove member with role-based permissions (owner/admin/member baseline).
-- Join group via tokenized join link with rotation support.
-- Leave group and transfer ownership safeguards.
+## 6) Primary User Personas
 
-### 5.5 UI
-- Responsive dashboard/chat layout.
-- Mobile interaction handling and enhancements.
-- Notification sound handling.
+- Small private teams needing self-hosted secure chat.
+- Technical operators on shared/constrained hosting.
+- Privacy-aware users preferring minimal dependency surfaces.
 
-## 6) Functional Requirements (Target)
+## 7) Functional Requirements (Current Baseline)
 
-### FR-1: Message Reply
-- User can reply to a specific message.
-- Reply metadata is stored and rendered in conversation.
-- Clicking reply preview scrolls/highlights original message.
+- FR-1: Authenticated chat access with stable session behavior.
+- FR-2: Direct/group message send/fetch and incremental refresh.
+- FR-3: Message action parity (reply/copy/forward/details/delete/reactions).
+- FR-4: Encrypted text and encrypted media/file envelope handling.
+- FR-5: Profile and moderation actions (avatar, user info, block/unblock).
+- FR-6: Repeatable automated test flow for critical behaviors.
 
-### FR-2: Copy Message
-- User can copy decrypted text message content from message action button or context menu.
-- User gets visual confirmation (toast/modal/inline state).
+## 8) Non-Functional Requirements
 
-### FR-3: Message Context Menu
-- Desktop: right-click on message opens context menu.
-- Mobile: long-press on message opens same menu.
-- Initial menu items: Reply, Copy (text-only), Forward, Delete (if permitted).
+- NFR-1 Security: strict guard ordering (method/auth/csrf/input), safe error contracts.
+- NFR-2 Reliability: deterministic API envelopes and stable client handling.
+- NFR-3 Performance: acceptable chat responsiveness under polling model.
+- NFR-4 Maintainability: dependency-light architecture with clear docs and shared helpers.
 
-### FR-4: Forward Message
-- User can forward an existing message to another chat.
-- Preserve original sender information in metadata where applicable.
-- Support at least text forwarding in first iteration; media forwarding as phase 2.
+## 9) Risks and Constraints
 
-### FR-5: Security Hardening
-- Every API endpoint enforces request method and consistent auth checks.
-- CSRF policy expanded to state-changing endpoints.
-- Unified response contract and input validation.
-- Upload validation standardized and hardened.
+- Polling remains simple but can be inefficient at scale.
+- Some crypto key-management tradeoffs still exist and require staged hardening over time.
+- Single large frontend surface (`chat.js`) still benefits from ongoing modularization.
 
-### FR-6: UX Upgrade Baseline
-- Cleaner message action discovery.
-- Better empty states and send/error/loading states.
-- Improved mobile interaction parity for actions.
+## 10) Success Criteria
 
-### FR-7: Group Support
-- User can create and manage groups with details and member list.
-- Group header/panel exposes title, description, members, and member management actions.
-- Group invite link can be copied and rotated by permitted roles.
-- Group messages include sender identification.
-- Reply/forward/copy/details/delete text actions work in group context with role-aware permissions.
+- High-confidence test pass on every substantial change (`tests/run_all_tests.sh`).
+- No regressions in direct/group parity for core chat flows.
+- Documentation remains synchronized with current architecture and endpoint organization.
 
-## 7) Non-Functional Requirements
+## 11) Phase Status Snapshot
 
-### NFR-1 Security
-- Prevent unauthorized message/file access.
-- Enforce strict input validation on all endpoints.
-- Keep session cookies secure (`HttpOnly`, `SameSite`, `Secure` under HTTPS).
+Completed:
+- A, B, C, D, E, E.1, E.2, F, F.5, F.6, G, H
 
-### NFR-2 Performance
-- Maintain smooth rendering on long conversations with pagination.
-- Keep initial dashboard interaction responsive under normal small-scale load.
+In progress:
+- I (partially complete)
 
-### NFR-3 Reliability
-- API errors return stable JSON shape for predictable frontend handling.
-- Upload and message failures provide actionable user feedback.
+Planned:
+- J, J.2
 
-### NFR-4 Compatibility
-- Support modern desktop/mobile browsers with graceful degradation.
-
-### NFR-5 Maintainability
-- Keep architecture simple and modular within existing no-framework constraints.
-
-## 8) Success Metrics
-
-- Reduced API error inconsistency across endpoints (target: single response schema adoption).
-- Lower user friction in message actions (reply/copy/forward usage and fewer failed interactions).
-- Security review closes all identified high/critical issues.
-- Improved usability feedback for mobile and desktop message interactions.
-
-## 9) Risks & Constraints
-
-- Current polling model can become inefficient at scale.
-- Text E2EE exists, but private key delivery/storage model has security trade-offs.
-- Inconsistent endpoint patterns increase maintenance risk.
-- No dependency-heavy stack means more custom implementation effort.
-
-## 10) Milestones
-
-### M1: Stabilization & Security
-- Full source review.
-- Endpoint normalization and security fixes.
-
-### M2: Core Chat UX Actions
-- Reply, copy, context menu, forward (text first).
-
-### M3: Group Support
-- Group schema + APIs + UI + role baseline.
-
-### M4: Quality & Polish
-- Usability pass, accessibility pass, and edge-case handling.
-
-### M5: Optional Enhancements
-- Typing indicator, better unread states, optional real-time transport, media-forward parity.
+Source of truth for detailed task lines: `docs/TASKS.md`.

@@ -69,36 +69,65 @@ Frontend receives synced values via `APP_CONSTANTS` in `dashboard.php`.
 
 ## 4) Endpoint Families
 
-- Auth/session: login/logout/session restoration
-- Keys: public/private key fetch + key save
-- Messaging (direct + group text): send/fetch/recent/seen/delete
-- Messaging extras:
-  - reactions: `toggle_message_reaction.php`
-  - delete for everyone mode in `delete_messages.php` (`delete_for_everyone: true`, sender-only hard delete)
-  - delete full direct-chat history in `delete_chat.php` (`target_username`, requester-scoped pair deletion)
-- Media/files (direct + group): image/voice/file send + retrieval
+All routes use organized domains under `api/<domain>/...`.
+
+- Auth/session:
+  - `api/auth/login.php`
+  - `api/auth/logout.php`
+  - session restoration path in users domain (`api/users/get_by_ident.php`)
+- Keys:
+  - `api/keys/get_public.php`
+  - `api/keys/get_private.php`
+  - `api/keys/save.php`
+  - `api/keys/get_group.php`
+  - `api/keys/group_health.php`
+- Chats:
+  - `api/chats/fetch.php`
+  - `api/chats/delete.php`
+- Messages:
+  - `api/messages/send_text.php`
+  - `api/messages/fetch.php`
+  - `api/messages/fetch_recent.php`
+  - `api/messages/see.php`
+  - `api/messages/fetch_seen.php`
+  - `api/messages/delete.php`
+  - `api/messages/toggle_reaction.php`
+- Message media:
+  - `api/messages/media/send_image.php`
+  - `api/messages/media/send_voice.php`
+  - `api/messages/media/send_file.php`
+  - `api/messages/media/get_image.php`
+  - `api/messages/media/get_voice.php`
+  - `api/messages/media/get_file.php`
 - Stickers:
-  - `upload_sticker.php`
-  - `fetch_stickers.php`
-  - `send_sticker_message.php`
-  - `get_sticker.php`
-- Discovery: user search/check + chat list
-- Typing status (private):
-  - `update_typing_status.php`
-  - `fetch_typing_status.php`
+  - `api/messages/stickers/upload.php`
+  - `api/messages/stickers/fetch.php`
+  - `api/messages/stickers/send.php`
+  - `api/messages/stickers/get.php`
 - Groups:
-  - `create_group.php`
-  - `update_group.php`
-  - `fetch_groups.php`
-  - `fetch_group_details.php`
-  - `group_key_health.php` (admin diagnostics)
-  - `get_group_key.php`
-  - `add_group_member.php`
-  - `remove_group_member.php`
-  - `join_group.php`
-  - `leave_group.php`
-  - `rotate_group_join_link.php`
-  - `transfer_group_owner.php`
+  - `api/groups/create.php`
+  - `api/groups/update.php`
+  - `api/groups/fetch.php`
+  - `api/groups/fetch_details.php`
+  - `api/groups/add_member.php`
+  - `api/groups/remove_member.php`
+  - `api/groups/join.php`
+  - `api/groups/leave.php`
+  - `api/groups/rotate_join_link.php`
+  - `api/groups/transfer_owner.php`
+- Typing:
+  - `api/typing/update.php`
+  - `api/typing/fetch.php`
+- Users:
+  - `api/users/search.php`
+  - `api/users/check_exists.php`
+  - `api/users/get_profile.php`
+  - `api/users/get_avatar.php`
+  - `api/users/upload_avatar.php`
+  - `api/users/block.php`
+  - `api/users/unblock.php`
+- System:
+  - `api/system/notrace.php`
 
 ---
 

@@ -1,6 +1,6 @@
 # TinTinChat Security Regression Checklist
 
-Last run: 2026-03-07 (deep pass)
+Last run: 2026-03-10 (post-route-organization + stabilization pass)
 Owner: Engineering
 
 ## Purpose
@@ -57,6 +57,13 @@ Use this checklist after every major backend/API change to prevent regressions i
 - Added pagination bounds hardening for fetch endpoints (`limit` cap and non-negative offsets).
 - Re-ran full API syntax validation after changes.
 
-Outstanding follow-up:
-- Full source review (`P0`) remains open.
-- Full security audit depth review remains open for additional defense-in-depth checks.
+### Run: 2026-03-10 (Route organization + runtime audit)
+- Removed legacy root `api/*.php` wrappers; runtime uses organized endpoint paths only.
+- Verified app/client/tests runtime scope has no legacy flat-route references.
+- Revalidated endpoint existence and full test-suite pass after route cleanup.
+
+### Run: 2026-03-10 (Ops reliability follow-up)
+- Added robust test server stop script behavior to clean orphan `php -S` listeners on port `8080` when PID tracking is missing.
+
+Current follow-up focus:
+- Continue defense-in-depth review as new features in Phase I/J are implemented.
