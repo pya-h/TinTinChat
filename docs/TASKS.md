@@ -229,6 +229,7 @@ Legend:
 
 
 ### Phase I — Nice to Have (Power UX) (`P3`)
+- [ ] (`P3`) Add Block user: Blocked user is not able to send message to the blocker anymore.
 - [ ] (`P3`) Add **Select messages** action to message context menu.
 - [ ] (`P3`) Implement select mode behavior:
 	- tap/click messages to multi-select,

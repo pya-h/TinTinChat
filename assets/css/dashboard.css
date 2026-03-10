@@ -1074,6 +1074,101 @@ nav.navbar:hover::after {
     transition: var(--transition-fast);
 }
 
+.sticker-bg-choice-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3250;
+    background: color-mix(in srgb, var(--text-color) 48%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.sticker-bg-choice-modal {
+    width: min(36rem, 100%);
+    border-radius: 0.9rem;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    box-shadow: var(--shadow-lg);
+    padding: 0.82rem;
+}
+
+.sticker-bg-choice-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.sticker-bg-choice-title {
+    margin: 0;
+    font-size: 0.94rem;
+    font-weight: 700;
+}
+
+.sticker-bg-choice-close {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--subtle-text-color);
+}
+
+.sticker-bg-choice-subtitle {
+    margin: 0 0 0.62rem;
+    color: var(--subtle-text-color);
+    font-size: 0.78rem;
+}
+
+.sticker-bg-choice-loading {
+    border: 1px dashed var(--border-color);
+    border-radius: 0.72rem;
+    padding: 0.75rem;
+    color: var(--subtle-text-color);
+    text-align: center;
+    font-size: 0.78rem;
+}
+
+.sticker-bg-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.62rem;
+}
+
+.sticker-bg-choice-card {
+    border: 1px solid var(--border-color);
+    border-radius: 0.78rem;
+    background: color-mix(in srgb, var(--surface-color) 95%, transparent);
+    padding: 0.5rem;
+    text-align: left;
+    transition: var(--transition-fast);
+}
+
+.sticker-bg-choice-card:hover,
+.sticker-bg-choice-card:focus-visible {
+    border-color: color-mix(in srgb, var(--secondary-color) 32%, var(--border-color));
+    transform: translateY(-1px);
+}
+
+.sticker-bg-choice-label {
+    display: block;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--subtle-text-color);
+    margin-bottom: 0.42rem;
+}
+
+.sticker-bg-choice-preview {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 0.62rem;
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    object-fit: contain;
+    background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+}
+
 .camera-capture-actions .btn-primary {
     box-shadow: 0 6px 14px color-mix(in srgb, var(--secondary-color) 30%, transparent);
 }

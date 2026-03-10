@@ -10,6 +10,14 @@ const stickerPickerProgress = document.getElementById("stickerPickerProgress");
 const stickerPickerProgressFill = document.getElementById("stickerPickerProgressFill");
 const stickerUploadBtn = document.getElementById("stickerUploadBtn");
 const stickerUploadInput = document.getElementById("stickerUploadInput");
+const stickerBgChoiceOverlay = document.getElementById("stickerBgChoiceOverlay");
+const stickerBgChoiceClose = document.getElementById("stickerBgChoiceClose");
+const stickerBgChoiceLoading = document.getElementById("stickerBgChoiceLoading");
+const stickerBgChoiceGrid = document.getElementById("stickerBgChoiceGrid");
+const stickerBgKeepBtn = document.getElementById("stickerBgKeepBtn");
+const stickerBgRemoveBtn = document.getElementById("stickerBgRemoveBtn");
+const stickerBgKeepPreview = document.getElementById("stickerBgKeepPreview");
+const stickerBgRemovePreview = document.getElementById("stickerBgRemovePreview");
 const replyPreviewElem = document.getElementById("replyPreview");
 const composerStatusElem = document.getElementById("composerStatus");
 const chatWithElem = document.getElementById("chatWith");
@@ -1281,16 +1289,26 @@ async function uploadSticker(file) {
         return;
     }
 
+    const shouldRemoveBackground = await chooseStickerBackgroundOption(file);
+    if (shouldRemoveBackground === null) {
+        setStickerPickerState("Sticker upload cancelled.");
+        return;
+    }
+
     let preparedStickerFile = file;
     try {
         setStickerPickerProgress(0, { visible: true });
         setStickerPickerState("Preparing sticker... 0%");
-        preparedStickerFile = await normalizeStickerUploadFile(file, (percent, step) => {
+        preparedStickerFile = await normalizeStickerUploadFile(
+            file,
+            (percent, step) => {
             const safePercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
             const safeStep = String(step || "Preparing").trim();
             setStickerPickerState(`${safeStep}... ${safePercent}%`);
             setStickerPickerProgress(Math.min(85, safePercent), { visible: true });
-        });
+            },
+            { removeBackground: shouldRemoveBackground }
+        );
     } catch (error) {
         setStickerPickerState(String(error?.message || "Unable to prepare sticker."), { isError: true });
         setStickerPickerProgress(0, { visible: false });
@@ -1327,6 +1345,141 @@ async function uploadSticker(file) {
         setStickerPickerProgress(0, { visible: false });
         setComposerStatus("Sticker upload failed", "error");
     }
+}
+
+function drawStickerImageOnCanvas(ctx, image, canvasSize) {
+    const sourceWidth = Number(image.naturalWidth || image.width || 0);
+    const sourceHeight = Number(image.naturalHeight || image.height || 0);
+    if (sourceWidth <= 0 || sourceHeight <= 0) {
+        throw new Error("Invalid image dimensions.");
+    }
+
+    const scale = Math.min(canvasSize / sourceWidth, canvasSize / sourceHeight);
+    const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+    const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
+    const offsetX = Math.floor((canvasSize - targetWidth) / 2);
+    const offsetY = Math.floor((canvasSize - targetHeight) / 2);
+
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
+    ctx.drawImage(image, 0, 0, sourceWidth, sourceHeight, offsetX, offsetY, targetWidth, targetHeight);
+
+    return {
+        offsetX,
+        offsetY,
+        targetWidth,
+        targetHeight,
+    };
+}
+
+async function buildStickerChoicePreviewDataUrl(file, removeBackground) {
+    const previewSize = 256;
+    const image = await loadImageElementFromFile(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = previewSize;
+    canvas.height = previewSize;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+        throw new Error("Canvas is not available in this browser.");
+    }
+
+    const drawn = drawStickerImageOnCanvas(ctx, image, previewSize);
+    if (removeBackground) {
+        removeEdgeBlackWhiteBackground(ctx, previewSize, {
+            x: drawn.offsetX,
+            y: drawn.offsetY,
+            width: drawn.targetWidth,
+            height: drawn.targetHeight,
+        });
+    }
+
+    return canvas.toDataURL("image/webp", 0.84);
+}
+
+async function chooseStickerBackgroundOption(file) {
+    if (
+        !stickerBgChoiceOverlay ||
+        !stickerBgChoiceLoading ||
+        !stickerBgChoiceGrid ||
+        !stickerBgKeepBtn ||
+        !stickerBgRemoveBtn ||
+        !stickerBgKeepPreview ||
+        !stickerBgRemovePreview
+    ) {
+        return true;
+    }
+
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    stickerBgChoiceOverlay.hidden = false;
+    stickerBgChoiceLoading.hidden = false;
+    stickerBgChoiceGrid.hidden = true;
+    stickerBgKeepPreview.removeAttribute("src");
+    stickerBgRemovePreview.removeAttribute("src");
+
+    return new Promise((resolve) => {
+        let settled = false;
+
+        const finalize = (choice) => {
+            if (settled) {
+                return;
+            }
+            settled = true;
+            cleanup();
+            resolve(choice);
+        };
+
+        const onOverlayClick = (event) => {
+            if (event.target === stickerBgChoiceOverlay) {
+                finalize(null);
+            }
+        };
+
+        const onEscape = (event) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                finalize(null);
+            }
+        };
+
+        const cleanup = () => {
+            stickerBgChoiceOverlay.hidden = true;
+            stickerBgKeepBtn.removeEventListener("click", onKeep);
+            stickerBgRemoveBtn.removeEventListener("click", onRemove);
+            stickerBgChoiceClose?.removeEventListener("click", onClose);
+            stickerBgChoiceOverlay.removeEventListener("click", onOverlayClick);
+            document.removeEventListener("keydown", onEscape);
+            if (previousFocus) {
+                previousFocus.focus();
+            }
+        };
+
+        const onKeep = () => finalize(false);
+        const onRemove = () => finalize(true);
+        const onClose = () => finalize(null);
+
+        stickerBgKeepBtn.addEventListener("click", onKeep);
+        stickerBgRemoveBtn.addEventListener("click", onRemove);
+        stickerBgChoiceClose?.addEventListener("click", onClose);
+        stickerBgChoiceOverlay.addEventListener("click", onOverlayClick);
+        document.addEventListener("keydown", onEscape);
+
+        Promise.all([
+            buildStickerChoicePreviewDataUrl(file, false),
+            buildStickerChoicePreviewDataUrl(file, true),
+        ])
+            .then(([keepPreview, removePreview]) => {
+                if (settled) {
+                    return;
+                }
+                stickerBgKeepPreview.src = keepPreview;
+                stickerBgRemovePreview.src = removePreview;
+                stickerBgChoiceLoading.hidden = true;
+                stickerBgChoiceGrid.hidden = false;
+                stickerBgRemoveBtn.focus();
+            })
+            .catch(() => {
+                finalize(null);
+            });
+    });
 }
 
 function loadImageElementFromFile(file) {
@@ -1496,12 +1649,13 @@ function removeEdgeBlackWhiteBackground(ctx, canvasSize, drawRegion) {
     ctx.putImageData(imageData, 0, 0);
 }
 
-async function normalizeStickerUploadFile(file, onProgress = null) {
+async function normalizeStickerUploadFile(file, onProgress = null, options = {}) {
     const reportProgress = (percent, step) => {
         if (typeof onProgress === "function") {
             onProgress(percent, step);
         }
     };
+    const shouldRemoveBackground = options?.removeBackground !== false;
 
     if (typeof document === "undefined") {
         reportProgress(100, "Prepared");
@@ -1510,11 +1664,6 @@ async function normalizeStickerUploadFile(file, onProgress = null) {
 
     reportProgress(10, "Loading image");
     const image = await loadImageElementFromFile(file);
-    const sourceWidth = Number(image.naturalWidth || image.width || 0);
-    const sourceHeight = Number(image.naturalHeight || image.height || 0);
-    if (sourceWidth <= 0 || sourceHeight <= 0) {
-        throw new Error("Invalid image dimensions.");
-    }
 
     const canvas = document.createElement("canvas");
     canvas.width = STICKER_CANVAS_SIZE;
@@ -1525,22 +1674,19 @@ async function normalizeStickerUploadFile(file, onProgress = null) {
     }
 
     reportProgress(28, "Drawing canvas");
-    ctx.clearRect(0, 0, STICKER_CANVAS_SIZE, STICKER_CANVAS_SIZE);
+    const drawn = drawStickerImageOnCanvas(ctx, image, STICKER_CANVAS_SIZE);
 
-    const scale = Math.min(STICKER_CANVAS_SIZE / sourceWidth, STICKER_CANVAS_SIZE / sourceHeight);
-    const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
-    const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
-    const offsetX = Math.floor((STICKER_CANVAS_SIZE - targetWidth) / 2);
-    const offsetY = Math.floor((STICKER_CANVAS_SIZE - targetHeight) / 2);
-    ctx.drawImage(image, 0, 0, sourceWidth, sourceHeight, offsetX, offsetY, targetWidth, targetHeight);
-
-    reportProgress(38, "Cleaning background");
-    removeEdgeBlackWhiteBackground(ctx, STICKER_CANVAS_SIZE, {
-        x: offsetX,
-        y: offsetY,
-        width: targetWidth,
-        height: targetHeight,
-    });
+    if (shouldRemoveBackground) {
+        reportProgress(38, "Cleaning background");
+        removeEdgeBlackWhiteBackground(ctx, STICKER_CANVAS_SIZE, {
+            x: drawn.offsetX,
+            y: drawn.offsetY,
+            width: drawn.targetWidth,
+            height: drawn.targetHeight,
+        });
+    } else {
+        reportProgress(38, "Skipping background clean");
+    }
 
     let bestBlob = null;
     const qualityLevels = [0.86, 0.78, 0.7, 0.62, 0.55];

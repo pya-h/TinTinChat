@@ -341,6 +341,29 @@ $csrfToken = generateCsrfToken();
         </div>
     </div>
 
+    <div id="stickerBgChoiceOverlay" class="sticker-bg-choice-overlay" hidden>
+        <div class="sticker-bg-choice-modal" role="dialog" aria-modal="true" aria-labelledby="stickerBgChoiceTitle">
+            <div class="sticker-bg-choice-header">
+                <h5 id="stickerBgChoiceTitle" class="sticker-bg-choice-title">Sticker background</h5>
+                <button type="button" id="stickerBgChoiceClose" class="sticker-bg-choice-close" aria-label="Close background choice">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="sticker-bg-choice-subtitle">Choose how this sticker should be uploaded.</p>
+            <div id="stickerBgChoiceLoading" class="sticker-bg-choice-loading">Preparing previews...</div>
+            <div id="stickerBgChoiceGrid" class="sticker-bg-choice-grid" hidden>
+                <button type="button" id="stickerBgKeepBtn" class="sticker-bg-choice-card" aria-label="Keep original sticker image">
+                    <span class="sticker-bg-choice-label">Keep original</span>
+                    <img id="stickerBgKeepPreview" class="sticker-bg-choice-preview" alt="Sticker preview without background removal" />
+                </button>
+                <button type="button" id="stickerBgRemoveBtn" class="sticker-bg-choice-card" aria-label="Remove black and white background around sticker">
+                    <span class="sticker-bg-choice-label">Remove background</span>
+                    <img id="stickerBgRemovePreview" class="sticker-bg-choice-preview" alt="Sticker preview with background removal" />
+                </button>
+            </div>
+        </div>
+    </div>
+
     <?php require_once __DIR__ . '/includes/modal.php' ?>
     <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
     <script src="assets/js/ext/jquery-3.6.1.min.js"></script>
