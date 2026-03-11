@@ -1627,6 +1627,7 @@ async function chooseStickerBackgroundOption(file) {
 
     return new Promise((resolve) => {
         let settled = false;
+        let fallbackPreviewUrl = "";
 
         const finalize = (choice) => {
             if (settled) {
@@ -1657,6 +1658,9 @@ async function chooseStickerBackgroundOption(file) {
             stickerBgChoiceClose?.removeEventListener("click", onClose);
             stickerBgChoiceOverlay.removeEventListener("click", onOverlayClick);
             document.removeEventListener("keydown", onEscape);
+            if (fallbackPreviewUrl) {
+                URL.revokeObjectURL(fallbackPreviewUrl);
+            }
             if (previousFocus) {
                 previousFocus.focus();
             }
@@ -1672,23 +1676,56 @@ async function chooseStickerBackgroundOption(file) {
         stickerBgChoiceOverlay.addEventListener("click", onOverlayClick);
         document.addEventListener("keydown", onEscape);
 
-        Promise.all([
-            buildStickerChoicePreviewDataUrl(file, false),
-            buildStickerChoicePreviewDataUrl(file, true),
-        ])
-            .then(([keepPreview, removePreview]) => {
+        const runPreviewBuild = async () => {
+            try {
+                await new Promise((resolveFrame) => {
+                    requestAnimationFrame(() => resolveFrame());
+                });
+
+                const [keepPreviewResult, removePreviewResult] = await Promise.allSettled([
+                    buildStickerChoicePreviewDataUrl(file, false),
+                    buildStickerChoicePreviewDataUrl(file, true),
+                ]);
+
                 if (settled) {
                     return;
                 }
+
+                let keepPreview = "";
+                let removePreview = "";
+
+                if (keepPreviewResult.status === "fulfilled") {
+                    keepPreview = keepPreviewResult.value;
+                }
+                if (removePreviewResult.status === "fulfilled") {
+                    removePreview = removePreviewResult.value;
+                }
+
+                if (!keepPreview || !removePreview) {
+                    fallbackPreviewUrl = URL.createObjectURL(file);
+                    keepPreview = keepPreview || fallbackPreviewUrl;
+                    removePreview = removePreview || fallbackPreviewUrl;
+                }
+
                 stickerBgKeepPreview.src = keepPreview;
                 stickerBgRemovePreview.src = removePreview;
                 stickerBgChoiceLoading.hidden = true;
                 stickerBgChoiceGrid.hidden = false;
                 stickerBgRemoveBtn.focus();
-            })
-            .catch(() => {
-                finalize(null);
-            });
+            } catch (error) {
+                if (settled) {
+                    return;
+                }
+                fallbackPreviewUrl = URL.createObjectURL(file);
+                stickerBgKeepPreview.src = fallbackPreviewUrl;
+                stickerBgRemovePreview.src = fallbackPreviewUrl;
+                stickerBgChoiceLoading.hidden = true;
+                stickerBgChoiceGrid.hidden = false;
+                stickerBgKeepBtn.focus();
+            }
+        };
+
+        void runPreviewBuild();
     });
 }
 

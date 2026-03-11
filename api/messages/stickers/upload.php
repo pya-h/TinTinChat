@@ -36,11 +36,12 @@ $finalWidth = TTC_STICKER_CANVAS_SIZE;
 $finalHeight = TTC_STICKER_CANVAS_SIZE;
 
 $hasGdProcessing = function_exists('imagecreatefromstring')
-	&& function_exists('imagescale')
 	&& function_exists('imagecreatetruecolor')
 	&& function_exists('imagecopy')
+	&& function_exists('imagecopyresampled')
 	&& function_exists('imagesavealpha')
-	&& function_exists('imagefill');
+	&& function_exists('imagefill')
+	&& function_exists('imagedestroy');
 
 if ($hasGdProcessing) {
 	$sourceImage = @imagecreatefromstring($raw);
@@ -60,9 +61,31 @@ if ($hasGdProcessing) {
 	$targetWidth = max(1, (int) round($srcWidth * $scale));
 	$targetHeight = max(1, (int) round($srcHeight * $scale));
 
-	$resized = imagescale($sourceImage, $targetWidth, $targetHeight, IMG_BICUBIC_FIXED);
-	imagedestroy($sourceImage);
+	$resized = imagecreatetruecolor($targetWidth, $targetHeight);
 	if (!$resized) {
+		imagedestroy($sourceImage);
+		apiError('STICKER_RESIZE_FAILED', 'Unable to resize sticker.', 500);
+	}
+
+	imagesavealpha($resized, true);
+	$resizeTransparent = imagecolorallocatealpha($resized, 0, 0, 0, 127);
+	imagefill($resized, 0, 0, $resizeTransparent);
+
+	$resizeOk = imagecopyresampled(
+		$resized,
+		$sourceImage,
+		0,
+		0,
+		0,
+		0,
+		$targetWidth,
+		$targetHeight,
+		$srcWidth,
+		$srcHeight
+	);
+	imagedestroy($sourceImage);
+	if (!$resizeOk) {
+		imagedestroy($resized);
 		apiError('STICKER_RESIZE_FAILED', 'Unable to resize sticker.', 500);
 	}
 

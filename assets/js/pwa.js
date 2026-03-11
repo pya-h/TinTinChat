@@ -68,9 +68,10 @@
     }
 
     window.addEventListener("beforeinstallprompt", (event) => {
-        event.preventDefault();
         deferredInstallPrompt = event;
-        revealInstallButton();
+        if (installButton) {
+            installButton.hidden = false;
+        }
     });
 
     window.addEventListener("appinstalled", () => {
