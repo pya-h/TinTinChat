@@ -84,9 +84,10 @@ $csrfToken = generateCsrfToken();
                         </button>
                     </div>
                 </div>
-                <div id="mobileChatListPullHandle" class="mobile-chatlist-pull-handle" aria-hidden="true">
+                <button type="button" id="mobileChatListPullHandle" class="mobile-chatlist-pull-handle" aria-label="Expand chats" aria-expanded="false">
                     <span class="mobile-chatlist-pull-pill"></span>
-                </div>
+                    <i class="fas fa-angle-down mobile-chatlist-pull-icon" aria-hidden="true"></i>
+                </button>
                 <div id="mobileChatListBackdrop" class="mobile-chatlist-backdrop" hidden></div>
             </aside>
 
@@ -456,22 +457,6 @@ $csrfToken = generateCsrfToken();
         const sidebarElement = document.querySelector('.sidebar');
         const MOBILE_DRAWER_BREAKPOINT = 767.98;
         let isMobileDrawerOpen = false;
-        let mobilePullInteractionActive = false;
-        let lastMobilePullInteractionAt = 0;
-
-        function markMobilePullInteraction(active) {
-            mobilePullInteractionActive = Boolean(active);
-            if (mobilePullInteractionActive) {
-                lastMobilePullInteractionAt = Date.now();
-            }
-        }
-
-        function isRecentMobilePullInteraction() {
-            if (mobilePullInteractionActive) {
-                return true;
-            }
-            return Date.now() - lastMobilePullInteractionAt < 420;
-        }
 
         function isMobileDrawerViewport() {
             return window.innerWidth <= MOBILE_DRAWER_BREAKPOINT;
@@ -504,6 +489,7 @@ $csrfToken = generateCsrfToken();
             const shouldOpen = Boolean(open);
             isMobileDrawerOpen = shouldOpen;
             sidebarElement.classList.toggle('mobile-chatlist-drawer-open', shouldOpen);
+            mobileChatListPullHandle?.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
             setCompactChatListVisible(
                 shouldOpen || document.activeElement === searchUserElement
             );
@@ -527,95 +513,16 @@ $csrfToken = generateCsrfToken();
             applyMobileDrawerState(!isMobileDrawerOpen);
         };
 
-        function bindPullGesture(triggerElement) {
-            if (!triggerElement) {
-                return;
-            }
-            let startY = 0;
-            let activeTouchId = null;
-
-            const start = function (clientY) {
-                startY = Number(clientY || 0);
-                markMobilePullInteraction(true);
-                setCompactChatListVisible(true);
-            };
-
-            const end = function (clientY) {
-                if (!isMobileDrawerViewport() || startY === 0) {
-                    startY = 0;
-                    markMobilePullInteraction(false);
-                    lastMobilePullInteractionAt = Date.now();
-                    return;
-                }
-                const deltaY = Number(clientY || 0) - startY;
-                startY = 0;
-                markMobilePullInteraction(false);
-                lastMobilePullInteractionAt = Date.now();
-
-                if (deltaY > 18 && !isMobileDrawerOpen) {
-                    applyMobileDrawerState(true);
-                    return;
-                }
-                if (deltaY < -18 && isMobileDrawerOpen) {
-                    applyMobileDrawerState(false);
-                }
-            };
-
-            triggerElement.addEventListener('pointerdown', function (event) {
-                if (!isMobileDrawerViewport()) {
-                    return;
-                }
-                start(event.clientY);
-            });
-
-            triggerElement.addEventListener('pointerup', function (event) {
-                end(event.clientY);
-            });
-
-            triggerElement.addEventListener('pointercancel', function () {
-                startY = 0;
-                markMobilePullInteraction(false);
-                lastMobilePullInteractionAt = Date.now();
-            });
-
-            triggerElement.addEventListener('touchstart', function (event) {
-                if (!isMobileDrawerViewport() || !event.changedTouches?.length) {
-                    return;
-                }
-                const touch = event.changedTouches[0];
-                activeTouchId = touch.identifier;
-                start(touch.clientY);
-            }, { passive: true });
-
-            triggerElement.addEventListener('touchend', function (event) {
-                if (!event.changedTouches?.length) {
-                    return;
-                }
-                let touch = null;
-                for (let index = 0; index < event.changedTouches.length; index += 1) {
-                    const candidate = event.changedTouches[index];
-                    if (activeTouchId === null || candidate.identifier === activeTouchId) {
-                        touch = candidate;
-                        break;
-                    }
-                }
-                activeTouchId = null;
-                end(touch?.clientY || 0);
-            }, { passive: true });
-
-            triggerElement.addEventListener('touchcancel', function () {
-                activeTouchId = null;
-                startY = 0;
-                markMobilePullInteraction(false);
-                lastMobilePullInteractionAt = Date.now();
-            });
-        }
-
         mobileChatListBackdrop?.addEventListener('click', function () {
             applyMobileDrawerState(false);
         });
 
-        bindPullGesture(mobileChatListPullHandle);
+        mobileChatListPullHandle?.addEventListener('click', function () {
+            if (!isMobileDrawerViewport()) {
+                return;
+            }
+            window.toggleMobileChatList();
+        });
 
         searchUserElement?.addEventListener('focus', function () {
             if (isMobileDrawerViewport()) {
@@ -629,9 +536,6 @@ $csrfToken = generateCsrfToken();
             }
             setTimeout(function () {
                 if (isMobileDrawerOpen) {
-                    return;
-                }
-                if (isRecentMobilePullInteraction()) {
                     return;
                 }
                 const activeInsideSidebar = Boolean(sidebarElement?.contains(document.activeElement));
@@ -652,9 +556,6 @@ $csrfToken = generateCsrfToken();
             }
             setTimeout(function () {
                 if (isMobileDrawerOpen) {
-                    return;
-                }
-                if (isRecentMobilePullInteraction()) {
                     return;
                 }
                 const activeInsideSidebar = Boolean(sidebarElement?.contains(document.activeElement));
@@ -679,6 +580,12 @@ $csrfToken = generateCsrfToken();
                 return;
             }
             applyMobileDrawerState(false);
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && isMobileDrawerOpen) {
+                applyMobileDrawerState(false);
+            }
         });
 
         if (isMobileDrawerViewport()) {

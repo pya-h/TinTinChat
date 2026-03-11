@@ -3225,9 +3225,8 @@ nav.navbar:hover::after {
     .chat-list-wrapper {
         overflow-x: auto;
         overflow-y: hidden;
-        padding-bottom: 1rem;
+        padding-bottom: 0.4rem;
         scrollbar-width: none;
-        padding-bottom: 4rem;
         transition: var(--transition-fast);
         margin-top: 0;
     }
@@ -3282,38 +3281,62 @@ nav.navbar:hover::after {
     }
 
     .mobile-chatlist-pull-handle {
+        border: 1px solid color-mix(in srgb, var(--secondary-color) 32%, var(--border-color));
+        background: color-mix(in srgb, var(--secondary-color) 10%, var(--surface-color));
+        color: color-mix(in srgb, var(--secondary-color) 75%, var(--text-color));
+        border-radius: 999px;
+        width: 3rem;
+        margin: 0.2rem auto 0.3rem;
+        padding: 0;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        min-height: 1.15rem;
-        margin: 0.15rem 0 0.25rem;
-        cursor: ns-resize;
-        touch-action: pan-y;
+        gap: 0.06rem;
+        min-height: 1.3rem;
+        cursor: pointer;
+        touch-action: manipulation;
         position: relative;
         z-index: 101;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--secondary-color) 16%, transparent);
+    }
+
+    .mobile-chatlist-pull-handle:hover,
+    .mobile-chatlist-pull-handle:focus-visible {
+        transform: translateY(-1px);
+        background: color-mix(in srgb, var(--secondary-color) 14%, var(--surface-color));
+        box-shadow: 0 6px 16px color-mix(in srgb, var(--secondary-color) 24%, transparent);
+        outline: none;
     }
 
     .mobile-chatlist-pull-pill {
-        width: 1.9rem;
-        height: 0.19rem;
+        width: 1rem;
+        height: 0.16rem;
         border-radius: 999px;
-        background: color-mix(in srgb, var(--secondary-color) 70%, var(--border-color));
+        background: currentColor;
+        opacity: 0.95;
+    }
+
+    .mobile-chatlist-pull-icon {
+        font-size: 0.88rem;
+        line-height: 1;
+        transform: translateY(-0.03rem);
+        transition: transform 0.24s ease;
     }
 
     .sidebar.mobile-chatlist-drawer-open .mobile-chatlist-backdrop {
         display: block;
         position: fixed;
-        top: 60px;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
         background: color-mix(in srgb, var(--background-color) 70%, transparent);
+        animation: mobileChatlistBackdropFade 0.2s ease both;
         z-index: 220;
     }
 
     .sidebar.mobile-chatlist-drawer-open {
         position: fixed;
-        top: 60px;
+        top: 0;
         left: 0;
         right: 0;
         bottom: 0;
@@ -3325,6 +3348,7 @@ nav.navbar:hover::after {
         z-index: 230;
         box-shadow: var(--shadow-lg);
         overflow: hidden;
+        animation: mobileChatlistDrawerOpen 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
 
     .sidebar.mobile-chatlist-drawer-open .mobile-chatlist-pull-handle {
@@ -3336,18 +3360,23 @@ nav.navbar:hover::after {
         z-index: 8;
     }
 
+    .sidebar.mobile-chatlist-drawer-open .mobile-chatlist-pull-icon {
+        transform: rotate(180deg);
+    }
+
     .sidebar.mobile-chatlist-drawer-open .search-container {
         position: sticky;
         top: 0;
         z-index: 5;
         background: var(--background-color);
+        padding-top: 0.35rem;
         padding-bottom: 0.35rem;
     }
 
     .sidebar.mobile-chatlist-drawer-open .chat-list-wrapper {
         display: block !important;
         margin-top: 0.2rem;
-        max-height: calc(100vh - 178px);
+        max-height: calc(100vh - 122px);
         overflow-y: auto;
         overflow-x: hidden;
         padding-bottom: 3.1rem;
@@ -3375,6 +3404,26 @@ nav.navbar:hover::after {
         padding-top: 0.45rem;
         background: linear-gradient(180deg, color-mix(in srgb, var(--background-color) 25%, transparent), var(--background-color));
         z-index: 6;
+    }
+
+    @keyframes mobileChatlistBackdropFade {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes mobileChatlistDrawerOpen {
+        from {
+            transform: translateY(-8px);
+            opacity: 0.65;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 }
 
