@@ -75,14 +75,15 @@ if ($groupId > 0) {
 $uploadsDir = __DIR__ . '/../../../uploads';
 $filesDir = __DIR__ . '/../../../uploads/files';
 
-apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
-apiEnsureWritableDirectory($filesDir, 'files directory');
-
 $uniqueFilename = uniqid('file_enc_', true) . '.bin';
 $uploadPath = $filesDir . '/' . $uniqueFilename;
 
 if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
-	apiError('FILE_SAVE_FAILED', 'Failed to save file', 500);
+	apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
+	apiEnsureWritableDirectory($filesDir, 'files directory');
+	if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+		apiError('FILE_SAVE_FAILED', 'Failed to save file', 500);
+	}
 }
 
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, any_file_path, file_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");

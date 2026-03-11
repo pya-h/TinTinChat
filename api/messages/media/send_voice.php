@@ -47,14 +47,15 @@ if ($groupId > 0) {
 $uploadsDir = __DIR__ . '/../../../uploads';
 $voiceMessagesDir = __DIR__ . '/../../../uploads/voice_messages';
 
-apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
-apiEnsureWritableDirectory($voiceMessagesDir, 'voice messages directory');
-
 $uniqueFilename = uniqid('voice_enc_', true) . '.' . ENCRYPTED_VOICE_EXTENSION;
 $uploadPath = $voiceMessagesDir . '/' . $uniqueFilename;
 
 if (!move_uploaded_file($voiceFile['tmp_name'], $uploadPath)) {
-	apiError('FILE_SAVE_FAILED', 'Failed to save voice file', 500);
+	apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
+	apiEnsureWritableDirectory($voiceMessagesDir, 'voice messages directory');
+	if (!move_uploaded_file($voiceFile['tmp_name'], $uploadPath)) {
+		apiError('FILE_SAVE_FAILED', 'Failed to save voice file', 500);
+	}
 }
 
 $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, voice_file_path, file_size) VALUES (?, ?, ?, ?, ?, 'voice', ?, ?)");

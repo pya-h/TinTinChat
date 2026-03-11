@@ -40,7 +40,6 @@ if ($groupId > 0) {
 }
 
 $upload_dir = __DIR__ . '/../../../uploads/images/';
-apiEnsureWritableDirectory($upload_dir, 'images directory');
 
 if ((int) $image_file['size'] > TTC_UPLOAD_IMAGE_MAX_BYTES + 64) {
 	apiError('FILE_TOO_LARGE', 'Image file is too large. Max 20MB allowed.', 400);
@@ -49,34 +48,37 @@ if ((int) $image_file['size'] > TTC_UPLOAD_IMAGE_MAX_BYTES + 64) {
 $unique_filename = uniqid('img_enc_', true) . '.' . ENCRYPTED_IMAGE_EXTENSION;
 $upload_path = $upload_dir . $unique_filename;
 
-if (move_uploaded_file($image_file['tmp_name'], $upload_path)) {
-	try {
-		$stmt = $pdo->prepare(
-			"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size) 
-			 VALUES (?, ?, ?, ?, ?, 'image', ?, ?)"
-		);
-		if (
-			!$stmt->execute([
-				$sender_id,
-				$receiver_id,
-				$groupId > 0 ? $groupId : null,
-				$message_for_recipient,
-				$message_for_sender,
-				'uploads/images/' . $unique_filename,
-				(int) $image_file['size'],
-			])
-		) {
-			apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);
-		}
-
-		apiSuccess([
-			'message_id' => (int) $pdo->lastInsertId(),
-			'message' => 'Image sent successfully'
-		]);
-	} catch (PDOException $e) {
-		unlink($upload_path);
-		apiError('DB_SAVE_FAILED', 'Failed to save image message', 500);
+if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
+	apiEnsureWritableDirectory($upload_dir, 'images directory');
+	if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
+		apiError('FILE_MOVE_FAILED', 'Failed to move uploaded file.', 500);
 	}
-} else {
-	apiError('FILE_MOVE_FAILED', 'Failed to move uploaded file.', 500);
+}
+
+try {
+	$stmt = $pdo->prepare(
+		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size) 
+		 VALUES (?, ?, ?, ?, ?, 'image', ?, ?)"
+	);
+	if (
+		!$stmt->execute([
+			$sender_id,
+			$receiver_id,
+			$groupId > 0 ? $groupId : null,
+			$message_for_recipient,
+			$message_for_sender,
+			'uploads/images/' . $unique_filename,
+			(int) $image_file['size'],
+		])
+	) {
+		apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);
+	}
+
+	apiSuccess([
+		'message_id' => (int) $pdo->lastInsertId(),
+		'message' => 'Image sent successfully'
+	]);
+} catch (PDOException $e) {
+	@unlink($upload_path);
+	apiError('DB_SAVE_FAILED', 'Failed to save image message', 500);
 }

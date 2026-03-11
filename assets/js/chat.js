@@ -1536,10 +1536,9 @@ async function uploadSticker(file) {
             { removeBackground: shouldRemoveBackground }
         );
     } catch (error) {
-        setStickerPickerState(String(error?.message || "Unable to prepare sticker."), { isError: true });
-        setStickerPickerProgress(0, { visible: false });
-        setComposerStatus("Sticker preparation failed", "error");
-        return;
+        preparedStickerFile = file;
+        setStickerPickerState("Sticker optimization unavailable on this browser. Uploading original image...");
+        setStickerPickerProgress(30, { visible: true });
     }
 
     if (preparedStickerFile.size > STICKER_UPLOAD_MAX_BYTES) {
@@ -1763,6 +1762,11 @@ function loadImageElementFromFile(file) {
 
 function canvasToBlob(canvas, type, quality) {
     return new Promise((resolve, reject) => {
+        if (!canvas || typeof canvas.toBlob !== "function") {
+            reject(new Error("Canvas export is not supported in this browser."));
+            return;
+        }
+
         canvas.toBlob(
             (blob) => {
                 if (!blob) {
@@ -1953,17 +1957,48 @@ async function normalizeStickerUploadFile(file, onProgress = null, options = {})
 
     let bestBlob = null;
     const qualityLevels = [0.86, 0.78, 0.7, 0.62, 0.55];
-    for (let index = 0; index < qualityLevels.length; index++) {
-        const quality = qualityLevels[index];
-        const scanPercent = 45 + ((index + 1) / qualityLevels.length) * 45;
-        reportProgress(scanPercent, "Optimizing size");
-        const candidate = await canvasToBlob(canvas, "image/webp", quality);
-        if (candidate.size <= STICKER_UPLOAD_MAX_BYTES) {
-            bestBlob = candidate;
-            break;
+    const exportFormats = [
+        { mime: "image/webp", extension: "webp" },
+        { mime: "image/png", extension: "png" },
+        { mime: "image/jpeg", extension: "jpg" },
+    ];
+    let selectedMime = "image/webp";
+    let selectedExt = "webp";
+
+    for (let formatIndex = 0; formatIndex < exportFormats.length; formatIndex++) {
+        const format = exportFormats[formatIndex];
+        for (let index = 0; index < qualityLevels.length; index++) {
+            const quality = qualityLevels[index];
+            const scanPercent = 45 + ((index + 1) / qualityLevels.length) * 45;
+            reportProgress(scanPercent, "Optimizing size");
+
+            let candidate = null;
+            try {
+                candidate = await canvasToBlob(canvas, format.mime, quality);
+            } catch (error) {
+                continue;
+            }
+
+            if (!candidate) {
+                continue;
+            }
+
+            if (candidate.size <= STICKER_UPLOAD_MAX_BYTES) {
+                bestBlob = candidate;
+                selectedMime = format.mime;
+                selectedExt = format.extension;
+                break;
+            }
+
+            if (!bestBlob || candidate.size < bestBlob.size) {
+                bestBlob = candidate;
+                selectedMime = format.mime;
+                selectedExt = format.extension;
+            }
         }
-        if (!bestBlob || candidate.size < bestBlob.size) {
-            bestBlob = candidate;
+
+        if (bestBlob && bestBlob.size <= STICKER_UPLOAD_MAX_BYTES) {
+            break;
         }
     }
 
@@ -1976,8 +2011,8 @@ async function normalizeStickerUploadFile(file, onProgress = null, options = {})
     }
 
     reportProgress(100, "Prepared");
-    return new File([bestBlob], `sticker_${Date.now()}.webp`, {
-        type: "image/webp",
+    return new File([bestBlob], `sticker_${Date.now()}.${selectedExt}`, {
+        type: selectedMime,
     });
 }
 

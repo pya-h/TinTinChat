@@ -29,8 +29,6 @@ if (!isset($allowedMimeToExtension[$detectedMime])) {
 
 $uploadsDir = __DIR__ . '/../../uploads';
 $avatarsDir = __DIR__ . '/../../uploads/avatars';
-apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
-apiEnsureWritableDirectory($avatarsDir, 'avatars directory');
 
 $extension = $allowedMimeToExtension[$detectedMime];
 $newFilename = sprintf('avatar_u%d_%s.%s', $userId, uniqid('', true), $extension);
@@ -41,7 +39,11 @@ $selectStmt->execute([$userId]);
 $oldAvatarPath = (string) ($selectStmt->fetchColumn() ?: '');
 
 if (!move_uploaded_file((string) $avatarFile['tmp_name'], $targetPath)) {
-	apiError('FILE_SAVE_FAILED', 'Failed to save avatar file.', 500);
+	apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
+	apiEnsureWritableDirectory($avatarsDir, 'avatars directory');
+	if (!move_uploaded_file((string) $avatarFile['tmp_name'], $targetPath)) {
+		apiError('FILE_SAVE_FAILED', 'Failed to save avatar file.', 500);
+	}
 }
 
 try {

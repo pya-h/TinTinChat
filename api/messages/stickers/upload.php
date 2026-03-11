@@ -216,14 +216,16 @@ $extensionByMime = [
 $extension = isset($extensionByMime[$targetMime]) ? $extensionByMime[$targetMime] : 'img';
 
 $uploadDir = __DIR__ . '/../../../uploads/stickers/';
-apiEnsureWritableDirectory($uploadDir, 'stickers directory');
 
 $fileName = uniqid('sticker_', true) . '.' . $extension;
 $relativePath = 'uploads/stickers/' . $fileName;
 $finalPath = $uploadDir . $fileName;
 
 if (@file_put_contents($finalPath, $finalBytes) === false) {
-	apiError('FILE_SAVE_FAILED', 'Unable to persist sticker file.', 500);
+	apiEnsureWritableDirectory($uploadDir, 'stickers directory');
+	if (@file_put_contents($finalPath, $finalBytes) === false) {
+		apiError('FILE_SAVE_FAILED', 'Unable to persist sticker file.', 500);
+	}
 }
 
 try {
