@@ -177,7 +177,6 @@ All routes use organized domains under `api/<domain>/...`.
 - `EDIT_UNSUPPORTED_TYPE` → edit attempted for non-text message type.
 - `EDIT_WINDOW_EXPIRED` → edit attempted after the allowed edit window.
 - `DB_SAVE_FAILED` / `DB_ERROR` → database operation failure.
-- `DELETE_FOR_EVERYONE_FORBIDDEN` → requester attempted sender-only delete-for-everyone on a message they did not send.
 - `DELETE_CHAT_FAILED` → direct chat history deletion failed server-side.
 - `INVALID_STICKER_ID` / `STICKER_NOT_FOUND` → sticker send/fetch references invalid or inactive sticker.
 

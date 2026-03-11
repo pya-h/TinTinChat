@@ -2907,8 +2907,56 @@ nav.navbar:hover::after {
     }
 
     .chat-input {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.42rem;
+        padding: 0.58rem 0.68rem 0.66rem;
+    }
+
+    .chat-input > .reply-preview,
+    .chat-input > .composer-status,
+    .chat-input > #chatForm {
+        width: 100%;
+    }
+
+    .chat-input > #chatForm {
+        margin-top: 0;
+    }
+
+    .chat-input > .composer-status {
+        display: none;
+        min-height: 0;
+        margin: 0;
+    }
+
+    .chat-input > .composer-status:not(:empty) {
+        display: block;
+        font-size: 0.76rem;
+        line-height: 1.2;
+        margin: 0 0 0.08rem;
+    }
+
+    .reply-preview {
+        margin-bottom: 0;
         gap: 0.55rem;
-        padding: 0.75rem;
+        padding: 0.46rem 0.58rem;
+        border-radius: 0.68rem;
+    }
+
+    .reply-preview-title {
+        font-size: 0.72rem;
+    }
+
+    .reply-preview-text {
+        font-size: 0.78rem;
+        max-width: none;
+    }
+
+    .reply-preview-close {
+        width: 1.72rem;
+        height: 1.72rem;
+        flex: 0 0 auto;
     }
 
     .camera-capture-actions .btn {

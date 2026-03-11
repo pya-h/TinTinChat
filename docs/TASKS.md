@@ -294,6 +294,7 @@ Legend:
 - [ ] (`P3`) Add Avatar change and username and password change options to settings (Make settings sectioned by tabs)
 - [ ] (`P3`) Improve the Settings modal UI (styles & animations)
 - [ ] (`P3`) Add Edit message option to messages; It's obvious it should only for normal text messages; Other types of messages or fprwarded messages don't need editting.
+- [ ] (`P3`) Add new tests for new sections & for sections that didn't had tests.
 
 ## 4) Suggested Execution Order
 

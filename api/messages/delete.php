@@ -9,7 +9,6 @@ apiRequireCsrf();
 
 $data = apiGetJsonBody();
 $messages = isset($data['messages']) ? $data['messages'] : (is_array($data) ? $data : null);
-$deleteForEveryone = !empty($data['delete_for_everyone']);
 
 if (!$messages || !is_array($messages)) {
 	apiError('MISSING_MESSAGES', 'No messages specified!', 400);
@@ -24,22 +23,12 @@ if (empty($messages)) {
 
 $placeholders = implode(',', array_fill(0, count($messages), '?'));
 
-$accessStmt = null;
-if ($deleteForEveryone) {
-	$accessStmt = $pdo->prepare(
-		"SELECT id, message_type, voice_file_path, image_file_path, any_file_path
-		 FROM messages
-		 WHERE id IN ($placeholders) AND sender_id = ?"
-	);
-	$accessStmt->execute(array_merge($messages, [$userId]));
-} else {
-	$accessStmt = $pdo->prepare(
-		"SELECT id, message_type, voice_file_path, image_file_path, any_file_path
-		 FROM messages
-		 WHERE id IN ($placeholders) AND (receiver_id = ? OR sender_id = ?)"
-	);
-	$accessStmt->execute(array_merge($messages, [$userId, $userId]));
-}
+$accessStmt = $pdo->prepare(
+	"SELECT id, message_type, voice_file_path, image_file_path, any_file_path
+	 FROM messages
+	 WHERE id IN ($placeholders) AND (receiver_id = ? OR sender_id = ?)"
+);
+$accessStmt->execute(array_merge($messages, [$userId, $userId]));
 
 $rows = $accessStmt->fetchAll(PDO::FETCH_ASSOC);
 $deletableIds = array_values(array_filter(array_map(static function ($row) {
@@ -47,12 +36,6 @@ $deletableIds = array_values(array_filter(array_map(static function ($row) {
 }, $rows), static function ($id) {
 	return $id > 0;
 }));
-
-if ($deleteForEveryone) {
-	if (empty($deletableIds)) {
-		apiError('DELETE_FOR_EVERYONE_FORBIDDEN', 'Only the message sender can delete for everyone', 403);
-	}
-}
 
 if (empty($deletableIds)) {
 	apiSuccess(['messages_deleted' => 0, 'message_ids' => []]);

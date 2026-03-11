@@ -179,8 +179,6 @@ const I18N_TEXT = {
     reactTitle: "React to Message",
     reactFailedTitle: "Reaction Failed",
     reactFailedBody: "Unable to update reaction.",
-    deleteForEveryoneConfirm: "Delete this message for everyone?",
-    deleteForEveryoneFailedTitle: "Delete for Everyone Failed",
 };
 
 let currentChatUser = null;
@@ -3869,33 +3867,31 @@ function openReactionPickerFromContext(messageElement, messageData = null) {
     picker.querySelector(".reaction-picker-item")?.focus();
 }
 
-async function deleteMessageById(messageId, { deleteForEveryone = false } = {}) {
+async function deleteMessageById(messageId) {
     await window.ApiService.jsonOk("api/messages/delete.php", {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",
             ...getCsrfHeaders(),
         },
-        body: JSON.stringify({ messages: [messageId], delete_for_everyone: deleteForEveryone }),
+        body: JSON.stringify({ messages: [messageId] }),
     });
 }
 
-async function deleteMessageFromContext(messageElement, { forEveryone = false } = {}) {
+async function deleteMessageFromContext(messageElement) {
     const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
     if (!messageId) {
         showModal("Delete Failed", "Invalid message id.", "warning");
         return;
     }
 
-    const confirmed = window.confirm(
-        forEveryone ? I18N_TEXT.deleteForEveryoneConfirm : "Delete this message?"
-    );
+    const confirmed = window.confirm("Delete this message?");
     if (!confirmed) {
         return;
     }
 
     try {
-        await deleteMessageById(messageId, { deleteForEveryone: forEveryone });
+        await deleteMessageById(messageId);
 
         messageElement.remove();
 
@@ -3929,7 +3925,6 @@ function addMessageActionHandlers(
         canSelect = true,
         canEdit = false,
         canDelete = true,
-        canDeleteEveryone = false,
         canReact = false,
         canCopy = false,
         canForward = false,
@@ -4044,19 +4039,6 @@ function addMessageActionHandlers(
                 closeMessageContextMenu();
             });
             appendMenuAction(deleteBtn);
-        }
-
-        if (canDeleteEveryone) {
-            const deleteEveryoneBtn = document.createElement("button");
-            deleteEveryoneBtn.type = "button";
-            deleteEveryoneBtn.className = "message-context-menu-item";
-            deleteEveryoneBtn.innerHTML =
-                '<i class="fas fa-trash-can me-2"></i>Delete for everyone';
-            deleteEveryoneBtn.addEventListener("click", async () => {
-                await deleteMessageFromContext(messageElement, { forEveryone: true });
-                closeMessageContextMenu();
-            });
-            appendMenuAction(deleteEveryoneBtn);
         }
 
         if (canDetails) {
@@ -5043,7 +5025,6 @@ async function addMessageToChat(msg, prepend = false) {
     let canCopy = false;
     let canForward = false;
     let canReact = false;
-    let canDeleteEveryone = false;
     div.classList.add("message");
     div.classList.add(msg.sender_id == CURRENT_USER_ID ? "sent" : "received");
 
@@ -5289,10 +5270,6 @@ async function addMessageToChat(msg, prepend = false) {
         }
     }
 
-    if (Number(msg.sender_id || 0) === Number(CURRENT_USER_ID) && Number(msg.group_id || 0) > 0) {
-        canDeleteEveryone = true;
-    }
-
     const isIncomingGroupMediaMessage =
         Number(msg.group_id || 0) > 0 &&
         Number(msg.sender_id || 0) !== Number(CURRENT_USER_ID) &&
@@ -5373,7 +5350,6 @@ async function addMessageToChat(msg, prepend = false) {
             canSelect: true,
             canEdit,
             canDelete: true,
-            canDeleteEveryone,
             canReact,
             canCopy,
             canForward,
