@@ -1,6 +1,6 @@
 # TinTinChat Technical Design
 
-Version: 1.2
+Version: 1.3
 Date: 2026-03-11
 
 ## 1) Overview
@@ -125,6 +125,7 @@ Reference: `docs/ENCRYPTION.md`
 - E2E smoke suites:
   - API guard
   - authenticated chat
+  - profile settings
   - group chat
   - group authorization
   - block-user
@@ -142,5 +143,6 @@ Reference: `docs/ENCRYPTION.md`
 
 ## 10) Forward Design Priorities
 
-- Continue hardening PWA rollout behaviors (cache lifecycle + install UX telemetry).
-- Add group seen/unread behavior refinements (Phase J.2).
+- Continue UI/performance hardening and bug-sweep iterations after Phase K.
+- Continue decomposing `assets/js/chat.js` into smaller modules without changing behavior.
+- Expand smoke coverage for recently added UX/account surfaces.

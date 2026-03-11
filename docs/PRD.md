@@ -1,7 +1,7 @@
 # TinTinChat Product Requirements Document (PRD)
 
-Version: 1.2
-Date: 2026-03-10
+Version: 1.3
+Date: 2026-03-11
 Owner: Product + Engineering
 
 ## 1) Product Summary
@@ -35,7 +35,7 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 - Forward
 - Details
 - Reactions
-- Delete modes
+- Delete (global for allowed participants)
 - Delete direct chat history (from profile modal)
 
 ### 3.4 Media/attachments
@@ -46,6 +46,9 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 - Avatar upload/retrieval with fallback avatar rendering
 - User Info modal with avatar enlargement + send-message shortcut
 - Block/unblock with direct-message send enforcement
+- Settings modal with tabbed sections (General/Account)
+- Account settings updates (username/password/avatar)
+- Font-size customization preference
 
 ### 3.6 Quality & reliability
 - Unit + E2E smoke suite and one-command runner
@@ -59,9 +62,8 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 - Maintain direct/group parity for core messaging behaviors.
 
 ### 4.2 Upcoming priorities
-- Finish remaining Phase I power UX items.
-- Phase J PWA baseline (manifest + service worker + offline shell strategy).
-- Phase J.2 group seen/unread refinement.
+- Continue post-Phase K quality hardening, bugfixing, and performance tuning.
+- Expand automated test coverage for newly introduced surfaces.
 
 ## 5) Non-Goals (for now)
 
@@ -106,12 +108,12 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 ## 11) Phase Status Snapshot
 
 Completed:
-- A, B, C, D, E, E.1, E.2, F, F.5, F.6, G, H
+- A, B, C, D, E, E.1, E.2, F, F.5, F.6, G, H, I, J, J.2, K
 
 In progress:
-- I (partially complete)
+- Post-Phase K optimization + audit loop
 
 Planned:
-- J, J.2
+- Further modularization and additional focused test expansion
 
 Source of truth for detailed task lines: `docs/TASKS.md`.

@@ -179,7 +179,7 @@ Legend:
 ### Phase F — Chatroom Parity Features (Recommended) (`P2/P3`)
 - [x] (`P2`) Search inside current conversation.
 - [x] (`P3`) Message reactions (minimal emoji set).
-- [x] (`P3`) Optional delete-for-everyone policy (with permissions).
+- [x] (`P3`) Delete policy simplified to a single global Delete action for allowed participants.
 - [x] (`P3`) Improve Search conversation: Allow searching in old messages (for now it just searchs loaded messages only)
 - [x] (`P3`) Add separate Send Video/Record Video option (Use File mode with video flag or something)
 

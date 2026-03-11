@@ -31,7 +31,7 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 - Forward
 - Message details
 - Reactions
-- Delete (including delete-for-everyone rules where applicable)
+- Delete (global for allowed participants)
 - Delete full direct-chat history from user profile modal
 
 ### Media and attachments
@@ -45,6 +45,9 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 - Avatar upload/retrieval with safe fallback rendering
 - User Info modal + avatar enlargement + send-message shortcut
 - Block/unblock user flow with send enforcement
+- Settings modal tabs (General/Account) with profile update actions
+- Username/password update support via profile settings
+- Font-size preference support
 
 ## Tech Stack
 
@@ -102,6 +105,8 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 - E2E smoke tests:
   - `bash tests/e2e/api_guard_smoke.sh http://localhost:8080`
   - `bash tests/e2e/authenticated_chat_smoke.sh http://localhost:8080`
+  - `bash tests/e2e/profile_settings_smoke.sh http://localhost:8080`
+  - `bash tests/e2e/profile_settings_edge_smoke.sh http://localhost:8080`
   - `bash tests/e2e/group_chat_smoke.sh http://localhost:8080`
   - `bash tests/e2e/group_authorization_smoke.sh http://localhost:8080`
   - `bash tests/e2e/block_user_smoke.sh http://localhost:8080`
@@ -125,6 +130,6 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 
 ## Current Status
 
-- Project is in post-Phase J baseline stabilization.
+- Project is in post-Phase K stabilization and optimization.
 - Organized endpoint architecture is enforced (no legacy flat `api/*.php` wrappers).
 - Full automated suite currently passes (`bash tests/run_all_tests.sh`).

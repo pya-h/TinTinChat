@@ -257,9 +257,12 @@ let isStickersLoading = false;
 let hasLoadedStickers = false;
 let snapToBottomRafId = 0;
 let snapToBottomTimerIds = [];
+let goToLatestRafId = 0;
 let retryLastSendAction = null;
 let activeSettingsTab = "general";
 let currentSelfUsername = String(CURRENT_USER || "");
+let isRefreshLoopBusy = false;
+let isSeenLoopBusy = false;
 
 const chatUserIdsByUsername = new Map();
 
@@ -2497,6 +2500,9 @@ function bindSettingsUiEvents() {
             updateCurrentUsernameUi(updatedUsername);
             setComposerStatus("Username updated", "success");
             showModal("Username Updated", "Your username was updated successfully.", "success");
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 260);
         } catch (error) {
             showModal("Username Update Failed", error?.message || "Unable to update username.", "error");
             setComposerStatus("Unable to update username", "error");
@@ -5649,11 +5655,7 @@ function updateMessageTickStatus(messageId, isSeen, seenAtOverride = "") {
         !hasLoadedMoreMessages &&
         isChatNearBottom(220);
 
-    const messageDiv = Array.from(chatMessagesElem.children).find(
-        (el) =>
-            el.getAttribute("data-message-id") == messageId ||
-            el.querySelector(`[data-message-id="${messageId}"]`)
-    );
+    const messageDiv = getMessageElementById(messageId);
 
     if (!messageDiv) return;
 
@@ -6027,12 +6029,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 chatMessagesElem.addEventListener("scroll", () => {
     if (hasLoadedMoreMessages) {
-        updateGoToLatestButton();
+        if (goToLatestRafId) {
+            cancelAnimationFrame(goToLatestRafId);
+        }
+        goToLatestRafId = requestAnimationFrame(() => {
+            goToLatestRafId = 0;
+            updateGoToLatestButton();
+        });
     }
 });
 
 window.playVoiceMessage = async function (messageId) {
-    const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+    const messageDiv = getMessageElementById(messageId);
     if (!messageDiv) return;
 
     const messageMeta = messageMetaById.get(Number(messageId));
@@ -7364,19 +7372,45 @@ groupLeaveBtn?.addEventListener("click", async () => {
 let chatListTriggerTime = 0;
 
 setInterval(async () => {
+    if (isRefreshLoopBusy) {
+        return;
+    }
     if (!navigator.onLine) {
         return;
     }
-    await Promise.all([
-        currentChatUser?.length && forceFetchCurrentChatMessages(),
-        currentChatUser?.length && refreshTypingIndicator(),
-        !(chatListTriggerTime % 10) && loadChatList(),
-    ]);
-    chatListTriggerTime = ++chatListTriggerTime % 10;
+    if (document.hidden) {
+        if (chatListTriggerTime % 30 === 0) {
+            try {
+                await loadChatList();
+            } catch (error) {}
+        }
+        chatListTriggerTime = ++chatListTriggerTime % 30;
+        return;
+    }
+
+    isRefreshLoopBusy = true;
+    try {
+        await Promise.all([
+            currentChatUser?.length && forceFetchCurrentChatMessages(),
+            currentChatUser?.length && refreshTypingIndicator(),
+            !(chatListTriggerTime % 10) && loadChatList(),
+        ]);
+        chatListTriggerTime = ++chatListTriggerTime % 10;
+    } finally {
+        isRefreshLoopBusy = false;
+    }
 }, CHAT_REFRESH_POLL_MS);
 
-setInterval(() => {
-    refreshPendingSeenStates();
+setInterval(async () => {
+    if (isSeenLoopBusy || document.hidden) {
+        return;
+    }
+    isSeenLoopBusy = true;
+    try {
+        await refreshPendingSeenStates();
+    } finally {
+        isSeenLoopBusy = false;
+    }
 }, SEEN_STATUS_POLL_MS);
 
 voiceBtn.addEventListener("click", async () => {
