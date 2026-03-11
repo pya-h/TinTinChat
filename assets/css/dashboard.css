@@ -630,6 +630,7 @@ nav.navbar:hover::after {
 
 .group-message-content {
     position: relative;
+    z-index: 1;
     min-width: 0;
     flex: 1;
     background: var(--surface-color);
@@ -710,6 +711,8 @@ nav.navbar:hover::after {
     right: 0.45rem;
     left: auto;
     margin: 0;
+    z-index: 4;
+    pointer-events: auto;
 }
 
 .group-message-meta-time {
@@ -2410,8 +2413,9 @@ nav.navbar:hover::after {
     z-index: 26;
     padding: 0.14rem;
     border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 16%, var(--border-color));
     background: color-mix(in srgb, var(--surface-color) 90%, transparent);
-    box-shadow: 0 1px 6px color-mix(in srgb, var(--text-color) 8%, transparent);
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--text-color) 7%, transparent);
 }
 
 .chat-settings-panel {

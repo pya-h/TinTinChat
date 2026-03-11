@@ -289,6 +289,12 @@ Legend:
 - [x] (`P2`) Add the group message seen system (the first user seeing my message, means message is seen)
 - [x] (`P2`) Implement unread message counter for group chats.
 
+### Phase K — Improvements (`P2`)
+- [ ] (`P3`) Add other customization for user if you have something in mind (For example font size change)
+- [ ] (`P3`) Add Avatar change and username and password change options to settings (Make settings sectioned by tabs)
+- [ ] (`P3`) Improve the Settings modal UI (styles & animations)
+- [ ] (`P3`) Add Edit message option to messages; It's obvious it should only for normal text messages; Other types of messages or fprwarded messages don't need editting.
+
 ## 4) Suggested Execution Order
 
 1. Security and endpoint consistency (`P0`)  
