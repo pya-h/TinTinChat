@@ -10,14 +10,33 @@ apiRequireAuth();
 $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 150;
 $limit = max(1, min(300, $limit));
 
-$stmt = $pdo->prepare(
-	'SELECT s.id, s.width, s.height, s.file_mime, s.created_at, u.username AS uploaded_by_username
-	 FROM stickers s
-	 INNER JOIN users u ON u.id = s.uploaded_by_user_id
-	 WHERE s.is_active = 1
-	 ORDER BY s.created_at DESC
-	 LIMIT ?'
-);
+$columns = apiGetTableColumns($pdo, 'stickers');
+if (empty($columns) || !isset($columns['id'])) {
+	apiError('STICKER_SCHEMA_OUTDATED', 'Stickers schema is missing or outdated. Run migration 14_add_sticker_support.sql.', 500);
+}
+
+$selectParts = ['s.id'];
+$selectParts[] = isset($columns['width']) ? 's.width' : (TTC_STICKER_CANVAS_SIZE . ' AS width');
+$selectParts[] = isset($columns['height']) ? 's.height' : (TTC_STICKER_CANVAS_SIZE . ' AS height');
+$selectParts[] = isset($columns['file_mime']) ? 's.file_mime' : "'image/png' AS file_mime";
+$selectParts[] = isset($columns['created_at']) ? 's.created_at' : 'NULL AS created_at';
+
+$needsUserJoin = isset($columns['uploaded_by_user_id']);
+if ($needsUserJoin) {
+	$selectParts[] = 'u.username AS uploaded_by_username';
+} else {
+	$selectParts[] = "'' AS uploaded_by_username";
+}
+
+$fromClause = ' FROM stickers s';
+if ($needsUserJoin) {
+	$fromClause .= ' INNER JOIN users u ON u.id = s.uploaded_by_user_id';
+}
+
+$whereClause = isset($columns['is_active']) ? ' WHERE s.is_active = 1' : '';
+$orderByClause = isset($columns['created_at']) ? ' ORDER BY s.created_at DESC' : ' ORDER BY s.id DESC';
+
+$stmt = $pdo->prepare('SELECT ' . implode(', ', $selectParts) . $fromClause . $whereClause . $orderByClause . ' LIMIT ?');
 $stmt->bindValue(1, $limit, PDO::PARAM_INT);
 $stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -18,7 +18,18 @@ if ($stickerId <= 0) {
 	apiError('INVALID_STICKER_ID', 'Invalid sticker id.', 400);
 }
 
-$stickerStmt = $pdo->prepare('SELECT id FROM stickers WHERE id = ? AND is_active = 1 LIMIT 1');
+$stickerColumns = apiGetTableColumns($pdo, 'stickers');
+if (empty($stickerColumns) || !isset($stickerColumns['id'])) {
+	apiError('STICKER_SCHEMA_OUTDATED', 'Stickers schema is missing or outdated. Run migration 14_add_sticker_support.sql.', 500);
+}
+
+$stickerSql = 'SELECT id FROM stickers WHERE id = ?';
+if (isset($stickerColumns['is_active'])) {
+	$stickerSql .= ' AND is_active = 1';
+}
+$stickerSql .= ' LIMIT 1';
+
+$stickerStmt = $pdo->prepare($stickerSql);
 $stickerStmt->execute([$stickerId]);
 $sticker = $stickerStmt->fetch(PDO::FETCH_ASSOC);
 if (!$sticker) {

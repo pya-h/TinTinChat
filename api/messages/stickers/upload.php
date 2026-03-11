@@ -169,26 +169,39 @@ if ($finalSize <= 0 || $finalSize > TTC_UPLOAD_STICKER_MAX_BYTES) {
 
 $fileHash = hash('sha256', $finalBytes);
 
-$existingStmt = $pdo->prepare('SELECT id, is_active, width, height, file_mime FROM stickers WHERE file_hash = ? LIMIT 1');
-$existingStmt->execute([$fileHash]);
-$existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
+$stickerColumns = apiGetTableColumns($pdo, 'stickers');
+if (empty($stickerColumns) || !isset($stickerColumns['file_path'])) {
+	apiError('STICKER_SCHEMA_OUTDATED', 'Stickers schema is missing required columns. Run migration 14_add_sticker_support.sql.', 500);
+}
 
-if ($existing) {
-	$existingId = (int) ($existing['id'] ?? 0);
-	if ((int) ($existing['is_active'] ?? 0) !== 1) {
-		$reactivateStmt = $pdo->prepare('UPDATE stickers SET is_active = 1 WHERE id = ?');
-		$reactivateStmt->execute([$existingId]);
+if (isset($stickerColumns['file_hash'])) {
+	$selectParts = ['id'];
+	$selectParts[] = isset($stickerColumns['is_active']) ? 'is_active' : '1 AS is_active';
+	$selectParts[] = isset($stickerColumns['width']) ? 'width' : (TTC_STICKER_CANVAS_SIZE . ' AS width');
+	$selectParts[] = isset($stickerColumns['height']) ? 'height' : (TTC_STICKER_CANVAS_SIZE . ' AS height');
+	$selectParts[] = isset($stickerColumns['file_mime']) ? 'file_mime' : ($pdo->quote($targetMime) . ' AS file_mime');
+
+	$existingStmt = $pdo->prepare('SELECT ' . implode(', ', $selectParts) . ' FROM stickers WHERE file_hash = ? LIMIT 1');
+	$existingStmt->execute([$fileHash]);
+	$existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
+
+	if ($existing) {
+		$existingId = (int) ($existing['id'] ?? 0);
+		if (isset($stickerColumns['is_active']) && (int) ($existing['is_active'] ?? 0) !== 1) {
+			$reactivateStmt = $pdo->prepare('UPDATE stickers SET is_active = 1 WHERE id = ?');
+			$reactivateStmt->execute([$existingId]);
+		}
+		apiSuccess([
+			'sticker' => [
+				'id' => $existingId,
+				'width' => (int) ($existing['width'] ?? TTC_STICKER_CANVAS_SIZE),
+				'height' => (int) ($existing['height'] ?? TTC_STICKER_CANVAS_SIZE),
+				'mime' => (string) ($existing['file_mime'] ?? $targetMime),
+				'url' => 'api/messages/stickers/get.php?id=' . $existingId,
+			],
+			'duplicate' => true,
+		]);
 	}
-	apiSuccess([
-		'sticker' => [
-			'id' => $existingId,
-			'width' => (int) ($existing['width'] ?? TTC_STICKER_CANVAS_SIZE),
-			'height' => (int) ($existing['height'] ?? TTC_STICKER_CANVAS_SIZE),
-			'mime' => (string) ($existing['file_mime'] ?? $targetMime),
-			'url' => 'api/messages/stickers/get.php?id=' . $existingId,
-		],
-		'duplicate' => true,
-	]);
 }
 
 $extensionByMime = [
@@ -214,18 +227,45 @@ if (@file_put_contents($finalPath, $finalBytes) === false) {
 }
 
 try {
+	$insertColumns = ['file_path'];
+	$insertValues = [$relativePath];
+	$placeholders = ['?'];
+
+	if (isset($stickerColumns['file_mime'])) {
+		$insertColumns[] = 'file_mime';
+		$insertValues[] = $targetMime;
+		$placeholders[] = '?';
+	}
+	if (isset($stickerColumns['file_hash'])) {
+		$insertColumns[] = 'file_hash';
+		$insertValues[] = $fileHash;
+		$placeholders[] = '?';
+	}
+	if (isset($stickerColumns['width'])) {
+		$insertColumns[] = 'width';
+		$insertValues[] = $finalWidth;
+		$placeholders[] = '?';
+	}
+	if (isset($stickerColumns['height'])) {
+		$insertColumns[] = 'height';
+		$insertValues[] = $finalHeight;
+		$placeholders[] = '?';
+	}
+	if (isset($stickerColumns['uploaded_by_user_id'])) {
+		$insertColumns[] = 'uploaded_by_user_id';
+		$insertValues[] = $userId;
+		$placeholders[] = '?';
+	}
+	if (isset($stickerColumns['is_active'])) {
+		$insertColumns[] = 'is_active';
+		$insertValues[] = 1;
+		$placeholders[] = '?';
+	}
+
 	$insert = $pdo->prepare(
-		'INSERT INTO stickers (file_path, file_mime, file_hash, width, height, uploaded_by_user_id, is_active)
-		 VALUES (?, ?, ?, ?, ?, ?, 1)'
+		'INSERT INTO stickers (' . implode(', ', $insertColumns) . ') VALUES (' . implode(', ', $placeholders) . ')'
 	);
-	$ok = $insert->execute([
-		$relativePath,
-		$targetMime,
-		$fileHash,
-		$finalWidth,
-		$finalHeight,
-		$userId,
-	]);
+	$ok = $insert->execute($insertValues);
 
 	if (!$ok) {
 		@unlink($finalPath);
@@ -245,5 +285,15 @@ try {
 	]);
 } catch (PDOException $e) {
 	@unlink($finalPath);
+	$errorCode = (string) ($e->errorInfo[1] ?? '');
+	if (in_array($errorCode, ['1054', '1136', '1146', '1364', '1048'], true)) {
+		apiError('STICKER_SCHEMA_OUTDATED', 'Stickers schema is outdated. Run migration 14_add_sticker_support.sql.', 500);
+	}
+	if ($errorCode === '1452') {
+		apiError('STICKER_OWNER_INVALID', 'Sticker owner reference failed. Ensure current session user exists in users table.', 500);
+	}
+	if ($errorCode === '1142') {
+		apiError('DB_PERMISSION_DENIED', 'Database user lacks write permission for stickers table.', 500);
+	}
 	apiError('DB_SAVE_FAILED', 'Failed to save sticker metadata.', 500);
 }

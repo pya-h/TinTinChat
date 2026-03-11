@@ -141,8 +141,8 @@ const MOBILE_BREAKPOINT_WIDTH = 767.98;
 const MESSAGE_ACTIONS_HINT_AUTO_HIDE_MS = 4200;
 const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
-const TYPING_IDLE_TIMEOUT_MS = 1800;
-const TYPING_UPDATE_THROTTLE_MS = 750;
+const TYPING_IDLE_TIMEOUT_MS = 3200;
+const TYPING_UPDATE_THROTTLE_MS = 3500;
 const MESSAGE_EDIT_WINDOW_MS = Number(appConstants.messageEditWindowMs) || 15 * 60 * 1000;
 const REACTION_EMOJI_SET = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🐠"];
 const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
@@ -231,8 +231,9 @@ let lastFocusedElementBeforeActionModal = null;
 const pendingSeenMessageIds = new Set();
 const messageMetaById = new Map();
 const decryptedMediaCacheByMessageId = new Map();
-let lastTypingSentAt = 0;
-let localTypingState = false;
+const typingStateByTarget = new Map();
+const typingLastSentAtByTarget = new Map();
+const typingInflightByTarget = new Set();
 let typingStopTimer = null;
 let messageActionsHintTimer = null;
 let hasShownMessageActionsHint = false;
@@ -1028,14 +1029,26 @@ async function updateTypingStatus(isTyping, chatTargetOverride = null) {
         return;
     }
 
-    const now = Date.now();
-    if (isTyping && now - lastTypingSentAt < TYPING_UPDATE_THROTTLE_MS) {
+    const desiredState = Boolean(isTyping);
+    const currentKnownState = Boolean(typingStateByTarget.get(chatTarget));
+    if (currentKnownState === desiredState) {
         return;
     }
 
+    if (typingInflightByTarget.has(chatTarget)) {
+        return;
+    }
+
+    const now = Date.now();
+    const lastSentAt = Number(typingLastSentAtByTarget.get(chatTarget) || 0);
+    if (desiredState && now - lastSentAt < TYPING_UPDATE_THROTTLE_MS) {
+        return;
+    }
+
+    typingInflightByTarget.add(chatTarget);
     try {
         const payload = {
-            is_typing: Boolean(isTyping),
+            is_typing: desiredState,
         };
         if (isGroupToken(chatTarget)) {
             payload.group_id = parseGroupIdFromToken(chatTarget);
@@ -1050,9 +1063,12 @@ async function updateTypingStatus(isTyping, chatTargetOverride = null) {
             },
             body: JSON.stringify(payload),
         });
-        localTypingState = Boolean(isTyping);
-        lastTypingSentAt = now;
+        typingStateByTarget.set(chatTarget, desiredState);
+        typingLastSentAtByTarget.set(chatTarget, now);
     } catch (error) {}
+    finally {
+        typingInflightByTarget.delete(chatTarget);
+    }
 }
 
 async function refreshTypingIndicator() {
@@ -4542,8 +4558,13 @@ function updateLoadingSpinnerState(chatTarget, show = false) {
 
 async function selectChatTarget(target) {
     const previousChatTarget = currentChatUser;
-    if (previousChatTarget && localTypingState) {
+    if (previousChatTarget && typingStateByTarget.get(previousChatTarget) === true) {
         updateTypingStatus(false, previousChatTarget);
+    }
+
+    if (typingStopTimer) {
+        clearTimeout(typingStopTimer);
+        typingStopTimer = null;
     }
 
     if (currentChatUser?.length) {
@@ -6475,7 +6496,9 @@ chatInput.addEventListener("input", () => {
 
     const hasText = Boolean(chatInput.value.trim().length);
     if (hasText) {
-        updateTypingStatus(true);
+        if (typingStateByTarget.get(currentChatUser) !== true) {
+            updateTypingStatus(true);
+        }
         if (typingStopTimer) {
             clearTimeout(typingStopTimer);
         }

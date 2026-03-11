@@ -13,11 +13,23 @@ if ($stickerId <= 0) {
 	exit('Bad Request');
 }
 
-$stmt = $pdo->prepare('SELECT file_path, file_mime, is_active FROM stickers WHERE id = ? LIMIT 1');
+$columns = apiGetTableColumns($pdo, 'stickers');
+if (empty($columns) || !isset($columns['file_path'])) {
+	http_response_code(500);
+	exit('Stickers schema unavailable');
+}
+
+$selectParts = ['file_path'];
+$selectParts[] = isset($columns['file_mime']) ? 'file_mime' : "'image/png' AS file_mime";
+if (isset($columns['is_active'])) {
+	$selectParts[] = 'is_active';
+}
+
+$stmt = $pdo->prepare('SELECT ' . implode(', ', $selectParts) . ' FROM stickers WHERE id = ? LIMIT 1');
 $stmt->execute([$stickerId]);
 $sticker = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$sticker || (int) ($sticker['is_active'] ?? 0) !== 1) {
+if (!$sticker || (isset($columns['is_active']) && (int) ($sticker['is_active'] ?? 0) !== 1)) {
 	http_response_code(404);
 	exit('Not Found');
 }

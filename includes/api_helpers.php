@@ -164,3 +164,37 @@ function apiNormalizeUsername(?string $username, string $errorCode = 'INVALID_US
 
     return $normalized;
 }
+
+function apiGetTableColumns(PDO $pdo, string $tableName): array
+{
+    static $cache = [];
+
+    $safeTableName = trim($tableName);
+    if ($safeTableName === '') {
+        return [];
+    }
+
+    if (isset($cache[$safeTableName])) {
+        return $cache[$safeTableName];
+    }
+
+    try {
+        $quotedName = str_replace('`', '``', $safeTableName);
+        $stmt = $pdo->query("SHOW COLUMNS FROM `{$quotedName}`");
+        $rows = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+    } catch (Throwable $error) {
+        $cache[$safeTableName] = [];
+        return $cache[$safeTableName];
+    }
+
+    $columns = [];
+    foreach ($rows as $row) {
+        $field = isset($row['Field']) ? (string) $row['Field'] : '';
+        if ($field !== '') {
+            $columns[$field] = true;
+        }
+    }
+
+    $cache[$safeTableName] = $columns;
+    return $columns;
+}
