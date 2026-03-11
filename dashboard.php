@@ -67,10 +67,6 @@ $csrfToken = generateCsrfToken();
                     </div>
                     <div id="searchSuggestions" class="search-suggestions" style="display: none;" role="listbox" aria-label="User suggestions"></div>
                 </div>
-                <button type="button" id="mobileChatListHandle" class="mobile-chatlist-toggle" aria-label="Toggle chat list" aria-expanded="false">
-                    <span class="mobile-chatlist-toggle-pill"></span>
-                    <span class="mobile-chatlist-toggle-text">Chats</span>
-                </button>
                 <div id='chatListWrapper' class="chat-list-wrapper">
                     <?php if ($is_admin): ?>
                     <div class="admin-actions mb-2">
@@ -87,6 +83,9 @@ $csrfToken = generateCsrfToken();
                             <i class="fas fa-users"></i>
                         </button>
                     </div>
+                </div>
+                <div id="mobileChatListPullHandle" class="mobile-chatlist-pull-handle" aria-hidden="true">
+                    <span class="mobile-chatlist-pull-pill"></span>
                 </div>
                 <div id="mobileChatListBackdrop" class="mobile-chatlist-backdrop" hidden></div>
             </aside>
@@ -451,33 +450,63 @@ $csrfToken = generateCsrfToken();
         }
         const searchUserElement = document.getElementById('searchUser');
         const searchSuggestionsElement = document.getElementById('searchSuggestions');
-        const mobileChatListHandle = document.getElementById('mobileChatListHandle');
+        const chatListWrapperElement = document.getElementById('chatListWrapper');
+        const mobileChatListPullHandle = document.getElementById('mobileChatListPullHandle');
         const mobileChatListBackdrop = document.getElementById('mobileChatListBackdrop');
         const sidebarElement = document.querySelector('.sidebar');
         const MOBILE_DRAWER_BREAKPOINT = 767.98;
+        let isMobileDrawerOpen = false;
+        let mobilePullInteractionActive = false;
+        let lastMobilePullInteractionAt = 0;
+
+        function markMobilePullInteraction(active) {
+            mobilePullInteractionActive = Boolean(active);
+            if (mobilePullInteractionActive) {
+                lastMobilePullInteractionAt = Date.now();
+            }
+        }
+
+        function isRecentMobilePullInteraction() {
+            if (mobilePullInteractionActive) {
+                return true;
+            }
+            return Date.now() - lastMobilePullInteractionAt < 420;
+        }
 
         function isMobileDrawerViewport() {
             return window.innerWidth <= MOBILE_DRAWER_BREAKPOINT;
         }
 
-        function applyMobileChatListState(open) {
+        function setCompactChatListVisible(visible) {
+            if (!chatListWrapperElement) {
+                return;
+            }
+            const shouldShow = Boolean(visible);
+            chatListWrapperElement.style.display = shouldShow ? 'block' : 'none';
+            if (mobileChatListPullHandle) {
+                mobileChatListPullHandle.style.display = shouldShow ? 'flex' : 'none';
+            }
+        }
+
+        function applyMobileDrawerState(open) {
             if (!sidebarElement) {
                 return;
             }
 
             if (!isMobileDrawerViewport()) {
-                sidebarElement.classList.remove('mobile-chatlist-open', 'mobile-chatlist-collapsed');
+                isMobileDrawerOpen = false;
+                sidebarElement.classList.remove('mobile-chatlist-drawer-open');
                 mobileChatListBackdrop?.setAttribute('hidden', 'hidden');
-                mobileChatListHandle?.setAttribute('aria-expanded', 'false');
+                setCompactChatListVisible(true);
                 return;
             }
 
             const shouldOpen = Boolean(open);
-            sidebarElement.classList.toggle('mobile-chatlist-open', shouldOpen);
-            sidebarElement.classList.toggle('mobile-chatlist-collapsed', !shouldOpen);
-            if (mobileChatListHandle) {
-                mobileChatListHandle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-            }
+            isMobileDrawerOpen = shouldOpen;
+            sidebarElement.classList.toggle('mobile-chatlist-drawer-open', shouldOpen);
+            setCompactChatListVisible(
+                shouldOpen || document.activeElement === searchUserElement
+            );
             if (mobileChatListBackdrop) {
                 if (shouldOpen) {
                     mobileChatListBackdrop.removeAttribute('hidden');
@@ -488,77 +517,109 @@ $csrfToken = generateCsrfToken();
         }
 
         window.setMobileChatListOpen = function (open) {
-            applyMobileChatListState(Boolean(open));
+            applyMobileDrawerState(Boolean(open));
         };
 
         window.toggleMobileChatList = function () {
-            if (!sidebarElement || !isMobileDrawerViewport()) {
+            if (!isMobileDrawerViewport()) {
                 return;
             }
-            const isOpen = sidebarElement.classList.contains('mobile-chatlist-open');
-            applyMobileChatListState(!isOpen);
+            applyMobileDrawerState(!isMobileDrawerOpen);
         };
 
-        function bindPullGesture(element) {
-            if (!element) {
+        function bindPullGesture(triggerElement) {
+            if (!triggerElement) {
                 return;
             }
-            let startY = null;
-            let suppressClick = false;
+            let startY = 0;
+            let activeTouchId = null;
 
-            element.addEventListener('pointerdown', function (event) {
+            const start = function (clientY) {
+                startY = Number(clientY || 0);
+                markMobilePullInteraction(true);
+                setCompactChatListVisible(true);
+            };
+
+            const end = function (clientY) {
+                if (!isMobileDrawerViewport() || startY === 0) {
+                    startY = 0;
+                    markMobilePullInteraction(false);
+                    lastMobilePullInteractionAt = Date.now();
+                    return;
+                }
+                const deltaY = Number(clientY || 0) - startY;
+                startY = 0;
+                markMobilePullInteraction(false);
+                lastMobilePullInteractionAt = Date.now();
+
+                if (deltaY > 18 && !isMobileDrawerOpen) {
+                    applyMobileDrawerState(true);
+                    return;
+                }
+                if (deltaY < -18 && isMobileDrawerOpen) {
+                    applyMobileDrawerState(false);
+                }
+            };
+
+            triggerElement.addEventListener('pointerdown', function (event) {
                 if (!isMobileDrawerViewport()) {
                     return;
                 }
-                startY = event.clientY;
+                start(event.clientY);
             });
 
-            element.addEventListener('pointerup', function (event) {
-                if (startY == null || !isMobileDrawerViewport()) {
-                    startY = null;
-                    return;
-                }
-                const deltaY = event.clientY - startY;
-                startY = null;
-                suppressClick = true;
-                setTimeout(function () {
-                    suppressClick = false;
-                }, 0);
-
-                if (deltaY > 30) {
-                    applyMobileChatListState(true);
-                } else if (deltaY < -30) {
-                    applyMobileChatListState(false);
-                } else {
-                    window.toggleMobileChatList();
-                }
+            triggerElement.addEventListener('pointerup', function (event) {
+                end(event.clientY);
             });
 
-            element.addEventListener('click', function (event) {
-                if (!isMobileDrawerViewport()) {
-                    return;
-                }
-                if (suppressClick) {
-                    event.preventDefault();
-                    return;
-                }
-                window.toggleMobileChatList();
+            triggerElement.addEventListener('pointercancel', function () {
+                startY = 0;
+                markMobilePullInteraction(false);
+                lastMobilePullInteractionAt = Date.now();
             });
 
-            element.addEventListener('pointercancel', function () {
-                startY = null;
+            triggerElement.addEventListener('touchstart', function (event) {
+                if (!isMobileDrawerViewport() || !event.changedTouches?.length) {
+                    return;
+                }
+                const touch = event.changedTouches[0];
+                activeTouchId = touch.identifier;
+                start(touch.clientY);
+            }, { passive: true });
+
+            triggerElement.addEventListener('touchend', function (event) {
+                if (!event.changedTouches?.length) {
+                    return;
+                }
+                let touch = null;
+                for (let index = 0; index < event.changedTouches.length; index += 1) {
+                    const candidate = event.changedTouches[index];
+                    if (activeTouchId === null || candidate.identifier === activeTouchId) {
+                        touch = candidate;
+                        break;
+                    }
+                }
+                activeTouchId = null;
+                end(touch?.clientY || 0);
+            }, { passive: true });
+
+            triggerElement.addEventListener('touchcancel', function () {
+                activeTouchId = null;
+                startY = 0;
+                markMobilePullInteraction(false);
+                lastMobilePullInteractionAt = Date.now();
             });
         }
 
         mobileChatListBackdrop?.addEventListener('click', function () {
-            applyMobileChatListState(false);
+            applyMobileDrawerState(false);
         });
 
-        bindPullGesture(mobileChatListHandle);
+        bindPullGesture(mobileChatListPullHandle);
 
         searchUserElement?.addEventListener('focus', function () {
             if (isMobileDrawerViewport()) {
-                applyMobileChatListState(true);
+                setCompactChatListVisible(true);
             }
         });
 
@@ -567,6 +628,12 @@ $csrfToken = generateCsrfToken();
                 return;
             }
             setTimeout(function () {
+                if (isMobileDrawerOpen) {
+                    return;
+                }
+                if (isRecentMobilePullInteraction()) {
+                    return;
+                }
                 const activeInsideSidebar = Boolean(sidebarElement?.contains(document.activeElement));
                 const suggestionsOpen = Boolean(
                     searchSuggestionsElement &&
@@ -574,21 +641,51 @@ $csrfToken = generateCsrfToken();
                     searchSuggestionsElement.childElementCount > 0
                 );
                 if (!activeInsideSidebar && !suggestionsOpen) {
-                    applyMobileChatListState(false);
+                    setCompactChatListVisible(false);
+                }
+            }, 120);
+        });
+
+        chatListWrapperElement?.addEventListener('focusout', function () {
+            if (!isMobileDrawerViewport()) {
+                return;
+            }
+            setTimeout(function () {
+                if (isMobileDrawerOpen) {
+                    return;
+                }
+                if (isRecentMobilePullInteraction()) {
+                    return;
+                }
+                const activeInsideSidebar = Boolean(sidebarElement?.contains(document.activeElement));
+                const suggestionsOpen = Boolean(
+                    searchSuggestionsElement &&
+                    searchSuggestionsElement.style.display !== 'none' &&
+                    searchSuggestionsElement.childElementCount > 0
+                );
+                if (!activeInsideSidebar && !suggestionsOpen && document.activeElement !== searchUserElement) {
+                    setCompactChatListVisible(false);
                 }
             }, 120);
         });
 
         window.addEventListener('resize', function () {
             if (isMobileDrawerViewport()) {
-                const keepOpen = document.activeElement === searchUserElement;
-                applyMobileChatListState(keepOpen);
+                const shouldShowCompact =
+                    isMobileDrawerOpen ||
+                    document.activeElement === searchUserElement ||
+                    Boolean(searchUserElement?.value?.trim().length);
+                setCompactChatListVisible(shouldShowCompact);
                 return;
             }
-            applyMobileChatListState(false);
+            applyMobileDrawerState(false);
         });
 
-        applyMobileChatListState(false);
+        if (isMobileDrawerViewport()) {
+            setCompactChatListVisible(false);
+        } else {
+            setCompactChatListVisible(true);
+        }
 
     </script>
 
