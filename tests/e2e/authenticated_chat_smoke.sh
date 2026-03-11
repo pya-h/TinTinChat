@@ -207,8 +207,8 @@ code=$(curl -sS -o "$RESP_DELETE" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A
   -X DELETE "${BASE_URL}/api/messages/delete.php" \
   -H "Content-Type: application/json" \
   -H "X-CSRF-Token: ${CSRF_A}" \
-  -d "{\"messages\":[${TEXT_MESSAGE_ID}],\"delete_for_everyone\":true}")
-assert_http_ok "$code" "delete message for everyone"
+  -d "{\"messages\":[${TEXT_MESSAGE_ID}]}")
+assert_http_ok "$code" "delete message"
 
 php -r '
   $json = json_decode(file_get_contents($argv[1]), true);

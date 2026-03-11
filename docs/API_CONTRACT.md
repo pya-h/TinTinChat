@@ -125,6 +125,7 @@ All routes use organized domains under `api/<domain>/...`.
   - `api/users/get_profile.php`
   - `api/users/get_avatar.php`
   - `api/users/upload_avatar.php`
+  - `api/users/update_profile.php`
   - `api/users/block.php`
   - `api/users/unblock.php`
 - System:
@@ -156,9 +157,12 @@ All routes use organized domains under `api/<domain>/...`.
 - `INVALID_METHOD` → wrong HTTP method.
 - `INVALID_JSON` → malformed JSON body.
 - `MISSING_USERNAME` / `INVALID_USERNAME` / `INVALID_TARGET_USERNAME` → username validation failures.
+- `USERNAME_TAKEN` → requested new username already exists.
 - `TARGET_NOT_FOUND` → referenced chat user does not exist.
 - `MISSING_OFFSET` / `INVALID_MESSAGE_IDS` → required pagination/seen inputs missing/invalid.
 - `INVALID_TARGET_USERNAME` → invalid or disallowed target username (also used for typing-status target validation).
+- `INVALID_ACTION` → unsupported update-profile action.
+- `MISSING_PASSWORD_FIELDS` / `PASSWORD_CONFIRM_MISMATCH` / `INVALID_CURRENT_PASSWORD` / `INVALID_PASSWORD` → password update validation/auth failures.
 
 ### Upload / File Handling
 - `UPLOAD_TOO_LARGE` → POST body exceeded server config (`post_max_size`).

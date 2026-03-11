@@ -42,6 +42,22 @@
     scroll-behavior: auto !important;
 }
 
+:root[data-font-scale="sm"] {
+    font-size: 14px;
+}
+
+:root[data-font-scale="md"] {
+    font-size: 16px;
+}
+
+:root[data-font-scale="lg"] {
+    font-size: 17px;
+}
+
+:root[data-font-scale="xl"] {
+    font-size: 18px;
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #18191a;
@@ -2107,6 +2123,65 @@ nav.navbar:hover::after {
     gap: 0.6rem;
 }
 
+.chat-ui-settings-shell {
+    display: grid;
+    gap: 0.72rem;
+}
+
+.chat-ui-settings-tabs {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    gap: 0.3rem;
+    padding: 0.24rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 20%, var(--border-color));
+    background: color-mix(in srgb, var(--surface-color) 88%, transparent);
+}
+
+.chat-ui-settings-tab {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--subtle-text-color);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.26rem 0.8rem;
+    transition: var(--transition-fast);
+}
+
+.chat-ui-settings-tab:hover,
+.chat-ui-settings-tab:focus-visible {
+    color: var(--text-color);
+    border-color: color-mix(in srgb, var(--secondary-color) 26%, var(--border-color));
+    outline: none;
+}
+
+.chat-ui-settings-tab.is-active {
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--secondary-color) 14%, var(--surface-color));
+    border-color: color-mix(in srgb, var(--secondary-color) 36%, var(--border-color));
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--secondary-color) 16%, transparent);
+}
+
+.chat-ui-settings-panel {
+    display: grid;
+    gap: 0.62rem;
+    animation: settingsPanelIn 0.16s ease;
+}
+
+@keyframes settingsPanelIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .chat-ui-settings-item {
     display: flex;
     align-items: center;
@@ -2120,6 +2195,50 @@ nav.navbar:hover::after {
 
 .chat-ui-settings-item input[type="checkbox"] {
     accent-color: var(--primary-color);
+}
+
+.chat-ui-account-section {
+    display: grid;
+    gap: 0.46rem;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 16%, var(--border-color));
+    border-radius: 0.75rem;
+    padding: 0.58rem 0.64rem;
+    background: color-mix(in srgb, var(--surface-color) 94%, transparent);
+}
+
+.chat-ui-account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.chat-ui-account-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.chat-ui-account-subtitle {
+    font-size: 0.76rem;
+    color: var(--subtle-text-color);
+}
+
+.chat-ui-settings-field {
+    display: grid;
+    gap: 0.22rem;
+}
+
+.chat-ui-settings-field > span {
+    font-size: 0.76rem;
+    color: var(--subtle-text-color);
+}
+
+.chat-ui-account-section .btn {
+    justify-self: start;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    padding: 0.28rem 0.75rem;
 }
 
 .group-health-modal {
@@ -2906,12 +3025,34 @@ nav.navbar:hover::after {
         min-width: 12.5rem;
     }
 
+    .chat-ui-settings-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .chat-ui-settings-tab {
+        flex: 1;
+        text-align: center;
+        padding-left: 0.45rem;
+        padding-right: 0.45rem;
+    }
+
+    .chat-ui-account-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chat-ui-account-section .btn {
+        justify-self: stretch;
+        width: 100%;
+    }
+
     .chat-input {
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 0.42rem;
-        padding: 0.58rem 0.68rem 0.66rem;
+        gap: 0.36rem;
+        padding: 0.52rem 0.64rem 0.6rem;
     }
 
     .chat-input > .reply-preview,
@@ -2940,7 +3081,7 @@ nav.navbar:hover::after {
     .reply-preview {
         margin-bottom: 0;
         gap: 0.55rem;
-        padding: 0.46rem 0.58rem;
+        padding: 0.42rem 0.54rem;
         border-radius: 0.68rem;
     }
 

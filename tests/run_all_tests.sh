@@ -70,6 +70,7 @@ run_step "PHP lint (api/includes)" bash -lc "find api includes -name '*.php' -pr
 run_step "Unit tests" php tests/unit/run.php
 run_step "E2E: API guard" bash tests/e2e/api_guard_smoke.sh "${BASE_URL}"
 run_step "E2E: Authenticated chat" bash tests/e2e/authenticated_chat_smoke.sh "${BASE_URL}"
+run_step "E2E: Profile settings" bash tests/e2e/profile_settings_smoke.sh "${BASE_URL}"
 run_step "E2E: Group chat" bash tests/e2e/group_chat_smoke.sh "${BASE_URL}"
 run_step "E2E: Group authorization" bash tests/e2e/group_authorization_smoke.sh "${BASE_URL}"
 run_step "E2E: Block user" bash tests/e2e/block_user_smoke.sh "${BASE_URL}"

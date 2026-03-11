@@ -45,7 +45,7 @@ $csrfToken = generateCsrfToken();
         <nav class="navbar navbar-expand-lg px-3">
             <a class="navbar-brand" href="#">TinTinChat</a>
             <div class="ms-auto d-flex align-items-center">
-                <span class="me-3 logged-in-as">Logged in as <strong><?= htmlspecialchars($username) ?></strong></span>
+                <span class="me-3 logged-in-as">Logged in as <strong id="loggedInUsername"><?= htmlspecialchars($username) ?></strong></span>
                 <form method="post" action="api/auth/logout.php" class="m-0">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>" />
                     <button type="submit" class="btn btn-logout btn-sm">
@@ -285,43 +285,101 @@ $csrfToken = generateCsrfToken();
                 </button>
             </div>
             <div class="message-action-modal-body">
-                <div class="chat-ui-settings-list">
-                    <label class="chat-ui-settings-item" for="settingThemeMode">
-                        <span>Theme mode</span>
-                        <select id="settingThemeMode" class="form-select form-select-sm" aria-label="Theme mode">
-                            <option value="system">System</option>
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                        </select>
-                    </label>
+                <div class="chat-ui-settings-shell">
+                    <div class="chat-ui-settings-tabs" role="tablist" aria-label="Settings sections">
+                        <button type="button" id="chatUiSettingsTabGeneral" class="chat-ui-settings-tab is-active" role="tab" aria-selected="true" aria-controls="chatUiSettingsPanelGeneral">General</button>
+                        <button type="button" id="chatUiSettingsTabAccount" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelAccount">Account</button>
+                    </div>
 
-                    <label class="chat-ui-settings-item" for="settingDensityMode">
-                        <span>Message density</span>
-                        <select id="settingDensityMode" class="form-select form-select-sm" aria-label="Message density">
-                            <option value="comfortable">Comfortable</option>
-                            <option value="compact">Compact</option>
-                        </select>
-                    </label>
+                    <section id="chatUiSettingsPanelGeneral" class="chat-ui-settings-panel" role="tabpanel" aria-labelledby="chatUiSettingsTabGeneral">
+                        <div class="chat-ui-settings-list">
+                            <label class="chat-ui-settings-item" for="settingThemeMode">
+                                <span>Theme mode</span>
+                                <select id="settingThemeMode" class="form-select form-select-sm" aria-label="Theme mode">
+                                    <option value="system">System</option>
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                </select>
+                            </label>
 
-                    <label class="chat-ui-settings-item">
-                        <input type="checkbox" id="settingShowTimestamps" checked>
-                        <span>Show message timestamps</span>
-                    </label>
+                            <label class="chat-ui-settings-item" for="settingDensityMode">
+                                <span>Message density</span>
+                                <select id="settingDensityMode" class="form-select form-select-sm" aria-label="Message density">
+                                    <option value="comfortable">Comfortable</option>
+                                    <option value="compact">Compact</option>
+                                </select>
+                            </label>
 
-                    <label class="chat-ui-settings-item">
-                        <input type="checkbox" id="settingReduceMotion">
-                        <span>Reduce motion</span>
-                    </label>
+                            <label class="chat-ui-settings-item" for="settingFontScale">
+                                <span>Font size</span>
+                                <select id="settingFontScale" class="form-select form-select-sm" aria-label="Font size">
+                                    <option value="sm">Small</option>
+                                    <option value="md">Default</option>
+                                    <option value="lg">Large</option>
+                                    <option value="xl">Extra large</option>
+                                </select>
+                            </label>
 
-                    <label class="chat-ui-settings-item">
-                        <input type="checkbox" id="settingNotificationSound" checked>
-                        <span>Notification sound</span>
-                    </label>
+                            <label class="chat-ui-settings-item">
+                                <input type="checkbox" id="settingShowTimestamps" checked>
+                                <span>Show message timestamps</span>
+                            </label>
 
-                    <label class="chat-ui-settings-item">
-                        <input type="checkbox" id="settingAutoScroll" checked>
-                        <span>Auto-scroll to latest</span>
-                    </label>
+                            <label class="chat-ui-settings-item">
+                                <input type="checkbox" id="settingReduceMotion">
+                                <span>Reduce motion</span>
+                            </label>
+
+                            <label class="chat-ui-settings-item">
+                                <input type="checkbox" id="settingNotificationSound" checked>
+                                <span>Notification sound</span>
+                            </label>
+
+                            <label class="chat-ui-settings-item">
+                                <input type="checkbox" id="settingAutoScroll" checked>
+                                <span>Auto-scroll to latest</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section id="chatUiSettingsPanelAccount" class="chat-ui-settings-panel" role="tabpanel" aria-labelledby="chatUiSettingsTabAccount" hidden>
+                        <div class="chat-ui-account-section">
+                            <div class="chat-ui-account-row">
+                                <div>
+                                    <div class="chat-ui-account-title">Profile avatar</div>
+                                    <div class="chat-ui-account-subtitle">Upload a new profile image.</div>
+                                </div>
+                                <button type="button" id="settingsAvatarUploadBtn" class="btn btn-sm btn-outline-secondary">Change avatar</button>
+                            </div>
+                        </div>
+
+                        <form id="settingsUsernameForm" class="chat-ui-account-section">
+                            <div class="chat-ui-account-title">Username</div>
+                            <div class="chat-ui-account-subtitle">Current: <strong id="settingsCurrentUsername"><?= htmlspecialchars($username) ?></strong></div>
+                            <label class="chat-ui-settings-field" for="settingsUsernameInput">
+                                <span>New username</span>
+                                <input type="text" id="settingsUsernameInput" class="form-control form-control-sm" minlength="3" maxlength="50" value="<?= htmlspecialchars($username) ?>" autocomplete="username" required>
+                            </label>
+                            <button type="submit" class="btn btn-sm btn-primary">Save username</button>
+                        </form>
+
+                        <form id="settingsPasswordForm" class="chat-ui-account-section">
+                            <div class="chat-ui-account-title">Password</div>
+                            <label class="chat-ui-settings-field" for="settingsCurrentPasswordInput">
+                                <span>Current password</span>
+                                <input type="password" id="settingsCurrentPasswordInput" class="form-control form-control-sm" autocomplete="current-password" required>
+                            </label>
+                            <label class="chat-ui-settings-field" for="settingsNewPasswordInput">
+                                <span>New password</span>
+                                <input type="password" id="settingsNewPasswordInput" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
+                            </label>
+                            <label class="chat-ui-settings-field" for="settingsConfirmPasswordInput">
+                                <span>Confirm new password</span>
+                                <input type="password" id="settingsConfirmPasswordInput" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
+                            </label>
+                            <button type="submit" class="btn btn-sm btn-primary">Change password</button>
+                        </form>
+                    </section>
                 </div>
             </div>
         </div>

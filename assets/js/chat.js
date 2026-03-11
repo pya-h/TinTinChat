@@ -55,13 +55,27 @@ const settingNotificationSound = document.getElementById("settingNotificationSou
 const settingAutoScroll = document.getElementById("settingAutoScroll");
 const settingThemeMode = document.getElementById("settingThemeMode");
 const settingDensityMode = document.getElementById("settingDensityMode");
+const settingFontScale = document.getElementById("settingFontScale");
 const settingShowTimestamps = document.getElementById("settingShowTimestamps");
 const settingReduceMotion = document.getElementById("settingReduceMotion");
 const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
+const chatUiSettingsTabGeneral = document.getElementById("chatUiSettingsTabGeneral");
+const chatUiSettingsTabAccount = document.getElementById("chatUiSettingsTabAccount");
+const chatUiSettingsPanelGeneral = document.getElementById("chatUiSettingsPanelGeneral");
+const chatUiSettingsPanelAccount = document.getElementById("chatUiSettingsPanelAccount");
 const openConversationSearchBtn = document.getElementById("openConversationSearchBtn");
 const openAvatarUploadBtn = document.getElementById("openAvatarUploadBtn");
+const settingsAvatarUploadBtn = document.getElementById("settingsAvatarUploadBtn");
 const avatarUploadInput = document.getElementById("avatarUploadInput");
+const settingsUsernameForm = document.getElementById("settingsUsernameForm");
+const settingsCurrentUsername = document.getElementById("settingsCurrentUsername");
+const settingsUsernameInput = document.getElementById("settingsUsernameInput");
+const settingsPasswordForm = document.getElementById("settingsPasswordForm");
+const settingsCurrentPasswordInput = document.getElementById("settingsCurrentPasswordInput");
+const settingsNewPasswordInput = document.getElementById("settingsNewPasswordInput");
+const settingsConfirmPasswordInput = document.getElementById("settingsConfirmPasswordInput");
+const loggedInUsernameElem = document.getElementById("loggedInUsername");
 const selectModeBar = document.getElementById("selectModeBar");
 const selectModeCount = document.getElementById("selectModeCount");
 const selectModeCancelBtn = document.getElementById("selectModeCancelBtn");
@@ -244,6 +258,8 @@ let hasLoadedStickers = false;
 let snapToBottomRafId = 0;
 let snapToBottomTimerIds = [];
 let retryLastSendAction = null;
+let activeSettingsTab = "general";
+let currentSelfUsername = String(CURRENT_USER || "");
 
 const chatUserIdsByUsername = new Map();
 
@@ -253,6 +269,7 @@ const appSettings = {
     mobileComposerExpanded: false,
     themeMode: "system",
     densityMode: "comfortable",
+    fontScale: "md",
     showTimestamps: true,
     reduceMotion: false,
 };
@@ -1097,6 +1114,9 @@ function loadAppSettings() {
             ? parsed.themeMode
             : "system";
         appSettings.densityMode = parsed.densityMode === "compact" ? "compact" : "comfortable";
+        appSettings.fontScale = ["sm", "md", "lg", "xl"].includes(parsed.fontScale)
+            ? parsed.fontScale
+            : "md";
         appSettings.showTimestamps = parseStoredBoolean(parsed.showTimestamps, true);
         appSettings.reduceMotion = parseStoredBoolean(parsed.reduceMotion, false);
     } catch (error) {}
@@ -1115,11 +1135,47 @@ function applyUiPreferenceClasses() {
         root.setAttribute("data-theme", appSettings.themeMode);
     }
     root.setAttribute("data-density", appSettings.densityMode);
+    root.setAttribute("data-font-scale", appSettings.fontScale);
     root.classList.toggle("reduced-motion-enabled", Boolean(appSettings.reduceMotion));
     chatMessagesElem?.classList.toggle(
         "hide-message-timestamps",
         !Boolean(appSettings.showTimestamps)
     );
+}
+
+function applySettingsTabUi(tabName = "general") {
+    const normalizedTab = tabName === "account" ? "account" : "general";
+    const isGeneral = normalizedTab === "general";
+    activeSettingsTab = normalizedTab;
+
+    chatUiSettingsTabGeneral?.classList.toggle("is-active", isGeneral);
+    chatUiSettingsTabGeneral?.setAttribute("aria-selected", isGeneral ? "true" : "false");
+    if (chatUiSettingsPanelGeneral) {
+        chatUiSettingsPanelGeneral.hidden = !isGeneral;
+    }
+
+    chatUiSettingsTabAccount?.classList.toggle("is-active", !isGeneral);
+    chatUiSettingsTabAccount?.setAttribute("aria-selected", !isGeneral ? "true" : "false");
+    if (chatUiSettingsPanelAccount) {
+        chatUiSettingsPanelAccount.hidden = isGeneral;
+    }
+}
+
+function updateCurrentUsernameUi(newUsername) {
+    const normalizedUsername = String(newUsername || "").trim();
+    if (!normalizedUsername) {
+        return;
+    }
+    currentSelfUsername = normalizedUsername;
+    if (loggedInUsernameElem) {
+        loggedInUsernameElem.textContent = normalizedUsername;
+    }
+    if (settingsCurrentUsername) {
+        settingsCurrentUsername.textContent = normalizedUsername;
+    }
+    if (settingsUsernameInput) {
+        settingsUsernameInput.value = normalizedUsername;
+    }
 }
 
 function openUiSettingsModal() {
@@ -1129,7 +1185,12 @@ function openUiSettingsModal() {
     chatUiSettingsOverlay.hidden = false;
     requestAnimationFrame(() => {
         chatUiSettingsOverlay.classList.add("visible");
-        settingThemeMode?.focus();
+        applySettingsTabUi(activeSettingsTab);
+        if (activeSettingsTab === "account") {
+            settingsUsernameInput?.focus();
+        } else {
+            settingThemeMode?.focus();
+        }
     });
 }
 
@@ -2226,11 +2287,15 @@ function openImageSourceMenu() {
 
 function applySettingsUi() {
     applyUiPreferenceClasses();
+    updateCurrentUsernameUi(currentSelfUsername || CURRENT_USER);
     if (settingThemeMode) {
         settingThemeMode.value = appSettings.themeMode;
     }
     if (settingDensityMode) {
         settingDensityMode.value = appSettings.densityMode;
+    }
+    if (settingFontScale) {
+        settingFontScale.value = appSettings.fontScale;
     }
     if (settingShowTimestamps) {
         settingShowTimestamps.checked = appSettings.showTimestamps;
@@ -2300,6 +2365,14 @@ function bindSettingsUiEvents() {
         applyUiPreferenceClasses();
     });
 
+    settingFontScale?.addEventListener("change", (event) => {
+        appSettings.fontScale = ["sm", "md", "lg", "xl"].includes(event.target.value)
+            ? event.target.value
+            : "md";
+        persistAppSettings();
+        applyUiPreferenceClasses();
+    });
+
     settingShowTimestamps?.addEventListener("change", (event) => {
         appSettings.showTimestamps = Boolean(event.target.checked);
         persistAppSettings();
@@ -2348,6 +2421,10 @@ function bindSettingsUiEvents() {
         avatarUploadInput?.click();
     });
 
+    settingsAvatarUploadBtn?.addEventListener("click", () => {
+        avatarUploadInput?.click();
+    });
+
     avatarUploadInput?.addEventListener("change", async (event) => {
         const selectedFile = event.target?.files?.[0];
         event.target.value = "";
@@ -2385,6 +2462,91 @@ function bindSettingsUiEvents() {
         } catch (error) {
             showModal("Avatar Update Failed", error?.message || "Failed to update avatar.", "error");
             setComposerStatus("Unable to update avatar", "error");
+        }
+    });
+
+    chatUiSettingsTabGeneral?.addEventListener("click", () => {
+        applySettingsTabUi("general");
+    });
+
+    chatUiSettingsTabAccount?.addEventListener("click", () => {
+        applySettingsTabUi("account");
+    });
+
+    settingsUsernameForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const username = String(settingsUsernameInput?.value || "").trim();
+        if (!username) {
+            showModal("Invalid Username", "Please provide a username.", "warning");
+            return;
+        }
+
+        try {
+            const response = await window.ApiService.jsonOk("api/users/update_profile.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
+                body: JSON.stringify({
+                    action: "username",
+                    username,
+                }),
+            });
+            const updatedUsername = String(response?.username || username);
+            updateCurrentUsernameUi(updatedUsername);
+            setComposerStatus("Username updated", "success");
+            showModal("Username Updated", "Your username was updated successfully.", "success");
+        } catch (error) {
+            showModal("Username Update Failed", error?.message || "Unable to update username.", "error");
+            setComposerStatus("Unable to update username", "error");
+        }
+    });
+
+    settingsPasswordForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const currentPassword = String(settingsCurrentPasswordInput?.value || "");
+        const newPassword = String(settingsNewPasswordInput?.value || "");
+        const confirmPassword = String(settingsConfirmPasswordInput?.value || "");
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showModal("Missing Password Fields", "Please fill all password fields.", "warning");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showModal("Password Mismatch", "New password and confirmation do not match.", "warning");
+            return;
+        }
+
+        try {
+            await window.ApiService.jsonOk("api/users/update_profile.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
+                body: JSON.stringify({
+                    action: "password",
+                    current_password: currentPassword,
+                    new_password: newPassword,
+                    confirm_password: confirmPassword,
+                }),
+            });
+            if (settingsCurrentPasswordInput) {
+                settingsCurrentPasswordInput.value = "";
+            }
+            if (settingsNewPasswordInput) {
+                settingsNewPasswordInput.value = "";
+            }
+            if (settingsConfirmPasswordInput) {
+                settingsConfirmPasswordInput.value = "";
+            }
+            setComposerStatus("Password updated", "success");
+            showModal("Password Updated", "Your password was changed successfully.", "success");
+        } catch (error) {
+            showModal("Password Update Failed", error?.message || "Unable to update password.", "error");
+            setComposerStatus("Unable to update password", "error");
         }
     });
 
@@ -3551,6 +3713,14 @@ function canEditMessage(messageElement, messageData = null) {
         messageData?.message_type ?? messageElement?.getAttribute("data-message-type") ?? ""
     );
     if (messageType !== "text") {
+        return false;
+    }
+    const forwardedFromMessageId = Number(
+        messageData?.forwarded_from_message_id ??
+        messageElement?.getAttribute("data-forwarded-from-message-id") ??
+        0
+    );
+    if (forwardedFromMessageId > 0) {
         return false;
     }
     const createdAtRaw =
@@ -5338,6 +5508,7 @@ async function addMessageToChat(msg, prepend = false) {
     div.setAttribute("data-created-at", msg.created_at || "");
     div.setAttribute("data-seen-at", msg.seen_at || "");
     div.setAttribute("data-group-seen-at", msg.group_seen_at || "");
+    div.setAttribute("data-forwarded-from-message-id", String(Number(msg.forwarded_from_message_id || 0)));
     div.setAttribute("data-edited-at", msg.edited_at || "");
     if (msg.file_size) {
         div.setAttribute("data-file-size", String(msg.file_size));
