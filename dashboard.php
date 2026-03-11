@@ -466,6 +466,15 @@ $csrfToken = generateCsrfToken();
             if (!chatListWrapperElement) {
                 return;
             }
+
+            if (!isMobileDrawerViewport()) {
+                chatListWrapperElement.style.display = 'block';
+                if (mobileChatListPullHandle) {
+                    mobileChatListPullHandle.style.display = 'none';
+                }
+                return;
+            }
+
             const shouldShow = Boolean(visible);
             chatListWrapperElement.style.display = shouldShow ? 'block' : 'none';
             if (mobileChatListPullHandle) {
@@ -514,6 +523,9 @@ $csrfToken = generateCsrfToken();
         };
 
         mobileChatListBackdrop?.addEventListener('click', function () {
+            if (!isMobileDrawerViewport()) {
+                return;
+            }
             applyMobileDrawerState(false);
         });
 
