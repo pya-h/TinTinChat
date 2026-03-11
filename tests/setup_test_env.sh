@@ -29,6 +29,7 @@ require_once $argv[1] . "/includes/db.php";
 $migrations = [
   ["15_add_user_block_support.sql", "user_blocks migration ensured"],
   ["16_add_message_edit_support.sql", "message edit migration ensured"],
+  ["17_add_group_seen_unread_support.sql", "group seen/unread migration ensured"],
 ];
 
 foreach ($migrations as [$fileName, $label]) {

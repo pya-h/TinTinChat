@@ -16,6 +16,7 @@ if(!isset($_GET['offsetMsgId'])) {
 $other_user_id = 0;
 if ($groupId > 0) {
 	groupRequireMembership($pdo, $groupId, $user_id);
+	groupMarkMessagesSeenAndRead($pdo, $groupId, $user_id);
 } else {
 	$stmt = $pdo->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
 	$stmt->execute([$other_username]);
@@ -35,12 +36,13 @@ $params = $groupId > 0
 	? [$groupId, $last_msg_id]
 	: [$user_id, $other_user_id, $other_user_id, $user_id, $last_msg_id];
 
-$stmt = $pdo->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.group_id, m.message, m.message_for_sender, m.message_type, m.voice_file_path, m.image_file_path, m.any_file_path, m.file_size, m.sticker_id, m.reply_to_message_id, m.forwarded_from_message_id, m.forwarded_by_user_id, m.created_at, m.edited_at, m.seen_at,
+$stmt = $pdo->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.group_id, m.message, m.message_for_sender, m.message_type, m.voice_file_path, m.image_file_path, m.any_file_path, m.file_size, m.sticker_id, m.reply_to_message_id, m.forwarded_from_message_id, m.forwarded_by_user_id, m.created_at, m.edited_at, m.seen_at, m.group_seen_at, m.group_seen_by_user_id,
 	s.width AS sticker_width,
 	s.height AS sticker_height,
 	s.file_mime AS sticker_mime,
 	s.is_active AS sticker_is_active,
 	su.username AS sender_username,
+	gsu.username AS group_seen_by_username,
 	r.id AS reply_message_id,
 	r.sender_id AS reply_sender_id,
 	r.message AS reply_message,
@@ -56,6 +58,7 @@ $stmt = $pdo->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.group_id, m.me
 	LEFT JOIN users fu ON fu.id = m.forwarded_by_user_id
 	LEFT JOIN messages fm ON fm.id = m.forwarded_from_message_id
 	LEFT JOIN users fmu ON fmu.id = fm.sender_id
+	LEFT JOIN users gsu ON gsu.id = m.group_seen_by_user_id
 	LEFT JOIN stickers s ON s.id = m.sticker_id
 	WHERE $whereClause ORDER BY m.created_at ASC");
 $stmt->execute($params);

@@ -289,6 +289,14 @@ nav.navbar:hover::after {
     padding-bottom: 4.25rem;
 }
 
+.mobile-chatlist-toggle {
+    display: none;
+}
+
+.mobile-chatlist-backdrop {
+    display: none;
+}
+
 .admin-actions {
     margin-bottom: 0.6rem;
 }
@@ -3212,9 +3220,12 @@ nav.navbar:hover::after {
 
     .chat-list-wrapper {
         overflow-x: auto;
+        overflow-y: hidden;
         padding-bottom: 1rem;
         scrollbar-width: none;
         padding-bottom: 4rem;
+        transition: max-height 0.24s ease, opacity 0.2s ease, transform 0.2s ease, margin-top 0.2s ease;
+        will-change: max-height, opacity, transform;
     }
 
     .chat-list-wrapper::-webkit-scrollbar {
@@ -3260,10 +3271,66 @@ nav.navbar:hover::after {
         border-bottom: 1px solid var(--border-color);
         height: auto;
         flex-shrink: 0;
-        padding-bottom: 0;
+        padding: 0.9rem 1rem 0.45rem;
         z-index: 100;
         position: relative;
         overflow: visible;
+    }
+
+    .mobile-chatlist-toggle {
+        width: 100%;
+        margin: 0.35rem 0 0.2rem;
+        border: 1px solid color-mix(in srgb, var(--secondary-color) 20%, var(--border-color));
+        background: color-mix(in srgb, var(--secondary-color) 6%, var(--background-color));
+        color: var(--text-color);
+        border-radius: 999px;
+        min-height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        position: relative;
+        z-index: 101;
+    }
+
+    .mobile-chatlist-toggle-pill {
+        width: 1.2rem;
+        height: 0.2rem;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--secondary-color) 85%, var(--text-color));
+    }
+
+    .sidebar.mobile-chatlist-collapsed .chat-list-wrapper {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-10px);
+        pointer-events: none;
+        margin-top: 0;
+        padding-bottom: 0;
+    }
+
+    .sidebar.mobile-chatlist-open .chat-list-wrapper {
+        max-height: 58vh;
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+        overflow-y: auto;
+        margin-top: 0.35rem;
+        padding-bottom: 4rem;
+    }
+
+    .sidebar.mobile-chatlist-open .mobile-chatlist-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: color-mix(in srgb, var(--background-color) 70%, transparent);
+        z-index: 90;
+    }
+
+    .sidebar.mobile-chatlist-open .mobile-chatlist-toggle {
+        border-color: color-mix(in srgb, var(--secondary-color) 50%, var(--border-color));
     }
 }
 

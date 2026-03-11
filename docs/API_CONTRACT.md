@@ -1,6 +1,6 @@
 # TinTinChat API Contract & Error Codes
 
-Last updated: 2026-03-10
+Last updated: 2026-03-11
 Audience: developers extending `api/*.php` and frontend consumers in `assets/js/*`.
 
 ## 1) Response Envelope
@@ -129,6 +129,13 @@ All routes use organized domains under `api/<domain>/...`.
   - `api/users/unblock.php`
 - System:
   - `api/system/notrace.php`
+
+### J.2 Response field additions
+- Group list payloads (`api/chats/fetch.php`, `api/groups/fetch.php`) now include `unread_count` per group item.
+- Message payloads (`api/messages/fetch.php`, `api/messages/fetch_recent.php`) now include:
+  - `group_seen_at` (timestamp when first non-sender group member viewed the message),
+  - `group_seen_by_user_id`,
+  - `group_seen_by_username`.
 
 ---
 

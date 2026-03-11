@@ -928,15 +928,25 @@ function chatListSpinnerId(chatTarget) {
     return `${chatListItemId(chatTarget)}_loading`;
 }
 
-function setGroupNewBadgeVisibility(chatListItem, visible) {
+function setGroupUnreadBadge(groupToken, unreadCount = 0) {
+    const chatListItem = document.getElementById(chatListItemId(groupToken));
     if (!chatListItem) {
         return;
     }
-    const badge = chatListItem.querySelector(".chat-item-new-badge");
+    const badge = chatListItem.querySelector(".chat-item-unread-badge");
     if (!badge) {
         return;
     }
-    badge.style.display = visible ? "inline-flex" : "none";
+
+    const count = Math.max(0, Number(unreadCount) || 0);
+    if (!count) {
+        badge.style.display = "none";
+        badge.textContent = "0";
+        return;
+    }
+
+    badge.style.display = "inline-flex";
+    badge.textContent = count > 99 ? "99+" : String(count);
 }
 
 function setTypingIndicator(text = "") {
@@ -3175,6 +3185,8 @@ function showMessageDetailsModal(messageElement, messageData = null) {
     const messageType = String(details.message_type || messageElement.getAttribute("data-message-type") || "text");
     const sentAt = details.created_at || messageElement.getAttribute("data-created-at") || "";
     const seenAt = details.seen_at || messageElement.getAttribute("data-seen-at") || "";
+    const groupSeenAt = details.group_seen_at || messageElement.getAttribute("data-group-seen-at") || "";
+    const groupSeenByUsername = details.group_seen_by_username || "";
     const editedAt = details.edited_at || messageElement.getAttribute("data-edited-at") || "";
     const fileSize = details.file_size || messageElement.getAttribute("data-file-size") || "";
     const text = getMessageTextForCopy(messageElement);
@@ -3188,7 +3200,14 @@ function showMessageDetailsModal(messageElement, messageData = null) {
         ["Sender", senderLabel],
         ["Sent", formatMessageTimestamp(sentAt)],
         ["Edited", editedAt ? formatMessageTimestamp(editedAt) : "No"],
-        ["Seen", seenAt ? formatMessageTimestamp(seenAt) : "Not seen yet"],
+        [
+            "Seen",
+            groupSeenAt
+                ? `${formatMessageTimestamp(groupSeenAt)}${groupSeenByUsername ? ` by ${groupSeenByUsername}` : ""}`
+                : seenAt
+                  ? formatMessageTimestamp(seenAt)
+                  : "Not seen yet",
+        ],
     ];
 
     if (text) {
@@ -4257,7 +4276,6 @@ function addGroupToChatList(group) {
         return false;
     }
 
-    const existingGroup = chatGroupsById.get(groupId);
     chatGroupsById.set(groupId, {
         id: groupId,
         title: String(group.title || `Group ${groupId}`),
@@ -4265,6 +4283,7 @@ function addGroupToChatList(group) {
         role: String(group.role || "member"),
         member_count: Number(group.member_count || 0),
         last_message_at: String(group.last_message_at || ""),
+        unread_count: Math.max(0, Number(group.unread_count || 0)),
     });
 
     const token = buildGroupToken(groupId);
@@ -4277,13 +4296,8 @@ function addGroupToChatList(group) {
         const metaElement = existing.querySelector(".chat-item-meta");
         if (titleElement) titleElement.textContent = title;
         if (metaElement) metaElement.textContent = `Group • ${role}`;
-
-        const previousLast = String(existingGroup?.last_message_at || "");
-        const currentLast = String(chatGroupsById.get(groupId)?.last_message_at || "");
-        const isCurrentOpen = currentChatUser === token;
-        if (!isCurrentOpen && previousLast && currentLast && previousLast !== currentLast) {
-            setGroupNewBadgeVisibility(existing, true);
-        }
+        const unreadCount = Math.max(0, Number(chatGroupsById.get(groupId)?.unread_count || 0));
+        setGroupUnreadBadge(token, unreadCount);
         return false;
     }
 
@@ -4306,7 +4320,7 @@ function addGroupToChatList(group) {
             <span class="chat-item-title">${escapeHtml(title)}</span>
             <span class="chat-item-meta">Group • ${escapeHtml(role)}</span>
         </span>
-        <span class="chat-item-new-badge" style="display:none;" aria-label="New messages in group">new</span>
+        <span class="chat-item-unread-badge" style="display:none;" aria-label="Unread group messages">0</span>
         <span id='${chatListSpinnerId(token)}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>
     `;
     li.id = chatListItemId(token);
@@ -4320,6 +4334,7 @@ function addGroupToChatList(group) {
     });
 
     chatListElem.appendChild(li);
+    setGroupUnreadBadge(token, Math.max(0, Number(chatGroupsById.get(groupId)?.unread_count || 0)));
     return true;
 }
 
@@ -4382,6 +4397,10 @@ async function selectChatTarget(target) {
         li.classList.toggle("active", li.id === chatListItemId(target));
     });
 
+    if (typeof window.setMobileChatListOpen === "function") {
+        window.setMobileChatListOpen(false);
+    }
+
     await loadMessages(target, true, true);
 }
 
@@ -4391,8 +4410,7 @@ async function selectChatUser(username) {
 
 async function selectGroupChat(groupId) {
     const token = buildGroupToken(groupId);
-    const listItem = document.getElementById(chatListItemId(token));
-    setGroupNewBadgeVisibility(listItem, false);
+    setGroupUnreadBadge(token, 0);
     try {
         await getGroupCryptoKey(groupId);
     } catch (error) {
@@ -5316,17 +5334,22 @@ async function addMessageToChat(msg, prepend = false) {
         void hydrateVideoMessageElement(div, msg);
     }
 
-    if (msg.sender_id == CURRENT_USER_ID && !Number(msg.group_id || 0)) {
+    const isOwnMessage = Number(msg.sender_id || 0) === Number(CURRENT_USER_ID);
+    const isGroupMessageForStatus = Number(msg.group_id || 0) > 0;
+    if (isOwnMessage) {
         const tickContainer = document.createElement("span");
-        tickContainer.className = msg.seen_at
+        const isSeen = isGroupMessageForStatus ? Boolean(msg.group_seen_at) : Boolean(msg.seen_at);
+        tickContainer.className = isSeen
             ? "message-status-indicator seen-ticks"
             : "message-status-indicator just-sent-tick";
         div.appendChild(tickContainer);
 
-        if (msg.seen_at) {
-            pendingSeenMessageIds.delete(Number(msg.id));
-        } else {
-            pendingSeenMessageIds.add(Number(msg.id));
+        if (!isGroupMessageForStatus) {
+            if (msg.seen_at) {
+                pendingSeenMessageIds.delete(Number(msg.id));
+            } else {
+                pendingSeenMessageIds.add(Number(msg.id));
+            }
         }
     }
 
@@ -5337,6 +5360,7 @@ async function addMessageToChat(msg, prepend = false) {
     div.setAttribute("data-sender-username", String(msg.sender_username || ""));
     div.setAttribute("data-created-at", msg.created_at || "");
     div.setAttribute("data-seen-at", msg.seen_at || "");
+    div.setAttribute("data-group-seen-at", msg.group_seen_at || "");
     div.setAttribute("data-edited-at", msg.edited_at || "");
     if (msg.file_size) {
         div.setAttribute("data-file-size", String(msg.file_size));

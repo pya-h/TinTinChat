@@ -67,6 +67,10 @@ $csrfToken = generateCsrfToken();
                     </div>
                     <div id="searchSuggestions" class="search-suggestions" style="display: none;" role="listbox" aria-label="User suggestions"></div>
                 </div>
+                <button type="button" id="mobileChatListHandle" class="mobile-chatlist-toggle" aria-label="Toggle chat list" aria-expanded="false">
+                    <span class="mobile-chatlist-toggle-pill"></span>
+                    <span class="mobile-chatlist-toggle-text">Chats</span>
+                </button>
                 <div id='chatListWrapper' class="chat-list-wrapper">
                     <?php if ($is_admin): ?>
                     <div class="admin-actions mb-2">
@@ -84,6 +88,7 @@ $csrfToken = generateCsrfToken();
                         </button>
                     </div>
                 </div>
+                <div id="mobileChatListBackdrop" class="mobile-chatlist-backdrop" hidden></div>
             </aside>
 
             <section class="chat-area d-flex flex-column">
@@ -445,22 +450,145 @@ $csrfToken = generateCsrfToken();
             localStorage.setItem('ident', currentUserIdent);
         }
         const searchUserElement = document.getElementById('searchUser');
+        const searchSuggestionsElement = document.getElementById('searchSuggestions');
+        const mobileChatListHandle = document.getElementById('mobileChatListHandle');
+        const mobileChatListBackdrop = document.getElementById('mobileChatListBackdrop');
+        const sidebarElement = document.querySelector('.sidebar');
+        const MOBILE_DRAWER_BREAKPOINT = 767.98;
 
-        let isMobileDevice = () => window.innerWidth < 850
-        const chatListWrapperElement = document.getElementById('chatListWrapper');
+        function isMobileDrawerViewport() {
+            return window.innerWidth <= MOBILE_DRAWER_BREAKPOINT;
+        }
 
-        searchUserElement.addEventListener('focus', function() {
-            if(chatListWrapperElement.style.display !== 'block') {
-                chatListWrapperElement.style.display = 'block';
+        function applyMobileChatListState(open) {
+            if (!sidebarElement) {
+                return;
+            }
+
+            if (!isMobileDrawerViewport()) {
+                sidebarElement.classList.remove('mobile-chatlist-open', 'mobile-chatlist-collapsed');
+                mobileChatListBackdrop?.setAttribute('hidden', 'hidden');
+                mobileChatListHandle?.setAttribute('aria-expanded', 'false');
+                return;
+            }
+
+            const shouldOpen = Boolean(open);
+            sidebarElement.classList.toggle('mobile-chatlist-open', shouldOpen);
+            sidebarElement.classList.toggle('mobile-chatlist-collapsed', !shouldOpen);
+            if (mobileChatListHandle) {
+                mobileChatListHandle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+            }
+            if (mobileChatListBackdrop) {
+                if (shouldOpen) {
+                    mobileChatListBackdrop.removeAttribute('hidden');
+                } else {
+                    mobileChatListBackdrop.setAttribute('hidden', 'hidden');
+                }
+            }
+        }
+
+        window.setMobileChatListOpen = function (open) {
+            applyMobileChatListState(Boolean(open));
+        };
+
+        window.toggleMobileChatList = function () {
+            if (!sidebarElement || !isMobileDrawerViewport()) {
+                return;
+            }
+            const isOpen = sidebarElement.classList.contains('mobile-chatlist-open');
+            applyMobileChatListState(!isOpen);
+        };
+
+        function bindPullGesture(element) {
+            if (!element) {
+                return;
+            }
+            let startY = null;
+            let suppressClick = false;
+
+            element.addEventListener('pointerdown', function (event) {
+                if (!isMobileDrawerViewport()) {
+                    return;
+                }
+                startY = event.clientY;
+            });
+
+            element.addEventListener('pointerup', function (event) {
+                if (startY == null || !isMobileDrawerViewport()) {
+                    startY = null;
+                    return;
+                }
+                const deltaY = event.clientY - startY;
+                startY = null;
+                suppressClick = true;
+                setTimeout(function () {
+                    suppressClick = false;
+                }, 0);
+
+                if (deltaY > 30) {
+                    applyMobileChatListState(true);
+                } else if (deltaY < -30) {
+                    applyMobileChatListState(false);
+                } else {
+                    window.toggleMobileChatList();
+                }
+            });
+
+            element.addEventListener('click', function (event) {
+                if (!isMobileDrawerViewport()) {
+                    return;
+                }
+                if (suppressClick) {
+                    event.preventDefault();
+                    return;
+                }
+                window.toggleMobileChatList();
+            });
+
+            element.addEventListener('pointercancel', function () {
+                startY = null;
+            });
+        }
+
+        mobileChatListBackdrop?.addEventListener('click', function () {
+            applyMobileChatListState(false);
+        });
+
+        bindPullGesture(mobileChatListHandle);
+
+        searchUserElement?.addEventListener('focus', function () {
+            if (isMobileDrawerViewport()) {
+                applyMobileChatListState(true);
             }
         });
-        searchUserElement.addEventListener('blur', function() {
-            if(isMobileDevice()) {
-                setTimeout(() => {
-                    chatListWrapperElement.style.display = 'none';
-                }, 100); // Allowing the click event to happen if user selects a chat
+
+        searchUserElement?.addEventListener('blur', function () {
+            if (!isMobileDrawerViewport()) {
+                return;
             }
+            setTimeout(function () {
+                const activeInsideSidebar = Boolean(sidebarElement?.contains(document.activeElement));
+                const suggestionsOpen = Boolean(
+                    searchSuggestionsElement &&
+                    searchSuggestionsElement.style.display !== 'none' &&
+                    searchSuggestionsElement.childElementCount > 0
+                );
+                if (!activeInsideSidebar && !suggestionsOpen) {
+                    applyMobileChatListState(false);
+                }
+            }, 120);
         });
+
+        window.addEventListener('resize', function () {
+            if (isMobileDrawerViewport()) {
+                const keepOpen = document.activeElement === searchUserElement;
+                applyMobileChatListState(keepOpen);
+                return;
+            }
+            applyMobileChatListState(false);
+        });
+
+        applyMobileChatListState(false);
 
     </script>
 

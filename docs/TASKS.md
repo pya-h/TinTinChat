@@ -286,8 +286,8 @@ Legend:
 - [x] (`P2`) Add PWA release runbook (cache busting, rollback, update rollout).
 
 ### Phase J.2 — Group seen manager & Unread counter (`P2`)
-- [ ] (`P2`) Add the group message seen system (the first user seeing my message, means message is seen)
-- [ ] (`P2`) Implement unread message counter for group chats.
+- [x] (`P2`) Add the group message seen system (the first user seeing my message, means message is seen)
+- [x] (`P2`) Implement unread message counter for group chats.
 
 ## 4) Suggested Execution Order
 

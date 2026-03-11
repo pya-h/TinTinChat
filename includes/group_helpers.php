@@ -109,3 +109,41 @@ function groupFetchById(PDO $pdo, int $groupId): ?array
 
     return $group ?: null;
 }
+
+function groupMarkMessagesSeenAndRead(PDO $pdo, int $groupId, int $viewerUserId, int $upToMessageId = 0): void
+{
+    if ($groupId <= 0 || $viewerUserId <= 0) {
+        return;
+    }
+
+    $maxMessageId = max(0, $upToMessageId);
+    if ($maxMessageId <= 0) {
+        $maxStmt = $pdo->prepare('SELECT COALESCE(MAX(id), 0) FROM messages WHERE group_id = ?');
+        $maxStmt->execute([$groupId]);
+        $maxMessageId = (int) $maxStmt->fetchColumn();
+    }
+
+    if ($maxMessageId <= 0) {
+        return;
+    }
+
+    $readStmt = $pdo->prepare(
+        'INSERT INTO group_member_reads (group_id, user_id, last_read_message_id, last_read_at)
+         VALUES (?, ?, ?, NOW())
+         ON DUPLICATE KEY UPDATE
+            last_read_message_id = GREATEST(last_read_message_id, VALUES(last_read_message_id)),
+            last_read_at = NOW()'
+    );
+    $readStmt->execute([$groupId, $viewerUserId, $maxMessageId]);
+
+    $seenStmt = $pdo->prepare(
+        'UPDATE messages
+         SET group_seen_at = NOW(),
+             group_seen_by_user_id = ?
+         WHERE group_id = ?
+           AND sender_id <> ?
+           AND group_seen_at IS NULL
+           AND id <= ?'
+    );
+    $seenStmt->execute([$viewerUserId, $groupId, $viewerUserId, $maxMessageId]);
+}

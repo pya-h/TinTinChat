@@ -63,6 +63,8 @@ CREATE TABLE messages (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   edited_at TIMESTAMP DEFAULT NULL,
   seen_at TIMESTAMP DEFAULT NULL,
+  group_seen_at TIMESTAMP DEFAULT NULL,
+  group_seen_by_user_id INT NULL,
   FOREIGN KEY (sender_id) REFERENCES users(id),
   FOREIGN KEY (receiver_id) REFERENCES users(id),
   FOREIGN KEY (reply_to_message_id) REFERENCES messages(id) ON DELETE SET NULL,
@@ -103,6 +105,21 @@ CREATE TABLE IF NOT EXISTS group_member_keys (
     FOREIGN KEY (group_id, user_id) REFERENCES group_members(group_id, user_id)
     ON DELETE CASCADE,
   CONSTRAINT fk_group_member_keys_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_member_reads (
+  group_id INT NOT NULL,
+  user_id INT NOT NULL,
+  last_read_message_id INT NOT NULL DEFAULT 0,
+  last_read_at TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (group_id, user_id),
+  KEY idx_group_member_reads_user_group (user_id, group_id),
+  CONSTRAINT fk_group_member_reads_group
+    FOREIGN KEY (group_id) REFERENCES groups(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_group_member_reads_user
     FOREIGN KEY (user_id) REFERENCES users(id)
     ON DELETE CASCADE
 );
@@ -177,5 +194,8 @@ CREATE INDEX idx_users_ident ON users(ident);
 
 CREATE INDEX idx_messages_receiver_seen_created_at
   ON messages(receiver_id, seen_at, created_at);
+
+CREATE INDEX idx_messages_group_seen_lookup
+  ON messages(group_id, group_seen_at, sender_id, id);
 
 CREATE INDEX idx_users_avatar_path ON users(avatar_path);
