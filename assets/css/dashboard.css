@@ -293,10 +293,6 @@ nav.navbar:hover::after {
     display: none;
 }
 
-.mobile-chatlist-pull-pill {
-    display: block;
-}
-
 .mobile-chatlist-backdrop {
     display: none;
 }
@@ -3239,6 +3235,12 @@ nav.navbar:hover::after {
         scrollbar-width: none;
         transition: var(--transition-fast);
         margin-top: 0;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar:not(.mobile-chatlist-drawer-open) .chat-list-wrapper {
+        max-width: 100%;
+        touch-action: pan-x;
     }
 
     .chat-list-wrapper::-webkit-scrollbar {
@@ -3250,6 +3252,7 @@ nav.navbar:hover::after {
         gap: 0.75rem;
         margin-top: 0;
         width: max-content;
+        flex-wrap: nowrap;
     }
 
     .chat-list li {
@@ -3299,15 +3302,14 @@ nav.navbar:hover::after {
         );
         color: color-mix(in srgb, var(--secondary-color) 75%, var(--text-color));
         border-radius: 999px;
-        width: 3.25rem;
+        width: 2.45rem;
         margin: 0.22rem auto 0.38rem;
         padding: 0;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         justify-content: center;
         align-items: center;
-        gap: 0.06rem;
-        min-height: 1.3rem;
+        min-height: 1.34rem;
         cursor: pointer;
         touch-action: manipulation;
         position: relative;
@@ -3324,18 +3326,10 @@ nav.navbar:hover::after {
         outline: none;
     }
 
-    .mobile-chatlist-pull-pill {
-        width: 1.14rem;
-        height: 0.16rem;
-        border-radius: 999px;
-        background: currentColor;
-        opacity: 0.95;
-    }
-
     .mobile-chatlist-pull-icon {
-        font-size: 0.88rem;
+        font-size: 1.02rem;
         line-height: 1;
-        transform: translateY(-0.03rem);
+        transform: translateY(0);
         transition: transform 0.16s ease;
     }
 
@@ -3368,11 +3362,12 @@ nav.navbar:hover::after {
 
     .sidebar.mobile-chatlist-drawer-open .mobile-chatlist-pull-handle {
         position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0.2rem;
+        left: 50%;
+        right: auto;
+        bottom: 0.35rem;
+        transform: translateX(-50%);
         margin: 0;
-        z-index: 8;
+        z-index: 9;
     }
 
     .sidebar.mobile-chatlist-drawer-open .mobile-chatlist-pull-icon {
@@ -3412,15 +3407,14 @@ nav.navbar:hover::after {
     }
 
     .sidebar.mobile-chatlist-drawer-open .group-actions {
-        position: sticky;
-        left: auto;
-        bottom: 0;
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-        padding-top: 0.45rem;
-        background: linear-gradient(180deg, color-mix(in srgb, var(--background-color) 25%, transparent), var(--background-color));
-        z-index: 6;
+        position: fixed;
+        left: 1rem;
+        bottom: 1.65rem;
+        width: auto;
+        display: block;
+        padding-top: 0;
+        background: none;
+        z-index: 240;
     }
 
     @keyframes mobileChatlistDrawerOpen {

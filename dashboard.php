@@ -85,7 +85,6 @@ $csrfToken = generateCsrfToken();
                     </div>
                 </div>
                 <button type="button" id="mobileChatListPullHandle" class="mobile-chatlist-pull-handle" aria-label="Expand chats" aria-expanded="false">
-                    <span class="mobile-chatlist-pull-pill"></span>
                     <i class="fas fa-angle-down mobile-chatlist-pull-icon" aria-hidden="true"></i>
                 </button>
                 <div id="mobileChatListBackdrop" class="mobile-chatlist-backdrop" hidden></div>
