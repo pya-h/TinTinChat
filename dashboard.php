@@ -176,7 +176,7 @@ $csrfToken = generateCsrfToken();
                     </div>
                 </div>
                 <div id="messageActionsHint" class="message-actions-hint is-hidden" aria-live="polite" hidden>
-                    Tip: Right-click (desktop) or long-press (mobile) any message to open actions.
+                    Tip: Right-click/double-click (desktop) or long-press/double-tap (mobile) any message to open actions.
                 </div>
                 <div id="selectModeBar" class="select-mode-bar" role="region" aria-label="Selected messages actions" hidden>
                     <div class="select-mode-meta">
@@ -184,6 +184,7 @@ $csrfToken = generateCsrfToken();
                     </div>
                     <div class="select-mode-actions">
                         <button type="button" id="selectModeCancelBtn" class="btn btn-sm btn-outline-secondary" aria-label="Cancel selection">Cancel</button>
+                        <button type="button" id="selectModeCopyBtn" class="btn btn-sm btn-outline-info" aria-label="Copy selected messages">Copy</button>
                         <button type="button" id="selectModeForwardBtn" class="btn btn-sm btn-outline-primary" aria-label="Forward selected messages">Forward</button>
                         <button type="button" id="selectModeDeleteBtn" class="btn btn-sm btn-outline-danger" aria-label="Delete selected messages">Delete</button>
                     </div>
@@ -212,6 +213,10 @@ $csrfToken = generateCsrfToken();
                             </div>
                         </div>
                         <textarea id="chatInput" class="form-control" placeholder="Type a message..." rows="1" aria-label="Message input"></textarea>
+                        <button type="button" id="pasteClipboardImageBtn" class="btn btn-secondary" title="Paste image from clipboard" aria-label="Paste image from clipboard" hidden>
+                            <i class="fas fa-clipboard"></i>
+                            <span>Paste</span>
+                        </button>
                         
                         <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
                         <input type="file" id="imageCaptureInput" accept="image/*" capture="environment" style="display: none;">

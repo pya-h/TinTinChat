@@ -79,8 +79,10 @@ const loggedInUsernameElem = document.getElementById("loggedInUsername");
 const selectModeBar = document.getElementById("selectModeBar");
 const selectModeCount = document.getElementById("selectModeCount");
 const selectModeCancelBtn = document.getElementById("selectModeCancelBtn");
+const selectModeCopyBtn = document.getElementById("selectModeCopyBtn");
 const selectModeForwardBtn = document.getElementById("selectModeForwardBtn");
 const selectModeDeleteBtn = document.getElementById("selectModeDeleteBtn");
+const pasteClipboardImageBtn = document.getElementById("pasteClipboardImageBtn");
 const messageActionsHintElem = document.getElementById("messageActionsHint");
 const messageActionModalOverlay = document.getElementById("messageActionModalOverlay");
 const messageActionModalTitle = document.getElementById("messageActionModalTitle");
@@ -266,6 +268,8 @@ let activeSettingsTab = "general";
 let currentSelfUsername = String(CURRENT_USER || "");
 let isRefreshLoopBusy = false;
 let isSeenLoopBusy = false;
+let pendingClipboardImageFile = null;
+let isChatInputFocused = false;
 
 const chatUserIdsByUsername = new Map();
 
@@ -2836,6 +2840,10 @@ function bindSelectModeEvents() {
         exitSelectMode({ clearSelection: true });
     });
 
+    selectModeCopyBtn?.addEventListener("click", async () => {
+        await bulkCopySelectedMessages();
+    });
+
     selectModeForwardBtn?.addEventListener("click", async () => {
         await bulkForwardSelectedMessages();
     });
@@ -3316,6 +3324,42 @@ async function copyMessageText(messageElement) {
     }
 }
 
+async function copyImageMessageToClipboard(messageElement, messageData = null) {
+    const messageType = String(
+        messageData?.message_type ?? messageElement?.getAttribute("data-message-type") ?? ""
+    );
+    if (messageType !== "image") {
+        showModal("Copy Failed", "Only image messages can be copied as image.", "warning");
+        return;
+    }
+
+    if (!(window.isSecureContext && navigator.clipboard?.write && window.ClipboardItem)) {
+        showModal("Copy Failed", "Image copy requires a secure browser context.", "warning");
+        return;
+    }
+
+    try {
+        const imageElement = messageElement?.querySelector(".message-image");
+        if (imageElement && imageElement.getAttribute("data-ready") !== "1" && messageData) {
+            await hydrateImageMessageElement(messageElement, messageData);
+        }
+
+        const imageSource = String(messageElement?.querySelector(".message-image")?.src || "").trim();
+        if (!imageSource) {
+            showModal("Copy Failed", "Image is not available yet. Try again in a moment.", "warning");
+            return;
+        }
+
+        const response = await fetch(imageSource);
+        const imageBlob = await response.blob();
+        const mimeType = String(imageBlob?.type || "image/png") || "image/png";
+        await navigator.clipboard.write([new ClipboardItem({ [mimeType]: imageBlob })]);
+        showModal("Copied", "Image copied to clipboard.", "success");
+    } catch (error) {
+        showModal("Copy Failed", "Unable to copy image to clipboard.", "error");
+    }
+}
+
 async function sendEncryptedTextMessage(
     targetUsername,
     text,
@@ -3543,6 +3587,7 @@ function formatSelectedCountLabel(count) {
 
 function updateSelectModeUi() {
     const selectedCount = selectedMessageIds.size;
+    const hasOnlyTextSelection = selectedCount > 0 && areSelectedMessagesTextOnly();
     if (selectModeBar) {
         selectModeBar.hidden = !isSelectModeActive;
     }
@@ -3551,6 +3596,10 @@ function updateSelectModeUi() {
     }
     if (selectModeForwardBtn) {
         selectModeForwardBtn.disabled = selectedCount === 0;
+    }
+    if (selectModeCopyBtn) {
+        selectModeCopyBtn.hidden = !hasOnlyTextSelection;
+        selectModeCopyBtn.disabled = !hasOnlyTextSelection;
     }
     if (selectModeDeleteBtn) {
         selectModeDeleteBtn.disabled = selectedCount === 0;
@@ -3579,6 +3628,18 @@ function getSelectedMessageElements() {
         }
     });
     return selectedElements;
+}
+
+function isTextMessageElement(messageElement) {
+    return String(messageElement?.getAttribute("data-message-type") || "") === "text";
+}
+
+function areSelectedMessagesTextOnly() {
+    const selectedElements = getSelectedMessageElements();
+    if (!selectedElements.length) {
+        return false;
+    }
+    return selectedElements.every((messageElement) => isTextMessageElement(messageElement));
 }
 
 function toSortableMessageTimestamp(messageElement) {
@@ -3796,6 +3857,49 @@ async function bulkDeleteSelectedMessages() {
         rebuildMessageDaySeparators();
     } catch (error) {
         showModal("Bulk Delete Failed", error?.message || "Unable to delete selected messages.", "error");
+    }
+}
+
+async function bulkCopySelectedMessages() {
+    const selectedElements = getSelectedMessageElementsSortedBySentTime();
+    if (!selectedElements.length) {
+        setComposerStatus("Select at least one message to copy.", "warning");
+        return;
+    }
+
+    if (!selectedElements.every((messageElement) => isTextMessageElement(messageElement))) {
+        setComposerStatus("Copy is available only for text-only selection.", "warning");
+        return;
+    }
+
+    const copiedTextLines = selectedElements
+        .map((messageElement) => getMessageTextForCopy(messageElement))
+        .map((text) => String(text || "").trim())
+        .filter((text) => text.length > 0);
+
+    if (!copiedTextLines.length) {
+        showModal("Copy Failed", "Only selected text messages can be copied.", "warning");
+        return;
+    }
+
+    const payload = copiedTextLines.join("\n\n");
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(payload);
+        } else {
+            const helper = document.createElement("textarea");
+            helper.value = payload;
+            helper.setAttribute("readonly", "true");
+            helper.style.position = "absolute";
+            helper.style.left = "-9999px";
+            document.body.appendChild(helper);
+            helper.select();
+            document.execCommand("copy");
+            helper.remove();
+        }
+        showModal("Copied", `Copied ${copiedTextLines.length} selected message(s).`, "success");
+    } catch (error) {
+        showModal("Copy Failed", "Unable to copy selected messages.", "error");
     }
 }
 
@@ -4194,6 +4298,7 @@ function addMessageActionHandlers(
         canDelete = true,
         canReact = false,
         canCopy = false,
+        canCopyImage = false,
         canForward = false,
         canDetails = true,
         messageData = null,
@@ -4203,6 +4308,9 @@ function addMessageActionHandlers(
     let longPressTriggered = false;
     let touchStartX = 0;
     let touchStartY = 0;
+    let lastTapAt = 0;
+    let lastTapX = 0;
+    let lastTapY = 0;
     messageElement.tabIndex = 0;
     messageElement.setAttribute("aria-selected", "false");
     messageElement.setAttribute("aria-label", "Chat message actions available");
@@ -4242,6 +4350,18 @@ function addMessageActionHandlers(
                 closeMessageContextMenu();
             });
             appendMenuAction(copyBtn);
+        }
+
+        if (canCopyImage) {
+            const copyImageBtn = document.createElement("button");
+            copyImageBtn.type = "button";
+            copyImageBtn.className = "message-context-menu-item";
+            copyImageBtn.innerHTML = '<i class="fas fa-image me-2"></i>Copy image';
+            copyImageBtn.addEventListener("click", async () => {
+                await copyImageMessageToClipboard(messageElement, messageData);
+                closeMessageContextMenu();
+            });
+            appendMenuAction(copyImageBtn);
         }
 
         if (canReply) {
@@ -4358,6 +4478,12 @@ function addMessageActionHandlers(
         openContextMenu(event.clientX, event.clientY);
     });
 
+    messageElement.addEventListener("dblclick", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openContextMenu(event.clientX, event.clientY);
+    });
+
     messageElement.addEventListener("keydown", (event) => {
         if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
             event.preventDefault();
@@ -4420,6 +4546,29 @@ function addMessageActionHandlers(
             event.stopPropagation();
             longPressTriggered = false;
         }
+
+        const touchPoint = event.changedTouches?.[0];
+        const now = Date.now();
+        if (touchPoint) {
+            const currentX = Number(touchPoint.clientX || 0);
+            const currentY = Number(touchPoint.clientY || 0);
+            const isDoubleTap = now - lastTapAt <= 340;
+            const isNearLastTap =
+                Math.abs(currentX - lastTapX) <= LONG_PRESS_MOVE_CANCEL_PX &&
+                Math.abs(currentY - lastTapY) <= LONG_PRESS_MOVE_CANCEL_PX;
+            if (isDoubleTap && isNearLastTap) {
+                event.preventDefault();
+                event.stopPropagation();
+                suppressNextContextMenuTapUntil = Date.now() + 380;
+                openContextMenu(currentX, currentY, { focusFirstItem: false });
+                lastTapAt = 0;
+            } else {
+                lastTapAt = now;
+                lastTapX = currentX;
+                lastTapY = currentY;
+            }
+        }
+
         clearLongPress();
     });
     messageElement.addEventListener("touchcancel", clearLongPress);
@@ -4701,6 +4850,9 @@ async function selectChatTarget(target) {
     clearDecryptedMediaCache();
     toggleSettingsPanel(false);
     closeStickerPicker();
+    pendingClipboardImageFile = null;
+    setClipboardImageButtonVisibility(false);
+    void refreshClipboardImageCandidate();
 
     messageOffset = 0;
     hasMoreMessages = true;
@@ -5367,6 +5519,7 @@ async function addMessageToChat(msg, prepend = false) {
     let div = document.createElement("div");
     let hasContextActions = false;
     let canCopy = false;
+    let canCopyImage = false;
     let canForward = false;
     let canReact = false;
     div.classList.add("message");
@@ -5402,6 +5555,7 @@ async function addMessageToChat(msg, prepend = false) {
         div.classList.add("is-image-message");
         hasContextActions = true;
         canReact = true;
+        canCopyImage = true;
 
         div.innerHTML = `<a href="#" class="image-message-link" title="View full image">
                 <img src="" class="message-image" alt="Encrypted image" data-ready="0" style="display:none;">
@@ -5488,7 +5642,7 @@ async function addMessageToChat(msg, prepend = false) {
             div.innerHTML = `
                 <div class="sticker-message-unavailable">Sticker unavailable</div>
                 ${newDateTag(msg, {
-                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    atLeft: msg.sender_id != CURRENT_USER_ID,
                     topSpace: 1,
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -5697,6 +5851,7 @@ async function addMessageToChat(msg, prepend = false) {
             canDelete: true,
             canReact,
             canCopy,
+            canCopyImage,
             canForward,
             canDetails: true,
             messageData: msg,
@@ -6455,6 +6610,92 @@ const sendTextMessage = async () => {
     }
 };
 
+function setClipboardImageButtonVisibility(isVisible) {
+    if (!pasteClipboardImageBtn) {
+        return;
+    }
+    const shouldShow = Boolean(isVisible && currentChatUser && isChatInputFocused);
+    pasteClipboardImageBtn.hidden = !shouldShow;
+    pasteClipboardImageBtn.disabled = !shouldShow;
+    pasteClipboardImageBtn.classList.toggle("is-visible", shouldShow);
+}
+
+function createClipboardImageFile(blob) {
+    const mimeType = String(blob?.type || "image/png") || "image/png";
+    const extension = mimeType.includes("jpeg")
+        ? "jpg"
+        : mimeType.includes("webp")
+          ? "webp"
+          : mimeType.includes("gif")
+            ? "gif"
+            : "png";
+    return new File([blob], `clipboard_${Date.now()}.${extension}`, { type: mimeType });
+}
+
+async function refreshClipboardImageCandidate() {
+    if (!(window.isSecureContext && navigator.clipboard?.read) || !currentChatUser) {
+        pendingClipboardImageFile = null;
+        setClipboardImageButtonVisibility(false);
+        return null;
+    }
+
+    try {
+        const clipboardItems = await navigator.clipboard.read();
+        for (const clipboardItem of clipboardItems) {
+            for (const type of clipboardItem.types || []) {
+                if (!String(type).startsWith("image/")) {
+                    continue;
+                }
+                const imageBlob = await clipboardItem.getType(type);
+                if (imageBlob) {
+                    pendingClipboardImageFile = createClipboardImageFile(imageBlob);
+                    setClipboardImageButtonVisibility(true);
+                    return pendingClipboardImageFile;
+                }
+            }
+        }
+    } catch (error) {}
+
+    pendingClipboardImageFile = null;
+    setClipboardImageButtonVisibility(false);
+    return null;
+}
+
+async function sendClipboardImage({ requireConfirm = true } = {}) {
+    if (!currentChatUser) {
+        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        return;
+    }
+
+    if (!pendingClipboardImageFile) {
+        await refreshClipboardImageCandidate();
+    }
+
+    if (!pendingClipboardImageFile) {
+        showModal("Clipboard", "No image found in clipboard.", "warning");
+        return;
+    }
+
+    const shouldSend = !requireConfirm || window.confirm("Send clipboard image to this chat?");
+    if (!shouldSend) {
+        return;
+    }
+
+    await sendImageMessage(pendingClipboardImageFile);
+    pendingClipboardImageFile = null;
+    setClipboardImageButtonVisibility(false);
+}
+
+function extractPastedImageFile(pasteEvent) {
+    const clipboardItems = Array.from(pasteEvent?.clipboardData?.items || []);
+    const imageItem = clipboardItems.find((item) => String(item.type || "").startsWith("image/"));
+    const imageBlob = imageItem?.getAsFile?.();
+    if (!imageBlob) {
+        return null;
+    }
+    return createClipboardImageFile(imageBlob);
+}
+
 const fileUploadInput = document.getElementById("fileUploadInput");
 const sendBtn = document.getElementById("sendBtn");
 
@@ -6559,6 +6800,44 @@ chatInput.addEventListener("keydown", async (e) => {
     }
 });
 
+chatInput.addEventListener("paste", async (event) => {
+    const pastedImageFile = extractPastedImageFile(event);
+    if (!pastedImageFile) {
+        return;
+    }
+
+    event.preventDefault();
+    pendingClipboardImageFile = pastedImageFile;
+    setClipboardImageButtonVisibility(true);
+    setComposerStatus("Clipboard image ready. Tap Paste to send.", "info");
+});
+
+document.addEventListener("paste", async (event) => {
+    if (event.defaultPrevented || !currentChatUser) {
+        return;
+    }
+
+    const activeElement = document.activeElement;
+    const activeTagName = String(activeElement?.tagName || "").toUpperCase();
+    const isEditable =
+        activeTagName === "INPUT" ||
+        activeTagName === "TEXTAREA" ||
+        activeElement?.isContentEditable;
+    if (isEditable && activeElement !== chatInput) {
+        return;
+    }
+
+    const pastedImageFile = extractPastedImageFile(event);
+    if (!pastedImageFile) {
+        return;
+    }
+
+    event.preventDefault();
+    pendingClipboardImageFile = pastedImageFile;
+    setClipboardImageButtonVisibility(true);
+    setComposerStatus("Clipboard image ready. Tap Paste to send.", "info");
+});
+
 document.addEventListener("keydown", async (event) => {
     if (event.key === "Escape") {
         if (isSelectModeActive) {
@@ -6621,6 +6900,31 @@ chatInput.addEventListener("input", () => {
             typingStopTimer = null;
         }
         updateTypingStatus(false);
+    }
+});
+
+chatInput.addEventListener("focus", () => {
+    isChatInputFocused = true;
+    setClipboardImageButtonVisibility(Boolean(pendingClipboardImageFile));
+    void refreshClipboardImageCandidate();
+});
+
+chatInput.addEventListener("blur", () => {
+    isChatInputFocused = false;
+    setClipboardImageButtonVisibility(false);
+});
+
+pasteClipboardImageBtn?.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+});
+
+pasteClipboardImageBtn?.addEventListener("click", async () => {
+    await sendClipboardImage({ requireConfirm: false });
+});
+
+window.addEventListener("focus", () => {
+    if (isChatInputFocused) {
+        void refreshClipboardImageCandidate();
     }
 });
 

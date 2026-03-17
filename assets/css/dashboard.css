@@ -723,8 +723,8 @@ nav.navbar:hover::after {
 
 .group-incoming-message .message-copy-btn {
     position: absolute;
-    top: 0.52rem;
-    right: 0.45rem;
+    top: 0.72rem;
+    right: 0.78rem;
     left: auto;
     margin: 0;
     z-index: 4;
@@ -3402,6 +3402,48 @@ textarea,
     transition: transform 0.1s ease;
 }
 
+#pasteClipboardImageBtn {
+    position: absolute;
+    right: 5.35rem;
+    bottom: calc(100% - 0.25rem);
+    width: auto;
+    height: 1.7rem;
+    min-height: 1.7rem;
+    border-radius: 999px;
+    padding: 0 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 24%, var(--border-color));
+    background: var(--surface-color);
+    color: var(--secondary-color);
+    font-size: 0.72rem;
+    font-weight: 700;
+    gap: 0.25rem;
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--secondary-color) 16%, transparent);
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+}
+
+#pasteClipboardImageBtn::before {
+    display: none;
+}
+
+#pasteClipboardImageBtn i {
+    font-size: 0.68rem;
+}
+
+#pasteClipboardImageBtn:hover,
+#pasteClipboardImageBtn:focus-visible {
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--secondary-color) 20%, transparent);
+}
+
+#pasteClipboardImageBtn.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
 .chat-input .image-source-menu-item {
     margin-left: 0;
     width: 100%;
@@ -4364,6 +4406,25 @@ textarea,
     margin-right: 0;
 }
 
+.message.is-sticker-message .message-meta-time {
+    float: none !important;
+    display: block;
+    margin: 0.2rem 0 0;
+}
+
+.message.is-sticker-message .message-meta-time.mx-2 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.message.sent.is-sticker-message .message-meta-time {
+    text-align: right;
+}
+
+.message.received.is-sticker-message .message-meta-time {
+    text-align: left;
+}
+
 .message.received.is-sticker-message {
     margin-right: auto;
     margin-left: 0;
@@ -4608,6 +4669,15 @@ textarea,
         margin-right: 0;
     }
 
+    .message.sent.is-sticker-message .message-status-indicator {
+        right: 0.2rem;
+    }
+
+    #pasteClipboardImageBtn {
+        right: 4.75rem;
+        bottom: calc(100% - 0.15rem);
+    }
+
     .just-sent-tick::before,
     .seen-ticks::before,
     .seen-ticks::after {
@@ -4675,6 +4745,11 @@ textarea,
 
     .logged-in-as {
         font-size: 0.8rem;
+    }
+
+    .select-mode-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 }
 
