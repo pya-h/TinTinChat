@@ -136,6 +136,7 @@ const STICKER_UPLOAD_MAX_BYTES = Number(appConstants.uploadStickerMaxBytes) || 5
 const STICKER_CANVAS_SIZE = Number(appConstants.stickerCanvasSize) || 512;
 const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
+const LONG_PRESS_MOVE_CANCEL_PX = 12;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
 const MESSAGE_ACTIONS_HINT_AUTO_HIDE_MS = 4200;
@@ -238,6 +239,7 @@ let typingStopTimer = null;
 let messageActionsHintTimer = null;
 let hasShownMessageActionsHint = false;
 let imageSourceMenuHideTimer = null;
+let suppressNextContextMenuTapUntil = 0;
 let cameraStream = null;
 let isCameraCaptureBusy = false;
 let hasVideoInputDevice = null;
@@ -3013,6 +3015,7 @@ function showMessageCopiedFeedback() {
 
 function closeMessageContextMenu() {
     document.getElementById("messageContextMenu")?.remove();
+    suppressNextContextMenuTapUntil = 0;
     if (lastContextMenuMessageElement) {
         lastContextMenuMessageElement.focus();
         lastContextMenuMessageElement = null;
@@ -4197,15 +4200,25 @@ function addMessageActionHandlers(
     } = {}
 ) {
     let longPressTimer = null;
+    let longPressTriggered = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
     messageElement.tabIndex = 0;
     messageElement.setAttribute("aria-selected", "false");
     messageElement.setAttribute("aria-label", "Chat message actions available");
 
-    const openContextMenu = (clientX, clientY) => {
+    const openContextMenu = (clientX, clientY, { focusFirstItem = true } = {}) => {
         closeMessageContextMenu();
         closeReactionPicker({ restoreFocus: false });
         updateMessageActionsHintVisibility(true);
         lastContextMenuMessageElement = messageElement;
+
+        if (window.getSelection) {
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+                selection.removeAllRanges();
+            }
+        }
 
         const menu = document.createElement("div");
         menu.id = "messageContextMenu";
@@ -4334,8 +4347,10 @@ function addMessageActionHandlers(
         menu.style.left = `${Math.min(clientX, maxLeft)}px`;
         menu.style.top = `${Math.min(clientY, maxTop)}px`;
 
-        const firstMenuButton = menu.querySelector(".message-context-menu-item");
-        firstMenuButton?.focus();
+        if (focusFirstItem) {
+            const firstMenuButton = menu.querySelector(".message-context-menu-item");
+            firstMenuButton?.focus();
+        }
     };
 
     messageElement.addEventListener("contextmenu", (event) => {
@@ -4351,15 +4366,46 @@ function addMessageActionHandlers(
         }
     });
 
-    messageElement.addEventListener("touchstart", (event) => {
-        longPressTimer = setTimeout(() => {
+    messageElement.addEventListener(
+        "touchstart",
+        (event) => {
+            if (event.touches?.length !== 1) {
+                return;
+            }
+            clearLongPress();
+            longPressTriggered = false;
+            const touch = event.touches[0];
+            touchStartX = Number(touch.clientX || 0);
+            touchStartY = Number(touch.clientY || 0);
+
+            longPressTimer = setTimeout(() => {
+                const touchPoint = event.touches?.[0] || event.changedTouches?.[0];
+                if (!touchPoint) {
+                    return;
+                }
+                longPressTriggered = true;
+                suppressNextContextMenuTapUntil = Date.now() + 420;
+                openContextMenu(touchPoint.clientX, touchPoint.clientY, { focusFirstItem: false });
+            }, MESSAGE_LONG_PRESS_MS);
+        },
+        { passive: true }
+    );
+
+    messageElement.addEventListener(
+        "touchmove",
+        (event) => {
             const touch = event.touches?.[0];
             if (!touch) {
                 return;
             }
-            openContextMenu(touch.clientX, touch.clientY);
-        }, MESSAGE_LONG_PRESS_MS);
-    });
+            const deltaX = Math.abs(Number(touch.clientX || 0) - touchStartX);
+            const deltaY = Math.abs(Number(touch.clientY || 0) - touchStartY);
+            if (deltaX > LONG_PRESS_MOVE_CANCEL_PX || deltaY > LONG_PRESS_MOVE_CANCEL_PX) {
+                clearLongPress();
+            }
+        },
+        { passive: true }
+    );
 
     const clearLongPress = () => {
         if (longPressTimer) {
@@ -4368,7 +4414,14 @@ function addMessageActionHandlers(
         }
     };
 
-    messageElement.addEventListener("touchend", clearLongPress);
+    messageElement.addEventListener("touchend", (event) => {
+        if (longPressTriggered) {
+            event.preventDefault();
+            event.stopPropagation();
+            longPressTriggered = false;
+        }
+        clearLongPress();
+    });
     messageElement.addEventListener("touchcancel", clearLongPress);
 
     messageElement.addEventListener(
@@ -4388,7 +4441,27 @@ function addMessageActionHandlers(
     );
 }
 
-document.addEventListener("click", (event) => {
+document.addEventListener(
+    "touchend",
+    (event) => {
+        if (Date.now() < suppressNextContextMenuTapUntil) {
+            event.preventDefault();
+            event.stopPropagation();
+            suppressNextContextMenuTapUntil = 0;
+        }
+    },
+    true
+);
+
+document.addEventListener(
+    "click",
+    (event) => {
+        if (Date.now() < suppressNextContextMenuTapUntil) {
+            event.preventDefault();
+            event.stopPropagation();
+            suppressNextContextMenuTapUntil = 0;
+            return;
+        }
     const menu = document.getElementById("messageContextMenu");
     if (!menu) {
         const picker = document.getElementById("messageReactionPicker");
@@ -4408,7 +4481,9 @@ document.addEventListener("click", (event) => {
     if (picker && !event.target.closest("#messageReactionPicker")) {
         closeReactionPicker({ restoreFocus: false });
     }
-});
+    },
+    true
+);
 
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && document.getElementById("messageReactionPicker")) {

@@ -1663,6 +1663,9 @@ nav.navbar:hover::after {
     border-radius: 0.75rem;
     box-shadow: var(--shadow-lg);
     padding: 0.3rem;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .message-context-menu-item {
@@ -1675,6 +1678,44 @@ nav.navbar:hover::after {
     text-align: left;
     cursor: pointer;
     font-size: 0.92rem;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.chat-header,
+.chat-header-actions,
+.chat-list li,
+.chat-setting-item,
+.chat-ui-settings-item,
+.chat-ui-account-title,
+.chat-ui-account-subtitle,
+.message-copy-btn,
+.reaction-picker-item,
+.sticker-picker-item,
+.sticker-picker-upload,
+.go-to-latest-btn,
+.btn {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.message,
+.message * {
+    -webkit-touch-callout: none;
+}
+
+.message .message-text-content,
+.message .reply-quote-text,
+.message .forwarded-preview-text,
+.chat-input textarea,
+input,
+textarea,
+[contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
+    -webkit-touch-callout: default;
 }
 
 .message-context-menu-item:hover {
@@ -4557,6 +4598,14 @@ nav.navbar:hover::after {
 
     .message-status-indicator {
         margin-left: 0.3rem !important;
+    }
+
+    .message.sent.is-sticker-message {
+        margin-right: 0;
+    }
+
+    .message.sent.is-sticker-message .sticker-message-button {
+        margin-right: 0;
     }
 
     .just-sent-tick::before,
