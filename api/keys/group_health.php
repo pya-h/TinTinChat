@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../includes/group_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
-apiRequireAdminUser($pdo, $userId);
+apiRequireAdminOrSuperuser($pdo, $userId);
 
 $body = apiGetJsonBody();
 $groupId = groupParseId($body['group_id'] ?? $_POST['group_id'] ?? null);

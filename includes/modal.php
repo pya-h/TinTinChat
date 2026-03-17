@@ -30,5 +30,5 @@
     </a>
 </div>
 
-<link href="assets/css/modal.css" rel="stylesheet" />
-<script src="assets/js/modal.js"></script>
+<link href="assets/css/modal.css?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/../assets/css/modal.css')); ?>" rel="stylesheet" />
+<script src="assets/js/modal.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/../assets/js/modal.js')); ?>"></script>

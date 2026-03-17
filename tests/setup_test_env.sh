@@ -51,6 +51,7 @@ foreach ($migrations as [$fileName, $label]) {
 
   fwrite(STDOUT, "[PASS] {$label}\n");
 }
+
 ' "${ROOT_DIR}"
 
 health_code=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}/index.php" || true)

@@ -70,10 +70,12 @@ const settingsGroupKeyHealthBtn = document.getElementById("settingsGroupKeyHealt
 const settingsAdminRefreshStickersBtn = document.getElementById("settingsAdminRefreshStickersBtn");
 const settingsAdminStickerList = document.getElementById("settingsAdminStickerList");
 const settingsAdminRefreshUsersBtn = document.getElementById("settingsAdminRefreshUsersBtn");
+const settingsAdminIncludeTestUsers = document.getElementById("settingsAdminIncludeTestUsers");
 const settingsAdminUsersList = document.getElementById("settingsAdminUsersList");
 const openConversationSearchBtn = document.getElementById("openConversationSearchBtn");
 const openAvatarUploadBtn = document.getElementById("openAvatarUploadBtn");
 const settingsAvatarUploadBtn = document.getElementById("settingsAvatarUploadBtn");
+const settingsAvatarPreview = document.getElementById("settingsAvatarPreview");
 const avatarUploadInput = document.getElementById("avatarUploadInput");
 const settingsUsernameForm = document.getElementById("settingsUsernameForm");
 const settingsCurrentUsername = document.getElementById("settingsCurrentUsername");
@@ -83,6 +85,7 @@ const settingsCurrentPasswordInput = document.getElementById("settingsCurrentPas
 const settingsNewPasswordInput = document.getElementById("settingsNewPasswordInput");
 const settingsConfirmPasswordInput = document.getElementById("settingsConfirmPasswordInput");
 const loggedInUsernameElem = document.getElementById("loggedInUsername");
+const logoutForm = document.getElementById("logoutForm");
 const selectModeBar = document.getElementById("selectModeBar");
 const selectModeCount = document.getElementById("selectModeCount");
 const selectModeCancelBtn = document.getElementById("selectModeCancelBtn");
@@ -147,6 +150,7 @@ const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
 const LONG_PRESS_MOVE_CANCEL_PX = 12;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
+const ADMIN_USERS_INCLUDE_TEST_STORAGE_KEY = "tintinchat.adminUsers.includeTestUsers.v1";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
 const MESSAGE_ACTIONS_HINT_AUTO_HIDE_MS = 4200;
 const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
@@ -279,6 +283,7 @@ let pendingClipboardImageFile = null;
 let isChatInputFocused = false;
 let adminStickerSettings = [];
 let adminUsersList = [];
+let adminUsersIncludeTestUsers = false;
 
 const chatUserIdsByUsername = new Map();
 
@@ -364,6 +369,12 @@ const notificationPlayer = window.ChatNotificationService?.createPlayer({
 };
 
 const playNotificationSound = () => notificationPlayer.play();
+
+function clearPersistedAdminDebugState() {
+    try {
+        localStorage.removeItem(ADMIN_USERS_INCLUDE_TEST_STORAGE_KEY);
+    } catch (error) {}
+}
 
 function buildAvatarUrl({ userId = 0, username = "", size = 96 } = {}) {
     const params = new URLSearchParams();
@@ -1154,6 +1165,15 @@ function loadAppSettings() {
         appSettings.showTimestamps = parseStoredBoolean(parsed.showTimestamps, true);
         appSettings.reduceMotion = parseStoredBoolean(parsed.reduceMotion, false);
     } catch (error) {}
+
+    try {
+        adminUsersIncludeTestUsers = parseStoredBoolean(
+            localStorage.getItem(ADMIN_USERS_INCLUDE_TEST_STORAGE_KEY),
+            false
+        );
+    } catch (error) {
+        adminUsersIncludeTestUsers = false;
+    }
 }
 
 function persistAppSettings() {
@@ -1224,6 +1244,19 @@ function updateCurrentUsernameUi(newUsername) {
     if (settingsUsernameInput) {
         settingsUsernameInput.value = normalizedUsername;
     }
+    updateSettingsAvatarPreview();
+}
+
+function updateSettingsAvatarPreview() {
+    if (!settingsAvatarPreview) {
+        return;
+    }
+
+    settingsAvatarPreview.src = buildAvatarUrl({
+        userId: Number(CURRENT_USER_ID || 0),
+        username: currentSelfUsername || CURRENT_USER,
+        size: 96,
+    });
 }
 
 function openUiSettingsModal() {
@@ -2413,6 +2446,10 @@ function openImageSourceMenu() {
 function applySettingsUi() {
     applyUiPreferenceClasses();
     updateCurrentUsernameUi(currentSelfUsername || CURRENT_USER);
+    updateSettingsAvatarPreview();
+    if (settingsAdminIncludeTestUsers) {
+        settingsAdminIncludeTestUsers.checked = Boolean(adminUsersIncludeTestUsers);
+    }
     if (settingThemeMode) {
         settingThemeMode.value = appSettings.themeMode;
     }
@@ -2592,7 +2629,8 @@ async function loadAdminUsersSettings() {
 
     settingsAdminUsersList.innerHTML = '<div class="chat-ui-admin-empty">Loading users...</div>';
     try {
-        const response = await window.ApiService.jsonOk("api/admin/users/list.php");
+        const query = adminUsersIncludeTestUsers ? "?include_test_users=1" : "";
+        const response = await window.ApiService.jsonOk(`api/admin/users/list.php${query}`);
         adminUsersList = Array.isArray(response?.users) ? response.users : [];
         renderAdminUsersSettings();
     } catch (error) {
@@ -2755,6 +2793,7 @@ function bindSettingsUiEvents() {
             });
             avatarCacheVersion = Date.now();
             refreshVisibleAvatars();
+            updateSettingsAvatarPreview();
             setComposerStatus("Profile avatar updated", "success");
             showModal("Avatar Updated", "Your profile avatar was updated successfully.", "success");
         } catch (error) {
@@ -2785,6 +2824,15 @@ function bindSettingsUiEvents() {
     });
 
     settingsAdminRefreshUsersBtn?.addEventListener("click", async () => {
+        await loadAdminUsersSettings();
+    });
+
+    settingsAdminIncludeTestUsers?.addEventListener("change", async (event) => {
+        adminUsersIncludeTestUsers = Boolean(event.target?.checked);
+        localStorage.setItem(
+            ADMIN_USERS_INCLUDE_TEST_STORAGE_KEY,
+            adminUsersIncludeTestUsers ? "true" : "false"
+        );
         await loadAdminUsersSettings();
     });
 
@@ -3075,6 +3123,9 @@ document.addEventListener("DOMContentLoaded", () => {
     loadAppSettings();
     applySettingsUi();
     bindSettingsUiEvents();
+    logoutForm?.addEventListener("submit", () => {
+        clearPersistedAdminDebugState();
+    });
     bindSelectModeEvents();
     bindMessageActionModalEvents();
     bindConversationSearchEvents();
@@ -7676,11 +7727,6 @@ async function handleJoinGroupFromUrl() {
 }
 
 async function runGroupKeyHealthCheck() {
-    if (!window.CURRENT_USER_IS_ADMIN) {
-        showModal("Access Denied", "Admin privileges required.", "warning");
-        return;
-    }
-
     const activeGroupId = getCurrentGroupId();
     const body = activeGroupId ? { group_id: activeGroupId } : {};
 

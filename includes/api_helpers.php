@@ -229,6 +229,20 @@ function apiRequireAdminUser(PDO $pdo, int $userId): void
     }
 }
 
+function apiRequireAdminOrSuperuser(PDO $pdo, int $userId): void
+{
+    if (apiIsAdminUser($pdo, $userId)) {
+        return;
+    }
+
+    $username = apiGetUsernameByUserId($pdo, $userId);
+    if (apiIsSuperuserUsername($username)) {
+        return;
+    }
+
+    apiError('FORBIDDEN', 'Admin privileges required', 403);
+}
+
 function apiGetConfiguredSuperuserUsername(): string
 {
     $configured = trim((string) ($_ENV['SUPERUSER_USERNAME'] ?? 'paya'));
@@ -247,7 +261,7 @@ function apiIsSuperuserUsername(string $username): bool
 
 function apiRequireSuperuserAdmin(PDO $pdo, int $userId): void
 {
-    apiRequireAdminUser($pdo, $userId);
+    apiRequireAdminOrSuperuser($pdo, $userId);
     $username = apiGetUsernameByUserId($pdo, $userId);
     if (!apiIsSuperuserUsername($username)) {
         apiError('FORBIDDEN', 'Superuser privileges required', 403);

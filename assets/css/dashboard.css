@@ -1862,7 +1862,7 @@ textarea,
 }
 
 #chatUiSettingsOverlay .message-action-modal {
-    width: min(30rem, 100%);
+    width: min(44rem, 96vw);
     max-height: min(88vh, 42rem);
 }
 
@@ -2187,6 +2187,7 @@ textarea,
     border: 1px solid color-mix(in srgb, var(--secondary-color) 16%, var(--border-color));
     border-radius: 0.9rem;
     padding: 0.7rem;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-color) 70%, transparent);
 }
 
 .chat-ui-settings-tabs {
@@ -2209,6 +2210,7 @@ textarea,
     font-weight: 700;
     padding: 0.26rem 0.8rem;
     transition: var(--transition-fast);
+    letter-spacing: 0.01em;
 }
 
 .chat-ui-settings-tab:hover,
@@ -2253,13 +2255,82 @@ textarea,
     justify-content: space-between;
     gap: 0.8rem;
     border: 1px solid var(--border-color);
-    border-radius: 0.65rem;
-    padding: 0.48rem 0.6rem;
+    border-radius: 0.75rem;
+    padding: 0.56rem 0.72rem;
     font-size: 0.86rem;
+    background: color-mix(in srgb, var(--surface-color) 98%, transparent);
+}
+
+.chat-ui-settings-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 9.8rem;
+}
+
+.chat-ui-settings-item .form-select {
+    border-radius: 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 26%, var(--border-color));
+    min-height: 2.2rem;
+    padding-left: 0.72rem;
+    padding-right: 2rem;
+    font-weight: 600;
+    font-size: 0.84rem;
+    background-color: color-mix(in srgb, var(--surface-color) 98%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--text-color) 6%, transparent);
+}
+
+.chat-ui-settings-item .form-select:focus {
+    border-color: color-mix(in srgb, var(--secondary-color) 55%, var(--border-color));
+    box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--secondary-color) 24%, transparent);
+}
+
+.chat-ui-settings-item-check {
+    flex-direction: row;
+}
+
+.chat-ui-settings-item-check .chat-ui-settings-control {
+    min-width: auto;
 }
 
 .chat-ui-settings-item input[type="checkbox"] {
-    accent-color: var(--primary-color);
+    appearance: none;
+    -webkit-appearance: none;
+    width: 2.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 32%, var(--border-color));
+    background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.chat-ui-settings-item input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 0.12rem;
+    left: 0.14rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+    transition: transform 0.2s ease;
+}
+
+.chat-ui-settings-item input[type="checkbox"]:checked {
+    background: color-mix(in srgb, var(--secondary-color) 78%, var(--primary-color));
+    border-color: color-mix(in srgb, var(--secondary-color) 78%, var(--primary-color));
+}
+
+.chat-ui-settings-item input[type="checkbox"]:checked::after {
+    transform: translateX(0.98rem);
+}
+
+.chat-ui-settings-item input[type="checkbox"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 0.16rem color-mix(in srgb, var(--secondary-color) 30%, transparent);
 }
 
 .chat-ui-account-section {
@@ -2285,6 +2356,25 @@ textarea,
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem;
+}
+
+.chat-ui-admin-row-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-shrink: 0;
+}
+
+.chat-ui-admin-inline-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.74rem;
+    color: var(--subtle-text-color);
+}
+
+.chat-ui-admin-inline-toggle input[type="checkbox"] {
+    accent-color: var(--primary-color);
 }
 
 .chat-ui-admin-list {
@@ -2372,6 +2462,28 @@ textarea,
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem;
+}
+
+.chat-ui-account-row-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.chat-ui-account-avatar-wrap {
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid color-mix(in srgb, var(--secondary-color) 34%, var(--border-color));
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--secondary-color) 24%, transparent);
+    flex-shrink: 0;
+}
+
+.chat-ui-account-avatar-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .chat-ui-account-title {
@@ -2700,6 +2812,21 @@ textarea,
     border: 1px solid color-mix(in srgb, var(--secondary-color) 16%, var(--border-color));
     background: color-mix(in srgb, var(--surface-color) 90%, transparent);
     box-shadow: 0 1px 4px color-mix(in srgb, var(--text-color) 7%, transparent);
+    backdrop-filter: blur(10px);
+}
+
+.chat-header-actions .btn {
+    border-radius: 999px;
+    min-width: 2rem;
+    height: 2rem;
+    border-color: color-mix(in srgb, var(--secondary-color) 24%, var(--border-color));
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.chat-header-actions .btn:hover,
+.chat-header-actions .btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--secondary-color) 16%, transparent);
 }
 
 .chat-settings-panel {
@@ -3191,7 +3318,7 @@ textarea,
     }
 
     #chatUiSettingsOverlay .message-action-modal {
-        width: min(100%, 28rem);
+        width: min(100%, 34rem);
         max-height: min(92dvh, 42rem);
     }
 
@@ -3224,6 +3351,11 @@ textarea,
         align-self: flex-end;
     }
 
+    .chat-ui-settings-control {
+        min-width: auto;
+        width: 100%;
+    }
+
     .chat-ui-settings-item .form-select {
         min-height: 2rem;
         font-size: 0.82rem;
@@ -3237,6 +3369,21 @@ textarea,
     .chat-ui-account-row {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .chat-ui-admin-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chat-ui-admin-row-tools {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .chat-ui-account-avatar-wrap {
+        width: 2.5rem;
+        height: 2.5rem;
     }
 
     .chat-ui-account-section .btn {
