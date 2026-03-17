@@ -2183,6 +2183,10 @@ textarea,
 .chat-ui-settings-shell {
     display: grid;
     gap: 0.82rem;
+    background: color-mix(in srgb, var(--surface-color) 95%, transparent);
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 16%, var(--border-color));
+    border-radius: 0.9rem;
+    padding: 0.7rem;
 }
 
 .chat-ui-settings-tabs {
@@ -2224,7 +2228,7 @@ textarea,
 .chat-ui-settings-panel {
     display: grid;
     gap: 0.72rem;
-    animation: settingsPanelIn 0.16s ease;
+    animation: settingsPanelIn 0.2s ease;
 }
 
 .chat-ui-settings-panel[hidden] {
@@ -2265,6 +2269,98 @@ textarea,
     border-radius: 0.75rem;
     padding: 0.64rem 0.7rem;
     background: color-mix(in srgb, var(--surface-color) 94%, transparent);
+}
+
+.chat-ui-admin-section {
+    display: grid;
+    gap: 0.56rem;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 16%, var(--border-color));
+    border-radius: 0.75rem;
+    padding: 0.64rem 0.7rem;
+    background: color-mix(in srgb, var(--surface-color) 94%, transparent);
+}
+
+.chat-ui-admin-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.chat-ui-admin-list {
+    display: grid;
+    gap: 0.45rem;
+    max-height: 16.5rem;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+}
+
+.chat-ui-admin-item {
+    display: flex;
+    align-items: center;
+    gap: 0.56rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.68rem;
+    padding: 0.45rem 0.55rem;
+    background: color-mix(in srgb, var(--surface-color) 96%, transparent);
+}
+
+.chat-ui-admin-item-preview-wrap {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.45rem;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.chat-ui-admin-item-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.chat-ui-admin-item-meta {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.chat-ui-admin-item-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.chat-ui-admin-item-subtitle {
+    font-size: 0.72rem;
+    color: var(--subtle-text-color);
+    line-height: 1.2;
+}
+
+.chat-ui-admin-item-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.36rem;
+    font-size: 0.74rem;
+    color: var(--subtle-text-color);
+    flex-shrink: 0;
+}
+
+.chat-ui-admin-item-toggle input[type="checkbox"] {
+    accent-color: var(--primary-color);
+}
+
+.chat-ui-admin-empty {
+    font-size: 0.78rem;
+    color: var(--subtle-text-color);
+    border: 1px dashed var(--border-color);
+    border-radius: 0.65rem;
+    padding: 0.55rem 0.6rem;
+    text-align: center;
 }
 
 #chatUiSettingsPanelAccount {
@@ -3830,8 +3926,14 @@ textarea,
     align-items: center;
     gap: 0.75rem;
     padding: 0.7rem 0.8rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--surface-color) 86%, transparent);
     border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--secondary-color) 14%, var(--border-color));
+    transition: var(--transition-fast);
+}
+
+.voice-player-container.is-playing {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--secondary-color) 22%, transparent);
 }
 
 .voice-play-btn {
@@ -3839,7 +3941,7 @@ textarea,
     height: 40px;
     border-radius: 50%;
     border: none;
-    background: rgba(255, 255, 255, 0.2);
+    background: color-mix(in srgb, var(--secondary-color) 30%, var(--surface-color));
     color: white;
     display: flex;
     align-items: center;
@@ -3850,13 +3952,13 @@ textarea,
 }
 
 .voice-play-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: color-mix(in srgb, var(--secondary-color) 45%, var(--surface-color));
     transform: scale(1.1);
 }
 
 .voice-play-btn.playing {
-    background: #28a745;
-    animation: pulse 2s infinite;
+    background: color-mix(in srgb, var(--secondary-color) 70%, var(--primary-color));
+    animation: pulse 1.5s infinite;
 }
 
 .voice-play-btn svg {
@@ -3897,15 +3999,15 @@ textarea,
 
 .waveform-bar {
     flex: 1;
-    background: rgba(255, 255, 255, 0.6);
+    background: color-mix(in srgb, var(--secondary-color) 32%, var(--surface-color));
     border-radius: 2px;
     min-height: 4px;
     height: 20%;
-    transition: all 0.1s ease;
+    transition: height 0.1s ease, background 0.12s ease;
 }
 
 .waveform-bar.played {
-    background: white;
+    background: color-mix(in srgb, var(--secondary-color) 68%, var(--primary-color));
 }
 
 .waveform-bar:hover {
@@ -3914,7 +4016,7 @@ textarea,
 
 .voice-duration-display {
     font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: color-mix(in srgb, var(--text-color) 82%, transparent);
     font-weight: 500;
     min-width: 40px;
     text-align: center;
@@ -4549,6 +4651,10 @@ textarea,
     justify-content: center;
     margin: 1rem 0;
     padding: 0.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    pointer-events: none;
 }
 
 .load-more-btn {
@@ -4561,6 +4667,7 @@ textarea,
     font-weight: 500;
     transition: var(--transition-fast);
     box-shadow: var(--shadow-sm);
+    pointer-events: auto;
 }
 
 .load-more-btn:hover {

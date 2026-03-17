@@ -23,7 +23,14 @@ if (empty($stickerColumns) || !isset($stickerColumns['id'])) {
 	apiError('STICKER_SCHEMA_OUTDATED', 'Stickers schema is missing or outdated. Run migration 14_add_sticker_support.sql.', 500);
 }
 
-$stickerSql = 'SELECT id FROM stickers WHERE id = ?';
+$stickerSql = 'SELECT id';
+if (isset($stickerColumns['is_admin_only'])) {
+	$stickerSql .= ', is_admin_only';
+}
+if (isset($stickerColumns['uploaded_by_user_id'])) {
+	$stickerSql .= ', uploaded_by_user_id';
+}
+$stickerSql .= ' FROM stickers WHERE id = ?';
 if (isset($stickerColumns['is_active'])) {
 	$stickerSql .= ' AND is_active = 1';
 }
@@ -34,6 +41,15 @@ $stickerStmt->execute([$stickerId]);
 $sticker = $stickerStmt->fetch(PDO::FETCH_ASSOC);
 if (!$sticker) {
 	apiError('STICKER_NOT_FOUND', 'Sticker is unavailable.', 404);
+}
+
+$isAdminOnly = isset($stickerColumns['is_admin_only']) && (int) ($sticker['is_admin_only'] ?? 0) === 1;
+if ($isAdminOnly) {
+	$isAdmin = apiIsAdminUser($pdo, $userId);
+	$uploadedByUserId = isset($stickerColumns['uploaded_by_user_id']) ? (int) ($sticker['uploaded_by_user_id'] ?? 0) : 0;
+	if (!$isAdmin && $uploadedByUserId !== $userId) {
+		apiError('STICKER_FORBIDDEN', 'Sticker is unavailable.', 403);
+	}
 }
 
 $receiverId = null;

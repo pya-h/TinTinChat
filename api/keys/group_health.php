@@ -8,13 +8,7 @@ require_once __DIR__ . '/../../includes/group_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
-
-$userStmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
-$userStmt->execute([$userId]);
-$isAdmin = (bool) $userStmt->fetchColumn();
-if (!$isAdmin) {
-	apiError('FORBIDDEN', 'Admin privileges required', 403);
-}
+apiRequireAdminUser($pdo, $userId);
 
 $body = apiGetJsonBody();
 $groupId = groupParseId($body['group_id'] ?? $_POST['group_id'] ?? null);

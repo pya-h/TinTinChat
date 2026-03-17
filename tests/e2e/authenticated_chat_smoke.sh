@@ -242,7 +242,26 @@ php -r '
   fwrite(STDOUT, "[PASS] deleted message not present in receiver fetch\n");
 ' "$RESP_FETCH_AFTER_DELETE" "$TEXT_MESSAGE_ID"
 
-printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO6VYvwAAAAASUVORK5CYII=' | base64 -d > "$STICKER_FILE"
+php -r '
+  $out = $argv[1];
+  $r = random_int(0, 255);
+  $g = random_int(0, 255);
+  $b = random_int(0, 255);
+  $signature = "\x89PNG\r\n\x1a\n";
+  $ihdrData = pack("NNCCCCC", 1, 1, 8, 2, 0, 0, 0);
+  $scanline = "\x00" . chr($r) . chr($g) . chr($b);
+  $idatData = gzcompress($scanline, 9);
+  $chunk = static function (string $type, string $data): string {
+      $len = pack("N", strlen($data));
+      $crc = pack("N", crc32($type . $data));
+      return $len . $type . $data . $crc;
+  };
+  $png = $signature
+      . $chunk("IHDR", $ihdrData)
+      . $chunk("IDAT", $idatData)
+      . $chunk("IEND", "");
+  file_put_contents($out, $png);
+' "$STICKER_FILE"
 
 code=$(curl -sS -o "$RESP_UPLOAD_STICKER" -w "%{http_code}" -c "$COOKIE_A" -b "$COOKIE_A" \
   -X POST "${BASE_URL}/api/messages/stickers/upload.php" \

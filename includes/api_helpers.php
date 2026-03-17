@@ -198,3 +198,58 @@ function apiGetTableColumns(PDO $pdo, string $tableName): array
     $cache[$safeTableName] = $columns;
     return $columns;
 }
+
+function apiGetUsernameByUserId(PDO $pdo, int $userId): string
+{
+    if ($userId <= 0) {
+        return '';
+    }
+
+    $stmt = $pdo->prepare('SELECT username FROM users WHERE id = ? LIMIT 1');
+    $stmt->execute([$userId]);
+    $username = $stmt->fetchColumn();
+    return is_string($username) ? trim($username) : '';
+}
+
+function apiIsAdminUser(PDO $pdo, int $userId): bool
+{
+    if ($userId <= 0) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
+    $stmt->execute([$userId]);
+    return (bool) $stmt->fetchColumn();
+}
+
+function apiRequireAdminUser(PDO $pdo, int $userId): void
+{
+    if (!apiIsAdminUser($pdo, $userId)) {
+        apiError('FORBIDDEN', 'Admin privileges required', 403);
+    }
+}
+
+function apiGetConfiguredSuperuserUsername(): string
+{
+    $configured = trim((string) ($_ENV['SUPERUSER_USERNAME'] ?? 'paya'));
+    return $configured;
+}
+
+function apiIsSuperuserUsername(string $username): bool
+{
+    $configured = apiGetConfiguredSuperuserUsername();
+    if ($configured === '') {
+        return false;
+    }
+
+    return strcasecmp(trim($username), $configured) === 0;
+}
+
+function apiRequireSuperuserAdmin(PDO $pdo, int $userId): void
+{
+    apiRequireAdminUser($pdo, $userId);
+    $username = apiGetUsernameByUserId($pdo, $userId);
+    if (!apiIsSuperuserUsername($username)) {
+        apiError('FORBIDDEN', 'Superuser privileges required', 403);
+    }
+}

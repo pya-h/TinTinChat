@@ -12,6 +12,8 @@ $username = $_SESSION['username'];
 $user_id = $_SESSION['user_id'];
 $user_ident = isset($_SESSION['ident']) ? $_SESSION['ident'] : null;
 $is_admin = false;
+$superuser_username = trim((string) ($_ENV['SUPERUSER_USERNAME'] ?? 'paya'));
+$is_superuser = false;
 
 try {
     $adminStmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
@@ -19,6 +21,10 @@ try {
     $is_admin = (bool) $adminStmt->fetchColumn();
 } catch (Throwable $ex) {
     $is_admin = false;
+}
+
+if ($is_admin && $superuser_username !== '') {
+    $is_superuser = strcasecmp((string) $username, $superuser_username) === 0;
 }
 
 $csrfToken = generateCsrfToken();
@@ -68,14 +74,6 @@ $csrfToken = generateCsrfToken();
                     <div id="searchSuggestions" class="search-suggestions" style="display: none;" role="listbox" aria-label="User suggestions"></div>
                 </div>
                 <div id='chatListWrapper' class="chat-list-wrapper">
-                    <?php if ($is_admin): ?>
-                    <div class="admin-actions mb-2">
-                        <button type="button" id="groupKeyHealthBtn" class="btn btn-sm btn-outline-secondary w-100" aria-label="Run group key health check">
-                            <i class="fas fa-shield-alt me-1"></i>Group Key Health Check
-                        </button>
-                    </div>
-                    <?php endif; ?>
-
                     <ul class="chat-list" id="chatList" role="list" aria-label="Chats"></ul>
 
                     <div class="group-actions" aria-hidden="false">
@@ -293,6 +291,9 @@ $csrfToken = generateCsrfToken();
                     <div class="chat-ui-settings-tabs" role="tablist" aria-label="Settings sections">
                         <button type="button" id="chatUiSettingsTabGeneral" class="chat-ui-settings-tab is-active" role="tab" aria-selected="true" aria-controls="chatUiSettingsPanelGeneral">General</button>
                         <button type="button" id="chatUiSettingsTabAccount" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelAccount">Account</button>
+                        <?php if ($is_admin): ?>
+                        <button type="button" id="chatUiSettingsTabAdmin" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelAdmin">Admin</button>
+                        <?php endif; ?>
                     </div>
 
                     <section id="chatUiSettingsPanelGeneral" class="chat-ui-settings-panel" role="tabpanel" aria-labelledby="chatUiSettingsTabGeneral">
@@ -384,6 +385,54 @@ $csrfToken = generateCsrfToken();
                             <button type="submit" class="btn btn-sm btn-primary">Change password</button>
                         </form>
                     </section>
+
+                    <?php if ($is_admin): ?>
+                    <section id="chatUiSettingsPanelAdmin" class="chat-ui-settings-panel" role="tabpanel" aria-labelledby="chatUiSettingsTabAdmin" hidden>
+                        <div class="chat-ui-admin-section">
+                            <div class="chat-ui-admin-row">
+                                <div>
+                                    <div class="chat-ui-account-title">Group key health</div>
+                                    <div class="chat-ui-account-subtitle">Run encryption health checks for your groups.</div>
+                                </div>
+                                <button type="button" id="settingsGroupKeyHealthBtn" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-shield-alt me-1"></i>Run Check
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="chat-ui-admin-section">
+                            <div class="chat-ui-admin-row">
+                                <div>
+                                    <div class="chat-ui-account-title">Stickers</div>
+                                    <div class="chat-ui-account-subtitle">Toggle admin-only visibility for each sticker.</div>
+                                </div>
+                                <button type="button" id="settingsAdminRefreshStickersBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                            </div>
+                            <div id="settingsAdminStickerList" class="chat-ui-admin-list" aria-live="polite">
+                                <div class="chat-ui-admin-empty">Loading stickers...</div>
+                            </div>
+                        </div>
+
+                        <?php if ($is_superuser): ?>
+                        <div class="chat-ui-admin-section">
+                            <div class="chat-ui-admin-row">
+                                <div>
+                                    <div class="chat-ui-account-title">Admin users</div>
+                                    <div class="chat-ui-account-subtitle">Promote or demote admin users.</div>
+                                </div>
+                                <button type="button" id="settingsAdminRefreshUsersBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                            </div>
+                            <div id="settingsAdminUsersList" class="chat-ui-admin-list" aria-live="polite">
+                                <div class="chat-ui-admin-empty">Loading users...</div>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <div class="chat-ui-admin-section">
+                            <div class="chat-ui-admin-empty">Only the configured superuser can manage admin roles.</div>
+                        </div>
+                        <?php endif; ?>
+                    </section>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -505,6 +554,7 @@ $csrfToken = generateCsrfToken();
         const CSRF_TOKEN = <?= json_encode($csrfToken) ?>;
         const APP_CONSTANTS = <?= json_encode(tintinchatFrontendConstants()) ?>;
         const CURRENT_USER_IS_ADMIN = <?= json_encode($is_admin) ?>;
+        const CURRENT_USER_IS_SUPERUSER = <?= json_encode($is_superuser) ?>;
         const PWA_SW_VERSION = <?= json_encode((string) @filemtime(__DIR__ . '/service-worker.js')) ?>;
         const currentUserIdent = <?= json_encode($user_ident) ?>;
         if(currentUserIdent?.length) {

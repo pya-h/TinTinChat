@@ -62,8 +62,15 @@ const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
 const chatUiSettingsTabGeneral = document.getElementById("chatUiSettingsTabGeneral");
 const chatUiSettingsTabAccount = document.getElementById("chatUiSettingsTabAccount");
+const chatUiSettingsTabAdmin = document.getElementById("chatUiSettingsTabAdmin");
 const chatUiSettingsPanelGeneral = document.getElementById("chatUiSettingsPanelGeneral");
 const chatUiSettingsPanelAccount = document.getElementById("chatUiSettingsPanelAccount");
+const chatUiSettingsPanelAdmin = document.getElementById("chatUiSettingsPanelAdmin");
+const settingsGroupKeyHealthBtn = document.getElementById("settingsGroupKeyHealthBtn");
+const settingsAdminRefreshStickersBtn = document.getElementById("settingsAdminRefreshStickersBtn");
+const settingsAdminStickerList = document.getElementById("settingsAdminStickerList");
+const settingsAdminRefreshUsersBtn = document.getElementById("settingsAdminRefreshUsersBtn");
+const settingsAdminUsersList = document.getElementById("settingsAdminUsersList");
 const openConversationSearchBtn = document.getElementById("openConversationSearchBtn");
 const openAvatarUploadBtn = document.getElementById("openAvatarUploadBtn");
 const settingsAvatarUploadBtn = document.getElementById("settingsAvatarUploadBtn");
@@ -270,6 +277,8 @@ let isRefreshLoopBusy = false;
 let isSeenLoopBusy = false;
 let pendingClipboardImageFile = null;
 let isChatInputFocused = false;
+let adminStickerSettings = [];
+let adminUsersList = [];
 
 const chatUserIdsByUsername = new Map();
 
@@ -1169,8 +1178,16 @@ function applyUiPreferenceClasses() {
 }
 
 function applySettingsTabUi(tabName = "general") {
-    const normalizedTab = tabName === "account" ? "account" : "general";
+    let normalizedTab = "general";
+    if (tabName === "account") {
+        normalizedTab = "account";
+    } else if (tabName === "admin" && chatUiSettingsTabAdmin && chatUiSettingsPanelAdmin) {
+        normalizedTab = "admin";
+    }
+
     const isGeneral = normalizedTab === "general";
+    const isAccount = normalizedTab === "account";
+    const isAdmin = normalizedTab === "admin";
     activeSettingsTab = normalizedTab;
 
     chatUiSettingsTabGeneral?.classList.toggle("is-active", isGeneral);
@@ -1179,10 +1196,16 @@ function applySettingsTabUi(tabName = "general") {
         chatUiSettingsPanelGeneral.hidden = !isGeneral;
     }
 
-    chatUiSettingsTabAccount?.classList.toggle("is-active", !isGeneral);
-    chatUiSettingsTabAccount?.setAttribute("aria-selected", !isGeneral ? "true" : "false");
+    chatUiSettingsTabAccount?.classList.toggle("is-active", isAccount);
+    chatUiSettingsTabAccount?.setAttribute("aria-selected", isAccount ? "true" : "false");
     if (chatUiSettingsPanelAccount) {
-        chatUiSettingsPanelAccount.hidden = isGeneral;
+        chatUiSettingsPanelAccount.hidden = !isAccount;
+    }
+
+    chatUiSettingsTabAdmin?.classList.toggle("is-active", isAdmin);
+    chatUiSettingsTabAdmin?.setAttribute("aria-selected", isAdmin ? "true" : "false");
+    if (chatUiSettingsPanelAdmin) {
+        chatUiSettingsPanelAdmin.hidden = !isAdmin;
     }
 }
 
@@ -1211,8 +1234,13 @@ function openUiSettingsModal() {
     requestAnimationFrame(() => {
         chatUiSettingsOverlay.classList.add("visible");
         applySettingsTabUi(activeSettingsTab);
+        if (activeSettingsTab === "admin") {
+            void refreshAdminSettingsData();
+        }
         if (activeSettingsTab === "account") {
             settingsUsernameInput?.focus();
+        } else if (activeSettingsTab === "admin") {
+            settingsGroupKeyHealthBtn?.focus();
         } else {
             settingThemeMode?.focus();
         }
@@ -2410,6 +2438,179 @@ function applySettingsUi() {
     updateMessageActionsHintVisibility();
 }
 
+function renderAdminStickerSettings() {
+    if (!settingsAdminStickerList) {
+        return;
+    }
+
+    settingsAdminStickerList.innerHTML = "";
+    if (!Array.isArray(adminStickerSettings) || !adminStickerSettings.length) {
+        settingsAdminStickerList.innerHTML =
+            '<div class="chat-ui-admin-empty">No stickers available.</div>';
+        return;
+    }
+
+    adminStickerSettings.forEach((sticker) => {
+        const row = document.createElement("label");
+        row.className = "chat-ui-admin-item";
+        row.innerHTML = `
+            <span class="chat-ui-admin-item-preview-wrap">
+                <img class="chat-ui-admin-item-preview" src="${escapeHtml(String(sticker.url || ""))}" alt="Sticker ${Number(sticker.id || 0)}">
+            </span>
+            <span class="chat-ui-admin-item-meta">
+                <span class="chat-ui-admin-item-title">Sticker #${Number(sticker.id || 0)}</span>
+                <span class="chat-ui-admin-item-subtitle">Uploaded by ${escapeHtml(String(sticker.uploaded_by_username || "Unknown"))}</span>
+            </span>
+            <span class="chat-ui-admin-item-toggle">
+                <input type="checkbox" ${sticker.is_admin_only ? "checked" : ""} data-sticker-id="${Number(sticker.id || 0)}">
+                <span>Admin-only</span>
+            </span>
+        `;
+
+        const toggle = row.querySelector('input[type="checkbox"]');
+        toggle?.addEventListener("change", async (event) => {
+            const target = event.target;
+            const stickerId = Number(target?.dataset?.stickerId || 0);
+            if (!stickerId) {
+                return;
+            }
+            target.disabled = true;
+            try {
+                const response = await window.ApiService.jsonOk("api/admin/stickers/toggle_admin_only.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({
+                        sticker_id: stickerId,
+                        is_admin_only: Boolean(target.checked),
+                    }),
+                });
+                const newValue = Boolean(response?.is_admin_only);
+                adminStickerSettings = adminStickerSettings.map((item) =>
+                    Number(item.id) === stickerId ? { ...item, is_admin_only: newValue } : item
+                );
+                target.checked = newValue;
+                setComposerStatus("Sticker visibility updated", "success");
+            } catch (error) {
+                target.checked = !target.checked;
+                showModal("Sticker Update Failed", error?.message || "Unable to update sticker visibility.", "error");
+                setComposerStatus("Unable to update sticker visibility", "error");
+            } finally {
+                target.disabled = false;
+            }
+        });
+
+        settingsAdminStickerList.appendChild(row);
+    });
+}
+
+async function loadAdminStickerSettings() {
+    if (!CURRENT_USER_IS_ADMIN || !settingsAdminStickerList) {
+        return;
+    }
+
+    settingsAdminStickerList.innerHTML = '<div class="chat-ui-admin-empty">Loading stickers...</div>';
+    try {
+        const response = await window.ApiService.jsonOk("api/admin/stickers/fetch.php?limit=300");
+        adminStickerSettings = Array.isArray(response?.stickers) ? response.stickers : [];
+        renderAdminStickerSettings();
+    } catch (error) {
+        settingsAdminStickerList.innerHTML = `<div class="chat-ui-admin-empty">${escapeHtml(String(error?.message || "Unable to load stickers."))}</div>`;
+    }
+}
+
+function renderAdminUsersSettings() {
+    if (!settingsAdminUsersList) {
+        return;
+    }
+
+    settingsAdminUsersList.innerHTML = "";
+    if (!Array.isArray(adminUsersList) || !adminUsersList.length) {
+        settingsAdminUsersList.innerHTML = '<div class="chat-ui-admin-empty">No users available.</div>';
+        return;
+    }
+
+    adminUsersList.forEach((user) => {
+        const row = document.createElement("label");
+        row.className = "chat-ui-admin-item";
+        row.innerHTML = `
+            <span class="chat-ui-admin-item-meta">
+                <span class="chat-ui-admin-item-title">${escapeHtml(String(user.username || "Unknown"))}${user.is_superuser ? " (superuser)" : ""}</span>
+                <span class="chat-ui-admin-item-subtitle">${user.last_login ? `Last login: ${escapeHtml(String(user.last_login))}` : "No login data"}</span>
+            </span>
+            <span class="chat-ui-admin-item-toggle">
+                <input type="checkbox" ${user.is_admin ? "checked" : ""} ${user.can_edit ? "" : "disabled"} data-user-id="${Number(user.id || 0)}">
+                <span>Admin</span>
+            </span>
+        `;
+
+        const toggle = row.querySelector('input[type="checkbox"]');
+        toggle?.addEventListener("change", async (event) => {
+            const target = event.target;
+            const targetUserId = Number(target?.dataset?.userId || 0);
+            if (!targetUserId) {
+                return;
+            }
+            target.disabled = true;
+            try {
+                const response = await window.ApiService.jsonOk("api/admin/users/set_admin.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({
+                        user_id: targetUserId,
+                        is_admin: Boolean(target.checked),
+                    }),
+                });
+                const newValue = Boolean(response?.is_admin);
+                adminUsersList = adminUsersList.map((item) =>
+                    Number(item.id) === targetUserId ? { ...item, is_admin: newValue } : item
+                );
+                target.checked = newValue;
+                setComposerStatus("Admin role updated", "success");
+            } catch (error) {
+                target.checked = !target.checked;
+                showModal("Role Update Failed", error?.message || "Unable to update admin role.", "error");
+                setComposerStatus("Unable to update admin role", "error");
+            } finally {
+                target.disabled = !user.can_edit;
+            }
+        });
+
+        settingsAdminUsersList.appendChild(row);
+    });
+}
+
+async function loadAdminUsersSettings() {
+    if (!CURRENT_USER_IS_SUPERUSER || !settingsAdminUsersList) {
+        return;
+    }
+
+    settingsAdminUsersList.innerHTML = '<div class="chat-ui-admin-empty">Loading users...</div>';
+    try {
+        const response = await window.ApiService.jsonOk("api/admin/users/list.php");
+        adminUsersList = Array.isArray(response?.users) ? response.users : [];
+        renderAdminUsersSettings();
+    } catch (error) {
+        settingsAdminUsersList.innerHTML = `<div class="chat-ui-admin-empty">${escapeHtml(String(error?.message || "Unable to load users."))}</div>`;
+    }
+}
+
+async function refreshAdminSettingsData() {
+    if (!CURRENT_USER_IS_ADMIN) {
+        return;
+    }
+
+    await loadAdminStickerSettings();
+    if (CURRENT_USER_IS_SUPERUSER) {
+        await loadAdminUsersSettings();
+    }
+}
+
 function toggleSettingsPanel(forceState = null) {
     if (!settingsPanel || !settingsButton) {
         return;
@@ -2568,6 +2769,23 @@ function bindSettingsUiEvents() {
 
     chatUiSettingsTabAccount?.addEventListener("click", () => {
         applySettingsTabUi("account");
+    });
+
+    chatUiSettingsTabAdmin?.addEventListener("click", async () => {
+        applySettingsTabUi("admin");
+        await refreshAdminSettingsData();
+    });
+
+    settingsGroupKeyHealthBtn?.addEventListener("click", async () => {
+        await runGroupKeyHealthCheck();
+    });
+
+    settingsAdminRefreshStickersBtn?.addEventListener("click", async () => {
+        await loadAdminStickerSettings();
+    });
+
+    settingsAdminRefreshUsersBtn?.addEventListener("click", async () => {
+        await loadAdminUsersSettings();
     });
 
     settingsUsernameForm?.addEventListener("submit", async (event) => {
@@ -5082,6 +5300,15 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
         }
 
         const previousScrollHeight = chatMessagesElem.scrollHeight;
+        let anchorMessageId = 0;
+        let anchorOffsetTop = 0;
+        if (!isInitialLoad) {
+            const firstMessageElement = chatMessagesElem.querySelector(".message[data-message-id]");
+            if (firstMessageElement) {
+                anchorMessageId = Number(firstMessageElement.getAttribute("data-message-id") || 0);
+                anchorOffsetTop = firstMessageElement.getBoundingClientRect().top;
+            }
+        }
 
         if (isInitialLoad) {
             for (const msg of data.messages) {
@@ -5102,7 +5329,20 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             for (let i = data.messages.length - 1; i >= 0; i--) {
                 await addMessageToChat(data.messages[i], true);
             }
-            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight - previousScrollHeight;
+            if (anchorMessageId > 0) {
+                const sameMessageAfterPrepend = chatMessagesElem.querySelector(
+                    `.message[data-message-id="${anchorMessageId}"]`
+                );
+                if (sameMessageAfterPrepend) {
+                    const newAnchorOffsetTop = sameMessageAfterPrepend.getBoundingClientRect().top;
+                    const delta = newAnchorOffsetTop - anchorOffsetTop;
+                    chatMessagesElem.scrollTop += delta;
+                } else {
+                    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight - previousScrollHeight;
+                }
+            } else {
+                chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight - previousScrollHeight;
+            }
             hasLoadedMoreMessages = true;
             updateGoToLatestButton();
         }
@@ -5223,7 +5463,8 @@ function generateWaveformBars() {
     const barCount = 30;
     for (let i = 0; i < barCount; i++) {
         const height = Math.random() * 60 + 15;
-        bars.push(`<div class="waveform-bar" style="height: ${height}%"></div>`);
+        const normalizedHeight = Math.max(14, Math.round(height));
+        bars.push(`<div class="waveform-bar" data-base-height="${normalizedHeight}" style="height: ${normalizedHeight}%"></div>`);
     }
     return bars.join("");
 }
@@ -6462,6 +6703,7 @@ window.playVoiceMessage = async function (messageId) {
 
     const playBtn = messageDiv.querySelector(".voice-play-btn");
     const durationDisplay = messageDiv.querySelector(".voice-duration-display");
+    const voiceContainer = messageDiv.querySelector(".voice-player-container");
 
     let audio = messageDiv.querySelector("audio");
     if (!audio) {
@@ -6531,6 +6773,7 @@ window.playVoiceMessage = async function (messageId) {
         audio.addEventListener("ended", function () {
             playBtn.innerHTML = `<i class="fas fa-play"></i>`;
             playBtn.classList.remove("playing");
+            voiceContainer?.classList.remove("is-playing");
 
             messageDiv
                 .querySelectorAll(".waveform-bar")
@@ -6557,7 +6800,8 @@ window.playVoiceMessage = async function (messageId) {
 
             const bars = waveformBarsContainer.children;
             for (let i = 0; i < bars.length; i++) {
-                bars[i].style.height = `20%`;
+                const baseHeight = Number(bars[i].dataset?.baseHeight || 20);
+                bars[i].style.height = `${Math.max(10, baseHeight)}%`;
             }
 
             return;
@@ -6579,11 +6823,13 @@ window.playVoiceMessage = async function (messageId) {
 
     if (audio.paused) {
         document.querySelectorAll(".voice-play-btn.playing").forEach((btn) => {
-            const audio = btn.closest(".voice-player-container").querySelector("audio");
-            if (audio && !audio.paused) {
-                audio.pause();
+            const otherContainer = btn.closest(".voice-player-container");
+            const otherAudio = otherContainer?.querySelector("audio");
+            if (otherAudio && !otherAudio.paused) {
+                otherAudio.pause();
             }
             btn.classList.remove("playing");
+            otherContainer?.classList.remove("is-playing");
             const i = btn.querySelector("i");
             i.classList.remove("fa-pause");
             i.classList.add("fa-play");
@@ -6597,11 +6843,13 @@ window.playVoiceMessage = async function (messageId) {
             showModal(I18N_TEXT.playbackErrorTitle, I18N_TEXT.playbackErrorBody, "error");
         });
         playBtn.classList.add("playing");
+        voiceContainer?.classList.add("is-playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
         draw();
     } else {
         audio.pause();
         playBtn.classList.remove("playing");
+        voiceContainer?.classList.remove("is-playing");
         playBtn.innerHTML = `<i class="fas fa-play"></i>`;
     }
 };
