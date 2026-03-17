@@ -3021,6 +3021,65 @@ function showMessageCopiedFeedback() {
     showModal(I18N_TEXT.copiedTitle, I18N_TEXT.copiedBody, "success");
 }
 
+function showTransientSuccessToast(message) {
+    const toastMessage = String(message || "").trim();
+    if (!toastMessage) {
+        return;
+    }
+    if (window.UIEnhancements?.showNotification) {
+        window.UIEnhancements.showNotification(toastMessage, "success", 1400);
+        return;
+    }
+    if (window.UIEnhancements?.showSearchNotification) {
+        window.UIEnhancements.showSearchNotification(toastMessage, "success");
+        return;
+    }
+    setComposerStatus(toastMessage, "success");
+    setTimeout(() => {
+        setComposerStatus("");
+    }, 1400);
+}
+
+async function convertBlobToPng(blob) {
+    if (!(blob instanceof Blob)) {
+        throw new Error("Invalid image blob.");
+    }
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+        const imageElement = new Image();
+        const loaded = await new Promise((resolve, reject) => {
+            imageElement.onload = () => resolve(true);
+            imageElement.onerror = () => reject(new Error("Unable to decode image."));
+            imageElement.src = objectUrl;
+        });
+        if (!loaded) {
+            throw new Error("Unable to decode image.");
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Number(imageElement.naturalWidth || imageElement.width || 0));
+        canvas.height = Math.max(1, Number(imageElement.naturalHeight || imageElement.height || 0));
+        const context = canvas.getContext("2d");
+        if (!context) {
+            throw new Error("Canvas not available.");
+        }
+        context.drawImage(imageElement, 0, 0);
+
+        const pngBlob = await new Promise((resolve, reject) => {
+            canvas.toBlob((result) => {
+                if (result) {
+                    resolve(result);
+                    return;
+                }
+                reject(new Error("Unable to convert image."));
+            }, "image/png");
+        });
+        return pngBlob;
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
+}
+
 function closeMessageContextMenu() {
     document.getElementById("messageContextMenu")?.remove();
     suppressNextContextMenuTapUntil = 0;
@@ -3339,24 +3398,42 @@ async function copyImageMessageToClipboard(messageElement, messageData = null) {
     }
 
     try {
-        const imageElement = messageElement?.querySelector(".message-image");
-        if (imageElement && imageElement.getAttribute("data-ready") !== "1" && messageData) {
-            await hydrateImageMessageElement(messageElement, messageData);
+        let imageBlob = null;
+        if (messageData?.id) {
+            try {
+                const mediaResource = await getDecryptedMediaResource(messageData);
+                if (mediaResource?.blob instanceof Blob) {
+                    imageBlob = mediaResource.blob;
+                }
+            } catch (error) {}
         }
 
-        const imageSource = String(messageElement?.querySelector(".message-image")?.src || "").trim();
-        if (!imageSource) {
-            showModal("Copy Failed", "Image is not available yet. Try again in a moment.", "warning");
-            return;
+        if (!imageBlob) {
+            const imageElement = messageElement?.querySelector(".message-image");
+            if (imageElement && imageElement.getAttribute("data-ready") !== "1" && messageData) {
+                await hydrateImageMessageElement(messageElement, messageData);
+            }
+
+            const imageSource = String(messageElement?.querySelector(".message-image")?.src || "").trim();
+            if (!imageSource) {
+                showModal("Copy Failed", "Image is not available yet. Try again in a moment.", "warning");
+                return;
+            }
+
+            const response = await fetch(imageSource);
+            imageBlob = await response.blob();
         }
 
-        const response = await fetch(imageSource);
-        const imageBlob = await response.blob();
         const mimeType = String(imageBlob?.type || "image/png") || "image/png";
-        await navigator.clipboard.write([new ClipboardItem({ [mimeType]: imageBlob })]);
-        showModal("Copied", "Image copied to clipboard.", "success");
+        try {
+            await navigator.clipboard.write([new ClipboardItem({ [mimeType]: imageBlob })]);
+        } catch (error) {
+            const pngBlob = await convertBlobToPng(imageBlob);
+            await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
+        }
+        showTransientSuccessToast("Image copied to clipboard.");
     } catch (error) {
-        showModal("Copy Failed", "Unable to copy image to clipboard.", "error");
+        showModal("Copy Failed", "Unable to copy image.", "error");
     }
 }
 
@@ -3873,9 +3950,20 @@ async function bulkCopySelectedMessages() {
     }
 
     const copiedTextLines = selectedElements
-        .map((messageElement) => getMessageTextForCopy(messageElement))
-        .map((text) => String(text || "").trim())
-        .filter((text) => text.length > 0);
+        .map((messageElement) => {
+            const messageText = String(getMessageTextForCopy(messageElement) || "")
+                .replace(/\s*\n+\s*/g, " ")
+                .trim();
+            if (!messageText) {
+                return "";
+            }
+            const senderUsername = String(messageElement.getAttribute("data-sender-username") || "").trim();
+            const senderLabel = senderUsername || (messageElement.classList.contains("sent")
+                ? String(CURRENT_USER || "You")
+                : String(getCurrentChatDisplayName() || "User"));
+            return `${senderLabel}: ${messageText}`;
+        })
+        .filter((line) => line.length > 0);
 
     if (!copiedTextLines.length) {
         showModal("Copy Failed", "Only selected text messages can be copied.", "warning");
@@ -3897,7 +3985,7 @@ async function bulkCopySelectedMessages() {
             document.execCommand("copy");
             helper.remove();
         }
-        showModal("Copied", `Copied ${copiedTextLines.length} selected message(s).`, "success");
+        showTransientSuccessToast(`Copied ${copiedTextLines.length} selected message(s).`);
     } catch (error) {
         showModal("Copy Failed", "Unable to copy selected messages.", "error");
     }
@@ -7693,7 +7781,7 @@ groupCopyJoinLinkBtn?.addEventListener("click", async () => {
     try {
         await navigator.clipboard.writeText(link);
         setComposerStatus("Join link copied", "success");
-        showModal("Copied", "Join link copied to clipboard.", "success");
+        showTransientSuccessToast("Join link copied to clipboard.");
     } catch (error) {
         setComposerStatus("Unable to copy join link", "warning");
         showModal("Copy Failed", "Unable to copy join link.", "warning");

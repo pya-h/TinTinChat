@@ -214,8 +214,7 @@ $csrfToken = generateCsrfToken();
                         </div>
                         <textarea id="chatInput" class="form-control" placeholder="Type a message..." rows="1" aria-label="Message input"></textarea>
                         <button type="button" id="pasteClipboardImageBtn" class="btn btn-secondary" title="Paste image from clipboard" aria-label="Paste image from clipboard" hidden>
-                            <i class="fas fa-clipboard"></i>
-                            <span>Paste</span>
+                            <i class="fas fa-paste"></i>
                         </button>
                         
                         <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
