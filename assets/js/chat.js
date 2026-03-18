@@ -5601,11 +5601,11 @@ window.forceFetchCurrentChatMessages = forceFetchCurrentChatMessages;
 
 function generateWaveformBars() {
     const bars = [];
-    const barCount = 30;
+    const barCount = 45;
     for (let i = 0; i < barCount; i++) {
-        const height = Math.random() * 60 + 15;
-        const normalizedHeight = Math.max(14, Math.round(height));
-        bars.push(`<div class="waveform-bar" data-base-height="${normalizedHeight}" style="height: ${normalizedHeight}%"></div>`);
+        const height = Math.random() * 65 + 12;
+        const normalizedHeight = Math.max(10, Math.round(height));
+        bars.push(`<div class="waveform-bar" data-bar-index="${i}" data-base-height="${normalizedHeight}" style="height: ${normalizedHeight}%"></div>`);
     }
     return bars.join("");
 }
@@ -5629,6 +5629,15 @@ function addLoadMoreButton() {
 
 async function loadMoreMessages() {
     if (!currentChatUser || isLoadingMessages || !hasMoreMessages) return;
+
+    // When scrollTop is exactly 0, the browser forcibly keeps the viewport at the
+    // very top after new DOM nodes are prepended, which causes a jarring jump.
+    // Nudging scrollTop to 1px lets the browser preserve the user's viewport
+    // position naturally, so the anchor-based correction in loadMessages works
+    // perfectly without any visible flicker.
+    if (chatMessagesElem.scrollTop === 0) {
+        chatMessagesElem.scrollTop = 1;
+    }
 
     const loadMoreBtn = document.getElementById("loadMoreBtn");
     if (loadMoreBtn) {
@@ -6930,6 +6939,26 @@ window.playVoiceMessage = async function (messageId) {
             playBtn.disabled = true;
             playBtn.style.opacity = "0.5";
         });
+
+        // Waveform seek: clicking on bars seeks audio to that position
+        const waveformBarsEl = messageDiv.querySelector(".waveform-bars");
+        if (waveformBarsEl) {
+            waveformBarsEl.addEventListener("click", function (e) {
+                if (!audio || !isFinite(audio.duration)) return;
+                const rect = waveformBarsEl.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+                audio.currentTime = ratio * audio.duration;
+
+                // Immediately update played bars
+                const bars = waveformBarsEl.querySelectorAll(".waveform-bar");
+                const playedCount = Math.floor(ratio * bars.length);
+                bars.forEach((bar, idx) => {
+                    if (idx < playedCount) bar.classList.add("played");
+                    else bar.classList.remove("played");
+                });
+            });
+        }
     }
 
     const { analyser, dataArray } = messageDiv.audioAnalyser;
