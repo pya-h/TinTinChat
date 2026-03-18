@@ -37,6 +37,10 @@ $stmt = $pdo->prepare('
 $stmt->execute([$userId]);
 $ideas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Determine if current user is superuser
+$currentUsername = apiGetUsernameByUserId($pdo, $userId);
+$isSuperuser = apiIsSuperuserUsername($currentUsername);
+
 foreach ($ideas as &$idea) {
     $idea['id']       = (int) $idea['id'];
     $idea['user_id']  = (int) $idea['user_id'];
@@ -44,6 +48,11 @@ foreach ($ideas as &$idea) {
     $idea['dislikes'] = (int) $idea['dislikes'];
     $idea['my_vote']  = $idea['my_vote'] !== null ? (int) $idea['my_vote'] : null;
     $idea['is_own']   = $idea['user_id'] === $userId;
+    // Only superuser can see who posted each idea
+    if (!$isSuperuser && !$idea['is_own']) {
+        unset($idea['username']);
+        unset($idea['user_id']);
+    }
 }
 unset($idea);
 

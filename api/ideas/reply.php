@@ -7,11 +7,10 @@ apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
 
-// Check admin
-$adminStmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
-$adminStmt->execute([$userId]);
-if (!(bool) $adminStmt->fetchColumn()) {
-    apiError('FORBIDDEN', 'Only admins can reply to ideas.', 403);
+// Only superuser can reply to ideas
+$username = apiGetUsernameByUserId($pdo, $userId);
+if (!apiIsSuperuserUsername($username)) {
+    apiError('FORBIDDEN', 'Only the superuser can reply to ideas.', 403);
 }
 
 $input  = apiGetJsonBody();

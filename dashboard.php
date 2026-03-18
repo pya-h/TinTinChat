@@ -13,7 +13,7 @@ $user_id = $_SESSION['user_id'];
 $user_ident = isset($_SESSION['ident']) ? $_SESSION['ident'] : null;
 $is_admin = false;
 $superuser_username = trim((string) ($_ENV['SUPERUSER_USERNAME'] ?? 'paya'));
-$is_superuser = false;
+$is_superuser = ($superuser_username !== '' && strcasecmp((string) $username, $superuser_username) === 0);
 
 try {
     $adminStmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
@@ -21,10 +21,6 @@ try {
     $is_admin = (bool) $adminStmt->fetchColumn();
 } catch (Throwable $ex) {
     $is_admin = false;
-}
-
-if ($is_admin && $superuser_username !== '') {
-    $is_superuser = strcasecmp((string) $username, $superuser_username) === 0;
 }
 
 $csrfToken = generateCsrfToken();
@@ -431,7 +427,7 @@ $csrfToken = generateCsrfToken();
                             Here you can write Ideas/Problems related to this app; Not that I care or give a fuck, I just like giving false hope to people.
                         </div>
 
-                        <?php if (!$is_admin): ?>
+                        <?php if (!$is_superuser): ?>
                         <form id="ideasSubmitForm" class="ideas-compose">
                             <textarea id="ideasBodyInput" class="form-control" rows="3" maxlength="2000" placeholder="Describe your idea, feature request, or bug report..."></textarea>
                             <button type="submit" class="btn btn-sm btn-primary ideas-submit-btn">
@@ -493,7 +489,7 @@ $csrfToken = generateCsrfToken();
                         </div>
                         <?php else: ?>
                         <div class="chat-ui-admin-section">
-                            <div class="chat-ui-admin-empty">Only the configured superuser can manage admin roles.</div>
+                            <div class="chat-ui-admin-empty">Only the developer can manage admin roles.</div>
                         </div>
                         <?php endif; ?>
                     </section>

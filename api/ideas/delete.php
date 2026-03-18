@@ -13,7 +13,7 @@ if ($ideaId <= 0) {
     apiError('INVALID_IDEA', 'Invalid idea ID.', 400);
 }
 
-// Owner or admin can delete
+// Owner or superuser can delete
 $ideaStmt = $pdo->prepare('SELECT user_id FROM ideas WHERE id = ? LIMIT 1');
 $ideaStmt->execute([$ideaId]);
 $ideaOwnerId = $ideaStmt->fetchColumn();
@@ -23,12 +23,10 @@ if ($ideaOwnerId === false) {
 }
 
 $isOwner = (int) $ideaOwnerId === $userId;
+$username = apiGetUsernameByUserId($pdo, $userId);
+$isSuperuser = apiIsSuperuserUsername($username);
 
-$adminStmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
-$adminStmt->execute([$userId]);
-$isAdmin = (bool) $adminStmt->fetchColumn();
-
-if (!$isOwner && !$isAdmin) {
+if (!$isOwner && !$isSuperuser) {
     apiError('FORBIDDEN', 'You can only delete your own ideas.', 403);
 }
 

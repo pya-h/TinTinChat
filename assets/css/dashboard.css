@@ -6149,75 +6149,121 @@ textarea,
     font-style: italic;
     color: var(--muted-color, #888);
     font-size: 0.82rem;
-    padding: 0.6rem 0.8rem 0.4rem;
-    line-height: 1.45;
-    border-left: 3px solid color-mix(in srgb, var(--primary-color, #0d6efd) 45%, transparent);
-    margin-bottom: 0.9rem;
-    background: color-mix(in srgb, var(--primary-color, #0d6efd) 5%, transparent);
-    border-radius: 0 0.45rem 0.45rem 0;
+    padding: 0.65rem 0.9rem;
+    line-height: 1.5;
+    border-left: 3px solid color-mix(in srgb, var(--primary-color, #0d6efd) 50%, transparent);
+    margin-bottom: 1rem;
+    background: color-mix(in srgb, var(--primary-color, #0d6efd) 4%, transparent);
+    border-radius: 0 0.5rem 0.5rem 0;
 }
 
 .ideas-compose {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    padding: 0 0.2rem;
+    gap: 0.55rem;
+    margin-bottom: 1.1rem;
+    padding: 0.7rem 0.8rem;
+    background: var(--surface-color, #f8f9fa);
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 0.7rem;
 }
 
 .ideas-compose textarea {
     resize: vertical;
-    min-height: 60px;
+    min-height: 56px;
     max-height: 160px;
-    font-size: 0.88rem;
-    border-radius: 0.55rem;
+    font-size: 0.86rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color, #dee2e6);
+    background: var(--card-bg, #fff);
+    padding: 0.55rem 0.7rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ideas-compose textarea:focus {
+    border-color: var(--primary-color, #0d6efd);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color, #0d6efd) 12%, transparent);
+    outline: none;
 }
 
 .ideas-submit-btn {
     align-self: flex-end;
+    border-radius: 999px;
+    padding: 0.3rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ideas-submit-btn:active {
+    transform: scale(0.97);
 }
 
 .ideas-list {
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
-    padding: 0 0.1rem;
+    gap: 0.55rem;
 }
 
 .idea-card {
     background: var(--card-bg, #fff);
     border: 1px solid var(--border-color, #dee2e6);
-    border-radius: 0.65rem;
-    padding: 0.7rem 0.85rem;
-    transition: box-shadow 0.18s ease;
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.9rem 0.65rem;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
 }
 
 .idea-card:hover {
-    box-shadow: 0 2px 10px color-mix(in srgb, var(--text-color, #000) 8%, transparent);
+    box-shadow: 0 3px 14px color-mix(in srgb, var(--text-color, #000) 7%, transparent);
+    border-color: color-mix(in srgb, var(--primary-color, #0d6efd) 25%, var(--border-color, #dee2e6));
 }
 
 .idea-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.3rem;
+    gap: 0.5rem;
 }
 
 .idea-card-author {
     font-weight: 600;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
+    color: var(--muted-color, #888);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.idea-card-author::before {
+    content: "\f007"; /* fa-user */
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif;
+    font-weight: 900;
+    font-size: 0.62rem;
+    opacity: 0.55;
+}
+
+.idea-card-author.is-own {
     color: var(--primary-color, #0d6efd);
 }
 
+.idea-card-author.is-own::before {
+    content: "\f2bd"; /* fa-user-circle */
+    opacity: 0.8;
+}
+
 .idea-card-date {
-    font-size: 0.72rem;
-    color: var(--muted-color, #888);
+    font-size: 0.68rem;
+    color: var(--muted-color, #aaa);
+    white-space: nowrap;
 }
 
 .idea-card-body {
     font-size: 0.88rem;
-    line-height: 1.5;
-    margin-bottom: 0.5rem;
+    line-height: 1.55;
+    margin-bottom: 0.55rem;
     white-space: pre-wrap;
     word-break: break-word;
     color: var(--text-color, #212529);
@@ -6226,54 +6272,82 @@ textarea,
 .idea-card-actions {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
-    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-color, #dee2e6) 60%, transparent);
 }
 
 .idea-vote-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0.55rem;
-    border: 1px solid var(--border-color, #dee2e6);
+    gap: 0.28rem;
+    padding: 0.22rem 0.6rem;
+    border: 1.5px solid var(--border-color, #dee2e6);
     border-radius: 999px;
     background: transparent;
     color: var(--muted-color, #888);
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: all 0.16s ease;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .idea-vote-btn:hover {
     border-color: var(--primary-color, #0d6efd);
     color: var(--primary-color, #0d6efd);
+    background: color-mix(in srgb, var(--primary-color, #0d6efd) 5%, transparent);
+}
+
+.idea-vote-btn:active {
+    transform: scale(0.93);
+}
+
+.idea-vote-btn:disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 .idea-vote-like.active {
-    background: color-mix(in srgb, #28a745 14%, transparent);
+    background: color-mix(in srgb, #28a745 12%, transparent);
     border-color: #28a745;
     color: #28a745;
+    font-weight: 600;
 }
 
 .idea-vote-dislike.active {
-    background: color-mix(in srgb, #dc3545 14%, transparent);
+    background: color-mix(in srgb, #dc3545 12%, transparent);
     border-color: #dc3545;
     color: #dc3545;
+    font-weight: 600;
 }
 
 .idea-vote-count {
     font-weight: 600;
-    min-width: 0.9em;
+    min-width: 0.8em;
     text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
 .idea-score {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    color: var(--muted-color, #888);
-    margin-left: 0.3rem;
-    min-width: 2em;
-    text-align: center;
+    color: var(--muted-color, #999);
+    margin-left: 0.15rem;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--muted-color, #999) 8%, transparent);
+    font-variant-numeric: tabular-nums;
+}
+
+.idea-score.positive {
+    color: #28a745;
+    background: color-mix(in srgb, #28a745 10%, transparent);
+}
+
+.idea-score.negative {
+    color: #dc3545;
+    background: color-mix(in srgb, #dc3545 10%, transparent);
 }
 
 .idea-delete-btn {
@@ -6281,42 +6355,59 @@ textarea,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.7rem;
-    height: 1.7rem;
+    width: 1.65rem;
+    height: 1.65rem;
     border: none;
     border-radius: 50%;
     background: transparent;
-    color: var(--muted-color, #aaa);
-    font-size: 0.72rem;
+    color: var(--muted-color, #bbb);
+    font-size: 0.68rem;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: all 0.16s ease;
+    opacity: 0;
+}
+
+.idea-card:hover .idea-delete-btn {
+    opacity: 1;
+}
+
+/* Always visible on touch devices */
+@media (hover: none) {
+    .idea-delete-btn {
+        opacity: 0.6;
+    }
 }
 
 .idea-delete-btn:hover {
-    background: color-mix(in srgb, #dc3545 14%, transparent);
+    background: color-mix(in srgb, #dc3545 12%, transparent);
     color: #dc3545;
 }
 
 .idea-admin-reply {
-    margin-top: 0.55rem;
-    padding: 0.5rem 0.7rem;
-    background: color-mix(in srgb, var(--primary-color, #0d6efd) 7%, transparent);
-    border-radius: 0.45rem;
+    margin-top: 0.6rem;
+    padding: 0.55rem 0.75rem;
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--primary-color, #0d6efd) 6%, transparent),
+        color-mix(in srgb, var(--primary-color, #0d6efd) 3%, transparent));
+    border-radius: 0.5rem;
     border-left: 3px solid var(--primary-color, #0d6efd);
 }
 
 .idea-admin-reply-label {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
     color: var(--primary-color, #0d6efd);
     margin-bottom: 0.2rem;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
 }
 
 .idea-admin-reply-text {
     font-size: 0.84rem;
-    line-height: 1.45;
+    line-height: 1.5;
     color: var(--text-color, #212529);
     white-space: pre-wrap;
     word-break: break-word;
@@ -6332,10 +6423,20 @@ textarea,
 .idea-reply-input {
     flex: 1;
     font-size: 0.82rem;
+    border-radius: 999px;
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
 }
 
 .idea-reply-submit-btn {
     flex-shrink: 0;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ideas-pagination {
@@ -6343,12 +6444,19 @@ textarea,
     align-items: center;
     justify-content: center;
     gap: 0.7rem;
-    padding: 0.6rem 0;
+    padding: 0.7rem 0 0.3rem;
+}
+
+.ideas-pagination .btn {
+    border-radius: 999px;
+    font-size: 0.78rem;
+    padding: 0.22rem 0.8rem;
 }
 
 .ideas-page-label {
-    font-size: 0.78rem;
-    color: var(--muted-color, #888);
+    font-size: 0.75rem;
+    color: var(--muted-color, #999);
+    font-variant-numeric: tabular-nums;
 }
 
 /* Dark mode overrides for Ideas */
@@ -6358,12 +6466,25 @@ textarea,
 }
 
 :root[data-theme="dark"] .ideas-hint {
-    background: color-mix(in srgb, var(--primary-color, #6ea8fe) 8%, transparent);
-    border-left-color: color-mix(in srgb, var(--primary-color, #6ea8fe) 50%, transparent);
+    background: color-mix(in srgb, var(--primary-color, #6ea8fe) 6%, transparent);
+    border-left-color: color-mix(in srgb, var(--primary-color, #6ea8fe) 45%, transparent);
+}
+
+:root[data-theme="dark"] .ideas-compose {
+    background: color-mix(in srgb, var(--surface-color, #1a1a2e) 90%, transparent);
+    border-color: var(--border-color, #333);
+}
+
+:root[data-theme="dark"] .ideas-compose textarea {
+    background: var(--card-bg, #1e1e2e);
+    border-color: var(--border-color, #444);
+    color: var(--text-color, #e0e0e0);
 }
 
 :root[data-theme="dark"] .idea-admin-reply {
-    background: color-mix(in srgb, var(--primary-color, #6ea8fe) 10%, transparent);
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--primary-color, #6ea8fe) 8%, transparent),
+        color-mix(in srgb, var(--primary-color, #6ea8fe) 4%, transparent));
 }
 
 /* ══════════════════════════════════════════
