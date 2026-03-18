@@ -1,7 +1,7 @@
 # TinTinChat Technical Design
 
-Version: 1.3
-Date: 2026-03-11
+Version: 1.4
+Date: 2026-03-18
 
 ## 1) Overview
 
@@ -18,13 +18,15 @@ The design emphasizes low operational complexity, predictable API contracts, and
   - `api/auth/*`
   - `api/chats/*`
   - `api/groups/*`
+  - `api/ideas/*`
   - `api/keys/*`
   - `api/messages/*`
   - `api/system/*`
   - `api/typing/*`
   - `api/users/*`
+  - `api/admin/*`
 - Shared backend helpers:
-  - `includes/db.php`, `includes/api_helpers.php`, `includes/auth.php`, `includes/group_helpers.php`, `includes/group_crypto_helpers.php`, `includes/constants.php`, etc.
+  - `includes/db.php`, `includes/api_helpers.php`, `includes/auth.php`, `includes/group_helpers.php`, `includes/group_crypto_helpers.php`, `includes/block_helpers.php`, `includes/constants.php`, etc.
 - Frontend:
   - `assets/js/chat.js` (main interaction surface)
   - `assets/js/api-service.js` (request/error normalization)
@@ -42,7 +44,7 @@ The design emphasizes low operational complexity, predictable API contracts, and
 1. Client authenticates via `api/auth/login.php`.
 2. Client loads chat list from `api/chats/fetch.php`.
 3. Client selects target (username or group token) and fetches paginated messages via `api/messages/fetch.php`.
-4. Incremental recent updates poll `api/messages/fetch_recent.php`.
+4. Incremental recent updates poll `api/messages/fetch_recent.php` (also returns typing status inline).
 5. Mutations use organized routes with method/auth/CSRF guards.
 
 ## 3) Data Model (High-level)
@@ -54,6 +56,7 @@ The design emphasizes low operational complexity, predictable API contracts, and
 - `group_members`
 - `group_member_keys`
 - `message_reactions`
+- `ideas`, `idea_votes`, `idea_replies`
 - `stickers`
 - supporting tables for typing/block/session-related features
 
@@ -140,9 +143,12 @@ Reference: `docs/ENCRYPTION.md`
 
 - `assets/js/chat.js` remains a large file and should be further modularized.
 - Polling architecture is intentionally simple but may need scaling strategy later.
+- `mbstring` PHP extension is not installed — project uses `strlen()` instead of `mb_strlen()`.
+- PDO uses emulated prepares — LIMIT/OFFSET values must be inlined as cast integers.
 
 ## 10) Forward Design Priorities
 
-- Continue UI/performance hardening and bug-sweep iterations after Phase K.
+- Continue UI/performance hardening and bug-sweep iterations after Phase L.
 - Continue decomposing `assets/js/chat.js` into smaller modules without changing behavior.
-- Expand smoke coverage for recently added UX/account surfaces.
+- Expand smoke coverage for recently added surfaces (Ideas, swipe gestures, notifications).
+- Evaluate WebSocket readiness as polling surfaces grow.

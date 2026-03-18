@@ -1,6 +1,6 @@
 # TinTinChat Tasks
 
-Date: 2026-03-06  
+Date: 2026-03-18  
 Source: Current codebase review + PRD + Technical Design
 
 Legend:
@@ -295,6 +295,40 @@ Legend:
 - [x] (`P3`) Improve the Settings modal UI (styles & animations)
 - [x] (`P3`) Add Edit message option to messages; It's obvious it should only for normal text messages; Other types of messages or fprwarded messages don't need editting.
 - [x] (`P3`) Add new tests for new sections & for sections that didn't had tests.
+
+### Phase L — Post-K Features & Optimizations (`P2/P3`)
+- [x] (`P2`) **Ideas / Feedback system** (full stack):
+	- DB migration (`ideas`, `idea_votes`, `idea_replies` tables),
+	- 5 API endpoints (create, fetch, vote, reply, delete),
+	- Ideas tab UI with vote/reply/delete, anonymous authors for non-superuser,
+	- Superuser-only reply and superuser/owner delete permissions (server-enforced),
+	- In-place vote DOM updates, delete confirmation dialog, Enter key reply, disabled states during API calls.
+- [x] (`P2`) **Swipe-to-reply / edit / forward gestures**:
+	- Swipe right to reply, swipe left on own text to edit, swipe left on others to forward,
+	- Visual feedback (translation + opacity indicators), mobile/touch support.
+- [x] (`P2`) **Browser Notification API**:
+	- Permission prompt and toggle in settings,
+	- Desktop notifications for new messages when tab is hidden/unfocused,
+	- Fixed notification body field name (`lastMsg.text` → `lastMsg.message`),
+	- Fixed hidden-tab polling gap (now fetches messages every ~5s when notifications enabled).
+- [x] (`P2`) **Changelog / What's New modal**:
+	- DB migration for `tips_seen_at` column on users table,
+	- `api/users/dismiss_changelog.php` POST endpoint,
+	- Animated modal with blur backdrop, styled item list, highlight effect, dark mode,
+	- Auto-shows when `tips_seen_at` is null or older than manually-updated `CHANGELOG_LAST_UPDATED` JS constant.
+- [x] (`P2`) **Typing status merged into fetch_recent** (network optimization):
+	- Typing queries inlined into `api/messages/fetch_recent.php` response,
+	- Eliminated separate `/typing/fetch.php` call from polling loop,
+	- New shared `applyTypingData()` JS function.
+- [x] (`P2`) **Superuser / admin fixes**:
+	- `$is_superuser` computed independently of `$is_admin` (username match only),
+	- Score display fix ("+0" → "0").
+- [x] (`P3`) **Blocked users management UI**:
+	- Blocked users section in settings modal with unblock capability.
+- [x] (`P3`) **UX modernization** (Telegram-inspired):
+	- Settings controls polish, chat header action bar styling,
+	- Account avatar preview/sync, cache-busting for startup CSS/JS,
+	- Load-more scroll anchoring, voice waveform baseline fix.
 
 ## 4) Suggested Execution Order
 

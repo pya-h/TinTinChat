@@ -1,7 +1,7 @@
 # TinTinChat Product Requirements Document (PRD)
 
-Version: 1.3
-Date: 2026-03-11
+Version: 1.4
+Date: 2026-03-18
 Owner: Product + Engineering
 
 ## 1) Product Summary
@@ -45,12 +45,26 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 ### 3.5 User/profile/moderation
 - Avatar upload/retrieval with fallback avatar rendering
 - User Info modal with avatar enlargement + send-message shortcut
-- Block/unblock with direct-message send enforcement
-- Settings modal with tabbed sections (General/Account)
+- Block/unblock with direct-message send enforcement and blocked-users management UI in settings
+- Settings modal with tabbed sections (General/Account/Admin)
 - Account settings updates (username/password/avatar)
 - Font-size customization preference
 
-### 3.6 Quality & reliability
+### 3.6 Ideas / Feedback
+- In-app idea submission and browsing
+- Voting (upvote/downvote) system with anonymous authorship for non-superusers
+- Superuser-only reply and superuser/owner delete permissions
+
+### 3.7 Engagement & discovery
+- Browser Notification API for new messages when tab is hidden/unfocused
+- Changelog / What's New modal with DB-backed dismiss tracking
+- Swipe gestures on messages (reply / edit / forward) for mobile/touch UX
+
+### 3.8 Performance optimizations
+- Typing status inlined into fetch_recent response (reduced polling requests)
+- Hidden-tab notification-aware polling (5s interval when notifications enabled)
+
+### 3.9 Quality & reliability
 - Unit + E2E smoke suite and one-command runner
 - Test env setup + test server lifecycle helper scripts
 
@@ -62,8 +76,9 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 - Maintain direct/group parity for core messaging behaviors.
 
 ### 4.2 Upcoming priorities
-- Continue post-Phase K quality hardening, bugfixing, and performance tuning.
-- Expand automated test coverage for newly introduced surfaces.
+- Continue post-Phase L quality hardening, bugfixing, and performance tuning.
+- Expand automated test coverage for newly introduced surfaces (Ideas, swipe gestures, notifications).
+- Further frontend modularization of `chat.js`.
 
 ## 5) Non-Goals (for now)
 
@@ -85,6 +100,9 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 - FR-4: Encrypted text and encrypted media/file envelope handling.
 - FR-5: Profile and moderation actions (avatar, user info, block/unblock).
 - FR-6: Repeatable automated test flow for critical behaviors.
+- FR-7: Ideas/Feedback submission, voting, and moderation.
+- FR-8: Browser notifications for background message alerts.
+- FR-9: Changelog/What's New modal with dismiss tracking.
 
 ## 8) Non-Functional Requirements
 
@@ -108,10 +126,10 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 ## 11) Phase Status Snapshot
 
 Completed:
-- A, B, C, D, E, E.1, E.2, F, F.5, F.6, G, H, I, J, J.2, K
+- A, B, C, D, E, E.1, E.2, F, F.5, F.6, G, H, I, J, J.2, K, L
 
 In progress:
-- Post-Phase K optimization + audit loop
+- Post-Phase L optimization + audit loop
 
 Planned:
 - Further modularization and additional focused test expansion

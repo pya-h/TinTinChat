@@ -1,6 +1,6 @@
 # TinTinChat API Contract & Error Codes
 
-Last updated: 2026-03-11
+Last updated: 2026-03-18
 Audience: developers extending `api/*.php` and frontend consumers in `assets/js/*`.
 
 ## 1) Response Envelope
@@ -128,6 +128,13 @@ All routes use organized domains under `api/<domain>/...`.
   - `api/users/update_profile.php`
   - `api/users/block.php`
   - `api/users/unblock.php`
+  - `api/users/dismiss_changelog.php`
+- Ideas:
+  - `api/ideas/create.php`
+  - `api/ideas/fetch.php`
+  - `api/ideas/vote.php`
+  - `api/ideas/reply.php`
+  - `api/ideas/delete.php`
 - System:
   - `api/system/notrace.php`
 
@@ -137,6 +144,17 @@ All routes use organized domains under `api/<domain>/...`.
   - `group_seen_at` (timestamp when first non-sender group member viewed the message),
   - `group_seen_by_user_id`,
   - `group_seen_by_username`.
+- `api/messages/fetch_recent.php` now additionally returns `typing` field alongside `messages` in the response envelope, containing current typing status for the active chat (merged from `api/typing/fetch.php` logic).
+
+### L.1 Ideas endpoint contracts
+- `api/ideas/create.php` — POST, auth + CSRF, JSON body `{text}`. Returns created idea.
+- `api/ideas/fetch.php` — GET, auth. Returns all ideas with vote counts, user vote status, replies. Author username is stripped for non-superuser/non-owner callers.
+- `api/ideas/vote.php` — POST, auth + CSRF, JSON body `{idea_id, vote}` (vote: 1 or -1). Toggles vote.
+- `api/ideas/reply.php` — POST, auth + CSRF, JSON body `{idea_id, text}`. Superuser-only.
+- `api/ideas/delete.php` — POST, auth + CSRF, JSON body `{idea_id}`. Superuser or idea owner.
+
+### L.2 Changelog dismiss endpoint
+- `api/users/dismiss_changelog.php` — POST, auth + CSRF. Sets `users.tips_seen_at = CURRENT_TIMESTAMP`. No body required.
 
 ---
 
