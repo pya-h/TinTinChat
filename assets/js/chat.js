@@ -5456,20 +5456,20 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                 addGoToLatestButton();
             }
         } else {
-            // Freeze the scroll container to prevent any visual jank while
-            // prepending older messages above the current viewport.
+            // Preserve the user's viewport position while prepending older
+            // messages. We correct scrollTop after EACH message insertion so
+            // the browser never shows an intermediate wrong scroll position —
+            // even between async yields (decryption, etc.).
             const savedScrollTop = chatMessagesElem.scrollTop;
-            const savedScrollHeight = chatMessagesElem.scrollHeight;
-            chatMessagesElem.style.overflowY = 'hidden';
+            let runningHeightDelta = 0;
 
             for (let i = data.messages.length - 1; i >= 0; i--) {
+                const prevH = chatMessagesElem.scrollHeight;
                 await addMessageToChat(data.messages[i], true);
+                const addedH = chatMessagesElem.scrollHeight - prevH;
+                runningHeightDelta += addedH;
+                chatMessagesElem.scrollTop = savedScrollTop + runningHeightDelta;
             }
-
-            // Restore scroll so the same messages stay in view.
-            const heightAdded = chatMessagesElem.scrollHeight - savedScrollHeight;
-            chatMessagesElem.scrollTop = savedScrollTop + heightAdded;
-            chatMessagesElem.style.overflowY = '';
 
             hasLoadedMoreMessages = true;
             updateGoToLatestButton();
@@ -6318,6 +6318,9 @@ async function addMessageToChat(msg, prepend = false) {
     renderMessageReactions(div, msg);
 
     if (prepend) {
+        // Disable entrance animation for older (prepended) messages —
+        // they are historical content, not new arrivals.
+        div.style.animation = 'none';
         const loadMoreBtn = document.getElementById("loadMoreBtn");
         if (loadMoreBtn) {
             chatMessagesElem.insertBefore(div, loadMoreBtn.nextSibling);
