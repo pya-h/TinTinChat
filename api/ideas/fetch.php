@@ -32,9 +32,9 @@ $stmt = $pdo->prepare('
     GROUP BY i.id
     ORDER BY (COALESCE(SUM(CASE WHEN v.vote = 1 THEN 1 ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN v.vote = -1 THEN 1 ELSE 0 END), 0)) DESC,
              i.created_at DESC
-    LIMIT ? OFFSET ?
+    LIMIT ' . (int) $limit . ' OFFSET ' . (int) $offset . '
 ');
-$stmt->execute([$userId, $limit, $offset]);
+$stmt->execute([$userId]);
 $ideas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($ideas as &$idea) {

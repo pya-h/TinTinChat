@@ -7,11 +7,12 @@ apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
 
-$body = trim((string) ($_POST['body'] ?? ''));
+$input = apiGetJsonBody();
+$body = trim((string) ($input['body'] ?? ''));
 if ($body === '') {
     apiError('EMPTY_BODY', 'Idea body cannot be empty.', 400);
 }
-if (mb_strlen($body) > 2000) {
+if (strlen($body) > 2000) {
     apiError('BODY_TOO_LONG', 'Idea body must be 2000 characters or fewer.', 400);
 }
 

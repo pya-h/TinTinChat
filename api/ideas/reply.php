@@ -14,8 +14,9 @@ if (!(bool) $adminStmt->fetchColumn()) {
     apiError('FORBIDDEN', 'Only admins can reply to ideas.', 403);
 }
 
-$ideaId = (int) ($_POST['idea_id'] ?? 0);
-$reply  = trim((string) ($_POST['reply'] ?? ''));
+$input  = apiGetJsonBody();
+$ideaId = (int) ($input['idea_id'] ?? 0);
+$reply  = trim((string) ($input['reply'] ?? ''));
 
 if ($ideaId <= 0) {
     apiError('INVALID_IDEA', 'Invalid idea ID.', 400);
@@ -23,7 +24,7 @@ if ($ideaId <= 0) {
 if ($reply === '') {
     apiError('EMPTY_REPLY', 'Reply cannot be empty.', 400);
 }
-if (mb_strlen($reply) > 2000) {
+if (strlen($reply) > 2000) {
     apiError('REPLY_TOO_LONG', 'Reply must be 2000 characters or fewer.', 400);
 }
 

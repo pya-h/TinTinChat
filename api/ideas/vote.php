@@ -7,8 +7,9 @@ apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
 
-$ideaId = (int) ($_POST['idea_id'] ?? 0);
-$vote   = (int) ($_POST['vote']    ?? 0);
+$input  = apiGetJsonBody();
+$ideaId = (int) ($input['idea_id'] ?? 0);
+$vote   = (int) ($input['vote']    ?? 0);
 
 if ($ideaId <= 0) {
     apiError('INVALID_IDEA', 'Invalid idea ID.', 400);
