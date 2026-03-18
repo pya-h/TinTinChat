@@ -12,11 +12,7 @@ function groupParseId($value): int
 
 function groupGenerateJoinToken(): string
 {
-    try {
-        return bin2hex(random_bytes(TTC_GROUP_JOIN_TOKEN_BYTES));
-    } catch (Throwable $ex) {
-        return sha1(uniqid('grp_', true) . microtime(true));
-    }
+    return bin2hex(random_bytes(TTC_GROUP_JOIN_TOKEN_BYTES));
 }
 
 function groupGenerateUniqueJoinToken(PDO $pdo, int $maxAttempts = 5): string

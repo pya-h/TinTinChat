@@ -60,7 +60,7 @@ $stmt = $pdo->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.group_id, m.me
 	LEFT JOIN users fmu ON fmu.id = fm.sender_id
 	LEFT JOIN users gsu ON gsu.id = m.group_seen_by_user_id
 	LEFT JOIN stickers s ON s.id = m.sticker_id
-	WHERE $whereClause ORDER BY m.created_at ASC");
+	WHERE $whereClause ORDER BY m.created_at ASC LIMIT 200");
 $stmt->execute($params);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

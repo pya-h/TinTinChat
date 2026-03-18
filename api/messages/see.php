@@ -21,6 +21,10 @@ if (empty($messages_seen)) {
 	apiError('INVALID_MESSAGES', 'No valid message IDs provided!', 400);
 }
 
+if (count($messages_seen) > TTC_SEEN_STATUS_MAX_IDS) {
+	$messages_seen = array_slice($messages_seen, 0, TTC_SEEN_STATUS_MAX_IDS);
+}
+
 $placeholders = implode(',', array_fill(0, count($messages_seen), '?'));
 $stmt = $pdo->prepare("UPDATE messages SET seen_at = NOW() WHERE id IN ($placeholders) AND receiver_id=?");
 $params = array_merge($messages_seen, [$userId]);

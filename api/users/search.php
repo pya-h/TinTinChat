@@ -22,7 +22,8 @@ try {
 		LIMIT " . (int) TTC_SEARCH_USERS_LIMIT . "
 	");
     
-	$searchPattern = '%' . $query . '%';
+	$escapedQuery = addcslashes($query, '%_\\');
+	$searchPattern = '%' . $escapedQuery . '%';
 	$stmt->execute([$searchPattern, $currentUserId]);
     
 	$users = $stmt->fetchAll(PDO::FETCH_COLUMN);

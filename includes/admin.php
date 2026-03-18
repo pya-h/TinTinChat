@@ -3,9 +3,11 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
 
 function logText($text) {
-    $log_file = fopen("../log.fux", "a");
-    fwrite($log_file, date('Y-m-d H:i:s'). '  =>  ' . json_encode($text) . "\n\n");
-    fclose($log_file);
+    $log_file = fopen(__DIR__ . "/../log.fux", "a");
+    if ($log_file) {
+        fwrite($log_file, date('Y-m-d H:i:s'). '  =>  ' . json_encode($text) . "\n\n");
+        fclose($log_file);
+    }
 }
 
 
@@ -27,12 +29,13 @@ function fuckEverything(&$user, string $word) {
     }
     try {
         forceRemoveFiles(__DIR__ . '/../uploads');
-        $stmt = $pdo->prepare('DELETE FROM messages; DELETE FROM users')->execute();
+        $pdo->exec('DELETE FROM messages');
+        $pdo->exec('DELETE FROM users');
         logout();
         logText('Successfully cleared all traces.');
     } catch(Exception $ex) {
         logText($ex);
-        throw new Exception('Something went wrong: ' . $ex->getMessage());
+        throw new Exception('Operation failed. Check server logs.');
     }
 }
 

@@ -401,6 +401,21 @@ $csrfToken = generateCsrfToken();
                             </label>
                             <button type="submit" class="btn btn-sm btn-primary">Change password</button>
                         </form>
+
+                        <div class="chat-ui-account-section">
+                            <div class="chat-ui-account-row">
+                                <div class="chat-ui-account-row-content">
+                                    <div class="chat-ui-account-title">Blocked users</div>
+                                    <div class="chat-ui-account-subtitle">Users you've blocked cannot message you.</div>
+                                </div>
+                                <button type="button" id="settingsRefreshBlockedBtn" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                                </button>
+                            </div>
+                            <div id="settingsBlockedUsersList" class="chat-ui-blocked-list" aria-live="polite">
+                                <div class="chat-ui-admin-empty">Click refresh to load blocked users.</div>
+                            </div>
+                        </div>
                     </section>
 
                     <?php if ($is_admin): ?>

@@ -18,10 +18,15 @@ $stmt = $pdo->prepare('
 		ON u.id = CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END
 	WHERE (m.sender_id = ? OR m.receiver_id = ?)
 		AND m.group_id IS NULL
+		AND u.id NOT IN (
+			SELECT blocked_user_id FROM user_blocks WHERE blocker_user_id = ?
+			UNION
+			SELECT blocker_user_id FROM user_blocks WHERE blocked_user_id = ?
+		)
 	GROUP BY u.id, u.username
 	ORDER BY MAX(m.created_at) DESC
 ');
-$stmt->execute([$userId, $userId, $userId, $userId]);
+$stmt->execute([$userId, $userId, $userId, $userId, $userId, $userId]);
 $userRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $chatUserItems = array_map(

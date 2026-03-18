@@ -96,6 +96,7 @@ if ($avatarPath !== '') {
 		header('X-Content-Type-Options: nosniff');
 		header('Content-Type: ' . $mime);
 		header('Content-Length: ' . filesize($absolutePath));
+		header('Content-Disposition: inline; filename="avatar.' . pathinfo($absolutePath, PATHINFO_EXTENSION) . '"');
 		header('Cache-Control: private, max-age=300');
 		readfile($absolutePath);
 		exit;

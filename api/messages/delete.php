@@ -21,6 +21,10 @@ if (empty($messages)) {
 	apiError('INVALID_MESSAGES', 'No valid message IDs provided!', 400);
 }
 
+if (count($messages) > TTC_SEEN_STATUS_MAX_IDS) {
+	$messages = array_slice($messages, 0, TTC_SEEN_STATUS_MAX_IDS);
+}
+
 $placeholders = implode(',', array_fill(0, count($messages), '?'));
 
 $accessStmt = $pdo->prepare(

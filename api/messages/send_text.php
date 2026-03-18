@@ -22,6 +22,11 @@ $forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numer
 if (!$messageEncryptedForRecipient || !$messageEncryptedForSender) {
 	apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
 }
+
+$maxMessageBytes = 256 * 1024;
+if (strlen($messageEncryptedForRecipient) > $maxMessageBytes || strlen($messageEncryptedForSender) > $maxMessageBytes) {
+	apiError('MESSAGE_TOO_LARGE', 'Message payload exceeds maximum allowed size', 400);
+}
 $targetUser = null;
 if ($groupId > 0) {
 	groupRequireMembership($pdo, $groupId, $userId);

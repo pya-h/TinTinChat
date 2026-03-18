@@ -42,7 +42,14 @@ if ($action === 'username') {
     }
 
     $updateStmt = $pdo->prepare('UPDATE users SET username = ? WHERE id = ?');
-    if (!$updateStmt->execute([$newUsername, $userId])) {
+    try {
+        if (!$updateStmt->execute([$newUsername, $userId])) {
+            apiError('DB_SAVE_FAILED', 'Could not update username', 500);
+        }
+    } catch (PDOException $e) {
+        if (str_contains((string) ($e->errorInfo[2] ?? ''), 'Duplicate')) {
+            apiError('USERNAME_TAKEN', 'This username is already taken', 409);
+        }
         apiError('DB_SAVE_FAILED', 'Could not update username', 500);
     }
 

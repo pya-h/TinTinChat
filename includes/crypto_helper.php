@@ -7,8 +7,17 @@ function generate_rsa_keypair()
         "private_key_bits" => 2048,
     ];
     $res = openssl_pkey_new($config);
-    openssl_pkey_export($res, $privateKeyPem);
+    if ($res === false) {
+        return [false, false];
+    }
+    $exported = openssl_pkey_export($res, $privateKeyPem);
+    if (!$exported || !$privateKeyPem) {
+        return [false, false];
+    }
     $pubKeyDetails = openssl_pkey_get_details($res);
+    if (!$pubKeyDetails || empty($pubKeyDetails['key'])) {
+        return [false, false];
+    }
     $publicKeyPem = $pubKeyDetails["key"];
 
     $publicKeyBase64 = base64_encode($publicKeyPem);

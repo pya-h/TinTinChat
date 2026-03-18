@@ -84,6 +84,8 @@ const settingsPasswordForm = document.getElementById("settingsPasswordForm");
 const settingsCurrentPasswordInput = document.getElementById("settingsCurrentPasswordInput");
 const settingsNewPasswordInput = document.getElementById("settingsNewPasswordInput");
 const settingsConfirmPasswordInput = document.getElementById("settingsConfirmPasswordInput");
+const settingsRefreshBlockedBtn = document.getElementById("settingsRefreshBlockedBtn");
+const settingsBlockedUsersList = document.getElementById("settingsBlockedUsersList");
 const loggedInUsernameElem = document.getElementById("loggedInUsername");
 const logoutForm = document.getElementById("logoutForm");
 const selectModeBar = document.getElementById("selectModeBar");
@@ -284,6 +286,7 @@ let isChatInputFocused = false;
 let adminStickerSettings = [];
 let adminUsersList = [];
 let adminUsersIncludeTestUsers = false;
+let blockedUsersList = [];
 
 const chatUserIdsByUsername = new Map();
 
@@ -2649,6 +2652,88 @@ async function refreshAdminSettingsData() {
     }
 }
 
+/* ── Blocked Users Settings ── */
+
+function renderBlockedUsersSettings() {
+    if (!settingsBlockedUsersList) {
+        return;
+    }
+
+    settingsBlockedUsersList.innerHTML = "";
+    if (!Array.isArray(blockedUsersList) || !blockedUsersList.length) {
+        settingsBlockedUsersList.innerHTML = '<div class="chat-ui-admin-empty">No blocked users.</div>';
+        return;
+    }
+
+    blockedUsersList.forEach((user) => {
+        const row = document.createElement("div");
+        row.className = "chat-ui-blocked-item";
+        row.dataset.userId = Number(user.id || 0);
+        row.innerHTML = `
+            <div class="chat-ui-blocked-item-avatar-wrap">
+                <img class="chat-ui-blocked-item-avatar" src="${buildAvatarUrl({ userId: Number(user.id || 0), username: String(user.username || ""), size: 40 })}" alt="" />
+            </div>
+            <span class="chat-ui-blocked-item-meta">
+                <span class="chat-ui-blocked-item-name">${escapeHtml(String(user.username || "Unknown"))}</span>
+                <span class="chat-ui-blocked-item-date">Blocked ${user.blocked_at ? escapeHtml(String(user.blocked_at)) : ""}</span>
+            </span>
+            <button type="button" class="btn btn-sm btn-outline-warning chat-ui-blocked-unblock-btn" title="Unblock ${escapeHtml(String(user.username || ""))}">
+                <i class="fas fa-user-check me-1"></i>Unblock
+            </button>
+        `;
+
+        const unblockBtn = row.querySelector(".chat-ui-blocked-unblock-btn");
+        unblockBtn?.addEventListener("click", async () => {
+            const targetUserId = Number(user.id || 0);
+            const targetUsername = String(user.username || "this user");
+            if (!targetUserId) return;
+
+            const confirmed = window.confirm(`Unblock ${targetUsername}?`);
+            if (!confirmed) return;
+
+            const originalLabel = unblockBtn.innerHTML;
+            unblockBtn.disabled = true;
+            unblockBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>...';
+
+            try {
+                await window.ApiService.jsonOk("api/users/unblock.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({ target_user_id: targetUserId }),
+                });
+
+                blockedUsersList = blockedUsersList.filter((u) => Number(u.id) !== targetUserId);
+                renderBlockedUsersSettings();
+                setComposerStatus(`${targetUsername} unblocked`, "success");
+            } catch (error) {
+                unblockBtn.innerHTML = originalLabel;
+                unblockBtn.disabled = false;
+                showModal("Unblock Failed", error?.message || "Unable to unblock user.", "error");
+            }
+        });
+
+        settingsBlockedUsersList.appendChild(row);
+    });
+}
+
+async function loadBlockedUsersSettings() {
+    if (!settingsBlockedUsersList) {
+        return;
+    }
+
+    settingsBlockedUsersList.innerHTML = '<div class="chat-ui-admin-empty">Loading blocked users...</div>';
+    try {
+        const response = await window.ApiService.jsonOk("api/users/list_blocked.php");
+        blockedUsersList = Array.isArray(response?.blocked_users) ? response.blocked_users : [];
+        renderBlockedUsersSettings();
+    } catch (error) {
+        settingsBlockedUsersList.innerHTML = `<div class="chat-ui-admin-empty">${escapeHtml(String(error?.message || "Unable to load blocked users."))}</div>`;
+    }
+}
+
 function toggleSettingsPanel(forceState = null) {
     if (!settingsPanel || !settingsButton) {
         return;
@@ -2808,6 +2893,7 @@ function bindSettingsUiEvents() {
 
     chatUiSettingsTabAccount?.addEventListener("click", () => {
         applySettingsTabUi("account");
+        void loadBlockedUsersSettings();
     });
 
     chatUiSettingsTabAdmin?.addEventListener("click", async () => {
@@ -2825,6 +2911,10 @@ function bindSettingsUiEvents() {
 
     settingsAdminRefreshUsersBtn?.addEventListener("click", async () => {
         await loadAdminUsersSettings();
+    });
+
+    settingsRefreshBlockedBtn?.addEventListener("click", async () => {
+        await loadBlockedUsersSettings();
     });
 
     settingsAdminIncludeTestUsers?.addEventListener("change", async (event) => {

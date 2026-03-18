@@ -52,4 +52,7 @@ function blockEnforceSenderAllowed(PDO $pdo, int $senderId, int $receiverId): vo
     if (blockIsUserBlockedBy($pdo, $receiverId, $senderId)) {
         apiError('BLOCKED_BY_USER', 'You cannot send messages to this user', 403);
     }
+    if (blockIsUserBlockedBy($pdo, $senderId, $receiverId)) {
+        apiError('BLOCKED_USER', 'You have blocked this user. Unblock them to send messages.', 403);
+    }
 }

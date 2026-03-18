@@ -16,6 +16,7 @@ function logout(): void {
     }
     $basePath = rtrim($basePath, '/');
     $redirectTo = ($basePath === '' ? '' : $basePath) . '/index.php';
+    $safeRedirect = htmlspecialchars(addslashes($redirectTo), ENT_QUOTES, 'UTF-8');
 
     clearPossibleLoginSession();
     $_SESSION = [];
@@ -23,7 +24,7 @@ function logout(): void {
     echo <<<_END
         <script>
             localStorage.removeItem('ident');
-            window.location.href = '{$redirectTo}';
+            window.location.href = '{$safeRedirect}';
         </script>
     _END;
 }

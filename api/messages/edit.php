@@ -24,7 +24,7 @@ if ($messageEncryptedForRecipient === '' || $messageEncryptedForSender === '') {
 }
 
 $accessStmt = $pdo->prepare(
-    'SELECT id, sender_id, message_type, created_at
+    'SELECT id, sender_id, message_type, created_at, TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds
      FROM messages
      WHERE id = ?
      LIMIT 1'
@@ -44,8 +44,8 @@ if (trim((string) $messageRow['message_type']) !== 'text') {
     apiError('EDIT_UNSUPPORTED_TYPE', 'Only text messages can be edited.', 400);
 }
 
-$createdAt = strtotime((string) ($messageRow['created_at'] ?? ''));
-if (!$createdAt || (time() - $createdAt) > TTC_MESSAGE_EDIT_WINDOW_SECONDS) {
+$ageSeconds = (int) ($messageRow['age_seconds'] ?? PHP_INT_MAX);
+if ($ageSeconds > TTC_MESSAGE_EDIT_WINDOW_SECONDS) {
     apiError('EDIT_WINDOW_EXPIRED', 'Edit time window has expired.', 409);
 }
 
