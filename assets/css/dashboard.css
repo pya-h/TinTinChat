@@ -4294,7 +4294,7 @@ textarea,
     background: color-mix(in srgb, var(--secondary-color) 28%, var(--border-color));
     border-radius: 999px;
     min-height: 3px;
-    max-width: 3px;
+    min-width: 2px;
     height: 20%;
     transition: height 0.12s ease, background 0.15s ease, transform 0.1s ease;
 }
@@ -4735,7 +4735,8 @@ textarea,
 }
 
 .message.is-voice-message.sent .voice-player-container {
-    background: rgba(255,255,255,0.12);
+    background: var(--sent-bg);
+    border-color: transparent;
 }
 
 .message.is-voice-message.received .voice-player-container {
@@ -4743,40 +4744,40 @@ textarea,
 }
 
 .message.sent .voice-player-container {
-    background: initial;
+    background: var(--sent-bg);
     padding-left: initial;
-    border-color: rgba(255,255,255,0.2);
+    border-color: transparent;
 }
 
 .message.sent .voice-play-btn {
-    background: rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.25);
     color: #fff;
     box-shadow: none;
 }
 
 .message.sent .voice-play-btn:hover {
-    background: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.38);
 }
 
 .message.sent .voice-play-btn.playing {
-    background: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.45);
     color: #fff;
 }
 
 .message.sent .waveform-bar {
-    background: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.4);
 }
 
 .message.sent .waveform-bar.played {
-    background: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.92);
 }
 
 .message.sent .waveform-bar:hover {
-    background: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.75);
 }
 
 .message.sent .voice-duration-display {
-    color: rgba(255,255,255,0.85);
+    color: rgba(255,255,255,0.92);
 }
 
 .message.is-voice-message.sent .voice-play-btn {

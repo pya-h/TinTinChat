@@ -5440,17 +5440,6 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             addLoadMoreButton();
         }
 
-        const previousScrollHeight = chatMessagesElem.scrollHeight;
-        let anchorMessageId = 0;
-        let anchorOffsetTop = 0;
-        if (!isInitialLoad) {
-            const firstMessageElement = chatMessagesElem.querySelector(".message[data-message-id]");
-            if (firstMessageElement) {
-                anchorMessageId = Number(firstMessageElement.getAttribute("data-message-id") || 0);
-                anchorOffsetTop = firstMessageElement.getBoundingClientRect().top;
-            }
-        }
-
         if (isInitialLoad) {
             for (const msg of data.messages) {
                 await addMessageToChat(msg);
@@ -5467,23 +5456,21 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                 addGoToLatestButton();
             }
         } else {
+            // Freeze the scroll container to prevent any visual jank while
+            // prepending older messages above the current viewport.
+            const savedScrollTop = chatMessagesElem.scrollTop;
+            const savedScrollHeight = chatMessagesElem.scrollHeight;
+            chatMessagesElem.style.overflowY = 'hidden';
+
             for (let i = data.messages.length - 1; i >= 0; i--) {
                 await addMessageToChat(data.messages[i], true);
             }
-            if (anchorMessageId > 0) {
-                const sameMessageAfterPrepend = chatMessagesElem.querySelector(
-                    `.message[data-message-id="${anchorMessageId}"]`
-                );
-                if (sameMessageAfterPrepend) {
-                    const newAnchorOffsetTop = sameMessageAfterPrepend.getBoundingClientRect().top;
-                    const delta = newAnchorOffsetTop - anchorOffsetTop;
-                    chatMessagesElem.scrollTop += delta;
-                } else {
-                    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight - previousScrollHeight;
-                }
-            } else {
-                chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight - previousScrollHeight;
-            }
+
+            // Restore scroll so the same messages stay in view.
+            const heightAdded = chatMessagesElem.scrollHeight - savedScrollHeight;
+            chatMessagesElem.scrollTop = savedScrollTop + heightAdded;
+            chatMessagesElem.style.overflowY = '';
+
             hasLoadedMoreMessages = true;
             updateGoToLatestButton();
         }
@@ -5629,15 +5616,6 @@ function addLoadMoreButton() {
 
 async function loadMoreMessages() {
     if (!currentChatUser || isLoadingMessages || !hasMoreMessages) return;
-
-    // When scrollTop is exactly 0, the browser forcibly keeps the viewport at the
-    // very top after new DOM nodes are prepended, which causes a jarring jump.
-    // Nudging scrollTop to 1px lets the browser preserve the user's viewport
-    // position naturally, so the anchor-based correction in loadMessages works
-    // perfectly without any visible flicker.
-    if (chatMessagesElem.scrollTop === 0) {
-        chatMessagesElem.scrollTop = 1;
-    }
 
     const loadMoreBtn = document.getElementById("loadMoreBtn");
     if (loadMoreBtn) {
