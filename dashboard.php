@@ -22,6 +22,12 @@ try {
     $adminRow = $adminStmt->fetch(PDO::FETCH_ASSOC);
     $is_admin = (bool) ($adminRow['is_admin'] ?? false);
     $tips_seen_at = $adminRow['tips_seen_at'] ?? null;
+    if ($tips_seen_at !== null) {
+        $ts = strtotime($tips_seen_at);
+        if ($ts !== false) {
+            $tips_seen_at = gmdate('Y-m-d\TH:i:s\Z', $ts);
+        }
+    }
 } catch (Throwable $ex) {
     $is_admin = false;
 }
