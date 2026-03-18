@@ -62,10 +62,16 @@ const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
 const chatUiSettingsTabGeneral = document.getElementById("chatUiSettingsTabGeneral");
 const chatUiSettingsTabAccount = document.getElementById("chatUiSettingsTabAccount");
+const chatUiSettingsTabIdeas = document.getElementById("chatUiSettingsTabIdeas");
 const chatUiSettingsTabAdmin = document.getElementById("chatUiSettingsTabAdmin");
 const chatUiSettingsPanelGeneral = document.getElementById("chatUiSettingsPanelGeneral");
 const chatUiSettingsPanelAccount = document.getElementById("chatUiSettingsPanelAccount");
+const chatUiSettingsPanelIdeas = document.getElementById("chatUiSettingsPanelIdeas");
 const chatUiSettingsPanelAdmin = document.getElementById("chatUiSettingsPanelAdmin");
+const settingBrowserNotifications = document.getElementById("settingBrowserNotifications");
+const ideasSubmitForm = document.getElementById("ideasSubmitForm");
+const ideasBodyInput = document.getElementById("ideasBodyInput");
+const ideasList = document.getElementById("ideasList");
 const settingsGroupKeyHealthBtn = document.getElementById("settingsGroupKeyHealthBtn");
 const settingsAdminRefreshStickersBtn = document.getElementById("settingsAdminRefreshStickersBtn");
 const settingsAdminStickerList = document.getElementById("settingsAdminStickerList");
@@ -299,6 +305,7 @@ const appSettings = {
     fontScale: "md",
     showTimestamps: true,
     reduceMotion: false,
+    browserNotificationsEnabled: false,
 };
 
 const selectedMessageIds = new Set();
@@ -1167,6 +1174,7 @@ function loadAppSettings() {
             : "md";
         appSettings.showTimestamps = parseStoredBoolean(parsed.showTimestamps, true);
         appSettings.reduceMotion = parseStoredBoolean(parsed.reduceMotion, false);
+        appSettings.browserNotificationsEnabled = parseStoredBoolean(parsed.browserNotificationsEnabled, false);
     } catch (error) {}
 
     try {
@@ -1204,12 +1212,15 @@ function applySettingsTabUi(tabName = "general") {
     let normalizedTab = "general";
     if (tabName === "account") {
         normalizedTab = "account";
+    } else if (tabName === "ideas" && chatUiSettingsTabIdeas && chatUiSettingsPanelIdeas) {
+        normalizedTab = "ideas";
     } else if (tabName === "admin" && chatUiSettingsTabAdmin && chatUiSettingsPanelAdmin) {
         normalizedTab = "admin";
     }
 
     const isGeneral = normalizedTab === "general";
     const isAccount = normalizedTab === "account";
+    const isIdeas = normalizedTab === "ideas";
     const isAdmin = normalizedTab === "admin";
     activeSettingsTab = normalizedTab;
 
@@ -1223,6 +1234,12 @@ function applySettingsTabUi(tabName = "general") {
     chatUiSettingsTabAccount?.setAttribute("aria-selected", isAccount ? "true" : "false");
     if (chatUiSettingsPanelAccount) {
         chatUiSettingsPanelAccount.hidden = !isAccount;
+    }
+
+    chatUiSettingsTabIdeas?.classList.toggle("is-active", isIdeas);
+    chatUiSettingsTabIdeas?.setAttribute("aria-selected", isIdeas ? "true" : "false");
+    if (chatUiSettingsPanelIdeas) {
+        chatUiSettingsPanelIdeas.hidden = !isIdeas;
     }
 
     chatUiSettingsTabAdmin?.classList.toggle("is-active", isAdmin);
@@ -2474,6 +2491,9 @@ function applySettingsUi() {
     if (settingAutoScroll) {
         settingAutoScroll.checked = appSettings.autoScrollEnabled;
     }
+    if (settingBrowserNotifications) {
+        settingBrowserNotifications.checked = appSettings.browserNotificationsEnabled;
+    }
     syncMobileComposerActions();
     updateMessageActionsHintVisibility();
 }
@@ -2649,6 +2669,205 @@ async function refreshAdminSettingsData() {
     await loadAdminStickerSettings();
     if (CURRENT_USER_IS_SUPERUSER) {
         await loadAdminUsersSettings();
+    }
+}
+
+/* ── Ideas / Feedback ── */
+
+let ideasCurrentPage = 1;
+let ideasHasMore = false;
+
+async function loadIdeasList(page = 1) {
+    if (!ideasList) return;
+    ideasCurrentPage = page;
+    try {
+        const data = await window.ApiService.json(`api/ideas/fetch.php?page=${page}&limit=20`);
+        if (!data || data.status !== "ok") throw new Error(data?.error || "Failed to load ideas");
+        renderIdeasList(data.ideas || [], data.pagination || {});
+    } catch (error) {
+        ideasList.innerHTML = `<div class="chat-ui-admin-empty">${escapeHtml(String(error?.message || "Unable to load ideas."))}</div>`;
+    }
+}
+
+function renderIdeasList(ideas, pagination) {
+    if (!ideasList) return;
+    ideasList.innerHTML = "";
+
+    if (!ideas.length) {
+        ideasList.innerHTML = '<div class="chat-ui-admin-empty">No ideas posted yet. Be the first!</div>';
+        return;
+    }
+
+    const isAdmin = Boolean(CURRENT_USER_IS_ADMIN);
+    for (const idea of ideas) {
+        const card = document.createElement("div");
+        card.className = "idea-card";
+        card.setAttribute("data-idea-id", idea.id);
+
+        const score = Number(idea.likes || 0) - Number(idea.dislikes || 0);
+        const myVote = Number(idea.my_vote || 0);
+
+        let headerHtml = `<div class="idea-card-header">
+            <span class="idea-card-author">${escapeHtml(idea.username || "Unknown")}</span>
+            <span class="idea-card-date">${formatIdeaDate(idea.created_at)}</span>
+        </div>`;
+
+        let bodyHtml = `<div class="idea-card-body">${escapeHtml(idea.body)}</div>`;
+
+        let voteHtml = `<div class="idea-card-actions">
+            <button type="button" class="idea-vote-btn idea-vote-like${myVote === 1 ? " active" : ""}" data-idea-id="${idea.id}" data-vote="1" aria-label="Like">
+                <i class="fas fa-thumbs-up"></i> <span class="idea-vote-count">${Number(idea.likes || 0)}</span>
+            </button>
+            <button type="button" class="idea-vote-btn idea-vote-dislike${myVote === -1 ? " active" : ""}" data-idea-id="${idea.id}" data-vote="-1" aria-label="Dislike">
+                <i class="fas fa-thumbs-down"></i> <span class="idea-vote-count">${Number(idea.dislikes || 0)}</span>
+            </button>
+            <span class="idea-score" title="Score">${score >= 0 ? "+" : ""}${score}</span>`;
+
+        const canDelete = isAdmin || (Number(idea.user_id) === Number(CURRENT_USER_ID));
+        if (canDelete) {
+            voteHtml += `<button type="button" class="idea-delete-btn" data-idea-id="${idea.id}" aria-label="Delete idea" title="Delete"><i class="fas fa-trash-alt"></i></button>`;
+        }
+        voteHtml += `</div>`;
+
+        let replyHtml = "";
+        if (idea.admin_reply) {
+            replyHtml = `<div class="idea-admin-reply">
+                <div class="idea-admin-reply-label"><i class="fas fa-shield-alt me-1"></i>Admin Reply</div>
+                <div class="idea-admin-reply-text">${escapeHtml(idea.admin_reply)}</div>
+            </div>`;
+        } else if (isAdmin) {
+            replyHtml = `<div class="idea-admin-reply-form" data-idea-id="${idea.id}">
+                <input type="text" class="form-control form-control-sm idea-reply-input" placeholder="Write admin reply..." maxlength="2000">
+                <button type="button" class="btn btn-sm btn-outline-primary idea-reply-submit-btn"><i class="fas fa-reply"></i></button>
+            </div>`;
+        }
+
+        card.innerHTML = headerHtml + bodyHtml + voteHtml + replyHtml;
+        ideasList.appendChild(card);
+    }
+
+    // Pagination
+    ideasHasMore = Boolean(pagination.has_more);
+    if (pagination.total_pages > 1) {
+        const paginationWrap = document.createElement("div");
+        paginationWrap.className = "ideas-pagination";
+        if (ideasCurrentPage > 1) {
+            const prevBtn = document.createElement("button");
+            prevBtn.type = "button";
+            prevBtn.className = "btn btn-sm btn-outline-secondary";
+            prevBtn.textContent = "← Previous";
+            prevBtn.addEventListener("click", () => loadIdeasList(ideasCurrentPage - 1));
+            paginationWrap.appendChild(prevBtn);
+        }
+        const pageLabel = document.createElement("span");
+        pageLabel.className = "ideas-page-label";
+        pageLabel.textContent = `Page ${pagination.page} of ${pagination.total_pages}`;
+        paginationWrap.appendChild(pageLabel);
+        if (ideasHasMore) {
+            const nextBtn = document.createElement("button");
+            nextBtn.type = "button";
+            nextBtn.className = "btn btn-sm btn-outline-secondary";
+            nextBtn.textContent = "Next →";
+            nextBtn.addEventListener("click", () => loadIdeasList(ideasCurrentPage + 1));
+            paginationWrap.appendChild(nextBtn);
+        }
+        ideasList.appendChild(paginationWrap);
+    }
+
+    // Attach event listeners via delegation (remove first to avoid duplicates)
+    ideasList.removeEventListener("click", handleIdeasListClick);
+    ideasList.addEventListener("click", handleIdeasListClick);
+}
+
+async function handleIdeasListClick(event) {
+    const voteBtn = event.target.closest(".idea-vote-btn");
+    if (voteBtn) {
+        event.preventDefault();
+        const ideaId = Number(voteBtn.getAttribute("data-idea-id"));
+        const voteValue = Number(voteBtn.getAttribute("data-vote"));
+        const isAlreadyActive = voteBtn.classList.contains("active");
+        await voteOnIdea(ideaId, isAlreadyActive ? 0 : voteValue);
+        return;
+    }
+
+    const deleteBtn = event.target.closest(".idea-delete-btn");
+    if (deleteBtn) {
+        event.preventDefault();
+        const ideaId = Number(deleteBtn.getAttribute("data-idea-id"));
+        await deleteIdea(ideaId);
+        return;
+    }
+
+    const replySubmitBtn = event.target.closest(".idea-reply-submit-btn");
+    if (replySubmitBtn) {
+        event.preventDefault();
+        const form = replySubmitBtn.closest(".idea-admin-reply-form");
+        const ideaId = Number(form?.getAttribute("data-idea-id"));
+        const input = form?.querySelector(".idea-reply-input");
+        const replyText = String(input?.value || "").trim();
+        if (!replyText) return;
+        await adminReplyToIdea(ideaId, replyText);
+        return;
+    }
+}
+
+async function voteOnIdea(ideaId, vote) {
+    try {
+        await window.ApiService.jsonOk("api/ideas/vote.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+            body: JSON.stringify({ idea_id: ideaId, vote }),
+        });
+        await loadIdeasList(ideasCurrentPage);
+    } catch (error) {
+        showModal("Vote Failed", error?.message || "Unable to vote.", "error");
+    }
+}
+
+async function deleteIdea(ideaId) {
+    try {
+        await window.ApiService.jsonOk("api/ideas/delete.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+            body: JSON.stringify({ idea_id: ideaId }),
+        });
+        setComposerStatus("Idea deleted", "success");
+        await loadIdeasList(ideasCurrentPage);
+    } catch (error) {
+        showModal("Delete Failed", error?.message || "Unable to delete idea.", "error");
+    }
+}
+
+async function adminReplyToIdea(ideaId, reply) {
+    try {
+        await window.ApiService.jsonOk("api/ideas/reply.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+            body: JSON.stringify({ idea_id: ideaId, reply }),
+        });
+        setComposerStatus("Reply posted", "success");
+        await loadIdeasList(ideasCurrentPage);
+    } catch (error) {
+        showModal("Reply Failed", error?.message || "Unable to reply.", "error");
+    }
+}
+
+function formatIdeaDate(dateStr) {
+    try {
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return dateStr || "";
+        const now = new Date();
+        const diffMs = now - d;
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 1) return "Just now";
+        if (diffMins < 60) return `${diffMins}m ago`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours}h ago`;
+        const diffDays = Math.floor(diffHours / 24);
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return d.toLocaleDateString();
+    } catch {
+        return dateStr || "";
     }
 }
 
@@ -2899,6 +3118,64 @@ function bindSettingsUiEvents() {
     chatUiSettingsTabAdmin?.addEventListener("click", async () => {
         applySettingsTabUi("admin");
         await refreshAdminSettingsData();
+    });
+
+    chatUiSettingsTabIdeas?.addEventListener("click", async () => {
+        applySettingsTabUi("ideas");
+        await loadIdeasList();
+    });
+
+    if (settingBrowserNotifications) {
+        settingBrowserNotifications.addEventListener("change", async (event) => {
+            const wantEnabled = Boolean(event.target.checked);
+            if (wantEnabled) {
+                if (!("Notification" in window)) {
+                    event.target.checked = false;
+                    showModal("Not Supported", "Browser notifications are not supported in this browser.", "warning");
+                    return;
+                }
+                let permission = Notification.permission;
+                if (permission === "default") {
+                    permission = await Notification.requestPermission();
+                }
+                if (permission !== "granted") {
+                    event.target.checked = false;
+                    showModal("Permission Denied", "Browser notification permission was denied. Enable it in your browser settings.", "warning");
+                    return;
+                }
+            }
+            appSettings.browserNotificationsEnabled = wantEnabled;
+            persistAppSettings();
+            setComposerStatus(
+                wantEnabled ? "Browser notifications enabled" : "Browser notifications disabled",
+                "success"
+            );
+        });
+    }
+
+    ideasSubmitForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const body = String(ideasBodyInput?.value || "").trim();
+        if (!body) {
+            showModal("Empty Idea", "Please write something before posting.", "warning");
+            return;
+        }
+        const submitBtn = ideasSubmitForm.querySelector(".ideas-submit-btn");
+        try {
+            if (submitBtn) submitBtn.disabled = true;
+            await window.ApiService.jsonOk("api/ideas/create.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                body: JSON.stringify({ body }),
+            });
+            if (ideasBodyInput) ideasBodyInput.value = "";
+            setComposerStatus("Idea posted!", "success");
+            await loadIdeasList();
+        } catch (error) {
+            showModal("Post Failed", error?.message || "Unable to post idea.", "error");
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+        }
     });
 
     settingsGroupKeyHealthBtn?.addEventListener("click", async () => {
@@ -4758,6 +5035,14 @@ function addMessageActionHandlers(
     let lastTapAt = 0;
     let lastTapX = 0;
     let lastTapY = 0;
+
+    // Swipe gesture state
+    const SWIPE_THRESHOLD_PX = 60;
+    const SWIPE_VERTICAL_LOCK_PX = 30;
+    const SWIPE_MAX_TRANSLATE_PX = 100;
+    let swipeActive = false;
+    let swipeLocked = false; // true once we committed to scroll (vertical) or swipe (horizontal)
+    let swipeDirection = 0; // 0=undecided, 1=right, -1=left
     messageElement.tabIndex = 0;
     messageElement.setAttribute("aria-selected", "false");
     messageElement.setAttribute("aria-label", "Chat message actions available");
@@ -4947,6 +5232,9 @@ function addMessageActionHandlers(
             }
             clearLongPress();
             longPressTriggered = false;
+            swipeActive = false;
+            swipeLocked = false;
+            swipeDirection = 0;
             const touch = event.touches[0];
             touchStartX = Number(touch.clientX || 0);
             touchStartY = Number(touch.clientY || 0);
@@ -4971,11 +5259,49 @@ function addMessageActionHandlers(
             if (!touch) {
                 return;
             }
-            const deltaX = Math.abs(Number(touch.clientX || 0) - touchStartX);
+            const rawDeltaX = Number(touch.clientX || 0) - touchStartX;
+            const deltaX = Math.abs(rawDeltaX);
             const deltaY = Math.abs(Number(touch.clientY || 0) - touchStartY);
+
+            // Cancel long press on any significant movement
             if (deltaX > LONG_PRESS_MOVE_CANCEL_PX || deltaY > LONG_PRESS_MOVE_CANCEL_PX) {
                 clearLongPress();
             }
+
+            // If long press already triggered, don't start a swipe
+            if (longPressTriggered) return;
+
+            // Decision point: lock into scroll vs swipe
+            if (!swipeLocked && (deltaX > 12 || deltaY > 12)) {
+                if (deltaY > deltaX) {
+                    // User is scrolling vertically — do NOT interfere
+                    swipeLocked = true;
+                    swipeActive = false;
+                    return;
+                }
+                // Horizontal movement dominates → lock into swipe
+                swipeLocked = true;
+                swipeActive = true;
+                swipeDirection = rawDeltaX > 0 ? 1 : -1;
+            }
+
+            if (!swipeActive) return;
+
+            // Clamp the visual displacement
+            const clampedDelta = Math.sign(rawDeltaX) * Math.min(deltaX, SWIPE_MAX_TRANSLATE_PX);
+
+            // Only allow swipe in the committed direction
+            if ((swipeDirection === 1 && rawDeltaX <= 0) || (swipeDirection === -1 && rawDeltaX >= 0)) {
+                messageElement.style.transform = "";
+                return;
+            }
+
+            messageElement.style.transform = `translateX(${clampedDelta}px)`;
+            messageElement.style.transition = "none";
+
+            // Show/hide swipe hint icon
+            const progress = deltaX / SWIPE_THRESHOLD_PX;
+            messageElement.classList.toggle("swipe-ready", progress >= 1);
         },
         { passive: true }
     );
@@ -4987,14 +5313,69 @@ function addMessageActionHandlers(
         }
     };
 
+    const resetSwipeStyles = () => {
+        messageElement.style.transition = "transform 0.2s ease-out";
+        messageElement.style.transform = "";
+        messageElement.classList.remove("swipe-ready");
+        const cleanup = () => {
+            messageElement.style.transition = "";
+            messageElement.style.transform = "";
+            messageElement.removeEventListener("transitionend", cleanup);
+        };
+        messageElement.addEventListener("transitionend", cleanup, { once: true });
+        // Fallback cleanup if transitionend doesn't fire
+        setTimeout(cleanup, 250);
+    };
+
     messageElement.addEventListener("touchend", (event) => {
+        // Animate the message back to its original position
+        const wasSwipeActive = swipeActive;
+        if (swipeActive) {
+            resetSwipeStyles();
+        }
+
         if (longPressTriggered) {
             event.preventDefault();
             event.stopPropagation();
             longPressTriggered = false;
+            swipeActive = false;
+            clearLongPress();
+            return;
         }
 
         const touchPoint = event.changedTouches?.[0];
+
+        // Handle swipe action
+        if (wasSwipeActive && touchPoint) {
+            const finalDeltaX = Number(touchPoint.clientX || 0) - touchStartX;
+            const deltaY = Math.abs(Number(touchPoint.clientY || 0) - touchStartY);
+
+            if (Math.abs(finalDeltaX) >= SWIPE_THRESHOLD_PX && deltaY < SWIPE_VERTICAL_LOCK_PX * 3) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (finalDeltaX > 0 && canReply) {
+                    // Swipe right → Reply
+                    setReplyState(messageElement);
+                    chatInput?.focus();
+                } else if (finalDeltaX < 0) {
+                    // Swipe left
+                    const isSent = messageElement.classList.contains("sent");
+                    if (isSent && canEdit && canEditMessage(messageElement, messageData)) {
+                        beginEditMode(messageElement);
+                    } else if (canForward) {
+                        forwardMessageText(messageElement);
+                    }
+                }
+
+                swipeActive = false;
+                clearLongPress();
+                return;
+            }
+        }
+
+        swipeActive = false;
+
         const now = Date.now();
         if (touchPoint) {
             const currentX = Number(touchPoint.clientX || 0);
@@ -5018,7 +5399,13 @@ function addMessageActionHandlers(
 
         clearLongPress();
     });
-    messageElement.addEventListener("touchcancel", clearLongPress);
+    messageElement.addEventListener("touchcancel", () => {
+        clearLongPress();
+        if (swipeActive) {
+            resetSwipeStyles();
+            swipeActive = false;
+        }
+    });
 
     messageElement.addEventListener(
         "click",
@@ -5518,6 +5905,30 @@ async function loadCurrentChatsRecentMessages() {
 
                 playNotificationSound()
             } catch(ex) {
+            }
+        }
+
+        // Browser Notification API (works when tab is hidden/unfocused)
+        if (
+            appSettings.browserNotificationsEnabled &&
+            document.hidden &&
+            "Notification" in window &&
+            Notification.permission === "granted"
+        ) {
+            const lastMsg = data.messages[data.messages.length - 1];
+            if (lastMsg && Number(lastMsg.sender_id) !== Number(CURRENT_USER_ID)) {
+                try {
+                    const senderName = lastMsg.sender_username || lastMsg.sender_id || "Someone";
+                    const msgPreview = lastMsg.message_type === "text"
+                        ? String(lastMsg.text || "").slice(0, 100) || "New message"
+                        : `Sent a ${lastMsg.message_type || "message"}`;
+                    new Notification(`${senderName} — TinTinChat`, {
+                        body: msgPreview,
+                        tag: `tintinchat-msg-${lastMsg.id}`,
+                        renotify: false,
+                        silent: true,
+                    });
+                } catch (notifErr) {}
             }
         }
         currentChatRecentMessages = data.messages;

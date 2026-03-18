@@ -291,6 +291,7 @@ $csrfToken = generateCsrfToken();
                     <div class="chat-ui-settings-tabs" role="tablist" aria-label="Settings sections">
                         <button type="button" id="chatUiSettingsTabGeneral" class="chat-ui-settings-tab is-active" role="tab" aria-selected="true" aria-controls="chatUiSettingsPanelGeneral">General</button>
                         <button type="button" id="chatUiSettingsTabAccount" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelAccount">Account</button>
+                        <button type="button" id="chatUiSettingsTabIdeas" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelIdeas">Ideas</button>
                         <?php if ($is_admin): ?>
                         <button type="button" id="chatUiSettingsTabAdmin" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelAdmin">Admin</button>
                         <?php endif; ?>
@@ -358,6 +359,13 @@ $csrfToken = generateCsrfToken();
                                     <input type="checkbox" id="settingAutoScroll" checked>
                                 </span>
                             </label>
+
+                            <label class="chat-ui-settings-item chat-ui-settings-item-check">
+                                <span>Browser notifications</span>
+                                <span class="chat-ui-settings-control">
+                                    <input type="checkbox" id="settingBrowserNotifications">
+                                </span>
+                            </label>
                         </div>
                     </section>
 
@@ -415,6 +423,25 @@ $csrfToken = generateCsrfToken();
                             <div id="settingsBlockedUsersList" class="chat-ui-blocked-list" aria-live="polite">
                                 <div class="chat-ui-admin-empty">Click refresh to load blocked users.</div>
                             </div>
+                        </div>
+                    </section>
+
+                    <section id="chatUiSettingsPanelIdeas" class="chat-ui-settings-panel" role="tabpanel" aria-labelledby="chatUiSettingsTabIdeas" hidden>
+                        <div class="ideas-hint">
+                            Here you can write Ideas/Problems related to this app; Not that I care or give a fuck, I just like giving false hope to people.
+                        </div>
+
+                        <?php if (!$is_admin): ?>
+                        <form id="ideasSubmitForm" class="ideas-compose">
+                            <textarea id="ideasBodyInput" class="form-control" rows="3" maxlength="2000" placeholder="Describe your idea, feature request, or bug report..."></textarea>
+                            <button type="submit" class="btn btn-sm btn-primary ideas-submit-btn">
+                                <i class="fas fa-paper-plane me-1"></i>Post Idea
+                            </button>
+                        </form>
+                        <?php endif; ?>
+
+                        <div id="ideasList" class="ideas-list" aria-live="polite">
+                            <div class="chat-ui-admin-empty">Loading ideas...</div>
                         </div>
                     </section>
 

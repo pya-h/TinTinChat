@@ -6140,3 +6140,271 @@ textarea,
         border-radius: 0.95rem;
     }
 }
+
+/* ══════════════════════════════════════════
+   Ideas / Feedback Tab
+   ══════════════════════════════════════════ */
+
+.ideas-hint {
+    font-style: italic;
+    color: var(--muted-color, #888);
+    font-size: 0.82rem;
+    padding: 0.6rem 0.8rem 0.4rem;
+    line-height: 1.45;
+    border-left: 3px solid color-mix(in srgb, var(--primary-color, #0d6efd) 45%, transparent);
+    margin-bottom: 0.9rem;
+    background: color-mix(in srgb, var(--primary-color, #0d6efd) 5%, transparent);
+    border-radius: 0 0.45rem 0.45rem 0;
+}
+
+.ideas-compose {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0 0.2rem;
+}
+
+.ideas-compose textarea {
+    resize: vertical;
+    min-height: 60px;
+    max-height: 160px;
+    font-size: 0.88rem;
+    border-radius: 0.55rem;
+}
+
+.ideas-submit-btn {
+    align-self: flex-end;
+}
+
+.ideas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0 0.1rem;
+}
+
+.idea-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 0.65rem;
+    padding: 0.7rem 0.85rem;
+    transition: box-shadow 0.18s ease;
+}
+
+.idea-card:hover {
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--text-color, #000) 8%, transparent);
+}
+
+.idea-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
+}
+
+.idea-card-author {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--primary-color, #0d6efd);
+}
+
+.idea-card-date {
+    font-size: 0.72rem;
+    color: var(--muted-color, #888);
+}
+
+.idea-card-body {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-color, #212529);
+}
+
+.idea-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.idea-vote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted-color, #888);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.idea-vote-btn:hover {
+    border-color: var(--primary-color, #0d6efd);
+    color: var(--primary-color, #0d6efd);
+}
+
+.idea-vote-like.active {
+    background: color-mix(in srgb, #28a745 14%, transparent);
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.idea-vote-dislike.active {
+    background: color-mix(in srgb, #dc3545 14%, transparent);
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.idea-vote-count {
+    font-weight: 600;
+    min-width: 0.9em;
+    text-align: center;
+}
+
+.idea-score {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted-color, #888);
+    margin-left: 0.3rem;
+    min-width: 2em;
+    text-align: center;
+}
+
+.idea-delete-btn {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted-color, #aaa);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.idea-delete-btn:hover {
+    background: color-mix(in srgb, #dc3545 14%, transparent);
+    color: #dc3545;
+}
+
+.idea-admin-reply {
+    margin-top: 0.55rem;
+    padding: 0.5rem 0.7rem;
+    background: color-mix(in srgb, var(--primary-color, #0d6efd) 7%, transparent);
+    border-radius: 0.45rem;
+    border-left: 3px solid var(--primary-color, #0d6efd);
+}
+
+.idea-admin-reply-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary-color, #0d6efd);
+    margin-bottom: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.idea-admin-reply-text {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--text-color, #212529);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.idea-admin-reply-form {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.idea-reply-input {
+    flex: 1;
+    font-size: 0.82rem;
+}
+
+.idea-reply-submit-btn {
+    flex-shrink: 0;
+}
+
+.ideas-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0;
+}
+
+.ideas-page-label {
+    font-size: 0.78rem;
+    color: var(--muted-color, #888);
+}
+
+/* Dark mode overrides for Ideas */
+:root[data-theme="dark"] .idea-card {
+    background: var(--card-bg, #1e1e2e);
+    border-color: var(--border-color, #333);
+}
+
+:root[data-theme="dark"] .ideas-hint {
+    background: color-mix(in srgb, var(--primary-color, #6ea8fe) 8%, transparent);
+    border-left-color: color-mix(in srgb, var(--primary-color, #6ea8fe) 50%, transparent);
+}
+
+:root[data-theme="dark"] .idea-admin-reply {
+    background: color-mix(in srgb, var(--primary-color, #6ea8fe) 10%, transparent);
+}
+
+/* ══════════════════════════════════════════
+   Swipe Gesture Visual Feedback
+   ══════════════════════════════════════════ */
+
+.message {
+    will-change: transform;
+}
+
+.message.swipe-ready {
+    opacity: 0.85;
+}
+
+.message.swipe-ready::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif;
+    font-weight: 900;
+    font-size: 0.7rem;
+    color: #fff;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.message.sent.swipe-ready::after {
+    left: -2rem;
+    background: var(--primary-color, #0d6efd);
+    content: "\f3e5"; /* fa-reply */
+}
+
+.message.received.swipe-ready::after {
+    right: -2rem;
+    background: var(--primary-color, #0d6efd);
+    content: "\f3e5"; /* fa-reply */
+}

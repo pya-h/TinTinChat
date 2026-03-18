@@ -1,0 +1,61 @@
+<?php
+session_start();
+require_once __DIR__ . '/../../includes/db.php';
+require_once __DIR__ . '/../../includes/api_helpers.php';
+
+apiRequireMethod('GET');
+$userId = apiRequireAuth();
+
+$page  = max(1, (int) ($_GET['page'] ?? 1));
+$limit = min(50, max(5, (int) ($_GET['limit'] ?? 20)));
+$offset = ($page - 1) * $limit;
+
+$countStmt = $pdo->prepare('SELECT COUNT(*) FROM ideas');
+$countStmt->execute();
+$total = (int) $countStmt->fetchColumn();
+
+$stmt = $pdo->prepare('
+    SELECT
+        i.id,
+        i.user_id,
+        u.username,
+        i.body,
+        i.admin_reply,
+        i.created_at,
+        i.replied_at,
+        COALESCE(SUM(CASE WHEN v.vote = 1 THEN 1 ELSE 0 END), 0)  AS likes,
+        COALESCE(SUM(CASE WHEN v.vote = -1 THEN 1 ELSE 0 END), 0) AS dislikes,
+        MAX(CASE WHEN v.user_id = ? THEN v.vote ELSE NULL END)     AS my_vote
+    FROM ideas i
+    JOIN users u ON u.id = i.user_id
+    LEFT JOIN idea_votes v ON v.idea_id = i.id
+    GROUP BY i.id
+    ORDER BY (COALESCE(SUM(CASE WHEN v.vote = 1 THEN 1 ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN v.vote = -1 THEN 1 ELSE 0 END), 0)) DESC,
+             i.created_at DESC
+    LIMIT ? OFFSET ?
+');
+$stmt->execute([$userId, $limit, $offset]);
+$ideas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($ideas as &$idea) {
+    $idea['id']       = (int) $idea['id'];
+    $idea['user_id']  = (int) $idea['user_id'];
+    $idea['likes']    = (int) $idea['likes'];
+    $idea['dislikes'] = (int) $idea['dislikes'];
+    $idea['my_vote']  = $idea['my_vote'] !== null ? (int) $idea['my_vote'] : null;
+    $idea['is_own']   = $idea['user_id'] === $userId;
+}
+unset($idea);
+
+$totalPages = max(1, (int) ceil($total / $limit));
+
+apiSuccess([
+    'ideas'      => $ideas,
+    'pagination' => [
+        'total'       => $total,
+        'page'        => $page,
+        'per_page'    => $limit,
+        'total_pages' => $totalPages,
+        'has_more'    => $page < $totalPages,
+    ],
+]);
