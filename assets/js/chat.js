@@ -1107,43 +1107,50 @@ async function updateTypingStatus(isTyping, chatTargetOverride = null) {
     }
 }
 
+function applyTypingData(typing) {
+    if (!typing || !currentChatUser) {
+        setTypingIndicator("");
+        return;
+    }
+    if (isGroupToken(currentChatUser)) {
+        const typers = Array.isArray(typing.typers)
+            ? typing.typers.map((item) => String(item || "").trim()).filter(Boolean)
+            : [];
+        if (!typers.length) {
+            setTypingIndicator("");
+        } else if (typers.length === 1) {
+            setTypingIndicator(`${typers[0]} is typing...`);
+        } else if (typers.length === 2) {
+            setTypingIndicator(`${typers[0]} and ${typers[1]} are typing...`);
+        } else {
+            setTypingIndicator(`${typers[0]} and ${typers.length - 1} others are typing...`);
+        }
+    } else {
+        setTypingIndicator(typing.is_typing ? `${currentChatUser} is typing...` : "");
+    }
+}
+
 async function refreshTypingIndicator() {
     if (!currentChatUser) {
         setTypingIndicator("");
         return;
     }
-
     try {
+        let data;
         if (isGroupToken(currentChatUser)) {
             const groupId = parseGroupIdFromToken(currentChatUser);
-            if (!groupId) {
-                setTypingIndicator("");
-                return;
-            }
-            const data = await window.ApiService.json(
+            if (!groupId) { setTypingIndicator(""); return; }
+            data = await window.ApiService.json(
                 `api/typing/fetch.php?group_id=${encodeURIComponent(groupId)}`,
                 { cache: "no-store" }
             );
-            const typers = Array.isArray(data?.typers)
-                ? data.typers.map((item) => String(item || "").trim()).filter(Boolean)
-                : [];
-            if (!typers.length) {
-                setTypingIndicator("");
-            } else if (typers.length === 1) {
-                setTypingIndicator(`${typers[0]} is typing...`);
-            } else if (typers.length === 2) {
-                setTypingIndicator(`${typers[0]} and ${typers[1]} are typing...`);
-            } else {
-                setTypingIndicator(`${typers[0]} and ${typers.length - 1} others are typing...`);
-            }
-            return;
+        } else {
+            data = await window.ApiService.json(
+                `api/typing/fetch.php?with=${encodeURIComponent(currentChatUser)}`,
+                { cache: "no-store" }
+            );
         }
-
-        const data = await window.ApiService.json(
-            `api/typing/fetch.php?with=${encodeURIComponent(currentChatUser)}`,
-            { cache: "no-store" }
-        );
-        setTypingIndicator(data?.is_typing ? `${currentChatUser} is typing...` : "");
+        applyTypingData(data);
     } catch (error) {
         setTypingIndicator("");
     }
@@ -5965,6 +5972,8 @@ async function loadCurrentChatsRecentMessages() {
         );
 
         if (!data?.messages?.length) {
+            // Still process typing status even if no new messages
+            if (data?.typing) applyTypingData(data.typing);
             setComposerStatus("");
             return;
         }
@@ -5980,6 +5989,11 @@ async function loadCurrentChatsRecentMessages() {
             }
         }
 
+        // Apply inline typing status from fetch_recent response
+        if (data.typing) {
+            applyTypingData(data.typing);
+        }
+
         // Browser Notification API (works when tab is hidden/unfocused)
         if (
             appSettings.browserNotificationsEnabled &&
@@ -5992,7 +6006,7 @@ async function loadCurrentChatsRecentMessages() {
                 try {
                     const senderName = lastMsg.sender_username || lastMsg.sender_id || "Someone";
                     const msgPreview = lastMsg.message_type === "text"
-                        ? String(lastMsg.text || "").slice(0, 100) || "New message"
+                        ? String(lastMsg.message || lastMsg.message_for_sender || "").slice(0, 100) || "New message"
                         : `Sent a ${lastMsg.message_type || "message"}`;
                     new Notification(`${senderName} — TinTinChat`, {
                         body: msgPreview,
@@ -8818,9 +8832,15 @@ setInterval(async () => {
         return;
     }
     if (document.hidden) {
-        if (chatListTriggerTime % 30 === 0) {
+        if (chatListTriggerTime % 5 === 0) {
             try {
-                await loadChatList();
+                await Promise.all([
+                    loadChatList(),
+                    // Fetch messages in background for browser notifications
+                    currentChatUser?.length &&
+                        appSettings.browserNotificationsEnabled &&
+                        forceFetchCurrentChatMessages(),
+                ]);
             } catch (error) {}
         }
         chatListTriggerTime = ++chatListTriggerTime % 30;
@@ -8831,7 +8851,6 @@ setInterval(async () => {
     try {
         await Promise.all([
             currentChatUser?.length && forceFetchCurrentChatMessages(),
-            currentChatUser?.length && refreshTypingIndicator(),
             !(chatListTriggerTime % 10) && loadChatList(),
         ]);
         chatListTriggerTime = ++chatListTriggerTime % 10;
@@ -9373,3 +9392,92 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         if (sendingIndicator) sendingIndicator.remove();
     }
 }
+
+// ═══════════════════════════════════════════
+// Changelog / What's New Tip Modal
+// ═══════════════════════════════════════════
+const CHANGELOG_LAST_UPDATED = "2026-03-18T12:00:00Z";
+
+const CHANGELOG_HTML = `
+<ul class="changelog-list">
+    <li class="changelog-item changelog-highlight">
+        <span class="changelog-icon"><i class="fas fa-hand-pointer"></i></span>
+        <div>
+            <strong>Swipe Gestures</strong>
+            <p>Swipe right on any message to <em>reply</em> to it. Swipe left on your own messages to <em>edit</em> or <em>forward</em>. Works on both mobile and desktop (click-drag).</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-lightbulb"></i></span>
+        <div>
+            <strong>Ideas &amp; Feedback</strong>
+            <p>Head to <em>Settings → Ideas</em> to submit feature requests or bug reports, and vote on others' ideas.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-bell"></i></span>
+        <div>
+            <strong>Browser Notifications</strong>
+            <p>Enable in <em>Settings → General</em> to get desktop notifications for new messages even when the tab is in the background.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-ban"></i></span>
+        <div>
+            <strong>Block Users</strong>
+            <p>You can now block/unblock users from their profile popup. Manage blocked users in <em>Settings → Account</em>.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-paint-brush"></i></span>
+        <div>
+            <strong>UI Refresh &amp; Improvements</strong>
+            <p>Modernized design, smoother animations, improved dark mode, and better voice message waveforms.</p>
+        </div>
+    </li>
+</ul>
+<div class="changelog-hint">
+    <i class="fas fa-info-circle"></i>
+    Tip: Clear your browser's cache &amp; cookies so it fetches the latest version of the app.
+</div>
+`;
+
+(function initChangelog() {
+    const overlay = document.getElementById("changelogOverlay");
+    const body = document.getElementById("changelogBody");
+    const dismissBtn = document.getElementById("changelogDismissBtn");
+    const closeBtn = document.getElementById("changelogCloseBtn");
+    if (!overlay || !body || !dismissBtn) return;
+
+    const changelogTs = new Date(CHANGELOG_LAST_UPDATED).getTime();
+    const seenTs = USER_TIPS_SEEN_AT ? new Date(USER_TIPS_SEEN_AT).getTime() : 0;
+
+    if (!Number.isNaN(changelogTs) && seenTs >= changelogTs) return;
+
+    body.innerHTML = CHANGELOG_HTML;
+
+    // Show after a short delay so the page loads first
+    setTimeout(() => {
+        overlay.style.display = "flex";
+        requestAnimationFrame(() => overlay.classList.add("visible"));
+    }, 1200);
+
+    function dismiss() {
+        overlay.classList.remove("visible");
+        setTimeout(() => { overlay.style.display = "none"; }, 350);
+        // Fire-and-forget server update
+        try {
+            window.ApiService.jsonOk("api/users/dismiss_changelog.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                body: "{}",
+            });
+        } catch (e) {}
+    }
+
+    dismissBtn.addEventListener("click", dismiss);
+    closeBtn?.addEventListener("click", dismiss);
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) dismiss();
+    });
+})();

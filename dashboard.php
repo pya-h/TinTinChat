@@ -14,11 +14,14 @@ $user_ident = isset($_SESSION['ident']) ? $_SESSION['ident'] : null;
 $is_admin = false;
 $superuser_username = trim((string) ($_ENV['SUPERUSER_USERNAME'] ?? 'paya'));
 $is_superuser = ($superuser_username !== '' && strcasecmp((string) $username, $superuser_username) === 0);
+$tips_seen_at = null;
 
 try {
-    $adminStmt = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
+    $adminStmt = $pdo->prepare('SELECT is_admin, tips_seen_at FROM users WHERE id = ? LIMIT 1');
     $adminStmt->execute([$user_id]);
-    $is_admin = (bool) $adminStmt->fetchColumn();
+    $adminRow = $adminStmt->fetch(PDO::FETCH_ASSOC);
+    $is_admin = (bool) ($adminRow['is_admin'] ?? false);
+    $tips_seen_at = $adminRow['tips_seen_at'] ?? null;
 } catch (Throwable $ex) {
     $is_admin = false;
 }
@@ -608,6 +611,25 @@ $csrfToken = generateCsrfToken();
     </div>
 
     <?php require_once __DIR__ . '/includes/modal.php' ?>
+
+    <!-- Changelog / What's New tip modal -->
+    <div id="changelogOverlay" class="changelog-overlay" style="display:none;">
+        <div class="changelog-modal">
+            <div class="changelog-header">
+                <span class="changelog-badge">What's New</span>
+                <button type="button" class="changelog-close" id="changelogCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="changelog-body" id="changelogBody">
+                <!-- Content injected by JS -->
+            </div>
+            <div class="changelog-footer">
+                <button type="button" class="btn btn-primary changelog-dismiss-btn" id="changelogDismissBtn">
+                    <i class="fas fa-check me-1"></i>Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
@@ -616,6 +638,7 @@ $csrfToken = generateCsrfToken();
         const APP_CONSTANTS = <?= json_encode(tintinchatFrontendConstants()) ?>;
         const CURRENT_USER_IS_ADMIN = <?= json_encode($is_admin) ?>;
         const CURRENT_USER_IS_SUPERUSER = <?= json_encode($is_superuser) ?>;
+        const USER_TIPS_SEEN_AT = <?= json_encode($tips_seen_at) ?>;
         const PWA_SW_VERSION = <?= json_encode((string) @filemtime(__DIR__ . '/service-worker.js')) ?>;
         const currentUserIdent = <?= json_encode($user_ident) ?>;
         if(currentUserIdent?.length) {

@@ -1,0 +1,2 @@
+ALTER TABLE users
+    ADD COLUMN tips_seen_at TIMESTAMP NULL DEFAULT NULL AFTER is_admin;

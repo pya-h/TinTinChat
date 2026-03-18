@@ -113,6 +113,53 @@ if (!empty($messages)) {
 		unset($messageRow);
 	}
 }
+// ── Inline typing status (saves a separate /typing/fetch.php round-trip) ──
+$typingData = ['is_typing' => false, 'typers' => []];
+try {
+	if ($groupId > 0) {
+		$typStmt = $pdo->prepare(
+			'SELECT u.username
+			 FROM group_typing_status gts
+			 INNER JOIN users u ON u.id = gts.typer_user_id
+			 WHERE gts.group_id = ?
+			   AND gts.typer_user_id <> ?
+			   AND gts.is_typing = 1
+			   AND gts.updated_at >= (NOW() - INTERVAL 8 SECOND)
+			 ORDER BY gts.updated_at DESC'
+		);
+		$typStmt->execute([$groupId, $user_id]);
+		$typers = [];
+		foreach ($typStmt->fetchAll(PDO::FETCH_ASSOC) as $tRow) {
+			$tName = trim((string) ($tRow['username'] ?? ''));
+			if ($tName !== '') $typers[] = $tName;
+		}
+		$typingData = [
+			'is_typing' => count($typers) > 0,
+			'typers' => $typers,
+			'scope' => 'group',
+			'group_id' => $groupId,
+		];
+	} else {
+		$typStmt = $pdo->prepare(
+			'SELECT is_typing, updated_at
+			 FROM chat_typing_status
+			 WHERE typer_user_id = ? AND target_user_id = ?
+			 LIMIT 1'
+		);
+		$typStmt->execute([$other_user_id, $user_id]);
+		$typRow = $typStmt->fetch(PDO::FETCH_ASSOC);
+		if ($typRow) {
+			$isTyping = (int) ($typRow['is_typing'] ?? 0) === 1;
+			$updatedAt = isset($typRow['updated_at']) ? strtotime((string) $typRow['updated_at']) : false;
+			$isFresh = $updatedAt !== false && $updatedAt >= (time() - 8);
+			$typingData['is_typing'] = $isTyping && $isFresh;
+		}
+	}
+} catch (Throwable $ex) {
+	// Typing status is non-critical; silently ignore errors
+}
+
 apiSuccess([
 	'messages' => $messages,
+	'typing' => $typingData,
 ]);
