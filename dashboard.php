@@ -371,6 +371,16 @@ $csrfToken = generateCsrfToken();
                                     <input type="checkbox" id="settingBrowserNotifications">
                                 </span>
                             </label>
+
+                            <div class="chat-ui-settings-item chat-ui-settings-item-action">
+                                <span>
+                                    <span>Media cache</span>
+                                    <small id="mediaCacheSizeLabel" class="chat-ui-settings-hint">Calculating…</small>
+                                </span>
+                                <span class="chat-ui-settings-control">
+                                    <button type="button" id="clearMediaCacheBtn" class="btn btn-sm btn-outline-danger">Clear</button>
+                                </span>
+                            </div>
                         </div>
                     </section>
 

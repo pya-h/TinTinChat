@@ -70,26 +70,26 @@ const decryptedMediaCacheByMessageId = new Map();
 
 ### Tasks
 
-- [ ] **1.1** — Add new IDB object store `"mediaCache"` to the existing `TinTinChatFileCache` database
+- [x] **1.1** — Add new IDB object store `"mediaCache"` to the existing `TinTinChatFileCache` database
   - Bump DB version from 1 to 2
   - Schema: `{ messageId (keyPath), blob (Blob), mimeType (string), fileName (string), size (number), cachedAt (number) }`
   - Add indexes: `cachedAt` (for LRU eviction), `size` (for quota queries)
   - Update `initFileCache()` `onupgradeneeded` handler to create the new store while preserving existing `"downloadedFiles"` store
   - **File**: `assets/js/chat.js` lines ~6728-6755
 
-- [ ] **1.2** — Create `saveMediaToCache(messageId, blob, metadata)` function
+- [x] **1.2** — Create `saveMediaToCache(messageId, blob, metadata)` function
   - Writes decrypted blob + metadata to `"mediaCache"` IDB store
   - Fire-and-forget (don't await in the hot path)
   - Silently catch errors (IDB failure should never break the app)
   - **File**: `assets/js/chat.js`, new function near existing `saveDownloadedFile`
 
-- [ ] **1.3** — Create `getMediaFromCache(messageId)` function
+- [x] **1.3** — Create `getMediaFromCache(messageId)` function
   - Reads from `"mediaCache"` IDB store by messageId
   - Returns `{ blob, mimeType, fileName }` or `null`
   - Update `cachedAt` timestamp on read (for LRU tracking) — optional, can use a separate touch function
   - **File**: `assets/js/chat.js`, new function near existing `getDownloadedFile`
 
-- [ ] **1.4** — Integrate IDB read into `getDecryptedMediaResource(msg)` 
+- [x] **1.4** — Integrate IDB read into `getDecryptedMediaResource(msg)` 
   - After the in-memory Map check (line ~775), add IDB check:
     ```
     1. Check in-memory Map → return if found
@@ -102,16 +102,16 @@ const decryptedMediaCacheByMessageId = new Map();
   - When loading from IDB, must create a new `URL.createObjectURL()` since the old one was revoked
   - **File**: `assets/js/chat.js` lines ~770-812
 
-- [ ] **1.5** — Integrate IDB write into `getDecryptedMediaResource(msg)` after successful decrypt
+- [x] **1.5** — Integrate IDB write into `getDecryptedMediaResource(msg)` after successful decrypt
   - After creating the blob and objectUrl (line ~808), fire-and-forget: `saveMediaToCache(messageId, blob, metadata)`
   - **File**: `assets/js/chat.js` line ~810
 
-- [ ] **1.6** — Update `clearDecryptedMediaCache()` to only revoke objectURLs, NOT clear IDB
+- [x] **1.6** — Update `clearDecryptedMediaCache()` to only revoke objectURLs, NOT clear IDB
   - The in-memory Map should still be cleared (objectURLs become invalid on page unload)
   - IDB data must persist across page loads — that's the whole point
   - **File**: `assets/js/chat.js` lines ~932-939
 
-- [ ] **1.7** — Implement LRU eviction with storage quota monitoring
+- [x] **1.7** — Implement LRU eviction with storage quota monitoring
   - On app startup (or after each IDB write), check `navigator.storage.estimate()`
   - If usage > 80% of quota, or if mediaCache exceeds a configurable max (e.g. 500MB):
     - Query all entries sorted by `cachedAt` ascending
@@ -121,17 +121,17 @@ const decryptedMediaCacheByMessageId = new Map();
   - Call it on app init and periodically (e.g. every 10 minutes)
   - **File**: `assets/js/chat.js`, new function
 
-- [ ] **1.8** — Handle message deletion: when a message is deleted (locally or via delete API), also remove its cached media from IDB
+- [x] **1.8** — Handle message deletion: when a message is deleted (locally or via delete API), also remove its cached media from IDB
   - Find existing delete handler in chat.js and add IDB cleanup
   - Create `removeMediaFromCache(messageId)` function
   - **File**: `assets/js/chat.js`
 
-- [ ] **1.9** — Add a "Clear Media Cache" button in Settings → General
+- [x] **1.9** — Add a "Clear Media Cache" button in Settings → General
   - Shows current cache size (count of entries + total bytes)
   - Button: "Clear cached media (X MB)" → clears `"mediaCache"` store
   - **File**: `dashboard.php` (HTML), `assets/js/chat.js` (handler), `assets/css/dashboard.css` (styles)
 
-- [ ] **1.10** — Test edge cases
+- [x] **1.10** — Test edge cases
   - Verify: image/video/voice all cached and restored correctly after page refresh
   - Verify: cache hit skips network fetch entirely (check Network tab)
   - Verify: IDB failure (e.g. private browsing mode) falls back to normal fetch+decrypt gracefully

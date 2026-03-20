@@ -258,6 +258,7 @@ let messageActionsHintTimer = null;
 let hasShownMessageActionsHint = false;
 let imageSourceMenuHideTimer = null;
 let suppressNextContextMenuTapUntil = 0;
+let refreshMediaCacheLabelGlobal = () => {};
 let cameraStream = null;
 let isCameraCaptureBusy = false;
 let hasVideoInputDevice = null;
@@ -772,10 +773,29 @@ async function getDecryptedMediaResource(msg) {
         throw new Error("Invalid media message");
     }
 
+    // 1. Check volatile in-memory Map
     if (decryptedMediaCacheByMessageId.has(messageId)) {
         return decryptedMediaCacheByMessageId.get(messageId);
     }
 
+    // 2. Check persistent IDB media cache
+    try {
+        const cached = await getMediaFromCache(messageId);
+        if (cached?.blob) {
+            const objectUrl = URL.createObjectURL(cached.blob);
+            const resource = {
+                blob: cached.blob,
+                objectUrl,
+                metadata: { mime_type: cached.mimeType, file_name: cached.fileName },
+            };
+            decryptedMediaCacheByMessageId.set(messageId, resource);
+            return resource;
+        }
+    } catch (_) {
+        // IDB failure: fall through to network fetch
+    }
+
+    // 3. Fetch + decrypt from server
     const envelopePayload = getMediaEnvelopePayloadForMessage(msg);
     const envelope = parseMediaEnvelopePayload(envelopePayload);
     if (Number(msg?.group_id || 0) > 0) {
@@ -807,7 +827,13 @@ async function getDecryptedMediaResource(msg) {
     const blob = new Blob([decryptedBytes], { type: mimeType });
     const objectUrl = URL.createObjectURL(blob);
     const resource = { blob, objectUrl, metadata: { ...metadata, mime_type: mimeType, file_name: fileName } };
+
+    // 4. Store in volatile cache
     decryptedMediaCacheByMessageId.set(messageId, resource);
+
+    // 5. Persist to IDB (fire-and-forget, never block render)
+    void saveMediaToCache(messageId, blob, { mime_type: mimeType, file_name: fileName });
+
     return resource;
 }
 
@@ -930,6 +956,8 @@ async function hydrateVideoMessageElement(messageElement, msg) {
 }
 
 function clearDecryptedMediaCache() {
+    // Revoke objectURLs and clear volatile in-memory map only.
+    // IDB persistent cache is intentionally preserved across page loads.
     decryptedMediaCacheByMessageId.forEach((resource) => {
         if (resource?.objectUrl) {
             URL.revokeObjectURL(resource.objectUrl);
@@ -941,6 +969,9 @@ function clearDecryptedMediaCache() {
 window.addEventListener("beforeunload", () => {
     clearDecryptedMediaCache();
 });
+
+// Run LRU eviction on startup (fire-and-forget)
+void evictStaleCachedMedia();
 
 function buildGroupToken(groupId) {
     return `group:${groupId}`;
@@ -1293,6 +1324,9 @@ function openUiSettingsModal() {
         applySettingsTabUi(activeSettingsTab);
         if (activeSettingsTab === "admin") {
             void refreshAdminSettingsData();
+        }
+        if (activeSettingsTab === "general") {
+            void refreshMediaCacheLabelGlobal();
         }
         if (activeSettingsTab === "account") {
             settingsUsernameInput?.focus();
@@ -2966,6 +3000,47 @@ function bindSettingsUiEvents() {
         await runGroupKeyHealthCheck();
     });
 
+    // Media cache UI
+    const clearMediaCacheBtn = document.getElementById("clearMediaCacheBtn");
+    const mediaCacheSizeLabel = document.getElementById("mediaCacheSizeLabel");
+
+    refreshMediaCacheLabelGlobal = async function refreshMediaCacheLabel() {
+        if (!mediaCacheSizeLabel) return;
+        try {
+            const stats = await getMediaCacheStats();
+            if (stats.count === 0) {
+                mediaCacheSizeLabel.textContent = "Empty";
+            } else {
+                mediaCacheSizeLabel.textContent = `${stats.count} items · ${formatFileSize(stats.totalSize)}`;
+            }
+        } catch (_) {
+            mediaCacheSizeLabel.textContent = "Unavailable";
+        }
+    }
+
+    if (clearMediaCacheBtn) {
+        clearMediaCacheBtn.addEventListener("click", async () => {
+            const confirmed = window.confirm("Clear all cached media? Images and videos will need to be re-downloaded.");
+            if (!confirmed) return;
+
+            clearMediaCacheBtn.disabled = true;
+            clearMediaCacheBtn.textContent = "Clearing…";
+            try {
+                await clearMediaCache();
+                clearDecryptedMediaCache();
+                setComposerStatus("Media cache cleared", "success");
+            } catch (_) {
+                setComposerStatus("Failed to clear media cache", "error");
+            }
+            clearMediaCacheBtn.disabled = false;
+            clearMediaCacheBtn.textContent = "Clear";
+            await refreshMediaCacheLabelGlobal();
+        });
+    }
+
+    // Refresh label when settings panel opens
+    void refreshMediaCacheLabelGlobal();
+
     settingsAdminRefreshStickersBtn?.addEventListener("click", async () => {
         await loadAdminStickerSettings();
     });
@@ -4339,6 +4414,7 @@ async function bulkDeleteSelectedMessages() {
             pendingSeenMessageIds.delete(messageId);
             messageMetaById.delete(messageId);
         });
+        void removeMultipleMediaFromCache(deletedIds);
         if (Array.isArray(currentChatRecentMessages)) {
             currentChatRecentMessages = currentChatRecentMessages.filter(
                 (item) => !deletedSet.has(Number(item.id || 0))
@@ -4794,6 +4870,7 @@ async function deleteMessageFromContext(messageElement) {
         }
         pendingSeenMessageIds.delete(messageId);
         messageMetaById.delete(messageId);
+        void removeMediaFromCache(messageId);
     } catch (error) {
         showModal("Delete Failed", error.message || "Unable to delete message.", "error");
     }
@@ -6724,31 +6801,43 @@ function formatFileSize(bytes) {
 
 const FILE_CACHE_DB = "TinTinChatFileCache";
 const FILE_CACHE_STORE = "downloadedFiles";
+const MEDIA_CACHE_STORE = "mediaCache";
+const FILE_CACHE_DB_VERSION = 2;
+const MEDIA_CACHE_MAX_ENTRIES = 2000;
+const MEDIA_CACHE_EVICT_BATCH = 200;
+
+let _fileCacheDb = null;
 
 async function initFileCache() {
+    if (_fileCacheDb) {
+        return _fileCacheDb;
+    }
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(FILE_CACHE_DB, 1);
+        const request = indexedDB.open(FILE_CACHE_DB, FILE_CACHE_DB_VERSION);
 
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
-            const db = request.result;
-            if (!db.objectStoreNames.contains(FILE_CACHE_STORE)) {
-                const objectStore = db.createObjectStore(FILE_CACHE_STORE, {
-                    keyPath: "messageId",
-                });
-                objectStore.createIndex("timestamp", "timestamp", {
-                    unique: false,
-                });
-            }
-            resolve(db);
+            _fileCacheDb = request.result;
+            _fileCacheDb.onclose = () => { _fileCacheDb = null; };
+            resolve(_fileCacheDb);
         };
 
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
+            // v1: downloadedFiles store
             if (!db.objectStoreNames.contains(FILE_CACHE_STORE)) {
-                db.createObjectStore(FILE_CACHE_STORE, {
+                const store = db.createObjectStore(FILE_CACHE_STORE, {
                     keyPath: "messageId",
                 });
+                store.createIndex("timestamp", "timestamp", { unique: false });
+            }
+            // v2: mediaCache store for persistent decrypted media
+            if (!db.objectStoreNames.contains(MEDIA_CACHE_STORE)) {
+                const mediaStore = db.createObjectStore(MEDIA_CACHE_STORE, {
+                    keyPath: "messageId",
+                });
+                mediaStore.createIndex("cachedAt", "cachedAt", { unique: false });
+                mediaStore.createIndex("size", "size", { unique: false });
             }
         };
     });
@@ -6796,6 +6885,177 @@ async function isFileDownloaded(messageId) {
     const cachedFile = await getDownloadedFile(messageId);
     return Boolean(cachedFile);
 }
+
+// ── Persistent decrypted media cache (Phase 1) ──────────────────────
+
+async function saveMediaToCache(messageId, blob, metadata) {
+    try {
+        const db = await initFileCache();
+        const tx = db.transaction([MEDIA_CACHE_STORE], "readwrite");
+        const store = tx.objectStore(MEDIA_CACHE_STORE);
+
+        const entry = {
+            messageId: Number(messageId),
+            blob: blob,
+            mimeType: String(metadata?.mime_type || "application/octet-stream"),
+            fileName: String(metadata?.file_name || ""),
+            size: Number(blob?.size || 0),
+            cachedAt: Date.now(),
+        };
+
+        return new Promise((resolve, reject) => {
+            const request = store.put(entry);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(entry);
+        });
+    } catch (_) {
+        // IDB failure must never break the app (e.g. private browsing)
+    }
+    return null;
+}
+
+async function getMediaFromCache(messageId) {
+    try {
+        const db = await initFileCache();
+        const tx = db.transaction([MEDIA_CACHE_STORE], "readonly");
+        const store = tx.objectStore(MEDIA_CACHE_STORE);
+
+        return new Promise((resolve, reject) => {
+            const request = store.get(Number(messageId));
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                const result = request.result;
+                if (!result?.blob) {
+                    resolve(null);
+                    return;
+                }
+                resolve({
+                    blob: result.blob,
+                    mimeType: result.mimeType,
+                    fileName: result.fileName,
+                });
+            };
+        });
+    } catch (_) {}
+    return null;
+}
+
+async function removeMediaFromCache(messageId) {
+    try {
+        const db = await initFileCache();
+        const tx = db.transaction([MEDIA_CACHE_STORE], "readwrite");
+        const store = tx.objectStore(MEDIA_CACHE_STORE);
+
+        return new Promise((resolve, reject) => {
+            const request = store.delete(Number(messageId));
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(true);
+        });
+    } catch (_) {}
+    return false;
+}
+
+async function removeMultipleMediaFromCache(messageIds) {
+    if (!Array.isArray(messageIds) || !messageIds.length) return;
+    try {
+        const db = await initFileCache();
+        const tx = db.transaction([MEDIA_CACHE_STORE], "readwrite");
+        const store = tx.objectStore(MEDIA_CACHE_STORE);
+
+        for (const id of messageIds) {
+            store.delete(Number(id));
+        }
+        return new Promise((resolve) => {
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+        });
+    } catch (_) {}
+}
+
+async function getMediaCacheStats() {
+    try {
+        const db = await initFileCache();
+        const tx = db.transaction([MEDIA_CACHE_STORE], "readonly");
+        const store = tx.objectStore(MEDIA_CACHE_STORE);
+
+        return new Promise((resolve, reject) => {
+            const countReq = store.count();
+            let totalSize = 0;
+            let count = 0;
+
+            const cursorReq = store.openCursor();
+            cursorReq.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    totalSize += Number(cursor.value?.size || 0);
+                    count++;
+                    cursor.continue();
+                }
+            };
+
+            countReq.onerror = () => reject(countReq.error);
+            tx.oncomplete = () => resolve({ count, totalSize });
+            tx.onerror = () => resolve({ count: 0, totalSize: 0 });
+        });
+    } catch (_) {}
+    return { count: 0, totalSize: 0 };
+}
+
+async function clearMediaCache() {
+    try {
+        const db = await initFileCache();
+        const tx = db.transaction([MEDIA_CACHE_STORE], "readwrite");
+        const store = tx.objectStore(MEDIA_CACHE_STORE);
+
+        return new Promise((resolve, reject) => {
+            const request = store.clear();
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(true);
+        });
+    } catch (_) {}
+    return false;
+}
+
+async function evictStaleCachedMedia() {
+    try {
+        const db = await initFileCache();
+        const tx = db.transaction([MEDIA_CACHE_STORE], "readonly");
+        const store = tx.objectStore(MEDIA_CACHE_STORE);
+
+        const countReq = store.count();
+        const totalCount = await new Promise((resolve, reject) => {
+            countReq.onerror = () => reject(countReq.error);
+            countReq.onsuccess = () => resolve(countReq.result);
+        });
+
+        if (totalCount <= MEDIA_CACHE_MAX_ENTRIES) {
+            return 0;
+        }
+
+        const toEvict = totalCount - MEDIA_CACHE_MAX_ENTRIES + MEDIA_CACHE_EVICT_BATCH;
+        const evictTx = db.transaction([MEDIA_CACHE_STORE], "readwrite");
+        const evictStore = evictTx.objectStore(MEDIA_CACHE_STORE);
+        const index = evictStore.index("cachedAt");
+
+        let evicted = 0;
+        return new Promise((resolve) => {
+            const cursorReq = index.openCursor(); // ascending = oldest first
+            cursorReq.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor && evicted < toEvict) {
+                    cursor.delete();
+                    evicted++;
+                    cursor.continue();
+                }
+            };
+            evictTx.oncomplete = () => resolve(evicted);
+            evictTx.onerror = () => resolve(evicted);
+        });
+    } catch (_) {}
+    return 0;
+}
+
+// ── End persistent media cache helpers ──────────────────────────────
 
 async function getDownloadDirectory() {
     try {

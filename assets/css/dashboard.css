@@ -2365,6 +2365,28 @@ textarea,
     box-shadow: 0 0 0 0.16rem color-mix(in srgb, var(--secondary-color) 30%, transparent);
 }
 
+.chat-ui-settings-item-action {
+    cursor: default;
+}
+
+.chat-ui-settings-item-action > span:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.chat-ui-settings-hint {
+    font-size: 0.74rem;
+    color: color-mix(in srgb, var(--text-color) 56%, transparent);
+    font-weight: 400;
+}
+
+.chat-ui-settings-item-action .btn {
+    font-size: 0.78rem;
+    padding: 0.28rem 0.72rem;
+    border-radius: 0.55rem;
+}
+
 .chat-ui-account-section {
     display: grid;
     gap: 0.52rem;
