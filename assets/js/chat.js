@@ -789,7 +789,7 @@ async function getDecryptedMediaResource(msg) {
     const metadata = await decryptMediaMetadata(envelope.m, mediaKey);
 
     const endpoint = getMediaEndpointForType(String(msg.message_type || "file"), messageId);
-    const response = await fetch(endpoint, { cache: "no-store" });
+    const response = await fetch(endpoint);
     if (!response.ok) {
         throw new Error(`Failed to fetch media (${response.status})`);
     }

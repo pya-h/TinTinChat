@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/group_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
+session_write_close();
 $groupId = groupParseId($_GET['group_id'] ?? null);
 $otherUsername = $groupId > 0 ? '' : apiNormalizeUsername($_GET['with'] ?? '', 'INVALID_TARGET_USERNAME');
 

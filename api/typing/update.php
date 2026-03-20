@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../includes/group_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
+session_write_close();
 
 $body = apiGetJsonBody();
 $targetUsernameRaw = trim((string) ($body['target'] ?? ''));

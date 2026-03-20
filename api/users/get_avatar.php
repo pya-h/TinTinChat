@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 apiRequireAuth();
+session_write_close();
 
 function avatarComputeInitials(string $username): string
 {

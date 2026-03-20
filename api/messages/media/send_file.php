@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../../includes/block_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
+session_write_close();
 apiGuardOversizedPostBody();
 const BLOCKED_FILE_EXTENSIONS = [
 	'php', 'phtml', 'php3', 'php4', 'php5', 'phar',

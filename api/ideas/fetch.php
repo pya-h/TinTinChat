@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
+session_write_close();
 
 $page  = max(1, (int) ($_GET['page'] ?? 1));
 $limit = min(50, max(5, (int) ($_GET['limit'] ?? 20)));

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 apiRequireAuth();
+session_write_close();
 
 $username = apiNormalizeUsername($_GET['username'] ?? '', 'INVALID_USERNAME');
 

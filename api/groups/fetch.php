@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/group_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
+session_write_close();
 
 $stmt = $pdo->prepare(
 	'SELECT

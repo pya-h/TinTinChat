@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
+session_write_close();
 
 $stmt = $pdo->prepare('SELECT private_key FROM users WHERE id = ?');
 $stmt->execute([$userId]);

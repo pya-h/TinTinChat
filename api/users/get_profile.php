@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../includes/block_helpers.php';
 
 apiRequireMethod('GET');
 $currentUserId = apiRequireAuth();
+session_write_close();
 
 $userId = isset($_GET['user_id']) ? (int) $_GET['user_id'] : 0;
 $username = trim((string) ($_GET['username'] ?? ''));

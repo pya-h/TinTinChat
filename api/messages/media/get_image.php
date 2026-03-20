@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../../includes/group_helpers.php';
 
 apiRequireMethod('GET');
 $user_id = apiRequireAuth();
+session_write_close();
 
 $message_id = $_GET['id'] ?? null;
 if (!$message_id || !is_numeric($message_id)) {

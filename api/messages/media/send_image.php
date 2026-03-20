@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../../includes/block_helpers.php';
 apiRequireMethod('POST');
 $sender_id = apiRequireAuth();
 apiRequireCsrf();
+session_write_close();
 apiGuardOversizedPostBody();
 const ENCRYPTED_IMAGE_EXTENSION = 'bin';
 

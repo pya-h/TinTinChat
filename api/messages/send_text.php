@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../includes/block_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
+session_write_close();
 $target = isset($_POST['target']) ? trim((string) $_POST['target']) : '';
 $groupId = groupParseId($_POST['group_id'] ?? null);
 $messageEncryptedForRecipient = $_POST['message'] ?? '';

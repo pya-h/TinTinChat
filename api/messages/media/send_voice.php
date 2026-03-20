@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../../includes/block_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
+session_write_close();
 apiGuardOversizedPostBody();
 const ENCRYPTED_VOICE_EXTENSION = 'bin';
 

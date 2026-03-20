@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
+session_write_close();
 
 $data = apiGetJsonBody();
 $messageId = isset($data['message_id']) && is_numeric($data['message_id'])

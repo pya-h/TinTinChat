@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/group_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
+session_write_close();
 $groupId = groupParseId($_GET['group_id'] ?? null);
 if ($groupId <= 0) {
 	apiError('INVALID_GROUP_ID', 'Invalid group id', 400);

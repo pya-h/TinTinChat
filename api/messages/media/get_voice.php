@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../../includes/group_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
+session_write_close();
 $messageId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if (!$messageId) {

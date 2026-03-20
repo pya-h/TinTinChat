@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
+session_write_close();
 $isAdmin = apiIsAdminUser($pdo, $userId);
 
 $stickerId = isset($_GET['id']) ? (int) $_GET['id'] : 0;

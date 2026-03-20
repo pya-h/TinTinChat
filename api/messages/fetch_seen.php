@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
+session_write_close();
 $otherUsername = apiNormalizeUsername($_GET['with'] ?? '', 'INVALID_TARGET_USERNAME');
 $maxIds = TTC_SEEN_STATUS_MAX_IDS;
 $maxRawIdsLength = TTC_SEEN_STATUS_MAX_RAW_IDS_LENGTH;

@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../includes/group_helpers.php';
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
 apiRequireCsrf();
+session_write_close();
 
 $body = apiGetJsonBody();
 $messageId = isset($body['message_id']) ? (int) $body['message_id'] : 0;

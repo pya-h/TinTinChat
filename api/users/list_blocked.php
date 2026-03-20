@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 
 apiRequireMethod('GET');
 $currentUserId = apiRequireAuth();
+session_write_close();
 
 $stmt = $pdo->prepare(
     'SELECT ub.blocked_user_id AS id, u.username, ub.created_at AS blocked_at
