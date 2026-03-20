@@ -3003,6 +3003,31 @@ function bindSettingsUiEvents() {
     // Media cache UI
     const clearMediaCacheBtn = document.getElementById("clearMediaCacheBtn");
     const mediaCacheSizeLabel = document.getElementById("mediaCacheSizeLabel");
+        const clearCookiesBtn = document.getElementById("clearCookiesBtn");
+        if (clearCookiesBtn) {
+            clearCookiesBtn.addEventListener("click", async () => {
+                const confirmed = window.confirm("Clear all cookies and storage? You will be logged out and get the latest version. Proceed?");
+                if (!confirmed) return;
+                clearCookiesBtn.disabled = true;
+                clearCookiesBtn.textContent = "Clearing…";
+                try {
+                    // Clear cookies
+                    document.cookie.split(";").forEach(function(c) {
+                        document.cookie = c.replace(/^\s+/, "").replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+                    });
+                    // Clear localStorage and sessionStorage
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    setComposerStatus("Cookies and storage cleared", "success");
+                } catch (_) {
+                    setComposerStatus("Failed to clear cookies/storage", "error");
+                }
+                clearCookiesBtn.disabled = false;
+                clearCookiesBtn.textContent = "Clear";
+                // Reload page to ensure logout and fresh version
+                setTimeout(() => { window.location.reload(); }, 800);
+            });
+        }
 
     refreshMediaCacheLabelGlobal = async function refreshMediaCacheLabel() {
         if (!mediaCacheSizeLabel) return;

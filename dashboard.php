@@ -381,6 +381,15 @@ $csrfToken = generateCsrfToken();
                                     <button type="button" id="clearMediaCacheBtn" class="btn btn-sm btn-outline-danger">Clear</button>
                                 </span>
                             </div>
+                                <div class="chat-ui-settings-item chat-ui-settings-item-action">
+                                    <span>
+                                        <span>Cookies & Storage</span>
+                                        <small class="chat-ui-settings-hint">Clears cookies, localStorage, sessionStorage. You will be logged out and get the latest version.</small>
+                                    </span>
+                                    <span class="chat-ui-settings-control">
+                                        <button type="button" id="clearCookiesBtn" class="btn btn-sm btn-outline-danger">Clear</button>
+                                    </span>
+                                </div>
                         </div>
                     </section>
 
