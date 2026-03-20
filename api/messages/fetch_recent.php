@@ -29,13 +29,20 @@ if ($groupId > 0) {
 	$other_user_id = (int) $other_user['id'];
 }
 $last_msg_id = max(0, (int)$_GET['offsetMsgId']);
+$editedSince = isset($_GET['editedSince']) ? trim((string)$_GET['editedSince']) : '';
 
-$whereClause = $groupId > 0
-	? 'm.group_id = ? AND m.id > ?'
-	: '((m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)) AND m.id > ?';
-$params = $groupId > 0
-	? [$groupId, $last_msg_id]
-	: [$user_id, $other_user_id, $other_user_id, $user_id, $last_msg_id];
+if ($groupId > 0) {
+	$whereClause = 'm.group_id = ? AND (m.id > ?' . ($editedSince !== '' ? ' OR (m.edited_at > ? AND m.id <= ?)' : '') . ')';
+	$params = $editedSince !== ''
+		? [$groupId, $last_msg_id, $editedSince, $last_msg_id]
+		: [$groupId, $last_msg_id];
+} else {
+	$chatFilter = '((m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?))';
+	$whereClause = $chatFilter . ' AND (m.id > ?' . ($editedSince !== '' ? ' OR (m.edited_at > ? AND m.id <= ?)' : '') . ')';
+	$params = $editedSince !== ''
+		? [$user_id, $other_user_id, $other_user_id, $user_id, $last_msg_id, $editedSince, $last_msg_id]
+		: [$user_id, $other_user_id, $other_user_id, $user_id, $last_msg_id];
+}
 
 $stmt = $pdo->prepare("SELECT m.id, m.sender_id, m.receiver_id, m.group_id, m.message, m.message_for_sender, m.message_type, m.voice_file_path, m.image_file_path, m.any_file_path, m.file_size, m.sticker_id, m.reply_to_message_id, m.forwarded_from_message_id, m.forwarded_by_user_id, m.created_at, m.edited_at, m.seen_at, m.group_seen_at, m.group_seen_by_user_id,
 	s.width AS sticker_width,
@@ -163,4 +170,5 @@ try {
 apiSuccess([
 	'messages' => $messages,
 	'typing' => $typingData,
+	'server_time' => date('Y-m-d H:i:s'),
 ]);

@@ -216,6 +216,7 @@ const I18N_TEXT = {
 
 let currentChatUser = null;
 let currentChatRecentMessages = null;
+let lastRecentPollTime = "";
 let currentReplyTarget = null;
 const chatUsers = new Set();
 const chatGroupsById = new Map();
@@ -607,6 +608,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
 
                 if (currentChatUser === String(profile.username || "")) {
                     currentChatRecentMessages = null;
+lastRecentPollTime = "";
                     messageOffset = 0;
                     hasMoreMessages = true;
                     hasLoadedMoreMessages = false;
@@ -627,6 +629,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                         setTimeout(async () => {
                             if (currentChatUser === String(profile.username || "")) {
                                 currentChatRecentMessages = null;
+lastRecentPollTime = "";
                                 messageOffset = 0;
                                 hasMoreMessages = true;
                                 hasLoadedMoreMessages = false;
@@ -5568,6 +5571,7 @@ async function selectChatTarget(target) {
     document.getElementById(chatListItemId(currentChatUser))?.classList.remove("selected-chat");
     currentChatUser = target;
     currentChatRecentMessages = null;
+lastRecentPollTime = "";
     document.getElementById(chatListItemId(currentChatUser))?.classList.add("selected-chat");
     chatInput.disabled = false;
     chatWithElem.textContent = getCurrentChatDisplayName();
@@ -5788,10 +5792,12 @@ async function loadCurrentChatsRecentMessages() {
                 : 0;
         const query = buildChatQueryParams(currentChatUser, {
             offsetMsgId,
+            editedSince: lastRecentPollTime || undefined,
         });
         const data = await window.ApiService.json(
             `api/messages/fetch_recent.php?${query.toString()}`
         );
+        if (data?.server_time) lastRecentPollTime = data.server_time;
 
         if (!data?.messages?.length) {
             // Still process typing status even if no new messages
@@ -5800,58 +5806,58 @@ async function loadCurrentChatsRecentMessages() {
             return;
         }
 
-        if (
-            appSettings.notificationSoundEnabled &&
-            data.messages[data.messages.length - 1]?.sender_id != CURRENT_USER_ID
-        ) {
-            try {
-
-                playNotificationSound()
-            } catch(ex) {
-            }
-        }
-
         // Apply inline typing status from fetch_recent response
         if (data.typing) {
             applyTypingData(data.typing);
         }
 
-        // Browser Notification API (works when tab is hidden/unfocused)
-        if (
-            appSettings.browserNotificationsEnabled &&
-            document.hidden &&
-            "Notification" in window &&
-            Notification.permission === "granted"
-        ) {
-            const lastMsg = data.messages[data.messages.length - 1];
-            if (lastMsg && Number(lastMsg.sender_id) !== Number(CURRENT_USER_ID)) {
+        // Separate new messages from re-fetched edits
+        const newMessages = data.messages.filter(m => Number(m.id) > offsetMsgId);
+        const lastNew = newMessages.length ? newMessages[newMessages.length - 1] : null;
+
+        if (lastNew && Number(lastNew.sender_id) !== Number(CURRENT_USER_ID)) {
+            if (appSettings.notificationSoundEnabled) {
+                try { playNotificationSound(); } catch (_) {}
+            }
+            // Browser Notification API (works when tab is hidden/unfocused)
+            if (
+                appSettings.browserNotificationsEnabled &&
+                document.hidden &&
+                "Notification" in window &&
+                Notification.permission === "granted"
+            ) {
                 try {
-                    const senderName = lastMsg.sender_username || lastMsg.sender_id || "Someone";
-                    const msgPreview = lastMsg.message_type === "text"
-                        ? String(lastMsg.message || lastMsg.message_for_sender || "").slice(0, 100) || "New message"
-                        : `Sent a ${lastMsg.message_type || "message"}`;
+                    const senderName = lastNew.sender_username || lastNew.sender_id || "Someone";
+                    const msgPreview = lastNew.message_type === "text"
+                        ? String(lastNew.message || lastNew.message_for_sender || "").slice(0, 100) || "New message"
+                        : `Sent a ${lastNew.message_type || "message"}`;
                     new Notification(`${senderName} — TinTinChat`, {
                         body: msgPreview,
-                        tag: `tintinchat-msg-${lastMsg.id}`,
+                        tag: `tintinchat-msg-${lastNew.id}`,
                         renotify: false,
                         silent: true,
                     });
-                } catch (notifErr) {}
+                } catch (_) {}
             }
         }
-        currentChatRecentMessages = data.messages;
-        messageOffset += currentChatRecentMessages?.length ?? 0;
-        for (const msg of currentChatRecentMessages) {
+
+        if (newMessages.length) {
+            currentChatRecentMessages = newMessages;
+            messageOffset += newMessages.length;
+        }
+        for (const msg of data.messages) {
             await addMessageToChat(msg, false, true);
         }
 
         updateMessagesStatus(data.messages);
         setComposerStatus("");
 
-        if (appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
-            scheduleSnapToBottom();
-        } else {
-            addGoToLatestButton();
+        if (newMessages.length) {
+            if (appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
+                scheduleSnapToBottom();
+            } else {
+                addGoToLatestButton();
+            }
         }
     } catch (error) {
         setComposerStatus("Failed to refresh latest messages.", "warning");
@@ -8840,6 +8846,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
         groupInfoBtn.setAttribute("aria-expanded", "false");
         currentChatUser = null;
         currentChatRecentMessages = null;
+lastRecentPollTime = "";
         chatMessagesElem.innerHTML = "";
         clearDecryptedMediaCache();
         chatWithElem.textContent = "Select a chat";
