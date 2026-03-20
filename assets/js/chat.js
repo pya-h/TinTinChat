@@ -163,7 +163,7 @@ const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
 const TYPING_IDLE_TIMEOUT_MS = 3200;
 const TYPING_UPDATE_THROTTLE_MS = 3500;
 const MESSAGE_EDIT_WINDOW_MS = Number(appConstants.messageEditWindowMs) || 15 * 60 * 1000;
-const REACTION_EMOJI_SET = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🐠"];
+const REACTION_EMOJI_SET = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F525}", "\u{1F420}"];
 const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
     "php", "phtml", "php3", "php4", "php5", "phar",
     "exe", "msi", "bat", "cmd", "com", "scr",
@@ -4643,7 +4643,20 @@ async function saveEditedMessage() {
                 message_for_sender: encrypted.message_for_sender,
             }),
         });
-        await forceFetchCurrentChatMessages();
+        const msgEl = getMessageElementById(messageId);
+        if (msgEl) {
+            const textSpan = msgEl.querySelector(".message-text-content");
+            if (textSpan) {
+                textSpan.textContent = editedText;
+            }
+            if (!msgEl.querySelector(".message-edited-marker")) {
+                const marker = document.createElement("span");
+                marker.className = "message-edited-marker";
+                marker.title = "Edited";
+                marker.textContent = "edited";
+                textSpan?.after(marker);
+            }
+        }
         cancelEditMode();
         setComposerStatus("Message edited", "success");
         return true;
@@ -6268,6 +6281,7 @@ async function addMessageToChat(msg, prepend = false) {
             `.message[data-message-id="${normalizedMessageId}"]`
         );
         if (existingMessageElement) {
+            const prevMeta = messageMetaById.get(normalizedMessageId);
             messageMetaById.set(normalizedMessageId, msg);
             renderMessageReactions(existingMessageElement, msg);
             updateMessageTickStatus(
@@ -6275,6 +6289,34 @@ async function addMessageToChat(msg, prepend = false) {
                 Boolean(msg.seen_at),
                 msg.seen_at || ""
             );
+            if (msg.edited_at && msg.edited_at !== (prevMeta?.edited_at || "")) {
+                try {
+                    const isGroup = Number(msg.group_id || 0) > 0;
+                    let newText = "";
+                    if (isGroup) {
+                        const gKey = await getGroupCryptoKey(Number(msg.group_id));
+                        const payload = msg.sender_id == CURRENT_USER_ID
+                            ? msg.message_for_sender || msg.message || ""
+                            : msg.message || msg.message_for_sender || "";
+                        newText = await decryptGroupMessage(String(payload), gKey);
+                    } else {
+                        newText = await decryptLongMessage(
+                            msg.sender_id == CURRENT_USER_ID ? msg.message_for_sender : msg.message
+                        );
+                    }
+                    const textSpan = existingMessageElement.querySelector(".message-text-content");
+                    if (textSpan) {
+                        textSpan.textContent = newText;
+                    }
+                    if (!existingMessageElement.querySelector(".message-edited-marker")) {
+                        const marker = document.createElement("span");
+                        marker.className = "message-edited-marker";
+                        marker.title = "Edited";
+                        marker.textContent = "edited";
+                        textSpan?.after(marker);
+                    }
+                } catch (_) { /* decryption failure — leave existing text */ }
+            }
             return;
         }
     }
