@@ -834,6 +834,8 @@ $csrfToken = generateCsrfToken();
     <script src="assets/js/chat-utils.js"></script>
     <script src="assets/js/chat-notifications.js"></script>
     <script src="assets/js/crypto.js"></script>
+    <script src="assets/js/chat-sticker-utils.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-sticker-utils.js')); ?>"></script>
+    <script src="assets/js/chat-media-cache.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-media-cache.js')); ?>"></script>
     <script src="assets/js/chat.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat.js')); ?>"></script>
     <script src="assets/js/ideas.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/ideas.js')); ?>"></script>
     <script src="assets/js/changelog.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/changelog.js')); ?>"></script>
