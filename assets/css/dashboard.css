@@ -3028,70 +3028,6 @@ textarea,
     background: transparent;
 }
 
-.message-actions-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    width: fit-content;
-    position: absolute;
-    top: 4.15rem;
-    left: 50%;
-    z-index: 7;
-    max-width: calc(100% - 2rem);
-    margin: 0;
-    padding: 0.38rem 0.78rem;
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--subtle-text-color);
-    border: 1px solid color-mix(in srgb, var(--secondary-color) 24%, var(--border-color));
-    border-radius: 999px;
-    box-shadow: var(--shadow-sm);
-    background: color-mix(in srgb, var(--surface-color) 92%, transparent);
-    transform: translate(-50%, 14px);
-    opacity: 0;
-    pointer-events: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.message-actions-hint::before {
-    content: "💡";
-    font-size: 0.84rem;
-    line-height: 1;
-}
-
-.message-actions-hint.is-visible {
-    animation: messageHintRiseIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.message-actions-hint.is-hidden {
-    animation: messageHintFadeOut 0.22s ease forwards;
-}
-
-@keyframes messageHintRiseIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, 14px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
-}
-
-@keyframes messageHintFadeOut {
-    from {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
-
-    to {
-        opacity: 0;
-        transform: translate(-50%, -8px);
-    }
-}
 
 .composer-image-source {
     position: relative;
@@ -3458,13 +3394,6 @@ textarea,
     .conversation-search-count {
         min-width: 2.6rem;
         font-size: 0.7rem;
-    }
-
-    .message-actions-hint {
-        font-size: 0.76rem;
-        top: 3.95rem;
-        max-width: calc(100% - 1.2rem);
-        padding: 0.28rem 0.68rem;
     }
 
     .image-source-menu {
@@ -6963,4 +6892,196 @@ textarea,
 
 :root[data-theme="dark"] .changelog-hint {
     background: color-mix(in srgb, #f7b731 6%, transparent);
+}
+
+/* ── Guide Modal ── */
+.guide-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10500;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.guide-overlay.visible {
+    opacity: 1;
+}
+
+.guide-modal {
+    background: var(--card-bg, #fff);
+    border-radius: 1rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    max-width: 480px;
+    width: 100%;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(20px) scale(0.96);
+    transition: transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.guide-overlay.visible .guide-modal {
+    transform: translateY(0) scale(1);
+}
+
+.guide-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.15rem 0.7rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color, #dee2e6) 60%, transparent);
+}
+
+.guide-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--primary-color, #0d6efd);
+    letter-spacing: 0.01em;
+}
+
+.guide-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted-color, #999);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.guide-close:hover {
+    background: color-mix(in srgb, var(--text-color, #000) 8%, transparent);
+    color: var(--text-color, #333);
+}
+
+.guide-body {
+    padding: 0.8rem 1.15rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.guide-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.guide-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 0.65rem;
+    background: color-mix(in srgb, var(--surface-color, #f8f9fa) 80%, transparent);
+    animation: guideSlideIn 0.35s ease both;
+}
+
+@keyframes guideSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.guide-tip-icon {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    background: color-mix(in srgb, var(--primary-color, #0d6efd) 12%, transparent);
+    color: var(--primary-color, #0d6efd);
+    margin-top: 0.1rem;
+}
+
+.guide-tip-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.guide-tip-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-color, #212529);
+    margin-bottom: 0.15rem;
+}
+
+.guide-tip-desc {
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--muted-color, #666);
+}
+
+.guide-tip-demo {
+    margin-top: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--primary-color, #0d6efd);
+    background: color-mix(in srgb, var(--primary-color, #0d6efd) 8%, transparent);
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+}
+
+.guide-footer {
+    padding: 0.65rem 1.15rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-color, #dee2e6) 60%, transparent);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.guide-dismiss-btn {
+    border-radius: 999px;
+    padding: 0.35rem 1.2rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.guide-dismiss-btn:active {
+    transform: scale(0.96);
+}
+
+/* Guide dark mode */
+:root[data-theme="dark"] .guide-modal {
+    background: var(--card-bg, #1e1e2e);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme="dark"] .guide-tip {
+    background: color-mix(in srgb, var(--surface-color, #1a1a2e) 80%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .guide-modal {
+        background: var(--card-bg, #1e1e2e);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    :root:not([data-theme="light"]) .guide-tip {
+        background: color-mix(in srgb, var(--surface-color, #1a1a2e) 80%, transparent);
+    }
 }

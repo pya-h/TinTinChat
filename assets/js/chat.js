@@ -98,7 +98,6 @@ const selectModeCopyBtn = document.getElementById("selectModeCopyBtn");
 const selectModeForwardBtn = document.getElementById("selectModeForwardBtn");
 const selectModeDeleteBtn = document.getElementById("selectModeDeleteBtn");
 const pasteClipboardImageBtn = document.getElementById("pasteClipboardImageBtn");
-const messageActionsHintElem = document.getElementById("messageActionsHint");
 const messageActionModalOverlay = document.getElementById("messageActionModalOverlay");
 const messageActionModalTitle = document.getElementById("messageActionModalTitle");
 const messageActionModalBody = document.getElementById("messageActionModalBody");
@@ -157,7 +156,6 @@ const LONG_PRESS_MOVE_CANCEL_PX = 12;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
 const ADMIN_USERS_INCLUDE_TEST_STORAGE_KEY = "tintinchat.adminUsers.includeTestUsers.v1";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
-const MESSAGE_ACTIONS_HINT_AUTO_HIDE_MS = 4200;
 const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
 const TYPING_IDLE_TIMEOUT_MS = 3200;
@@ -255,8 +253,6 @@ const typingStateByTarget = new Map();
 const typingLastSentAtByTarget = new Map();
 const typingInflightByTarget = new Set();
 let typingStopTimer = null;
-let messageActionsHintTimer = null;
-let hasShownMessageActionsHint = false;
 let imageSourceMenuHideTimer = null;
 let suppressNextContextMenuTapUntil = 0;
 let refreshMediaCacheLabelGlobal = () => {};
@@ -1414,49 +1410,9 @@ function syncMobileComposerActions() {
     }
 }
 
-function hideMessageActionsHint(immediate = false) {
-    if (!messageActionsHintElem) {
-        return;
-    }
-    if (messageActionsHintTimer) {
-        window.clearTimeout(messageActionsHintTimer);
-        messageActionsHintTimer = null;
-    }
-    messageActionsHintElem.classList.remove("is-visible");
-    messageActionsHintElem.classList.add("is-hidden");
-    if (immediate) {
-        messageActionsHintElem.hidden = true;
-        return;
-    }
-    window.setTimeout(() => {
-        if (messageActionsHintElem.classList.contains("is-hidden")) {
-            messageActionsHintElem.hidden = true;
-        }
-    }, 220);
-}
-
-function updateMessageActionsHintVisibility(forceDismiss = false) {
-    if (!messageActionsHintElem) {
-        return;
-    }
-    if (forceDismiss) {
-        hasShownMessageActionsHint = true;
-        hideMessageActionsHint(true);
-        return;
-    }
-    if (hasShownMessageActionsHint) {
-        hideMessageActionsHint(true);
-        return;
-    }
-    hasShownMessageActionsHint = true;
-    messageActionsHintElem.hidden = false;
-    messageActionsHintElem.classList.remove("is-hidden");
-    void messageActionsHintElem.offsetWidth;
-    messageActionsHintElem.classList.add("is-visible");
-    messageActionsHintTimer = window.setTimeout(() => {
-        hideMessageActionsHint();
-    }, MESSAGE_ACTIONS_HINT_AUTO_HIDE_MS);
-}
+// Tip hint removed — replaced by Guide modal
+function hideMessageActionsHint() {}
+function updateMessageActionsHintVisibility() {}
 
 function closeImageSourceMenu({ restoreFocus = false } = {}) {
     if (!imageSourceMenu) {

@@ -121,6 +121,10 @@ $csrfToken = generateCsrfToken();
                                 <i class="fas fa-download"></i>
                                 <span>Install app</span>
                             </button>
+                            <button type="button" id="openGuideBtn" class="chat-setting-item chat-setting-button" aria-label="Open guide">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Guide</span>
+                            </button>
                             <button type="button" id="openConversationSearchBtn" class="chat-setting-item chat-setting-button" aria-label="Search inside current conversation">
                                 <i class="fas fa-search"></i>
                                 <span>Search in this chat</span>
@@ -177,9 +181,6 @@ $csrfToken = generateCsrfToken();
                             <button type="button" id="groupLeaveBtn" class="btn btn-sm btn-outline-danger">Leave Group</button>
                         </div>
                     </div>
-                </div>
-                <div id="messageActionsHint" class="message-actions-hint is-hidden" aria-live="polite" hidden>
-                    Tip: Right-click/double-click (desktop) or long-press/double-tap (mobile) any message to open actions.
                 </div>
                 <div id="selectModeBar" class="select-mode-bar" role="region" aria-label="Selected messages actions" hidden>
                     <div class="select-mode-meta">
@@ -655,6 +656,21 @@ $csrfToken = generateCsrfToken();
         </div>
     </div>
 
+    <div id="guideOverlay" class="guide-overlay" style="display:none;">
+        <div class="guide-modal">
+            <div class="guide-header">
+                <span class="guide-badge"><i class="fas fa-compass me-1"></i>Guide</span>
+                <button type="button" class="guide-close" id="guideCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="guide-body" id="guideBody"></div>
+            <div class="guide-footer">
+                <button type="button" class="btn btn-primary guide-dismiss-btn" id="guideDismissBtn">
+                    <i class="fas fa-check me-1"></i>Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/ext/bootstrap.bundle.min.js"></script>
     <script>
         const CURRENT_USER = <?= json_encode($username) ?>;
@@ -838,6 +854,7 @@ $csrfToken = generateCsrfToken();
     <script src="assets/js/chat-media-cache.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-media-cache.js')); ?>"></script>
     <script src="assets/js/chat.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat.js')); ?>"></script>
     <script src="assets/js/ideas.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/ideas.js')); ?>"></script>
+    <script src="assets/js/guide.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/guide.js')); ?>"></script>
     <script src="assets/js/changelog.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/changelog.js')); ?>"></script>
 </body>
 
