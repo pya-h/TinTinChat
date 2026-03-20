@@ -6894,6 +6894,19 @@ textarea,
     background: color-mix(in srgb, #f7b731 6%, transparent);
 }
 
+.media-cleanup-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+}
+
+.media-cleanup-form .chat-ui-settings-field {
+    margin: 0;
+    flex: 0 0 auto;
+}
+
 /* ── Guide Modal ── */
 .guide-overlay {
     position: fixed;

@@ -516,6 +516,29 @@ $csrfToken = generateCsrfToken();
                                 <div class="chat-ui-admin-empty">Loading users...</div>
                             </div>
                         </div>
+                        <div class="chat-ui-admin-section">
+                            <div class="chat-ui-admin-row">
+                                <div>
+                                    <div class="chat-ui-account-title">Media cleanup</div>
+                                    <div class="chat-ui-account-subtitle">Delete old large media files to free disk space.</div>
+                                </div>
+                            </div>
+                            <div class="media-cleanup-form">
+                                <label class="chat-ui-settings-field" for="mediaCleanupDays">
+                                    <span>Older than (days)</span>
+                                    <input type="number" id="mediaCleanupDays" class="form-control form-control-sm" min="1" value="90" style="max-width:120px">
+                                </label>
+                                <label class="chat-ui-settings-field" for="mediaCleanupMaxSize">
+                                    <span>Larger than (MB)</span>
+                                    <input type="number" id="mediaCleanupMaxSize" class="form-control form-control-sm" min="1" value="5" step="0.5" style="max-width:120px">
+                                </label>
+                                <button type="button" id="mediaCleanupBtn" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-broom me-1"></i>Clean up
+                                </button>
+                            </div>
+                            <div id="mediaCleanupResult" class="chat-ui-admin-empty" style="display:none"></div>
+                        </div>
+
                         <?php else: ?>
                         <div class="chat-ui-admin-section">
                             <div class="chat-ui-admin-empty">Only the developer can manage admin roles.</div>

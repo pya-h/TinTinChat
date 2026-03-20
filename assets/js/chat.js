@@ -810,6 +810,9 @@ async function getDecryptedMediaResource(msg) {
     const endpoint = getMediaEndpointForType(String(msg.message_type || "file"), messageId);
     const response = await fetch(endpoint);
     if (!response.ok) {
+        if (response.status === 404) {
+            throw new Error("FILE_UNAVAILABLE");
+        }
         throw new Error(`Failed to fetch media (${response.status})`);
     }
 
@@ -922,7 +925,9 @@ async function hydrateImageMessageElement(messageElement, msg) {
     } catch (error) {
         imageElem.style.display = "none";
         if (loadingElem) {
-            loadingElem.textContent = "Unable to decrypt image";
+            loadingElem.textContent = error?.message === "FILE_UNAVAILABLE"
+                ? "File no longer available"
+                : "Unable to decrypt image";
         }
     }
 }
@@ -949,7 +954,9 @@ async function hydrateVideoMessageElement(messageElement, msg) {
     } catch (error) {
         videoElem.style.display = "none";
         if (loadingElem) {
-            loadingElem.textContent = "Unable to decrypt video";
+            loadingElem.textContent = error?.message === "FILE_UNAVAILABLE"
+                ? "File no longer available"
+                : "Unable to decrypt video";
         }
     }
 }
@@ -2730,6 +2737,50 @@ function bindSettingsUiEvents() {
             adminUsersIncludeTestUsers ? "true" : "false"
         );
         await loadAdminUsersSettings();
+    });
+
+    const mediaCleanupBtn = document.getElementById("mediaCleanupBtn");
+    const mediaCleanupDays = document.getElementById("mediaCleanupDays");
+    const mediaCleanupMaxSize = document.getElementById("mediaCleanupMaxSize");
+    const mediaCleanupResult = document.getElementById("mediaCleanupResult");
+    mediaCleanupBtn?.addEventListener("click", async () => {
+        const days = Number(mediaCleanupDays?.value || 0);
+        const maxSizeMB = Number(mediaCleanupMaxSize?.value || 0);
+        if (days < 1 || maxSizeMB <= 0) {
+            showModal("Invalid Input", "Please provide valid values for days and file size.", "warning");
+            return;
+        }
+        const maxSizeBytes = Math.round(maxSizeMB * 1024 * 1024);
+        const confirmed = window.confirm(
+            `Delete all media files older than ${days} days and larger than ${maxSizeMB} MB? This cannot be undone.`
+        );
+        if (!confirmed) return;
+
+        mediaCleanupBtn.disabled = true;
+        mediaCleanupBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Cleaning...';
+        if (mediaCleanupResult) { mediaCleanupResult.style.display = "none"; }
+
+        try {
+            const result = await window.ApiService.jsonOk("api/admin/media_cleanup.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                body: JSON.stringify({ older_than_days: days, max_size_bytes: maxSizeBytes }),
+            });
+            const freed = formatFileSize(result.freed_bytes || 0);
+            const msg = result.deleted_count > 0
+                ? `Deleted ${result.deleted_count} file(s), freed ${freed}.${result.failed_count ? ` ${result.failed_count} failed.` : ""}`
+                : "No matching files found.";
+            if (mediaCleanupResult) {
+                mediaCleanupResult.textContent = msg;
+                mediaCleanupResult.style.display = "block";
+            }
+            setComposerStatus(msg, "success");
+        } catch (error) {
+            showModal("Cleanup Failed", error?.message || "Unable to run media cleanup.", "error");
+        } finally {
+            mediaCleanupBtn.disabled = false;
+            mediaCleanupBtn.innerHTML = '<i class="fas fa-broom me-1"></i>Clean up';
+        }
     });
 
     settingsUsernameForm?.addEventListener("submit", async (event) => {
@@ -6724,10 +6775,11 @@ async function downloadAndOpenFile(messageId) {
             URL.revokeObjectURL(url);
         }
     } catch (error) {
+        const isUnavailable = error?.message === "FILE_UNAVAILABLE";
         showModal(
-            I18N_TEXT.downloadErrorTitle,
-            formatI18nText(I18N_TEXT.downloadErrorBody, { error: error.message || "Unknown" }),
-            "error"
+            isUnavailable ? "File Unavailable" : I18N_TEXT.downloadErrorTitle,
+            isUnavailable ? "This file is no longer available on the server." : formatI18nText(I18N_TEXT.downloadErrorBody, { error: error.message || "Unknown" }),
+            isUnavailable ? "warning" : "error"
         );
     } finally {
         if (container) {
