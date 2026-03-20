@@ -17,6 +17,8 @@ const APP_SHELL_URLS = [
   "./assets/js/chat-utils.js",
   "./assets/js/chat-notifications.js",
   "./assets/js/crypto.js",
+  "./assets/js/chat-sticker-utils.js",
+  "./assets/js/chat-media-cache.js",
   "./assets/js/chat.js",
   "./assets/js/modal.js",
   "./assets/js/pwa.js",

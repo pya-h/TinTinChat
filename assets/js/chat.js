@@ -5467,6 +5467,50 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
     }
 }
 
+async function showBrowserNotification(lastMsg, newCount) {
+    try {
+        const senderName = lastMsg.sender_username || lastMsg.sender_id || "Someone";
+        let body = "";
+        if (newCount > 1) {
+            body = `${newCount} new messages`;
+        } else if (lastMsg.message_type === "text") {
+            try {
+                const isGroup = Number(lastMsg.group_id || 0) > 0;
+                if (isGroup) {
+                    const gKey = await getGroupCryptoKey(Number(lastMsg.group_id));
+                    const payload = lastMsg.message || lastMsg.message_for_sender || "";
+                    body = await decryptGroupMessage(String(payload), gKey);
+                } else {
+                    body = await decryptLongMessage(lastMsg.message);
+                }
+                if (body.length > 120) body = body.slice(0, 120) + "...";
+            } catch (_) {
+                body = "New message";
+            }
+        } else {
+            const typeLabels = { image: "Photo", voice: "Voice message", video: "Video", file: "File", sticker: "Sticker" };
+            body = typeLabels[lastMsg.message_type] || "New message";
+        }
+
+        const notifOptions = {
+            body,
+            tag: `tintinchat-${lastMsg.sender_id}`,
+            renotify: true,
+            silent: true,
+        };
+
+        // Prefer Service Worker showNotification for broad mobile support
+        if ("serviceWorker" in navigator) {
+            const reg = await navigator.serviceWorker.ready;
+            if (reg?.showNotification) {
+                await reg.showNotification(`${senderName} — TinTinChat`, notifOptions);
+                return;
+            }
+        }
+        new Notification(`${senderName} — TinTinChat`, notifOptions);
+    } catch (_) {}
+}
+
 async function loadCurrentChatsRecentMessages() {
     if (isLoadingMessages || !currentChatUser) return;
 
@@ -5505,25 +5549,14 @@ async function loadCurrentChatsRecentMessages() {
             if (appSettings.notificationSoundEnabled) {
                 try { playNotificationSound(); } catch (_) {}
             }
-            // Browser Notification API (works when tab is hidden/unfocused)
+            // Browser Notification API
             if (
                 appSettings.browserNotificationsEnabled &&
                 document.hidden &&
                 "Notification" in window &&
                 Notification.permission === "granted"
             ) {
-                try {
-                    const senderName = lastNew.sender_username || lastNew.sender_id || "Someone";
-                    const msgPreview = lastNew.message_type === "text"
-                        ? String(lastNew.message || lastNew.message_for_sender || "").slice(0, 100) || "New message"
-                        : `Sent a ${lastNew.message_type || "message"}`;
-                    new Notification(`${senderName} — TinTinChat`, {
-                        body: msgPreview,
-                        tag: `tintinchat-msg-${lastNew.id}`,
-                        renotify: false,
-                        silent: true,
-                    });
-                } catch (_) {}
+                void showBrowserNotification(lastNew, newMessages.length);
             }
         }
 
