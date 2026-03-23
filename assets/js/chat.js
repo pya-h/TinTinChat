@@ -977,7 +977,7 @@ window.addEventListener("beforeunload", () => {
 });
 
 // Run LRU eviction on startup (fire-and-forget)
-void evictStaleCachedMedia();
+void window.MediaCacheService.evictStaleCachedMedia();
 
 function buildGroupToken(groupId) {
     return `group:${groupId}`;
