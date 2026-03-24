@@ -147,6 +147,7 @@ const STICKER_UPLOAD_MAX_BYTES = Number(appConstants.uploadStickerMaxBytes) || 5
 const STICKER_CANVAS_SIZE = Number(appConstants.stickerCanvasSize) || 512;
 const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
+const DOUBLE_TAP_MS = 280;
 const LONG_PRESS_MOVE_CANCEL_PX = 12;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
@@ -4290,6 +4291,9 @@ function addMessageActionHandlers(
     let lastTapAt = 0;
     let lastTapX = 0;
     let lastTapY = 0;
+    let singleTapTimer = null;
+    let suppressClickUntil = 0;
+    let desktopClickTimer = null;
 
     // Swipe gesture state
     const SWIPE_THRESHOLD_PX = 60;
@@ -4299,12 +4303,28 @@ function addMessageActionHandlers(
     let swipeLocked = false; // true once we committed to scroll (vertical) or swipe (horizontal)
     let swipeDirection = 0; // 0=undecided, 1=right, -1=left
 
-    // Voice seek state (long-press + drag on voice messages)
+    // Voice bar drag state (drag on waveform bars)
     const isVoiceMessage = messageElement.classList.contains("is-voice-message");
-    let voiceSeekActive = false;
+    const isMultimediaMessage = isVoiceMessage ||
+        messageElement.classList.contains("is-image-message") ||
+        messageElement.classList.contains("is-video-message") ||
+        messageElement.classList.contains("is-sticker-message") ||
+        messageElement.classList.contains("is-file-message");
+    let touchStartedOnBars = false;
+    let voiceBarDragActive = false;
+
     messageElement.tabIndex = 0;
     messageElement.setAttribute("aria-selected", "false");
     messageElement.setAttribute("aria-label", "Chat message actions available");
+
+    const doHeartReaction = () => {
+        if (!canReact) return;
+        const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+        if (!msgId) return;
+        const currentEmoji = getCurrentUserReactionEmoji(msgId);
+        const newEmoji = currentEmoji === "\u2764\uFE0F" ? "" : "\u2764\uFE0F";
+        toggleMessageReaction(msgId, newEmoji).catch(() => {});
+    };
 
     const openContextMenu = (clientX, clientY, { focusFirstItem = true } = {}) => {
         closeMessageContextMenu();
@@ -4468,12 +4488,6 @@ function addMessageActionHandlers(
         openContextMenu(event.clientX, event.clientY);
     });
 
-    messageElement.addEventListener("dblclick", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        openContextMenu(event.clientX, event.clientY);
-    });
-
     messageElement.addEventListener("keydown", (event) => {
         if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
             event.preventDefault();
@@ -4490,13 +4504,21 @@ function addMessageActionHandlers(
             }
             clearLongPress();
             longPressTriggered = false;
-            voiceSeekActive = false;
+            voiceBarDragActive = false;
+            touchStartedOnBars = false;
             swipeActive = false;
             swipeLocked = false;
             swipeDirection = 0;
             const touch = event.touches[0];
             touchStartX = Number(touch.clientX || 0);
             touchStartY = Number(touch.clientY || 0);
+
+            // Check if touch started on voice waveform bars
+            if (isVoiceMessage && event.target.closest(".waveform-bars")) {
+                touchStartedOnBars = true;
+                // No long-press on bars — only tap (seek) or drag (continuous seek)
+                return;
+            }
 
             longPressTimer = setTimeout(() => {
                 const touchPoint = event.touches?.[0] || event.changedTouches?.[0];
@@ -4505,26 +4527,16 @@ function addMessageActionHandlers(
                 }
                 longPressTriggered = true;
 
-                if (isVoiceMessage) {
-                    // Voice messages: long-press enters seek mode instead of context menu
-                    voiceSeekActive = true;
-                    messageElement.classList.add("voice-seeking");
-                    const audio = messageElement.querySelector("audio");
-                    if (audio && isFinite(audio.duration)) {
-                        const waveformBarsEl = messageElement.querySelector(".waveform-bars");
-                        if (waveformBarsEl) {
-                            const rect = waveformBarsEl.getBoundingClientRect();
-                            const touchX = Number(touchPoint.clientX || 0);
-                            const ratio = Math.max(0, Math.min(1, (touchX - rect.left) / rect.width));
-                            audio.currentTime = ratio * audio.duration;
-                            updateVoiceSeekBars(waveformBarsEl, ratio);
-                        }
+                if (isMultimediaMessage) {
+                    // Multimedia messages: long-press opens context menu
+                    suppressNextContextMenuTapUntil = Date.now() + 420;
+                    openContextMenu(touchPoint.clientX, touchPoint.clientY, { focusFirstItem: false });
+                } else {
+                    // Text messages: long-press enters select mode
+                    if (canSelect) {
+                        enterSelectMode(messageElement);
                     }
-                    return;
                 }
-
-                suppressNextContextMenuTapUntil = Date.now() + 420;
-                openContextMenu(touchPoint.clientX, touchPoint.clientY, { focusFirstItem: false });
             }, MESSAGE_LONG_PRESS_MS);
         },
         { passive: true }
@@ -4541,29 +4553,29 @@ function addMessageActionHandlers(
             const deltaX = Math.abs(rawDeltaX);
             const deltaY = Math.abs(Number(touch.clientY || 0) - touchStartY);
 
-            // Cancel long press on any significant movement (but not if voice seeking)
-            if (!voiceSeekActive && (deltaX > LONG_PRESS_MOVE_CANCEL_PX || deltaY > LONG_PRESS_MOVE_CANCEL_PX)) {
-                clearLongPress();
+            // Voice bar drag: if touch started on bars and moved horizontally, enter seek mode
+            if (touchStartedOnBars && !voiceBarDragActive && !swipeActive) {
+                if (deltaX > LONG_PRESS_MOVE_CANCEL_PX) {
+                    voiceBarDragActive = true;
+                    messageElement.classList.add("voice-seeking");
+                }
             }
 
-            // Voice seek mode: drag controls playback position
-            if (voiceSeekActive) {
-                const audio = messageElement.querySelector("audio");
-                if (audio && isFinite(audio.duration)) {
-                    const waveformBarsEl = messageElement.querySelector(".waveform-bars");
-                    if (waveformBarsEl) {
-                        const rect = waveformBarsEl.getBoundingClientRect();
-                        const touchX = Number(touch.clientX || 0);
-                        const ratio = Math.max(0, Math.min(1, (touchX - rect.left) / rect.width));
-                        audio.currentTime = ratio * audio.duration;
-                        updateVoiceSeekBars(waveformBarsEl, ratio);
-                    }
-                }
+            if (voiceBarDragActive) {
+                applyVoiceSeek(messageElement, Number(touch.clientX || 0));
                 return;
+            }
+
+            // Cancel long press on any significant movement
+            if (deltaX > LONG_PRESS_MOVE_CANCEL_PX || deltaY > LONG_PRESS_MOVE_CANCEL_PX) {
+                clearLongPress();
             }
 
             // If long press already triggered, don't start a swipe
             if (longPressTriggered) return;
+
+            // Don't start swipe if touch started on bars (handled above)
+            if (touchStartedOnBars) return;
 
             // Decision point: lock into scroll vs swipe
             if (!swipeLocked && (deltaX > 12 || deltaY > 12)) {
@@ -4628,11 +4640,12 @@ function addMessageActionHandlers(
             resetSwipeStyles();
         }
 
-        if (voiceSeekActive) {
-            voiceSeekActive = false;
-            longPressTriggered = false;
+        // Voice bar drag end
+        if (voiceBarDragActive) {
+            voiceBarDragActive = false;
             messageElement.classList.remove("voice-seeking");
             clearLongPress();
+            suppressClickUntil = Date.now() + 400;
             return;
         }
 
@@ -4642,6 +4655,7 @@ function addMessageActionHandlers(
             longPressTriggered = false;
             swipeActive = false;
             clearLongPress();
+            suppressClickUntil = Date.now() + 400;
             return;
         }
 
@@ -4672,40 +4686,75 @@ function addMessageActionHandlers(
 
                 swipeActive = false;
                 clearLongPress();
+                suppressClickUntil = Date.now() + 400;
                 return;
             }
         }
 
         swipeActive = false;
+        clearLongPress();
 
-        const now = Date.now();
+        // Tap handling: single-tap vs double-tap
         if (touchPoint) {
             const currentX = Number(touchPoint.clientX || 0);
             const currentY = Number(touchPoint.clientY || 0);
-            const isDoubleTap = now - lastTapAt <= 340;
+            const totalMoveX = Math.abs(currentX - touchStartX);
+            const totalMoveY = Math.abs(currentY - touchStartY);
+            const wasTap = totalMoveX < LONG_PRESS_MOVE_CANCEL_PX && totalMoveY < LONG_PRESS_MOVE_CANCEL_PX;
+
+            if (!wasTap) {
+                // Finger moved significantly — not a tap (e.g. scroll)
+                lastTapAt = 0;
+                return;
+            }
+
+            const now = Date.now();
+            const timeSinceLastTap = now - lastTapAt;
             const isNearLastTap =
                 Math.abs(currentX - lastTapX) <= LONG_PRESS_MOVE_CANCEL_PX &&
                 Math.abs(currentY - lastTapY) <= LONG_PRESS_MOVE_CANCEL_PX;
-            if (isDoubleTap && isNearLastTap) {
+
+            if (timeSinceLastTap <= DOUBLE_TAP_MS && isNearLastTap) {
+                // Double-tap → heart reaction
                 event.preventDefault();
                 event.stopPropagation();
-                suppressNextContextMenuTapUntil = Date.now() + 380;
-                openContextMenu(currentX, currentY, { focusFirstItem: false });
+                if (singleTapTimer) {
+                    clearTimeout(singleTapTimer);
+                    singleTapTimer = null;
+                }
+                doHeartReaction();
                 lastTapAt = 0;
+                suppressClickUntil = Date.now() + 400;
             } else {
+                // Potential single tap — wait to see if double-tap follows
                 lastTapAt = now;
                 lastTapX = currentX;
                 lastTapY = currentY;
+
+                if (!isMultimediaMessage && !isSelectModeActive) {
+                    // Text messages: delayed context menu (cancelled if double-tap follows)
+                    if (singleTapTimer) clearTimeout(singleTapTimer);
+                    singleTapTimer = setTimeout(() => {
+                        singleTapTimer = null;
+                        if (isSelectModeActive) return;
+                        suppressNextContextMenuTapUntil = Date.now() + 420;
+                        openContextMenu(currentX, currentY, { focusFirstItem: false });
+                    }, DOUBLE_TAP_MS);
+                    suppressClickUntil = Date.now() + 400;
+                }
+                // Multimedia single tap: don't suppress click — native behavior (play/pause, etc.)
             }
         }
-
-        clearLongPress();
     });
     messageElement.addEventListener("touchcancel", () => {
         clearLongPress();
         longPressTriggered = false;
-        if (voiceSeekActive) {
-            voiceSeekActive = false;
+        if (singleTapTimer) {
+            clearTimeout(singleTapTimer);
+            singleTapTimer = null;
+        }
+        if (voiceBarDragActive) {
+            voiceBarDragActive = false;
             messageElement.classList.remove("voice-seeking");
         }
         if (swipeActive) {
@@ -4717,18 +4766,170 @@ function addMessageActionHandlers(
     messageElement.addEventListener(
         "click",
         (event) => {
-            if (!isSelectModeActive) {
+            // Suppress click events that follow touch handling
+            if (Date.now() < suppressClickUntil) {
+                event.preventDefault();
+                event.stopPropagation();
                 return;
             }
-            if (!event.target.closest(".message")) {
+
+            // Select mode — intercept everything
+            if (isSelectModeActive) {
+                if (!event.target.closest(".message")) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                toggleMessageSelection(messageElement);
                 return;
             }
-            event.preventDefault();
-            event.stopPropagation();
-            toggleMessageSelection(messageElement);
+
+            // Don't intercept clicks on interactive child elements
+            if (event.target.closest("a, button, .message-reaction-chip, .voice-play-btn, .waveform-bars")) {
+                return;
+            }
+
+            // Text messages: delayed context menu (cancelled by double-click → heart)
+            if (!isMultimediaMessage) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!desktopClickTimer) {
+                    const cx = event.clientX;
+                    const cy = event.clientY;
+                    desktopClickTimer = setTimeout(() => {
+                        desktopClickTimer = null;
+                        openContextMenu(cx, cy, { focusFirstItem: false });
+                    }, DOUBLE_TAP_MS);
+                }
+            }
+            // Multimedia: don't intercept — let native handlers work
         },
         true
     );
+
+    // Desktop double-click → heart reaction (cancels pending single-click context menu)
+    messageElement.addEventListener("dblclick", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (desktopClickTimer) {
+            clearTimeout(desktopClickTimer);
+            desktopClickTimer = null;
+        }
+        doHeartReaction();
+    });
+
+    // Mouse drag: swipe (reply/edit/forward) and voice bar seek
+    let mouseDragInfo = null;
+
+    messageElement.addEventListener("mousedown", (event) => {
+        if (event.button !== 0) return; // left click only
+        if (isSelectModeActive) return;
+
+        const onBars = isVoiceMessage && !!event.target.closest(".waveform-bars");
+        mouseDragInfo = {
+            startX: event.clientX,
+            startY: event.clientY,
+            onBars,
+            swipeActive: false,
+            swipeLocked: false,
+            swipeDirection: 0,
+            barDragActive: false,
+            moved: false,
+        };
+
+        const onMouseMove = (e) => {
+            if (!mouseDragInfo) return;
+            const rawDeltaX = e.clientX - mouseDragInfo.startX;
+            const deltaX = Math.abs(rawDeltaX);
+            const deltaY = Math.abs(e.clientY - mouseDragInfo.startY);
+
+            if (deltaX > 3 || deltaY > 3) mouseDragInfo.moved = true;
+
+            // Voice bar drag
+            if (mouseDragInfo.onBars && !mouseDragInfo.barDragActive && !mouseDragInfo.swipeActive) {
+                if (deltaX > LONG_PRESS_MOVE_CANCEL_PX) {
+                    mouseDragInfo.barDragActive = true;
+                    messageElement.classList.add("voice-seeking");
+                    e.preventDefault(); // prevent text selection
+                }
+            }
+
+            if (mouseDragInfo.barDragActive) {
+                applyVoiceSeek(messageElement, e.clientX);
+                return;
+            }
+
+            // Don't start swipe from bars
+            if (mouseDragInfo.onBars) return;
+
+            // Swipe decision
+            if (!mouseDragInfo.swipeLocked && (deltaX > 12 || deltaY > 12)) {
+                if (deltaY > deltaX) {
+                    mouseDragInfo.swipeLocked = true;
+                    mouseDragInfo.swipeActive = false;
+                    return;
+                }
+                mouseDragInfo.swipeLocked = true;
+                mouseDragInfo.swipeActive = true;
+                mouseDragInfo.swipeDirection = rawDeltaX > 0 ? 1 : -1;
+                e.preventDefault(); // prevent text selection
+            }
+
+            if (!mouseDragInfo.swipeActive) return;
+
+            e.preventDefault();
+            const clampedDelta = Math.sign(rawDeltaX) * Math.min(deltaX, SWIPE_MAX_TRANSLATE_PX);
+            if ((mouseDragInfo.swipeDirection === 1 && rawDeltaX <= 0) || (mouseDragInfo.swipeDirection === -1 && rawDeltaX >= 0)) {
+                messageElement.style.transform = "";
+                return;
+            }
+            messageElement.style.transform = `translateX(${clampedDelta}px)`;
+            messageElement.style.transition = "none";
+            messageElement.classList.toggle("swipe-ready", deltaX / SWIPE_THRESHOLD_PX >= 1);
+        };
+
+        const onMouseUp = (e) => {
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+            if (!mouseDragInfo) return;
+            const info = mouseDragInfo;
+            mouseDragInfo = null;
+
+            if (info.barDragActive) {
+                messageElement.classList.remove("voice-seeking");
+                suppressClickUntil = Date.now() + 400;
+                return;
+            }
+
+            if (info.swipeActive) {
+                resetSwipeStyles();
+                const finalDeltaX = e.clientX - info.startX;
+                const finalDeltaY = Math.abs(e.clientY - info.startY);
+
+                if (Math.abs(finalDeltaX) >= SWIPE_THRESHOLD_PX && finalDeltaY < SWIPE_VERTICAL_LOCK_PX * 3) {
+                    if (finalDeltaX > 0 && canReply) {
+                        setReplyState(messageElement);
+                        chatInput?.focus();
+                    } else if (finalDeltaX < 0) {
+                        const isSent = messageElement.classList.contains("sent");
+                        if (isSent && canEdit && canEditMessage(messageElement, messageData)) {
+                            beginEditMode(messageElement);
+                        } else if (canForward) {
+                            forwardMessageText(messageElement);
+                        }
+                    }
+                }
+                suppressClickUntil = Date.now() + 400;
+            }
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    });
+
+    // Expose actions for horizon (empty space beside messages) clicks
+    messageElement._openContextMenu = (x, y) => openContextMenu(x, y, { focusFirstItem: false });
+    messageElement._doHeartReaction = doHeartReaction;
 }
 
 document.addEventListener(
@@ -4812,6 +5013,57 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("scroll", closeMessageContextMenu, true);
 document.addEventListener("scroll", () => closeReactionPicker({ restoreFocus: false }), true);
+
+/* ── Message Horizon: clicks on empty space beside messages ── */
+(function () {
+    let horizonClickTimer = null;
+    let horizonLastClickY = 0;
+
+    function findHorizonMessage(clientY) {
+        const messages = chatMessagesElem.querySelectorAll(".message");
+        let closest = null;
+        let closestDist = Infinity;
+        for (const msg of messages) {
+            const rect = msg.getBoundingClientRect();
+            if (clientY >= rect.top - 4 && clientY <= rect.bottom + 4) {
+                const dist = Math.abs(clientY - (rect.top + rect.height / 2));
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closest = msg;
+                }
+            }
+        }
+        return closest;
+    }
+
+    chatMessagesElem.addEventListener("click", (event) => {
+        // Only handle clicks directly on the container background (empty space)
+        if (event.target !== chatMessagesElem) return;
+
+        const msg = findHorizonMessage(event.clientY);
+        if (!msg?._openContextMenu) return;
+
+        if (horizonClickTimer && Math.abs(event.clientY - horizonLastClickY) < 30) {
+            // Second click within delay → double-click → heart/unheart
+            clearTimeout(horizonClickTimer);
+            horizonClickTimer = null;
+            msg._doHeartReaction?.();
+            return;
+        }
+
+        if (horizonClickTimer) {
+            clearTimeout(horizonClickTimer);
+        }
+
+        horizonLastClickY = event.clientY;
+        const cx = event.clientX;
+        const cy = event.clientY;
+        horizonClickTimer = setTimeout(() => {
+            horizonClickTimer = null;
+            msg._openContextMenu(cx, cy);
+        }, DOUBLE_TAP_MS);
+    });
+})();
 
 window.addEventListener("resize", () => {
     closeReactionPicker({ restoreFocus: false });
@@ -6555,6 +6807,20 @@ function updateVoiceSeekBars(waveformBarsEl, ratio) {
     });
 }
 
+function applyVoiceSeek(messageElement, clientX) {
+    const waveformBarsEl = messageElement.querySelector(".waveform-bars");
+    if (!waveformBarsEl) return;
+    const rect = waveformBarsEl.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    updateVoiceSeekBars(waveformBarsEl, ratio);
+    const audio = messageElement.querySelector("audio");
+    if (audio && isFinite(audio.duration)) {
+        audio.currentTime = ratio * audio.duration;
+    } else {
+        messageElement.dataset.pendingVoiceSeekRatio = String(ratio);
+    }
+}
+
 window.playVoiceMessage = async function (messageId) {
     const messageDiv = getMessageElementById(messageId);
     if (!messageDiv) return;
@@ -6604,6 +6870,11 @@ window.playVoiceMessage = async function (messageId) {
 
         audio.addEventListener("loadedmetadata", function () {
             if (isFinite(audio.duration)) {
+                const pendingRatio = parseFloat(messageDiv.dataset.pendingVoiceSeekRatio);
+                if (isFinite(pendingRatio) && pendingRatio >= 0 && pendingRatio <= 1) {
+                    audio.currentTime = pendingRatio * audio.duration;
+                    delete messageDiv.dataset.pendingVoiceSeekRatio;
+                }
                 const duration = Math.round(audio.duration);
                 const minutes = Math.floor(duration / 60);
                 const seconds = duration % 60;
