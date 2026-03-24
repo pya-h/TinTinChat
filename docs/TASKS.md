@@ -330,6 +330,49 @@ Legend:
 	- Account avatar preview/sync, cache-busting for startup CSS/JS,
 	- Load-more scroll anchoring, voice waveform baseline fix.
 
+### Phase M — New Features & Enhancements (`P1/P2`)
+- [x] (`P1`) **Multiline message input**:
+	- Textarea auto-grow on input (max 150px), proper CSS height transition,
+	- Reset height on send/clear.
+- [x] (`P1`) **Send by Enter setting**:
+	- Toggle in General settings, Enter sends (default) or Shift+Enter sends,
+	- Ctrl/Cmd+Enter always saves edits.
+- [x] (`P1`) **Music file display** (Telegram-style):
+	- Audio file detection by extension set (mp3, wav, ogg, flac, aac, m4a, etc.),
+	- Inline player with play/pause, progress bar (seekable), duration, format badge,
+	- Gradient styling with dark mode, auto-pause other playing audio.
+- [x] (`P1`) **Saved Messages** (self-chat):
+	- No new tables — `sender_id == receiver_id` in existing messages table,
+	- Bookmark icon avatar, always at top of chat list,
+	- "Save" context menu action on all messages (text forwarded, media saved as label),
+	- Forward target list includes Saved Messages, search finds Saved Messages,
+	- Toggle in General settings to show/hide, typing status disabled for self-chat.
+- [x] (`P2`) **Username blacklist**:
+	- `TTC_USERNAME_BLACKLIST` constant with ~30 reserved names,
+	- Server-side check in `apiNormalizeUsername()` and `login.php` registration,
+	- Client-side check in `index.php` with JS `RESERVED_USERNAMES` array,
+	- Case-insensitive with separator stripping (dashes, underscores, spaces removed).
+- [x] (`P1`) **Global Announcements system**:
+	- DB migration (`announcements` table with title, body, user_id, created_at),
+	- 3 API endpoints (create, fetch, delete) with superuser-only write access,
+	- Admin panel "Announcements" section with create form and delete buttons,
+	- Alert button in chat header with bullhorn icon and unread dot indicator,
+	- Announcements overlay panel with styled item list, author, timestamps,
+	- Unread detection via `tips_seen_at` comparison with latest announcement.
+- [x] (`P2`) **Playlist** (music collection):
+	- localStorage-based playlist storage with encrypted message meta for offline playback,
+	- "Add to Playlist" context menu option on music messages,
+	- Playlist button visible in chat header when viewing Saved Messages,
+	- Playlist panel overlay with play/pause, auto-advance to next track, remove tracks,
+	- Gradient-styled play buttons with pulse animation.
+- [x] (`P2`) **Message horizon improvement**:
+	- Reduced from 100% to 60% of free space adjacent to message for context menu trigger.
+- [x] (`P2`) **Click/double-click/long-click refactor**:
+	- Unified interaction model for messages across desktop and mobile.
+- [x] (`P2`) **Bug fixes**:
+	- Voice bar click when voice not yet played,
+	- Context menu re-opening on outside click (now closes properly).
+
 ## 4) Suggested Execution Order
 
 1. Security and endpoint consistency (`P0`)  

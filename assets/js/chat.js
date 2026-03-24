@@ -72,6 +72,10 @@ const settingBrowserNotifications = document.getElementById("settingBrowserNotif
 const settingSendByEnter = document.getElementById("settingSendByEnter");
 const settingShowSavedMessages = document.getElementById("settingShowSavedMessages");
 const settingsGroupKeyHealthBtn = document.getElementById("settingsGroupKeyHealthBtn");
+const playlistBtn = document.getElementById("playlistBtn");
+const playlistOverlay = document.getElementById("playlistOverlay");
+const playlistBody = document.getElementById("playlistBody");
+const playlistCloseBtn = document.getElementById("playlistCloseBtn");
 const alertPanelBtn = document.getElementById("alertPanelBtn");
 const alertUnreadDot = document.getElementById("alertUnreadDot");
 const announcementsOverlay = document.getElementById("announcementsOverlay");
@@ -1376,7 +1380,7 @@ let announcementsCachedList = null;
 
 async function fetchAnnouncements() {
     try {
-        const response = await ApiService.jsonOk("api/admin/announcements/fetch.php");
+        const response = await window.ApiService.jsonOk("api/admin/announcements/fetch.php");
         return Array.isArray(response?.announcements) ? response.announcements : [];
     } catch { return []; }
 }
@@ -1412,7 +1416,7 @@ async function openAnnouncementsPanel() {
     renderAnnouncementsPanel(list);
     // Mark as seen — update tips_seen_at
     try {
-        await ApiService.jsonOk("api/users/dismiss_changelog.php", {
+        await window.ApiService.jsonOk("api/users/dismiss_changelog.php", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
             body: "{}",
@@ -1439,6 +1443,190 @@ async function checkAnnouncementUnread() {
     const seenTs = (typeof USER_TIPS_SEEN_AT !== "undefined" && USER_TIPS_SEEN_AT)
         ? new Date(USER_TIPS_SEEN_AT).getTime() : 0;
     alertUnreadDot.hidden = !(latestTs > seenTs);
+}
+
+/* ── Playlist ── */
+
+const PLAYLIST_STORAGE_KEY = "ttc_playlist";
+
+function getPlaylist() {
+    try {
+        const raw = localStorage.getItem(PLAYLIST_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+}
+
+function savePlaylist(list) {
+    localStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify(list));
+}
+
+function addToPlaylist(msgId, chatTarget, title, ext) {
+    const list = getPlaylist();
+    if (list.some((t) => t.msgId === msgId)) {
+        setComposerStatus("Already in playlist", "warning");
+        return;
+    }
+    const meta = messageMetaById.get(Number(msgId));
+    if (!meta) {
+        setComposerStatus("Unable to save track metadata", "error");
+        return;
+    }
+    // Store minimal meta needed for decryption + playback
+    const entry = {
+        msgId, chatTarget, title, ext,
+        addedAt: new Date().toISOString(),
+        meta: {
+            id: meta.id,
+            file_path: meta.file_path,
+            media_meta: meta.media_meta,
+            message: meta.message,
+            message_for_sender: meta.message_for_sender,
+            sender_id: meta.sender_id,
+            group_id: meta.group_id || 0,
+            message_type: meta.message_type,
+        },
+    };
+    list.push(entry);
+    savePlaylist(list);
+    setComposerStatus("Added to playlist", "success");
+}
+
+function removeFromPlaylist(msgId) {
+    const list = getPlaylist().filter((t) => t.msgId !== msgId);
+    savePlaylist(list);
+}
+
+function renderPlaylistPanel() {
+    if (!playlistBody) return;
+    const list = getPlaylist();
+    playlistBody.innerHTML = "";
+    if (!list.length) {
+        playlistBody.innerHTML = '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet. Add music from context menu.</div>';
+        return;
+    }
+    list.forEach((track, idx) => {
+        const item = document.createElement("div");
+        item.className = "playlist-item";
+        item.innerHTML = `
+            <button type="button" class="playlist-item-play" title="Play">
+                <i class="fas fa-play"></i>
+            </button>
+            <div class="playlist-item-info">
+                <div class="playlist-item-title">${ChatUtils.escapeHtml(String(track.title || "Unknown"))}</div>
+                <div class="playlist-item-meta">${ChatUtils.escapeHtml(String(track.ext || "").toUpperCase())}</div>
+            </div>
+            <button type="button" class="playlist-item-remove" title="Remove">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        const playEl = item.querySelector(".playlist-item-play");
+        playEl?.addEventListener("click", async () => {
+            await playPlaylistTrack(track, playEl);
+        });
+        const removeEl = item.querySelector(".playlist-item-remove");
+        removeEl?.addEventListener("click", () => {
+            removeFromPlaylist(track.msgId);
+            renderPlaylistPanel();
+        });
+        playlistBody.appendChild(item);
+    });
+}
+
+let playlistAudio = null;
+let playlistCurrentBtn = null;
+
+async function playPlaylistTrack(track, btnEl) {
+    // If same track is playing, toggle pause
+    if (playlistAudio && playlistCurrentBtn === btnEl && !playlistAudio.paused) {
+        playlistAudio.pause();
+        btnEl.innerHTML = '<i class="fas fa-play"></i>';
+        btnEl.classList.remove("playing");
+        return;
+    }
+    // Stop any existing playlist audio
+    if (playlistAudio) {
+        playlistAudio.pause();
+        playlistAudio.src = "";
+        if (playlistCurrentBtn) {
+            playlistCurrentBtn.innerHTML = '<i class="fas fa-play"></i>';
+            playlistCurrentBtn.classList.remove("playing");
+        }
+    }
+    // Also stop any in-chat audio
+    document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
+        const otherAudio = btn.closest(".message")?.querySelector("audio");
+        if (otherAudio && !otherAudio.paused) otherAudio.pause();
+        btn.classList.remove("playing");
+        btn.innerHTML = '<i class="fas fa-play"></i>';
+        btn.closest(".voice-player-container")?.classList.remove("is-playing");
+        btn.closest(".music-player-container")?.classList.remove("is-playing");
+    });
+
+    btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        if (!track.meta) throw new Error("Track metadata missing — re-add from chat");
+        const mediaResource = await getDecryptedMediaResource(track.meta);
+
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === "suspended") audioContext.resume();
+
+        playlistAudio = new Audio(mediaResource.objectUrl);
+        playlistCurrentBtn = btnEl;
+
+        playlistAudio.addEventListener("ended", () => {
+            btnEl.innerHTML = '<i class="fas fa-play"></i>';
+            btnEl.classList.remove("playing");
+            playlistCurrentBtn = null;
+            // Auto-play next track
+            autoPlayNextTrack(track);
+        });
+
+        playlistAudio.addEventListener("error", () => {
+            btnEl.innerHTML = '<i class="fas fa-play"></i>';
+            btnEl.classList.remove("playing");
+            showModal("Playback Error", "Unable to play this track.", "error");
+        });
+
+        await playlistAudio.play();
+        btnEl.innerHTML = '<i class="fas fa-pause"></i>';
+        btnEl.classList.add("playing");
+    } catch (error) {
+        btnEl.innerHTML = '<i class="fas fa-play"></i>';
+        showModal("Playback Error", error?.message || "Unable to play track.", "error");
+    }
+}
+
+function autoPlayNextTrack(currentTrack) {
+    const list = getPlaylist();
+    const idx = list.findIndex((t) => t.msgId === currentTrack.msgId);
+    if (idx >= 0 && idx < list.length - 1) {
+        const nextTrack = list[idx + 1];
+        const items = playlistBody?.querySelectorAll(".playlist-item");
+        const nextBtn = items?.[idx + 1]?.querySelector(".playlist-item-play");
+        if (nextBtn) {
+            playPlaylistTrack(nextTrack, nextBtn);
+        }
+    }
+}
+
+function openPlaylistPanel() {
+    if (!playlistOverlay) return;
+    renderPlaylistPanel();
+    playlistOverlay.hidden = false;
+    requestAnimationFrame(() => playlistOverlay.classList.add("visible"));
+}
+
+function closePlaylistPanel() {
+    if (!playlistOverlay) return;
+    playlistOverlay.classList.remove("visible");
+    setTimeout(() => {
+        if (!playlistOverlay.classList.contains("visible")) {
+            playlistOverlay.hidden = true;
+        }
+    }, 250);
 }
 
 function setComposerStatus(message = "", type = "neutral") {
@@ -2304,6 +2492,15 @@ function bindSettingsUiEvents() {
     announcementsCloseBtn?.addEventListener("click", () => closeAnnouncementsPanel());
     announcementsOverlay?.addEventListener("click", (event) => {
         if (event.target === announcementsOverlay) closeAnnouncementsPanel();
+    });
+
+    playlistBtn?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openPlaylistPanel();
+    });
+    playlistCloseBtn?.addEventListener("click", () => closePlaylistPanel());
+    playlistOverlay?.addEventListener("click", (event) => {
+        if (event.target === playlistOverlay) closePlaylistPanel();
     });
 
     openUiSettingsBtn?.addEventListener("click", () => {
@@ -4632,6 +4829,24 @@ function addMessageActionHandlers(
             appendMenuAction(saveBtn);
         }
 
+        if (messageElement.classList.contains("is-music-message")) {
+            const addPlaylistBtn = document.createElement("button");
+            addPlaylistBtn.type = "button";
+            addPlaylistBtn.className = "message-context-menu-item";
+            addPlaylistBtn.innerHTML = '<i class="fas fa-list-ul me-2"></i>Add to Playlist';
+            addPlaylistBtn.addEventListener("click", () => {
+                closeMessageContextMenu();
+                const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+                if (!msgId) return;
+                const titleEl = messageElement.querySelector(".music-title");
+                const title = titleEl?.textContent || "Unknown";
+                const formatEl = messageElement.querySelector(".music-format");
+                const ext = formatEl?.textContent || "";
+                addToPlaylist(msgId, currentChatUser, title, ext);
+            });
+            appendMenuAction(addPlaylistBtn);
+        }
+
         if (canReact) {
             const reactBtn = document.createElement("button");
             reactBtn.type = "button";
@@ -5530,6 +5745,7 @@ lastRecentPollTime = "";
     const isGroup = isGroupToken(currentChatUser);
     groupInfoBtn.hidden = !isGroup;
     userInfoBtn && (userInfoBtn.hidden = isGroup || !currentChatUser || isSavedMessagesChat(currentChatUser));
+    if (playlistBtn) playlistBtn.hidden = !isSavedMessagesChat(currentChatUser);
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }

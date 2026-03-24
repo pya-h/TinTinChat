@@ -112,9 +112,8 @@ $csrfToken = generateCsrfToken();
                         <button type="button" id="groupInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Group details" title="Group details" hidden>
                             <i class="fas fa-users"></i>
                         </button>
-                        <button type="button" id="alertBellBtn" class="btn btn-sm btn-outline-secondary alert-bell-btn" aria-label="Announcements" title="Announcements">
-                            <i class="fas fa-bell"></i>
-                            <span id="alertUnreadDot" class="alert-unread-dot" hidden></span>
+                        <button type="button" id="playlistBtn" class="btn btn-sm btn-outline-secondary" aria-label="Playlist" title="Playlist" hidden>
+                            <i class="fas fa-music"></i>
                         </button>
                         <button type="button" id="alertPanelBtn" class="btn btn-sm btn-outline-secondary alert-panel-btn" aria-label="Announcements" title="Announcements">
                             <i class="fas fa-bullhorn"></i>
@@ -556,29 +555,6 @@ $csrfToken = generateCsrfToken();
                             <div class="chat-ui-admin-section">
                                 <div class="chat-ui-admin-row">
                                     <div>
-                                        <div class="chat-ui-account-title">Global notices</div>
-                                        <div class="chat-ui-account-subtitle">Create alerts visible to all users.</div>
-                                    </div>
-                                    <button type="button" id="settingsAdminRefreshAnnouncementsBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
-                                </div>
-                                <div class="announcement-create-form">
-                                    <input type="text" id="announcementTitleInput" class="form-control form-control-sm" placeholder="Title" maxlength="200">
-                                    <textarea id="announcementBodyInput" class="form-control form-control-sm" placeholder="Body" rows="3" maxlength="5000"></textarea>
-                                    <button type="button" id="announcementCreateBtn" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-plus me-1"></i>Create
-                                    </button>
-                                </div>
-                                <div id="settingsAdminAnnouncementsList" class="chat-ui-admin-list" aria-live="polite">
-                                    <div class="chat-ui-admin-empty">Loading announcements...</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="chat-ui-admin-group">
-                            <div class="chat-ui-admin-group-header"><i class="fas fa-bullhorn me-2"></i>Announcements</div>
-                            <div class="chat-ui-admin-section">
-                                <div class="chat-ui-admin-row">
-                                    <div>
                                         <div class="chat-ui-account-title">Global Notices</div>
                                         <div class="chat-ui-account-subtitle">Post announcements visible to all users.</div>
                                     </div>
@@ -759,6 +735,19 @@ $csrfToken = generateCsrfToken();
                 <button type="button" class="btn btn-primary changelog-dismiss-btn" id="changelogDismissBtn">
                     <i class="fas fa-check me-1"></i>Got it!
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Playlist panel -->
+    <div id="playlistOverlay" class="playlist-overlay" hidden>
+        <div class="playlist-panel" role="dialog" aria-modal="true" aria-labelledby="playlistPanelTitle">
+            <div class="playlist-header">
+                <span class="playlist-badge"><i class="fas fa-music me-1"></i>Playlist</span>
+                <button type="button" class="playlist-close" id="playlistCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="playlist-body" id="playlistBody">
+                <div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet. Add music from context menu.</div>
             </div>
         </div>
     </div>
