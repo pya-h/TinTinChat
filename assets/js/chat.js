@@ -250,6 +250,7 @@ const typingInflightByTarget = new Set();
 let typingStopTimer = null;
 let imageSourceMenuHideTimer = null;
 let suppressNextContextMenuTapUntil = 0;
+let contextMenuJustClosedAt = 0;
 let refreshMediaCacheLabelGlobal = () => {};
 let cameraStream = null;
 let isCameraCaptureBusy = false;
@@ -2958,7 +2959,11 @@ async function convertBlobToPng(blob) {
 }
 
 function closeMessageContextMenu() {
-    document.getElementById("messageContextMenu")?.remove();
+    const existing = document.getElementById("messageContextMenu");
+    if (existing) {
+        existing.remove();
+        contextMenuJustClosedAt = Date.now();
+    }
     suppressNextContextMenuTapUntil = 0;
     if (lastContextMenuMessageElement) {
         lastContextMenuMessageElement.focus();
@@ -4327,6 +4332,8 @@ function addMessageActionHandlers(
     };
 
     const openContextMenu = (clientX, clientY, { focusFirstItem = true } = {}) => {
+        // If a context menu was just closed (by clicking outside), don't immediately open a new one
+        if (Date.now() - contextMenuJustClosedAt < 450) return;
         closeMessageContextMenu();
         closeReactionPicker({ restoreFocus: false });
         lastContextMenuMessageElement = messageElement;
@@ -4649,6 +4656,22 @@ function addMessageActionHandlers(
             return;
         }
 
+        // Voice bar tap (no drag) → seek to tapped position (+ auto-play if not yet loaded)
+        if (touchStartedOnBars) {
+            touchStartedOnBars = false;
+            const touchPoint = event.changedTouches?.[0];
+            if (touchPoint) {
+                applyVoiceSeek(messageElement, Number(touchPoint.clientX || 0));
+                if (!messageElement.querySelector("audio")) {
+                    const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+                    if (msgId) playVoiceMessage(msgId);
+                }
+                suppressClickUntil = Date.now() + 400;
+            }
+            clearLongPress();
+            return;
+        }
+
         if (longPressTriggered) {
             event.preventDefault();
             event.stopPropagation();
@@ -4784,8 +4807,18 @@ function addMessageActionHandlers(
                 return;
             }
 
+            // Voice bar click → seek to clicked position (+ auto-play if not yet loaded)
+            if (isVoiceMessage && event.target.closest(".waveform-bars")) {
+                applyVoiceSeek(messageElement, event.clientX);
+                if (!messageElement.querySelector("audio")) {
+                    const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+                    if (msgId) playVoiceMessage(msgId);
+                }
+                return;
+            }
+
             // Don't intercept clicks on interactive child elements
-            if (event.target.closest("a, button, .message-reaction-chip, .voice-play-btn, .waveform-bars")) {
+            if (event.target.closest("a, button, .message-reaction-chip, .voice-play-btn")) {
                 return;
             }
 
@@ -5017,20 +5050,38 @@ document.addEventListener("scroll", () => closeReactionPicker({ restoreFocus: fa
 /* ── Message Horizon: clicks on empty space beside messages ── */
 (function () {
     let horizonClickTimer = null;
+    let horizonLastClickX = 0;
     let horizonLastClickY = 0;
 
-    function findHorizonMessage(clientY) {
+    const HORIZON_RATIO = 0.6;
+
+    function findHorizonMessage(clientX, clientY) {
+        const containerRect = chatMessagesElem.getBoundingClientRect();
         const messages = chatMessagesElem.querySelectorAll(".message");
         let closest = null;
         let closestDist = Infinity;
         for (const msg of messages) {
             const rect = msg.getBoundingClientRect();
-            if (clientY >= rect.top - 4 && clientY <= rect.bottom + 4) {
-                const dist = Math.abs(clientY - (rect.top + rect.height / 2));
-                if (dist < closestDist) {
-                    closestDist = dist;
-                    closest = msg;
-                }
+            if (clientY < rect.top - 4 || clientY > rect.bottom + 4) continue;
+
+            // Check horizontal proximity: only the 60% of free space adjacent to the message
+            const isSent = msg.classList.contains("sent");
+            if (isSent) {
+                // Free space is to the left of the message
+                const gapLeft = rect.left - containerRect.left;
+                const horizonLeft = rect.left - gapLeft * HORIZON_RATIO;
+                if (clientX < horizonLeft) continue;
+            } else {
+                // Free space is to the right of the message
+                const gapRight = containerRect.right - rect.right;
+                const horizonRight = rect.right + gapRight * HORIZON_RATIO;
+                if (clientX > horizonRight) continue;
+            }
+
+            const dist = Math.abs(clientY - (rect.top + rect.height / 2));
+            if (dist < closestDist) {
+                closestDist = dist;
+                closest = msg;
             }
         }
         return closest;
@@ -5040,10 +5091,10 @@ document.addEventListener("scroll", () => closeReactionPicker({ restoreFocus: fa
         // Only handle clicks directly on the container background (empty space)
         if (event.target !== chatMessagesElem) return;
 
-        const msg = findHorizonMessage(event.clientY);
+        const msg = findHorizonMessage(event.clientX, event.clientY);
         if (!msg?._openContextMenu) return;
 
-        if (horizonClickTimer && Math.abs(event.clientY - horizonLastClickY) < 30) {
+        if (horizonClickTimer && Math.abs(event.clientX - horizonLastClickX) < 80 && Math.abs(event.clientY - horizonLastClickY) < 30) {
             // Second click within delay → double-click → heart/unheart
             clearTimeout(horizonClickTimer);
             horizonClickTimer = null;
@@ -5055,6 +5106,7 @@ document.addEventListener("scroll", () => closeReactionPicker({ restoreFocus: fa
             clearTimeout(horizonClickTimer);
         }
 
+        horizonLastClickX = event.clientX;
         horizonLastClickY = event.clientY;
         const cx = event.clientX;
         const cy = event.clientY;
