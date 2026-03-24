@@ -4708,8 +4708,8 @@ textarea,
     border-radius: var(--border-radius);
     border: 1px solid rgba(106, 17, 203, 0.15);
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
-    min-width: 220px;
-    max-width: 320px;
+    min-width: 240px;
+    max-width: 100%;
     transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -4816,29 +4816,54 @@ textarea,
 
 .music-progress-wrap {
     width: 100%;
-    height: 3px;
+    height: 6px;
     background: rgba(0, 0, 0, 0.12);
-    border-radius: 2px;
+    border-radius: 3px;
     margin-top: 0.3rem;
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    touch-action: none;
 }
 
 .music-progress-bar {
     height: 100%;
     width: 0;
     background: linear-gradient(90deg, #7c3aed, #a855f7);
-    border-radius: 2px;
-    transition: width 0.15s linear;
+    border-radius: 3px;
+    transition: width 0.1s linear;
+    pointer-events: none;
+}
+
+.music-progress-bar::after {
+    content: "";
+    position: absolute;
+    right: -5px;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #7c3aed;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease;
+}
+
+.music-progress-wrap:active .music-progress-bar::after,
+.music-progress-wrap.seeking .music-progress-bar::after {
+    transform: translateY(-50%) scale(1);
 }
 
 .message.received .music-progress-bar {
     background: linear-gradient(90deg, #495057, #6c757d);
 }
 
+.message.received .music-progress-bar::after {
+    background: #495057;
+}
+
 .music-player-container.is-playing .music-progress-wrap {
-    height: 4px;
+    height: 6px;
 }
 
 .music-download-btn {

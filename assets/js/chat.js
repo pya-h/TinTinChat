@@ -5817,7 +5817,7 @@ function buildChatQueryParams(target, extra = {}) {
 }
 
 async function updateMessagesStatus(messages) {
-    if (isGroupToken(currentChatUser)) {
+    if (isGroupToken(currentChatUser) || isSavedMessagesChat(currentChatUser)) {
         return false;
     }
     const messagesNewlySeen = messages
@@ -6857,7 +6857,7 @@ async function addMessageToChat(msg, prepend = false) {
 
     const isOwnMessage = Number(msg.sender_id || 0) === Number(CURRENT_USER_ID);
     const isGroupMessageForStatus = Number(msg.group_id || 0) > 0;
-    if (isOwnMessage) {
+    if (isOwnMessage && !isSavedMessagesChat(currentChatUser)) {
         const tickContainer = document.createElement("span");
         const isSeen = isGroupMessageForStatus ? Boolean(msg.group_seen_at) : Boolean(msg.seen_at);
         tickContainer.className = isSeen
@@ -7624,15 +7624,46 @@ window.playMusicMessage = async function (messageId) {
             playBtn.style.opacity = "0.5";
         });
 
-        // Click on progress bar to seek
+        // Click + drag on progress bar to seek
         const progressWrap = messageDiv.querySelector(".music-progress-wrap");
         if (progressWrap) {
-            progressWrap.addEventListener("click", function (e) {
+            function seekToPosition(clientX) {
                 if (!audio || !isFinite(audio.duration)) return;
                 const rect = progressWrap.getBoundingClientRect();
-                const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                 audio.currentTime = ratio * audio.duration;
                 if (progressBar) progressBar.style.width = `${ratio * 100}%`;
+            }
+
+            // Mouse drag
+            progressWrap.addEventListener("mousedown", function (e) {
+                e.preventDefault();
+                seekToPosition(e.clientX);
+                progressWrap.classList.add("seeking");
+                function onMouseMove(ev) { seekToPosition(ev.clientX); }
+                function onMouseUp() {
+                    progressWrap.classList.remove("seeking");
+                    document.removeEventListener("mousemove", onMouseMove);
+                    document.removeEventListener("mouseup", onMouseUp);
+                }
+                document.addEventListener("mousemove", onMouseMove);
+                document.addEventListener("mouseup", onMouseUp);
+            });
+
+            // Touch drag
+            progressWrap.addEventListener("touchstart", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                seekToPosition(e.touches[0].clientX);
+                progressWrap.classList.add("seeking");
+            });
+            progressWrap.addEventListener("touchmove", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                seekToPosition(e.touches[0].clientX);
+            });
+            progressWrap.addEventListener("touchend", function () {
+                progressWrap.classList.remove("seeking");
             });
         }
     }
