@@ -105,7 +105,7 @@
             row.innerHTML = `
                 <span class="chat-ui-admin-item-meta">
                     <span class="chat-ui-admin-item-title">
-                        ${escapeHtml(String(user.username || "Unknown"))}${user.is_superuser ? ' <span class="chat-ui-admin-badge badge-superuser">superuser</span>' : ""}${isBanned ? ' <span class="chat-ui-admin-badge badge-banned">banned</span>' : ""}
+                        ${escapeHtml(String(user.username || "Unknown"))}${user.is_superuser ? ' <span class="chat-ui-admin-badge badge-superuser">superuser</span>' : ""}
                     </span>
                     <span class="chat-ui-admin-item-subtitle">${user.last_login ? `Last login: ${escapeHtml(String(user.last_login))}` : "No login data"}</span>
                 </span>
@@ -114,9 +114,10 @@
                         <input type="checkbox" class="admin-role-toggle" ${user.is_admin ? "checked" : ""} ${user.can_edit ? "" : "disabled"} data-user-id="${Number(user.id || 0)}">
                         <span>Admin</span>
                     </label>
-                    ${user.can_edit ? `<button type="button" class="btn btn-sm ${isBanned ? "btn-outline-success" : "btn-outline-danger"} admin-ban-toggle" data-user-id="${Number(user.id || 0)}" title="${isBanned ? "Unban" : "Ban"} this user">
-                        <i class="fas ${isBanned ? "fa-user-check" : "fa-ban"} me-1"></i>${isBanned ? "Unban" : "Ban"}
-                    </button>` : ""}
+                    <label class="chat-ui-admin-item-toggle" title="${isBanned ? "Unban" : "Ban"} this user">
+                        <input type="checkbox" class="admin-ban-toggle toggle-danger" ${isBanned ? "checked" : ""} ${user.can_edit ? "" : "disabled"} data-user-id="${Number(user.id || 0)}">
+                        <span>Banned</span>
+                    </label>
                 </span>
             `;
 
@@ -147,36 +148,40 @@
                 }
             });
 
-            const banBtn = row.querySelector(".admin-ban-toggle");
-            banBtn?.addEventListener("click", async () => {
-                const targetUserId = Number(banBtn.dataset?.userId || 0);
+            const banToggle = row.querySelector(".admin-ban-toggle");
+            banToggle?.addEventListener("change", async (event) => {
+                const target = event.target;
+                const targetUserId = Number(target?.dataset?.userId || 0);
                 if (!targetUserId) return;
 
-                const currentlyBanned = adminUsersList.find((u) => Number(u.id) === targetUserId)?.banned_at != null;
-                const action = currentlyBanned ? "unban" : "ban";
+                const wantBan = Boolean(target.checked);
+                const action = wantBan ? "ban" : "unban";
                 const targetUsername = String(user.username || "this user");
 
-                const confirmed = window.confirm(`${currentlyBanned ? "Unban" : "Ban"} ${targetUsername}? ${currentlyBanned ? "They will be able to log in again." : "They will be logged out and unable to log in."}`);
-                if (!confirmed) return;
+                const confirmed = window.confirm(`${wantBan ? "Ban" : "Unban"} ${targetUsername}? ${wantBan ? "They will be logged out and unable to log in." : "They will be able to log in again."}`);
+                if (!confirmed) {
+                    target.checked = !target.checked;
+                    return;
+                }
 
-                banBtn.disabled = true;
-                banBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>...';
+                target.disabled = true;
                 try {
                     const response = await window.ApiService.jsonOk("api/admin/users/set_ban.php", {
                         method: "POST",
                         headers: { "Content-Type": "application/json", ...window.getCsrfHeaders() },
-                        body: JSON.stringify({ user_id: targetUserId, ban: !currentlyBanned }),
+                        body: JSON.stringify({ user_id: targetUserId, ban: wantBan }),
                     });
                     const newBannedAt = response?.banned_at ?? null;
                     adminUsersList = adminUsersList.map((item) =>
                         Number(item.id) === targetUserId ? { ...item, banned_at: newBannedAt } : item
                     );
-                    renderAdminUsersSettings();
+                    target.checked = newBannedAt != null;
                     window.setComposerStatus(`${targetUsername} ${newBannedAt ? "banned" : "unbanned"}`, "success");
                 } catch (error) {
+                    target.checked = !target.checked;
                     showModal(`${action === "ban" ? "Ban" : "Unban"} Failed`, error?.message || `Unable to ${action} user.`, "error");
-                    banBtn.disabled = false;
-                    banBtn.innerHTML = `<i class="fas ${currentlyBanned ? "fa-user-check" : "fa-ban"} me-1"></i>${currentlyBanned ? "Unban" : "Ban"}`;
+                } finally {
+                    target.disabled = !user.can_edit;
                 }
             });
 
