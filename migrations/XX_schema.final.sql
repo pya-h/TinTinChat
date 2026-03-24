@@ -11,6 +11,7 @@ CREATE TABLE users (
   last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   ident VARCHAR(128),
   is_admin BOOLEAN DEFAULT FALSE,
+  banned_at TIMESTAMP NULL DEFAULT NULL,
   tips_seen_at TIMESTAMP NULL DEFAULT NULL
 );
 
@@ -225,3 +226,5 @@ CREATE INDEX idx_messages_group_seen_lookup
   ON messages(group_id, group_seen_at, sender_id, id);
 
 CREATE INDEX idx_users_avatar_path ON users(avatar_path);
+
+CREATE INDEX idx_users_banned_at ON users(banned_at);

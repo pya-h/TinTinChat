@@ -104,6 +104,11 @@ if (!password_verify($password, $user['password_hash'])) {
 	redirectToApp('/index.php');
 }
 
+if (!empty($user['banned_at'])) {
+	$_SESSION['login_error'] = 'Your account has been suspended.';
+	redirectToApp('/index.php');
+}
+
 $new_ident = setSessionUser($user);
 if($new_ident) {
    updateLoginSession($user['id'], $new_ident); 

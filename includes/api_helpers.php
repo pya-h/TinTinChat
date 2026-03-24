@@ -45,6 +45,21 @@ function apiRequireAuth(): int
     return (int) $_SESSION['user_id'];
 }
 
+function apiRequireBanCheck(PDO $pdo, int $userId): void
+{
+    if ($userId <= 0) {
+        return;
+    }
+
+    $stmt = $pdo->prepare('SELECT banned_at FROM users WHERE id = ? LIMIT 1');
+    $stmt->execute([$userId]);
+    $bannedAt = $stmt->fetchColumn();
+
+    if ($bannedAt !== false && $bannedAt !== null) {
+        apiError('ACCOUNT_BANNED', 'Your account has been suspended.', 403);
+    }
+}
+
 function apiRequireCsrf(): void
 {
     $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($_POST['csrf_token'] ?? null);

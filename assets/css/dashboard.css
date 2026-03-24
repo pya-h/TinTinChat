@@ -2506,6 +2506,59 @@ textarea,
     text-align: center;
 }
 
+.chat-ui-admin-group {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.chat-ui-admin-group-header {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--subtle-text-color);
+    padding: 0.15rem 0.2rem;
+}
+
+.chat-ui-admin-user-row {
+    display: flex;
+    align-items: center;
+    gap: 0.56rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.68rem;
+    padding: 0.45rem 0.55rem;
+    background: color-mix(in srgb, var(--surface-color) 96%, transparent);
+}
+
+.chat-ui-admin-user-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-shrink: 0;
+}
+
+.chat-ui-admin-badge {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.1rem 0.38rem;
+    border-radius: 0.35rem;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+.badge-superuser {
+    background: color-mix(in srgb, var(--primary-color) 18%, transparent);
+    color: var(--primary-color);
+}
+
+.badge-banned {
+    background: color-mix(in srgb, #dc3545 18%, transparent);
+    color: #dc3545;
+}
+
 #chatUiSettingsPanelAccount {
     padding-bottom: 0.2rem;
 }
@@ -3481,6 +3534,15 @@ textarea,
     .chat-ui-admin-row-tools {
         width: 100%;
         justify-content: space-between;
+    }
+
+    .chat-ui-admin-user-row {
+        flex-wrap: wrap;
+    }
+
+    .chat-ui-admin-user-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 
     .chat-ui-account-avatar-wrap {

@@ -12,7 +12,7 @@ $superuserUsername = apiGetConfiguredSuperuserUsername();
 
 $includeTestUsers = isset($_GET['include_test_users']) && (string) $_GET['include_test_users'] === '1';
 
-$sql = 'SELECT id, username, is_admin, last_login FROM users';
+$sql = 'SELECT id, username, is_admin, banned_at, last_login FROM users';
 if (!$includeTestUsers) {
     $sql .= " WHERE username NOT LIKE 'phaseh_%'";
     $sql .= " AND username NOT LIKE 'st_%'";
@@ -31,6 +31,7 @@ $users = array_map(static function ($row) use ($superuserUsername, $userId) {
         'id' => $targetUserId,
         'username' => $username,
         'is_admin' => !empty($row['is_admin']),
+        'banned_at' => isset($row['banned_at']) ? (string) $row['banned_at'] : null,
         'is_superuser' => $isSuperuser,
         'last_login' => isset($row['last_login']) ? (string) $row['last_login'] : null,
         'can_edit' => !$isSuperuser && $targetUserId !== $userId,

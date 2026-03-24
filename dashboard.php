@@ -17,9 +17,15 @@ $is_superuser = ($superuser_username !== '' && strcasecmp((string) $username, $s
 $tips_seen_at = null;
 
 try {
-    $adminStmt = $pdo->prepare('SELECT is_admin, tips_seen_at FROM users WHERE id = ? LIMIT 1');
+    $adminStmt = $pdo->prepare('SELECT is_admin, banned_at, tips_seen_at FROM users WHERE id = ? LIMIT 1');
     $adminStmt->execute([$user_id]);
     $adminRow = $adminStmt->fetch(PDO::FETCH_ASSOC);
+    if (!empty($adminRow['banned_at'])) {
+        $_SESSION = [];
+        session_destroy();
+        header('Location: index.php');
+        exit;
+    }
     $is_admin = (bool) ($adminRow['is_admin'] ?? false);
     $tips_seen_at = $adminRow['tips_seen_at'] ?? null;
     if ($tips_seen_at !== null) {
@@ -472,76 +478,90 @@ $csrfToken = generateCsrfToken();
 
                     <?php if ($is_admin): ?>
                     <section id="chatUiSettingsPanelAdmin" class="chat-ui-settings-panel" role="tabpanel" aria-labelledby="chatUiSettingsTabAdmin" hidden>
-                        <div class="chat-ui-admin-section">
-                            <div class="chat-ui-admin-row">
-                                <div>
-                                    <div class="chat-ui-account-title">Group key health</div>
-                                    <div class="chat-ui-account-subtitle">Run encryption health checks for your groups.</div>
+
+                        <div class="chat-ui-admin-group">
+                            <div class="chat-ui-admin-group-header"><i class="fas fa-tools me-2"></i>Tools</div>
+                            <div class="chat-ui-admin-section">
+                                <div class="chat-ui-admin-row">
+                                    <div>
+                                        <div class="chat-ui-account-title">Group key health</div>
+                                        <div class="chat-ui-account-subtitle">Run encryption health checks for your groups.</div>
+                                    </div>
+                                    <button type="button" id="settingsGroupKeyHealthBtn" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-shield-alt me-1"></i>Run Check
+                                    </button>
                                 </div>
-                                <button type="button" id="settingsGroupKeyHealthBtn" class="btn btn-sm btn-outline-secondary">
-                                    <i class="fas fa-shield-alt me-1"></i>Run Check
-                                </button>
                             </div>
                         </div>
 
-                        <div class="chat-ui-admin-section">
-                            <div class="chat-ui-admin-row">
-                                <div>
-                                    <div class="chat-ui-account-title">Stickers</div>
-                                    <div class="chat-ui-account-subtitle">Toggle admin-only visibility for each sticker.</div>
+                        <div class="chat-ui-admin-group">
+                            <div class="chat-ui-admin-group-header"><i class="fas fa-icons me-2"></i>Content</div>
+                            <div class="chat-ui-admin-section">
+                                <div class="chat-ui-admin-row">
+                                    <div>
+                                        <div class="chat-ui-account-title">Stickers</div>
+                                        <div class="chat-ui-account-subtitle">Toggle admin-only visibility for each sticker.</div>
+                                    </div>
+                                    <button type="button" id="settingsAdminRefreshStickersBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
                                 </div>
-                                <button type="button" id="settingsAdminRefreshStickersBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
-                            </div>
-                            <div id="settingsAdminStickerList" class="chat-ui-admin-list" aria-live="polite">
-                                <div class="chat-ui-admin-empty">Loading stickers...</div>
+                                <div id="settingsAdminStickerList" class="chat-ui-admin-list" aria-live="polite">
+                                    <div class="chat-ui-admin-empty">Loading stickers...</div>
+                                </div>
                             </div>
                         </div>
 
                         <?php if ($is_superuser): ?>
-                        <div class="chat-ui-admin-section">
-                            <div class="chat-ui-admin-row">
-                                <div>
-                                    <div class="chat-ui-account-title">Admin users</div>
-                                    <div class="chat-ui-account-subtitle">Promote or demote admin users.</div>
+                        <div class="chat-ui-admin-group">
+                            <div class="chat-ui-admin-group-header"><i class="fas fa-users-cog me-2"></i>User Management</div>
+                            <div class="chat-ui-admin-section">
+                                <div class="chat-ui-admin-row">
+                                    <div>
+                                        <div class="chat-ui-account-title">Users</div>
+                                        <div class="chat-ui-account-subtitle">Manage admin roles and ban users.</div>
+                                    </div>
+                                    <div class="chat-ui-admin-row-tools">
+                                        <label class="chat-ui-admin-inline-toggle" for="settingsAdminIncludeTestUsers">
+                                            <input type="checkbox" id="settingsAdminIncludeTestUsers">
+                                            <span>Show test users</span>
+                                        </label>
+                                        <button type="button" id="settingsAdminRefreshUsersBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                                    </div>
                                 </div>
-                                <div class="chat-ui-admin-row-tools">
-                                    <label class="chat-ui-admin-inline-toggle" for="settingsAdminIncludeTestUsers">
-                                        <input type="checkbox" id="settingsAdminIncludeTestUsers">
-                                        <span>Show test users</span>
-                                    </label>
-                                    <button type="button" id="settingsAdminRefreshUsersBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                                <div id="settingsAdminUsersList" class="chat-ui-admin-list" aria-live="polite">
+                                    <div class="chat-ui-admin-empty">Loading users...</div>
                                 </div>
-                            </div>
-                            <div id="settingsAdminUsersList" class="chat-ui-admin-list" aria-live="polite">
-                                <div class="chat-ui-admin-empty">Loading users...</div>
                             </div>
                         </div>
-                        <div class="chat-ui-admin-section">
-                            <div class="chat-ui-admin-row">
-                                <div>
-                                    <div class="chat-ui-account-title">Media cleanup</div>
-                                    <div class="chat-ui-account-subtitle">Delete old large media files to free disk space.</div>
+
+                        <div class="chat-ui-admin-group">
+                            <div class="chat-ui-admin-group-header"><i class="fas fa-database me-2"></i>Storage</div>
+                            <div class="chat-ui-admin-section">
+                                <div class="chat-ui-admin-row">
+                                    <div>
+                                        <div class="chat-ui-account-title">Media cleanup</div>
+                                        <div class="chat-ui-account-subtitle">Delete old large media files to free disk space.</div>
+                                    </div>
                                 </div>
+                                <div class="media-cleanup-form">
+                                    <label class="chat-ui-settings-field" for="mediaCleanupDays">
+                                        <span>Older than (days)</span>
+                                        <input type="number" id="mediaCleanupDays" class="form-control form-control-sm" min="1" value="90" style="max-width:120px">
+                                    </label>
+                                    <label class="chat-ui-settings-field" for="mediaCleanupMaxSize">
+                                        <span>Larger than (MB)</span>
+                                        <input type="number" id="mediaCleanupMaxSize" class="form-control form-control-sm" min="1" value="5" step="0.5" style="max-width:120px">
+                                    </label>
+                                    <button type="button" id="mediaCleanupBtn" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-broom me-1"></i>Clean up
+                                    </button>
+                                </div>
+                                <div id="mediaCleanupResult" class="chat-ui-admin-empty" style="display:none"></div>
                             </div>
-                            <div class="media-cleanup-form">
-                                <label class="chat-ui-settings-field" for="mediaCleanupDays">
-                                    <span>Older than (days)</span>
-                                    <input type="number" id="mediaCleanupDays" class="form-control form-control-sm" min="1" value="90" style="max-width:120px">
-                                </label>
-                                <label class="chat-ui-settings-field" for="mediaCleanupMaxSize">
-                                    <span>Larger than (MB)</span>
-                                    <input type="number" id="mediaCleanupMaxSize" class="form-control form-control-sm" min="1" value="5" step="0.5" style="max-width:120px">
-                                </label>
-                                <button type="button" id="mediaCleanupBtn" class="btn btn-sm btn-outline-danger">
-                                    <i class="fas fa-broom me-1"></i>Clean up
-                                </button>
-                            </div>
-                            <div id="mediaCleanupResult" class="chat-ui-admin-empty" style="display:none"></div>
                         </div>
 
                         <?php else: ?>
                         <div class="chat-ui-admin-section">
-                            <div class="chat-ui-admin-empty">Only the developer can manage admin roles.</div>
+                            <div class="chat-ui-admin-empty">Only the developer can manage admin roles and storage.</div>
                         </div>
                         <?php endif; ?>
                     </section>
@@ -702,6 +722,8 @@ $csrfToken = generateCsrfToken();
         const APP_CONSTANTS = <?= json_encode(tintinchatFrontendConstants()) ?>;
         const CURRENT_USER_IS_ADMIN = <?= json_encode($is_admin) ?>;
         const CURRENT_USER_IS_SUPERUSER = <?= json_encode($is_superuser) ?>;
+        window.CURRENT_USER_IS_ADMIN = CURRENT_USER_IS_ADMIN;
+        window.CURRENT_USER_IS_SUPERUSER = CURRENT_USER_IS_SUPERUSER;
         const USER_TIPS_SEEN_AT = <?= json_encode($tips_seen_at) ?>;
         const PWA_SW_VERSION = <?= json_encode((string) @filemtime(__DIR__ . '/service-worker.js')) ?>;
         const currentUserIdent = <?= json_encode($user_ident) ?>;
@@ -876,6 +898,7 @@ $csrfToken = generateCsrfToken();
     <script src="assets/js/chat-sticker-utils.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-sticker-utils.js')); ?>"></script>
     <script src="assets/js/chat-media-cache.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-media-cache.js')); ?>"></script>
     <script src="assets/js/chat.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat.js')); ?>"></script>
+    <script src="assets/js/chat-admin.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-admin.js')); ?>"></script>
     <script src="assets/js/ideas.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/ideas.js')); ?>"></script>
     <script src="assets/js/guide.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/guide.js')); ?>"></script>
     <script src="assets/js/changelog.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/changelog.js')); ?>"></script>
