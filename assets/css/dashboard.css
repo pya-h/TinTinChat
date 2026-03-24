@@ -4795,12 +4795,12 @@ textarea,
 }
 
 .message.received .voice-play-btn {
-    background: rgba(0, 0, 0, 0.15);
-    color: #212529;
+    background: color-mix(in srgb, var(--text-color) 12%, var(--surface-color));
+    color: var(--text-color);
 }
 
 .message.received .voice-play-btn:hover {
-    background: rgba(0, 0, 0, 0.2);
+    background: color-mix(in srgb, var(--text-color) 18%, var(--surface-color));
 }
 
 .message.received .voice-play-btn.playing {
@@ -4809,7 +4809,7 @@ textarea,
 }
 
 .message.received .voice-play-btn svg path {
-    fill: #212529;
+    fill: var(--text-color);
 }
 
 .message.received .voice-play-btn.playing svg path {
@@ -4817,16 +4817,16 @@ textarea,
 }
 
 .message.received .waveform-bar {
-    background: rgba(0, 0, 0, 0.3);
+    background: color-mix(in srgb, var(--text-color) 22%, var(--border-color));
     height: 20%;
 }
 
 .message.received .waveform-bar.played {
-    background: #0d6efd;
+    background: color-mix(in srgb, var(--secondary-color) 72%, var(--primary-color));
 }
 
 .message.received .voice-duration-display {
-    color: #212529;
+    color: var(--text-color);
 }
 
 .message.is-voice-message {
@@ -5280,8 +5280,7 @@ textarea,
     }
 
     .message.is-image-message,
-    .message.is-video-message,
-    .message.is-sticker-message {
+    .message.is-video-message {
         width: auto;
         max-width: 75%;
     }

@@ -6798,18 +6798,28 @@ async function refreshClipboardImageCandidate() {
     }
 
     try {
+        if (navigator.permissions) {
+            try {
+                const perm = await navigator.permissions.query({ name: "clipboard-read" });
+                if (perm.state === "denied") {
+                    pendingClipboardImageFile = null;
+                    setClipboardImageButtonVisibility(false);
+                    return null;
+                }
+            } catch (_) {}
+        }
+
         const clipboardItems = await navigator.clipboard.read();
         for (const clipboardItem of clipboardItems) {
-            for (const type of clipboardItem.types || []) {
-                if (!String(type).startsWith("image/")) {
-                    continue;
-                }
-                const imageBlob = await clipboardItem.getType(type);
-                if (imageBlob) {
-                    pendingClipboardImageFile = createClipboardImageFile(imageBlob);
-                    setClipboardImageButtonVisibility(true);
-                    return pendingClipboardImageFile;
-                }
+            const imageType = (clipboardItem.types || []).find((t) => String(t).startsWith("image/"));
+            if (!imageType) {
+                continue;
+            }
+            const imageBlob = await clipboardItem.getType(imageType);
+            if (imageBlob && imageBlob.size > 0) {
+                pendingClipboardImageFile = createClipboardImageFile(imageBlob);
+                setClipboardImageButtonVisibility(true);
+                return pendingClipboardImageFile;
             }
         }
     } catch (error) {}
@@ -6845,13 +6855,25 @@ async function sendClipboardImage({ requireConfirm = true } = {}) {
 }
 
 function extractPastedImageFile(pasteEvent) {
-    const clipboardItems = Array.from(pasteEvent?.clipboardData?.items || []);
-    const imageItem = clipboardItems.find((item) => String(item.type || "").startsWith("image/"));
-    const imageBlob = imageItem?.getAsFile?.();
-    if (!imageBlob) {
+    const clipboardData = pasteEvent?.clipboardData;
+    if (!clipboardData) {
         return null;
     }
-    return createClipboardImageFile(imageBlob);
+
+    const clipboardItems = Array.from(clipboardData.items || []);
+    const imageItem = clipboardItems.find((item) => String(item.type || "").startsWith("image/"));
+    const imageBlob = imageItem?.getAsFile?.();
+    if (imageBlob) {
+        return createClipboardImageFile(imageBlob);
+    }
+
+    const files = Array.from(clipboardData.files || []);
+    const imageFile = files.find((file) => String(file.type || "").startsWith("image/"));
+    if (imageFile) {
+        return createClipboardImageFile(imageFile);
+    }
+
+    return null;
 }
 
 const fileUploadInput = document.getElementById("fileUploadInput");
@@ -7065,6 +7087,12 @@ chatInput.addEventListener("focus", () => {
     isChatInputFocused = true;
     setClipboardImageButtonVisibility(Boolean(pendingClipboardImageFile));
     void refreshClipboardImageCandidate();
+});
+
+chatInput.addEventListener("click", () => {
+    if (!pendingClipboardImageFile) {
+        void refreshClipboardImageCandidate();
+    }
 });
 
 chatInput.addEventListener("blur", () => {
