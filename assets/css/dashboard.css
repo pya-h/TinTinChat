@@ -422,8 +422,7 @@ nav.navbar::after {
 }
 
 .chat-area.group-panel-open .chat-messages,
-.chat-area.group-panel-open .chat-input,
-.chat-area.group-panel-open #messageActionsHint {
+.chat-area.group-panel-open .chat-input {
     display: none;
 }
 
@@ -7088,6 +7087,10 @@ textarea,
     background: color-mix(in srgb, var(--surface-color, #1a1a2e) 80%, transparent);
 }
 
+:root[data-theme="dark"] .guide-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .guide-modal {
         background: var(--card-bg, #1e1e2e);
@@ -7096,5 +7099,48 @@ textarea,
 
     :root:not([data-theme="light"]) .guide-tip {
         background: color-mix(in srgb, var(--surface-color, #1a1a2e) 80%, transparent);
+    }
+
+    :root:not([data-theme="light"]) .guide-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Guide & media cleanup mobile */
+@media (max-width: 480px) {
+    .guide-modal {
+        max-width: calc(100vw - 1rem);
+        max-height: 88vh;
+    }
+
+    .guide-header {
+        padding: 0.8rem 1rem 0.6rem;
+    }
+
+    .guide-body {
+        padding: 0.6rem 0.85rem;
+    }
+
+    .guide-footer {
+        padding: 0.55rem 1rem;
+    }
+
+    .guide-tip {
+        gap: 0.55rem;
+        padding: 0.5rem 0.55rem;
+    }
+
+    .media-cleanup-form {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .media-cleanup-form .chat-ui-settings-field {
+        width: 100%;
+    }
+
+    .media-cleanup-form input[type="number"] {
+        max-width: 100% !important;
+        width: 100%;
     }
 }

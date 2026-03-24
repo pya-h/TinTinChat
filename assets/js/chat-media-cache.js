@@ -172,7 +172,7 @@
     }
 
     async function removeMultipleMediaFromCache(messageIds) {
-        if (!Array.isArray(messageIds) || !messageIds.length) return;
+        if (!Array.isArray(messageIds) || !messageIds.length) return Promise.resolve(false);
         try {
             const db = await initFileCache();
             const tx = db.transaction([MEDIA_CACHE_STORE], "readwrite");
@@ -194,8 +194,7 @@
             const tx = db.transaction([MEDIA_CACHE_STORE], "readonly");
             const store = tx.objectStore(MEDIA_CACHE_STORE);
 
-            return new Promise((resolve, reject) => {
-                const countReq = store.count();
+            return new Promise((resolve) => {
                 let totalSize = 0;
                 let count = 0;
 
@@ -209,7 +208,6 @@
                     }
                 };
 
-                countReq.onerror = () => reject(countReq.error);
                 tx.oncomplete = () => resolve({ count, totalSize });
                 tx.onerror = () => resolve({ count: 0, totalSize: 0 });
             });

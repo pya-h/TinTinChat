@@ -36,7 +36,7 @@ $file_path = __DIR__ . '/../../../' . $message['image_file_path'];
 $fullPath = realpath($file_path);
 $uploadsDir = realpath(__DIR__ . '/../../../uploads/images/');
 
-if (!$fullPath || !$uploadsDir || strpos($fullPath, $uploadsDir) !== 0 || !file_exists($fullPath)) {
+if (!$fullPath || !$uploadsDir || strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) !== 0 || !file_exists($fullPath)) {
 	http_response_code(404);
 	exit('Not Found: The image file is missing from the server.');
 }

@@ -118,7 +118,7 @@ foreach ($messageRows as $row) {
 	}
 
 	$fullPath = realpath($baseDir . DIRECTORY_SEPARATOR . $fileName);
-	if (!$fullPath || strpos($fullPath, $baseDir) !== 0 || !is_file($fullPath)) {
+	if (!$fullPath || strpos($fullPath, $baseDir . DIRECTORY_SEPARATOR) !== 0 || !is_file($fullPath)) {
 		continue;
 	}
 

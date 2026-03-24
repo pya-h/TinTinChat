@@ -1417,9 +1417,6 @@ function syncMobileComposerActions() {
     }
 }
 
-// Tip hint removed — replaced by Guide modal
-function hideMessageActionsHint() {}
-function updateMessageActionsHintVisibility() {}
 
 function closeImageSourceMenu({ restoreFocus = false } = {}) {
     if (!imageSourceMenu) {
@@ -1646,7 +1643,7 @@ async function uploadSticker(file) {
     try {
         setStickerPickerState("Uploading sticker...");
         setStickerPickerProgress(92, { visible: true });
-        const response = await window.ApiService.jsonOk("api/messages/stickers/upload.php", {
+        await window.ApiService.jsonOk("api/messages/stickers/upload.php", {
             method: "POST",
             headers: getCsrfHeaders(),
             body: payload,
@@ -2187,7 +2184,6 @@ function applySettingsUi() {
         settingBrowserNotifications.checked = appSettings.browserNotificationsEnabled;
     }
     syncMobileComposerActions();
-    updateMessageActionsHintVisibility();
 }
 
 function renderAdminStickerSettings() {
@@ -4647,7 +4643,6 @@ function addMessageActionHandlers(
     const openContextMenu = (clientX, clientY, { focusFirstItem = true } = {}) => {
         closeMessageContextMenu();
         closeReactionPicker({ restoreFocus: false });
-        updateMessageActionsHintVisibility(true);
         lastContextMenuMessageElement = messageElement;
 
         if (window.getSelection) {
@@ -6640,7 +6635,7 @@ async function getDownloadDirectory() {
     return null;
 }
 
-async function openCachedFile(messageId, fileName) {
+async function openCachedFile(messageId) {
     const cachedFile = await getDownloadedFile(messageId);
     if (!cachedFile) return false;
 
@@ -6722,7 +6717,7 @@ async function downloadAndOpenFile(messageId) {
             fileIcon.classList.remove("fa-download");
         }
 
-        const opened = await openCachedFile(messageId, fileName);
+        const opened = await openCachedFile(messageId);
         if (opened) {
             return;
         }
@@ -8121,7 +8116,7 @@ function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt
     return wrapper;
 }
 
-async function loadChatList(force = false) {
+async function loadChatList(_force = false) {
     try {
         const data = await window.ApiService.json("api/chats/fetch.php");
         const incomingGroups = Array.isArray(data.chatGroups) ? data.chatGroups : [];

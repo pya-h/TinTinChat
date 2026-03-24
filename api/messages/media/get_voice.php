@@ -35,7 +35,7 @@ $voiceFile = $message['voice_file_path'];
 $fullPath = realpath(__DIR__ . '/../../../uploads/voice_messages/' . $voiceFile);
 $uploadsDir = realpath(__DIR__ . '/../../../uploads/voice_messages/');
 
-if (!$fullPath || strpos($fullPath, $uploadsDir) !== 0 || !file_exists($fullPath)) {
+if (!$fullPath || !$uploadsDir || strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) !== 0 || !file_exists($fullPath)) {
 	http_response_code(404);
 	exit('File not found');
 }

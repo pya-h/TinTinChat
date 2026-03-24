@@ -66,7 +66,7 @@ foreach ($rows as $row) {
 
     $fullPath = realpath($baseDir . '/' . $filePath);
     $uploadsBase = realpath($baseDir . '/uploads');
-    if (!$fullPath || !$uploadsBase || strpos($fullPath, $uploadsBase) !== 0) {
+    if (!$fullPath || !$uploadsBase || strpos($fullPath, $uploadsBase . DIRECTORY_SEPARATOR) !== 0) {
         continue;
     }
 

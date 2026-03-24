@@ -6,6 +6,7 @@
     function createPlayer({ customSoundPath = "", volume = DEFAULT_VOLUME } = {}) {
         let notificationAudio = null;
         let customNotificationAudio = null;
+        let customObjectUrl = null;
 
         function initNotificationSound() {
             if (!notificationAudio) {
@@ -55,9 +56,10 @@
                 const response = await fetch(customSoundPath);
                 if (response.ok) {
                     const blob = await response.blob();
-                    const url = URL.createObjectURL(blob);
+                    if (customObjectUrl) URL.revokeObjectURL(customObjectUrl);
+                    customObjectUrl = URL.createObjectURL(blob);
                     customNotificationAudio = new Audio();
-                    customNotificationAudio.src = url;
+                    customNotificationAudio.src = customObjectUrl;
                     customNotificationAudio.volume = volume;
                     return true;
                 }
