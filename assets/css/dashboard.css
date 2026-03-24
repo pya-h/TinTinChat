@@ -5761,6 +5761,17 @@ textarea,
     max-height: 150px;
     min-height: 38px;
     color: var(--text-color);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+#chatInput::-webkit-scrollbar {
+    display: none;
+}
+#chatInput.chat-input-magnified {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    padding: 1rem 1.2rem;
+    transition: max-height 0.25s ease, font-size 0.2s ease, padding 0.2s ease;
 }
 
 .chat-list li .avatar {

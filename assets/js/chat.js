@@ -3847,9 +3847,20 @@ function showMessageDetailsModal(messageElement, messageData = null) {
     openMessageActionModal(I18N_TEXT.messageDetailsTitle, body);
 }
 
+function getForwardLabel(messageElement) {
+    if (messageElement.classList.contains("is-voice-message")) return "[Forwarded Voice message]";
+    if (messageElement.classList.contains("is-image-message")) return "[Forwarded Image]";
+    if (messageElement.classList.contains("is-video-message")) return "[Forwarded Video]";
+    if (messageElement.classList.contains("is-music-message")) return "[Forwarded Music]";
+    if (messageElement.classList.contains("is-file-message")) return "[Forwarded File]";
+    if (messageElement.classList.contains("is-sticker-message")) return "[Forwarded Sticker]";
+    return null;
+}
+
 async function forwardMessageText(messageElement) {
     const messageText = getMessageTextForCopy(messageElement);
-    if (!messageText) {
+    const forwardLabel = messageText || getForwardLabel(messageElement);
+    if (!forwardLabel) {
         showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedOnlyText, "warning");
         return;
     }
@@ -3868,9 +3879,9 @@ async function forwardMessageText(messageElement) {
             }
             if (isGroupToken(destination)) {
                 const groupId = parseGroupIdFromToken(destination);
-                await sendGroupTextMessage(groupId, messageText, null, sourceMessageId || null);
+                await sendGroupTextMessage(groupId, forwardLabel, null, sourceMessageId || null);
             } else {
-                await sendEncryptedTextMessage(destination, messageText, null, sourceMessageId || null);
+                await sendEncryptedTextMessage(destination, forwardLabel, null, sourceMessageId || null);
                 addUserToChatList(destination);
             }
             closeMessageActionModal();
@@ -6525,6 +6536,7 @@ async function addMessageToChat(msg, prepend = false) {
         div.classList.add("is-voice-message");
         hasContextActions = true;
         canReact = true;
+        canForward = true;
 
         div.innerHTML = `
           <div class="voice-player-container">
@@ -6550,6 +6562,7 @@ async function addMessageToChat(msg, prepend = false) {
         div.classList.add("is-image-message");
         hasContextActions = true;
         canReact = true;
+        canForward = true;
         canCopyImage = true;
 
         div.innerHTML = `<a href="#" class="image-message-link" title="View full image">
@@ -6567,6 +6580,7 @@ async function addMessageToChat(msg, prepend = false) {
         div.classList.add("is-video-message");
         hasContextActions = true;
         canReact = true;
+        canForward = true;
 
         div.innerHTML = `
             <div class="video-message-container">
@@ -6585,6 +6599,7 @@ async function addMessageToChat(msg, prepend = false) {
     } else if (msg.message_type === "file" && msg.any_file_path) {
         hasContextActions = true;
         canReact = true;
+        canForward = true;
 
         let fileName = "Encrypted file";
         try {
@@ -6665,6 +6680,7 @@ async function addMessageToChat(msg, prepend = false) {
         div.classList.add("is-sticker-message");
         hasContextActions = true;
         canReact = true;
+        canForward = true;
 
         const stickerId = Number(msg.sticker_id || 0);
         const stickerIsActive = Number(msg.sticker_is_active || 0) === 1;
@@ -7940,6 +7956,11 @@ chatForm.addEventListener("submit", async (e) => {
 });
 
 chatInput.addEventListener("keydown", async (e) => {
+    // Prevent arrow keys from bubbling to global handlers (chat nav, context menu, etc.)
+    if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        e.stopPropagation();
+        return;
+    }
     if (e.key !== "Enter") return;
 
     // Ctrl/Cmd+Enter always saves edit when in edit mode
@@ -8087,6 +8108,47 @@ chatInput.addEventListener("blur", () => {
     isChatInputFocused = false;
     setClipboardImageButtonVisibility(false);
 });
+
+// Long-press magnify: expand textarea for easier editing on mobile
+(function () {
+    let magnifyTimer = null;
+    let isMagnified = false;
+
+    function magnifyInput() {
+        if (isMagnified) return;
+        isMagnified = true;
+        chatInput.classList.add("chat-input-magnified");
+        chatInput.style.maxHeight = "300px";
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 300) + "px";
+    }
+
+    function shrinkInput() {
+        if (!isMagnified) return;
+        isMagnified = false;
+        chatInput.classList.remove("chat-input-magnified");
+        chatInput.style.maxHeight = "";
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + "px";
+    }
+
+    chatInput.addEventListener("touchstart", () => {
+        magnifyTimer = setTimeout(magnifyInput, 600);
+    }, { passive: true });
+
+    chatInput.addEventListener("touchend", () => {
+        if (magnifyTimer) { clearTimeout(magnifyTimer); magnifyTimer = null; }
+    });
+
+    chatInput.addEventListener("touchmove", () => {
+        if (magnifyTimer) { clearTimeout(magnifyTimer); magnifyTimer = null; }
+    }, { passive: true });
+
+    // Shrink back when user finishes editing and unfocuses
+    chatInput.addEventListener("blur", () => {
+        setTimeout(shrinkInput, 200);
+    });
+})();
 
 pasteClipboardImageBtn?.addEventListener("mousedown", (event) => {
     event.preventDefault();
@@ -9096,15 +9158,15 @@ voiceBtn.addEventListener("click", async () => {
             };
 
             mediaRecorder.onstop = async () => {
+                stream.getTracks().forEach((track) => track.stop());
+                resetRecordingState();
+
                 if (shouldSendRecording && audioChunks.length > 0) {
                     const audioBlob = new Blob(audioChunks, {
                         type: "audio/webm",
                     });
                     await sendVoiceMessage(audioBlob);
                 }
-
-                stream.getTracks().forEach((track) => track.stop());
-                resetRecordingState();
             };
 
             mediaRecorder.start();

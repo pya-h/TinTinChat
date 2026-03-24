@@ -373,6 +373,21 @@ Legend:
 	- Voice bar click when voice not yet played,
 	- Context menu re-opening on outside click (now closes properly).
 
+### Phase M.1 — Fixes & Improvements
+- [x] (`P1`) **Multimedia forward support**:
+	- Forward button and swipe-left gesture now work for all message types (voice, image, video, file, music, sticker),
+	- Forwards as text label with `forwarded_from_message_id` reference.
+- [x] (`P2`) **Voice recording UI fix**:
+	- Recording indicator now hides immediately when user stops recording (before upload completes).
+- [x] (`P2`) **Input area improvements**:
+	- Hidden scrollbar on message input textarea,
+	- Arrow keys no longer leak to parent handlers,
+	- Long-press magnify on mobile (expands textarea with larger font for easier editing).
+- [x] (`P2`) **Username blacklist cleanup**:
+	- Removed superuser username from reserved list (already protected by superuser logic).
+- [ ] (`P2`) **Saved Messages click-to-navigate**:
+	- Clicking a saved message (forwarded from another chat) should navigate to the original chat and scroll to the source message.
+
 ## 4) Suggested Execution Order
 
 1. Security and endpoint consistency (`P0`)  
