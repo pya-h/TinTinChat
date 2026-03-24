@@ -7616,7 +7616,8 @@ textarea,
     border-radius: 6px;
     transition: background 0.15s;
 }
-.announcements-close:hover {
+.announcements-close:hover,
+.announcements-close:focus-visible {
     background: rgba(0, 0, 0, 0.06);
 }
 
@@ -7660,6 +7661,13 @@ textarea,
     color: var(--text-muted, #999);
     display: flex;
     gap: 0.6rem;
+}
+.announcements-item-author {
+    font-weight: 600;
+    color: var(--text-color, #555);
+}
+.announcements-item-date {
+    color: var(--text-muted, #aaa);
 }
 
 /* ── Admin Announcement Create Form ── */
@@ -7716,6 +7724,10 @@ textarea,
     color: var(--text-muted, #999);
     margin-top: 0.2rem;
 }
+.chat-ui-announcement-delete-btn {
+    flex-shrink: 0;
+    align-self: center;
+}
 
 /* ── Dark mode for announcements ── */
 
@@ -7738,6 +7750,27 @@ textarea,
 [data-theme="dark"] .chat-ui-announcement-item {
     border-bottom-color: rgba(255, 255, 255, 0.06);
 }
+[data-theme="dark"] .announcements-item-title {
+    color: var(--text-color, #e8e8f0);
+}
+[data-theme="dark"] .announcements-item-body {
+    color: var(--text-muted, #b0b0c0);
+}
+[data-theme="dark"] .announcements-item-author {
+    color: var(--text-color, #d0d0e0);
+}
+[data-theme="dark"] .announcements-empty {
+    color: var(--text-muted, #888);
+}
+[data-theme="dark"] .announcements-close:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .announcement-create-form input,
+[data-theme="dark"] .announcement-create-form textarea {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color, #e8e8f0);
+}
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .announcements-panel {
@@ -7747,7 +7780,8 @@ textarea,
     :root:not([data-theme="light"]) .announcements-header {
         border-bottom-color: rgba(255, 255, 255, 0.08);
     }
-    :root:not([data-theme="light"]) .announcements-close:hover {
+    :root:not([data-theme="light"]) .announcements-close:hover,
+    :root:not([data-theme="light"]) .announcements-close:focus-visible {
         background: rgba(255, 255, 255, 0.08);
     }
     :root:not([data-theme="light"]) .announcements-item {
@@ -7758,6 +7792,24 @@ textarea,
     }
     :root:not([data-theme="light"]) .chat-ui-announcement-item {
         border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+    :root:not([data-theme="light"]) .announcements-item-title {
+        color: var(--text-color, #e8e8f0);
+    }
+    :root:not([data-theme="light"]) .announcements-item-body {
+        color: var(--text-muted, #b0b0c0);
+    }
+    :root:not([data-theme="light"]) .announcements-item-author {
+        color: var(--text-color, #d0d0e0);
+    }
+    :root:not([data-theme="light"]) .announcements-empty {
+        color: var(--text-muted, #888);
+    }
+    :root:not([data-theme="light"]) .announcement-create-form input,
+    :root:not([data-theme="light"]) .announcement-create-form textarea {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-color, #e8e8f0);
     }
 }
 
@@ -7828,7 +7880,8 @@ textarea,
     border-radius: 6px;
     transition: background 0.15s;
 }
-.playlist-close:hover {
+.playlist-close:hover,
+.playlist-close:focus-visible {
     background: rgba(0, 0, 0, 0.06);
 }
 
@@ -7871,7 +7924,8 @@ textarea,
     flex-shrink: 0;
     transition: transform 0.15s, box-shadow 0.15s;
 }
-.playlist-item-play:hover {
+.playlist-item-play:hover,
+.playlist-item-play:focus-visible {
     transform: scale(1.08);
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
@@ -7916,7 +7970,8 @@ textarea,
     transition: color 0.15s, background 0.15s;
     flex-shrink: 0;
 }
-.playlist-item-remove:hover {
+.playlist-item-remove:hover,
+.playlist-item-remove:focus-visible {
     color: #ef4444;
     background: rgba(239, 68, 68, 0.08);
 }
@@ -7939,6 +7994,22 @@ textarea,
 [data-theme="dark"] .playlist-item-remove:hover {
     background: rgba(239, 68, 68, 0.15);
 }
+[data-theme="dark"] .playlist-item-title {
+    color: var(--text-color, #e8e8f0);
+}
+[data-theme="dark"] .playlist-item-meta {
+    color: var(--text-muted, #888);
+}
+[data-theme="dark"] .playlist-empty {
+    color: var(--text-muted, #888);
+}
+[data-theme="dark"] .playlist-close:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .playlist-item-remove:focus-visible {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .playlist-panel {
@@ -7948,13 +8019,60 @@ textarea,
     :root:not([data-theme="light"]) .playlist-header {
         border-bottom-color: rgba(255, 255, 255, 0.08);
     }
-    :root:not([data-theme="light"]) .playlist-close:hover {
+    :root:not([data-theme="light"]) .playlist-close:hover,
+    :root:not([data-theme="light"]) .playlist-close:focus-visible {
         background: rgba(255, 255, 255, 0.08);
     }
     :root:not([data-theme="light"]) .playlist-item:hover {
         background: rgba(255, 255, 255, 0.04);
     }
-    :root:not([data-theme="light"]) .playlist-item-remove:hover {
+    :root:not([data-theme="light"]) .playlist-item-remove:hover,
+    :root:not([data-theme="light"]) .playlist-item-remove:focus-visible {
         background: rgba(239, 68, 68, 0.15);
+    }
+    :root:not([data-theme="light"]) .playlist-item-title {
+        color: var(--text-color, #e8e8f0);
+    }
+    :root:not([data-theme="light"]) .playlist-item-meta {
+        color: var(--text-muted, #888);
+    }
+    :root:not([data-theme="light"]) .playlist-empty {
+        color: var(--text-muted, #888);
+    }
+}
+
+/* ── Announcements & Playlist mobile ── */
+
+@media (max-width: 767.98px) {
+    .announcements-panel,
+    .playlist-panel {
+        width: 96%;
+        max-height: 85vh;
+        border-radius: 10px;
+    }
+    .announcements-header,
+    .playlist-header {
+        padding: 0.75rem 1rem;
+    }
+    .announcements-body {
+        padding: 0.4rem 0.6rem;
+    }
+    .playlist-item {
+        padding: 0.5rem 0.85rem;
+    }
+    .announcements-item {
+        padding: 0.65rem 0.6rem;
+    }
+}
+@media (max-width: 480px) {
+    .announcements-panel,
+    .playlist-panel {
+        width: 100%;
+        max-height: 90vh;
+        border-radius: 10px 10px 0 0;
+    }
+    .announcements-overlay,
+    .playlist-overlay {
+        align-items: flex-end;
     }
 }

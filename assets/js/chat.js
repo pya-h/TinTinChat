@@ -1466,6 +1466,10 @@ function addToPlaylist(msgId, chatTarget, title, ext) {
         setComposerStatus("Already in playlist", "warning");
         return;
     }
+    if (list.length >= 200) {
+        setComposerStatus("Playlist full (200 tracks max)", "warning");
+        return;
+    }
     const meta = messageMetaById.get(Number(msgId));
     if (!meta) {
         setComposerStatus("Unable to save track metadata", "error");
@@ -1604,6 +1608,8 @@ function autoPlayNextTrack(currentTrack) {
     const idx = list.findIndex((t) => t.msgId === currentTrack.msgId);
     if (idx >= 0 && idx < list.length - 1) {
         const nextTrack = list[idx + 1];
+        // Re-render panel so DOM items stay in sync (handles closed-panel case)
+        renderPlaylistPanel();
         const items = playlistBody?.querySelectorAll(".playlist-item");
         const nextBtn = items?.[idx + 1]?.querySelector(".playlist-item-play");
         if (nextBtn) {
