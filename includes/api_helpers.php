@@ -177,6 +177,16 @@ function apiNormalizeUsername(?string $username, string $errorCode = 'INVALID_US
         apiError($errorCode, 'Invalid username format', 400);
     }
 
+    // Check against reserved/blacklisted usernames
+    $lowerNormalized = strtolower($normalized);
+    $lowerNoSeparators = str_replace(['-', '_'], '', $lowerNormalized);
+    foreach (TTC_USERNAME_BLACKLIST as $reserved) {
+        $reservedClean = str_replace(['-', '_', ' '], '', strtolower($reserved));
+        if ($lowerNormalized === strtolower($reserved) || $lowerNoSeparators === $reservedClean) {
+            apiError('USERNAME_RESERVED', 'This username is not available', 400);
+        }
+    }
+
     return $normalized;
 }
 

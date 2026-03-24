@@ -69,7 +69,14 @@ const chatUiSettingsPanelAccount = document.getElementById("chatUiSettingsPanelA
 const chatUiSettingsPanelIdeas = document.getElementById("chatUiSettingsPanelIdeas");
 const chatUiSettingsPanelAdmin = document.getElementById("chatUiSettingsPanelAdmin");
 const settingBrowserNotifications = document.getElementById("settingBrowserNotifications");
+const settingSendByEnter = document.getElementById("settingSendByEnter");
+const settingShowSavedMessages = document.getElementById("settingShowSavedMessages");
 const settingsGroupKeyHealthBtn = document.getElementById("settingsGroupKeyHealthBtn");
+const alertPanelBtn = document.getElementById("alertPanelBtn");
+const alertUnreadDot = document.getElementById("alertUnreadDot");
+const announcementsOverlay = document.getElementById("announcementsOverlay");
+const announcementsBody = document.getElementById("announcementsBody");
+const announcementsCloseBtn = document.getElementById("announcementsCloseBtn");
 /* Admin DOM elements moved to chat-admin.js */
 const openConversationSearchBtn = document.getElementById("openConversationSearchBtn");
 const openAvatarUploadBtn = document.getElementById("openAvatarUploadBtn");
@@ -294,6 +301,8 @@ const appSettings = {
     showTimestamps: true,
     reduceMotion: false,
     browserNotificationsEnabled: false,
+    sendByEnter: true,
+    showSavedMessages: true,
 };
 
 const selectedMessageIds = new Set();
@@ -739,6 +748,14 @@ function getFileExtension(fileName) {
     return name.slice(lastDot + 1).toLowerCase();
 }
 
+const AUDIO_FILE_EXTENSIONS = new Set([
+    "mp3", "wav", "ogg", "flac", "aac", "m4a", "wma", "opus", "webm", "aiff", "alac",
+]);
+
+function isAudioFileName(fileName) {
+    return AUDIO_FILE_EXTENSIONS.has(getFileExtension(fileName));
+}
+
 function getMediaEnvelopePayloadForMessage(msg) {
     const isGroupMessage = Number(msg?.group_id || 0) > 0;
     if (isGroupMessage) {
@@ -992,9 +1009,16 @@ function getCurrentGroupId() {
     return parseGroupIdFromToken(currentChatUser);
 }
 
+function isSavedMessagesChat(target) {
+    return target === CURRENT_USER;
+}
+
 function getCurrentChatDisplayName() {
     if (!currentChatUser) {
         return "";
+    }
+    if (isSavedMessagesChat(currentChatUser)) {
+        return "Saved Messages";
     }
     const groupId = parseGroupIdFromToken(currentChatUser);
     if (groupId > 0) {
@@ -1089,7 +1113,7 @@ function setUserUnreadBadge(username, unreadCount = 0) {
 
 async function updateTypingStatus(isTyping, chatTargetOverride = null) {
     const chatTarget = String(chatTargetOverride || currentChatUser || "");
-    if (!chatTarget) {
+    if (!chatTarget || isSavedMessagesChat(chatTarget)) {
         return;
     }
 
@@ -1210,6 +1234,8 @@ function loadAppSettings() {
         appSettings.showTimestamps = parseStoredBoolean(parsed.showTimestamps, true);
         appSettings.reduceMotion = parseStoredBoolean(parsed.reduceMotion, false);
         appSettings.browserNotificationsEnabled = parseStoredBoolean(parsed.browserNotificationsEnabled, false);
+        appSettings.sendByEnter = parseStoredBoolean(parsed.sendByEnter, true);
+        appSettings.showSavedMessages = parseStoredBoolean(parsed.showSavedMessages, true);
     } catch (error) {}
 }
 
@@ -1342,6 +1368,77 @@ function closeUiSettingsModal({ restoreFocus = true } = {}) {
             }
         }
     }, 180);
+}
+
+/* ── Announcements Panel ── */
+
+let announcementsCachedList = null;
+
+async function fetchAnnouncements() {
+    try {
+        const response = await ApiService.jsonOk("api/admin/announcements/fetch.php");
+        return Array.isArray(response?.announcements) ? response.announcements : [];
+    } catch { return []; }
+}
+
+function renderAnnouncementsPanel(list) {
+    if (!announcementsBody) return;
+    announcementsBody.innerHTML = "";
+    if (!list.length) {
+        announcementsBody.innerHTML = '<div class="announcements-empty"><i class="fas fa-check-circle me-2"></i>No announcements yet.</div>';
+        return;
+    }
+    list.forEach((a) => {
+        const item = document.createElement("div");
+        item.className = "announcements-item";
+        item.innerHTML = `
+            <div class="announcements-item-title">${ChatUtils.escapeHtml(String(a.title || ""))}</div>
+            <div class="announcements-item-body">${ChatUtils.escapeHtml(String(a.body || "")).replace(/\n/g, "<br>")}</div>
+            <div class="announcements-item-meta">
+                <span class="announcements-item-author">${ChatUtils.escapeHtml(String(a.author || ""))}</span>
+                <span class="announcements-item-date">${ChatUtils.escapeHtml(String(a.created_at || ""))}</span>
+            </div>
+        `;
+        announcementsBody.appendChild(item);
+    });
+}
+
+async function openAnnouncementsPanel() {
+    if (!announcementsOverlay) return;
+    announcementsOverlay.hidden = false;
+    requestAnimationFrame(() => announcementsOverlay.classList.add("visible"));
+    const list = await fetchAnnouncements();
+    announcementsCachedList = list;
+    renderAnnouncementsPanel(list);
+    // Mark as seen — update tips_seen_at
+    try {
+        await ApiService.jsonOk("api/users/dismiss_changelog.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+            body: "{}",
+        });
+    } catch { /* best-effort */ }
+    if (alertUnreadDot) alertUnreadDot.hidden = true;
+}
+
+function closeAnnouncementsPanel() {
+    if (!announcementsOverlay) return;
+    announcementsOverlay.classList.remove("visible");
+    setTimeout(() => {
+        if (!announcementsOverlay.classList.contains("visible")) {
+            announcementsOverlay.hidden = true;
+        }
+    }, 250);
+}
+
+async function checkAnnouncementUnread() {
+    const list = await fetchAnnouncements();
+    announcementsCachedList = list;
+    if (!list.length || !alertUnreadDot) return;
+    const latestTs = new Date(list[0].created_at).getTime();
+    const seenTs = (typeof USER_TIPS_SEEN_AT !== "undefined" && USER_TIPS_SEEN_AT)
+        ? new Date(USER_TIPS_SEEN_AT).getTime() : 0;
+    alertUnreadDot.hidden = !(latestTs > seenTs);
 }
 
 function setComposerStatus(message = "", type = "neutral") {
@@ -2165,6 +2262,12 @@ function applySettingsUi() {
     if (settingBrowserNotifications) {
         settingBrowserNotifications.checked = appSettings.browserNotificationsEnabled;
     }
+    if (settingSendByEnter) {
+        settingSendByEnter.checked = appSettings.sendByEnter;
+    }
+    if (settingShowSavedMessages) {
+        settingShowSavedMessages.checked = appSettings.showSavedMessages;
+    }
     syncMobileComposerActions();
 }
 
@@ -2191,6 +2294,16 @@ function bindSettingsUiEvents() {
         event.stopPropagation();
         toggleSettingsPanel(false);
         openConversationSearchBar();
+    });
+
+    alertPanelBtn?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleSettingsPanel(false);
+        openAnnouncementsPanel();
+    });
+    announcementsCloseBtn?.addEventListener("click", () => closeAnnouncementsPanel());
+    announcementsOverlay?.addEventListener("click", (event) => {
+        if (event.target === announcementsOverlay) closeAnnouncementsPanel();
     });
 
     openUiSettingsBtn?.addEventListener("click", () => {
@@ -2365,6 +2478,32 @@ function bindSettingsUiEvents() {
             persistAppSettings();
             setComposerStatus(
                 wantEnabled ? "Browser notifications enabled" : "Browser notifications disabled",
+                "success"
+            );
+        });
+    }
+
+    if (settingSendByEnter) {
+        settingSendByEnter.addEventListener("change", (event) => {
+            appSettings.sendByEnter = Boolean(event.target.checked);
+            persistAppSettings();
+            setComposerStatus(
+                appSettings.sendByEnter ? "Enter sends message" : "Enter adds new line",
+                "success"
+            );
+        });
+    }
+
+    if (settingShowSavedMessages) {
+        settingShowSavedMessages.addEventListener("change", (event) => {
+            appSettings.showSavedMessages = Boolean(event.target.checked);
+            persistAppSettings();
+            const savedMsgItem = document.getElementById(chatListItemId(CURRENT_USER));
+            if (savedMsgItem) {
+                savedMsgItem.style.display = appSettings.showSavedMessages ? "" : "none";
+            }
+            setComposerStatus(
+                appSettings.showSavedMessages ? "Saved Messages shown in chat list" : "Saved Messages hidden from chat list",
                 "success"
             );
         });
@@ -2738,6 +2877,7 @@ document.addEventListener("DOMContentLoaded", () => {
     bindConversationSearchEvents();
     bindCreateGroupModalEvents();
     notificationPlayer.preloadCustom();
+    checkAnnouncementUnread();
 });
 
 function getCsrfHeaders() {
@@ -3120,6 +3260,9 @@ function getReplySnippetFromMessageElement(messageElement) {
     if (messageElement.classList.contains("is-voice-message")) {
         return "[Voice message]";
     }
+    if (messageElement.classList.contains("is-music-message")) {
+        return "[Music]";
+    }
     if (messageElement.classList.contains("is-file-message")) {
         return "[File]";
     }
@@ -3404,6 +3547,17 @@ function createForwardTargetListContent(onSelectUsername) {
         return wrapper;
     }
 
+    // Saved Messages always first in forward target list
+    const savedBtn = document.createElement("button");
+    savedBtn.type = "button";
+    savedBtn.className = "forward-target-item";
+    savedBtn.innerHTML = `
+        <span class="forward-target-avatar saved-messages-avatar"><i class="fas fa-bookmark"></i></span>
+        <span class="forward-target-name">Saved Messages</span>
+    `;
+    savedBtn.addEventListener("click", () => onSelectUsername(CURRENT_USER, savedBtn));
+    wrapper.appendChild(savedBtn);
+
     users.forEach((username) => {
         const button = document.createElement("button");
         button.type = "button";
@@ -3499,7 +3653,7 @@ async function forwardMessageText(messageElement) {
 
     const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
     const content = createForwardTargetListContent(async (destination, button) => {
-        if (!destination || (!isGroupToken(destination) && destination === CURRENT_USER)) {
+        if (!destination) {
             showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedInvalidTarget, "warning");
             return;
         }
@@ -3537,6 +3691,40 @@ async function forwardMessageText(messageElement) {
     });
 
     openMessageActionModal(I18N_TEXT.forwardTitle, content);
+}
+
+async function saveMessageToSavedMessages(messageElement) {
+    const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+    if (!msgId) return;
+
+    // For text messages, forward as a message to self
+    const messageText = getMessageTextForCopy(messageElement);
+    if (messageText) {
+        try {
+            await sendEncryptedTextMessage(CURRENT_USER, messageText, null, msgId || null);
+            addUserToChatList(CURRENT_USER, { userId: CURRENT_USER_ID });
+            setComposerStatus("Saved to Saved Messages", "success");
+        } catch (error) {
+            showModal("Save Failed", error.message || "Unable to save message.", "error");
+        }
+        return;
+    }
+
+    // For non-text messages, save a "[Saved]" note with the forward reference
+    try {
+        const label = messageElement.classList.contains("is-voice-message") ? "Voice message"
+            : messageElement.classList.contains("is-image-message") ? "Image"
+            : messageElement.classList.contains("is-video-message") ? "Video"
+            : messageElement.classList.contains("is-music-message") ? "Music"
+            : messageElement.classList.contains("is-file-message") ? "File"
+            : messageElement.classList.contains("is-sticker-message") ? "Sticker"
+            : "Message";
+        await sendEncryptedTextMessage(CURRENT_USER, `[Saved ${label}]`, null, msgId || null);
+        addUserToChatList(CURRENT_USER, { userId: CURRENT_USER_ID });
+        setComposerStatus("Saved to Saved Messages", "success");
+    } catch (error) {
+        showModal("Save Failed", error.message || "Unable to save message.", "error");
+    }
 }
 
 function formatSelectedCountLabel(count) {
@@ -3694,7 +3882,7 @@ async function bulkForwardSelectedMessages() {
 
     const skippedCount = Math.max(0, selectedElements.length - selectedTextMessages.length);
     const content = createForwardTargetListContent(async (destination, button) => {
-        if (!destination || (!isGroupToken(destination) && destination === CURRENT_USER)) {
+        if (!destination) {
             showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedInvalidTarget, "warning");
             return;
         }
@@ -3911,6 +4099,7 @@ function cancelEditMode({ restoreFocus = false } = {}) {
     activeEditMessageId = 0;
     clearReplyState();
     chatInput.value = "";
+    chatInput.style.height = "";
     setComposerStatus("", "neutral");
     if (restoreFocus) {
         chatInput.focus();
@@ -4285,6 +4474,7 @@ function addMessageActionHandlers(
         canCopy = false,
         canCopyImage = false,
         canForward = false,
+        canSave = false,
         canDetails = true,
         messageData = null,
     } = {}
@@ -4428,6 +4618,18 @@ function addMessageActionHandlers(
                 closeMessageContextMenu();
             });
             appendMenuAction(forwardBtn);
+        }
+
+        if (canSave && !isSavedMessagesChat(currentChatUser)) {
+            const saveBtn = document.createElement("button");
+            saveBtn.type = "button";
+            saveBtn.className = "message-context-menu-item";
+            saveBtn.innerHTML = '<i class="fas fa-bookmark me-2"></i>Save';
+            saveBtn.addEventListener("click", async () => {
+                closeMessageContextMenu();
+                await saveMessageToSavedMessages(messageElement);
+            });
+            appendMenuAction(saveBtn);
         }
 
         if (canReact) {
@@ -5141,7 +5343,8 @@ window.addEventListener("load", () => {
 });
 
 function addUserToChatList(username, options = {}) {
-    if (!username || username === CURRENT_USER) return false;
+    if (!username) return false;
+    const isSelf = username === CURRENT_USER;
     const unreadCount = Math.max(0, Number(options.unreadCount) || 0);
     const userId = Number(options.userId) || 0;
 
@@ -5151,6 +5354,9 @@ function addUserToChatList(username, options = {}) {
 
     if (chatUsers.has(username)) {
         const existingItem = document.getElementById(chatListItemId(username));
+        if (isSelf && existingItem) {
+            existingItem.style.display = appSettings.showSavedMessages ? "" : "none";
+        }
         const existingAvatarImage = existingItem?.querySelector(".avatar-image");
         if (existingAvatarImage && userId > 0) {
             existingAvatarImage.setAttribute("data-avatar-user-id", String(userId));
@@ -5165,14 +5371,23 @@ function addUserToChatList(username, options = {}) {
     const li = document.createElement("li");
     li.tabIndex = 0;
     li.setAttribute("role", "listitem");
-    li.setAttribute("aria-label", `Open chat with ${username}`);
     li.style.setProperty("--i", chatListElem.children.length);
 
-    li.innerHTML = `<span class="avatar">${buildAvatarImageHtml({ userId, username, className: "avatar-image", size: 84 })}</span> <span>${escapeHtml(username)}</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
-        username
-    )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
+    if (isSelf) {
+        li.setAttribute("aria-label", "Open Saved Messages");
+        li.innerHTML = `<span class="avatar saved-messages-avatar"><i class="fas fa-bookmark"></i></span> <span>Saved Messages</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
+            username
+        )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
+        if (!appSettings.showSavedMessages) li.style.display = "none";
+    } else {
+        li.setAttribute("aria-label", `Open chat with ${username}`);
+        li.innerHTML = `<span class="avatar">${buildAvatarImageHtml({ userId, username, className: "avatar-image", size: 84 })}</span> <span>${escapeHtml(username)}</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
+            username
+        )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
+    }
     li.id = chatListItemId(username);
     li.classList.add("chat-user");
+    if (isSelf) li.classList.add("saved-messages-item");
     li.addEventListener("click", () => selectChatUser(username));
     li.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -5180,7 +5395,13 @@ function addUserToChatList(username, options = {}) {
             selectChatUser(username);
         }
     });
-    chatListElem.appendChild(li);
+
+    // Saved Messages always at top
+    if (isSelf && chatListElem.firstChild) {
+        chatListElem.insertBefore(li, chatListElem.firstChild);
+    } else {
+        chatListElem.appendChild(li);
+    }
     setUserUnreadBadge(username, unreadCount);
     return true;
 }
@@ -5285,6 +5506,7 @@ lastRecentPollTime = "";
     chatWithElem.classList.toggle("direct-chat-clickable", Boolean(target));
     chatWithElem.tabIndex = target ? 0 : -1;
     chatInput.value = "";
+    chatInput.style.height = "";
     setComposerStatus("");
     cancelEditMode();
     exitSelectMode({ clearSelection: true });
@@ -5307,7 +5529,7 @@ lastRecentPollTime = "";
 
     const isGroup = isGroupToken(currentChatUser);
     groupInfoBtn.hidden = !isGroup;
-    userInfoBtn && (userInfoBtn.hidden = isGroup || !currentChatUser);
+    userInfoBtn && (userInfoBtn.hidden = isGroup || !currentChatUser || isSavedMessagesChat(currentChatUser));
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
@@ -6139,7 +6361,6 @@ async function addMessageToChat(msg, prepend = false) {
         div.setAttribute("data-message-id", msg.id);
 
     } else if (msg.message_type === "file" && msg.any_file_path) {
-        div.classList.add("is-file-message");
         hasContextActions = true;
         canReact = true;
 
@@ -6153,34 +6374,70 @@ async function addMessageToChat(msg, prepend = false) {
         } catch (error) {}
         const fileSize = msg.file_size ? formatFileSize(msg.file_size) : "";
         const safeFileName = escapeHtml(fileName);
+        const isAudio = isAudioFileName(fileName);
 
-        const isDownloaded = await isFileDownloaded(msg.id);
-        const downloadIconClass = isDownloaded ? "fa-check-circle" : "fa-download";
-        const downloadIconColor = isDownloaded ? "color: var(--primary-color);" : "";
-        const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
+        if (isAudio) {
+            // ── Music file: Telegram-style player ──
+            div.classList.add("is-file-message", "is-music-message");
+            const musicTitle = safeFileName.replace(/\.[^.]+$/, "");
+            const ext = getFileExtension(fileName).toUpperCase();
 
-        div.innerHTML = `
-                    <div class="file-message-container" data-file-msg-id="${
-                            msg.id
-                    }" onclick="downloadAndOpenFile(${msg.id})" ${cacheTitle}>
-            <div class="file-icon">
-              <i class="fas fa-file"></i>
-            </div>
-            <div class="file-info">
-                            <div class="file-name">${safeFileName}</div>
-              ${fileSize ? `<div class="file-size">${fileSize}</div>` : ""}
-            </div>
-            <div class="file-download-icon">
-              <i class="fas ${downloadIconClass}" style="${downloadIconColor}"></i>
-            </div>
-          </div>
-          ${newDateTag(msg, {
-              atLeft: msg.sender_id == CURRENT_USER_ID,
-              topSpace: 1,
-              fontSize: 8.5,
-              extraStyles: "color: var(--text-color); font-weight: 600;",
-          })}
-        `;
+            div.innerHTML = `
+              <div class="music-player-container" data-file-msg-id="${msg.id}">
+                <button class="music-play-btn" onclick="playMusicMessage(${msg.id})" type="button">
+                  <i class="fas fa-play"></i>
+                </button>
+                <div class="music-info">
+                  <div class="music-title">${musicTitle}</div>
+                  <div class="music-meta">
+                    <span class="music-duration">--:--</span>
+                    ${fileSize ? `<span class="music-sep">&middot;</span><span class="music-size">${fileSize}</span>` : ""}
+                    <span class="music-sep">&middot;</span><span class="music-format">${ext}</span>
+                  </div>
+                  <div class="music-progress-wrap">
+                    <div class="music-progress-bar"></div>
+                  </div>
+                </div>
+                <button class="music-download-btn" onclick="downloadAndOpenFile(${msg.id})" type="button" title="Download">
+                  <i class="fas fa-download"></i>
+                </button>
+              </div>
+              ${newDateTag(msg, {
+                  atLeft: msg.sender_id == CURRENT_USER_ID,
+                  topSpace: 1,
+                  fontSize: 8.5,
+                  extraStyles: "color: var(--text-color); font-weight: 600;",
+              })}
+            `;
+        } else {
+            // ── Generic file ──
+            div.classList.add("is-file-message");
+            const isDownloaded = await isFileDownloaded(msg.id);
+            const downloadIconClass = isDownloaded ? "fa-check-circle" : "fa-download";
+            const downloadIconColor = isDownloaded ? "color: var(--primary-color);" : "";
+            const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
+
+            div.innerHTML = `
+              <div class="file-message-container" data-file-msg-id="${msg.id}" onclick="downloadAndOpenFile(${msg.id})" ${cacheTitle}>
+                <div class="file-icon">
+                  <i class="fas fa-file"></i>
+                </div>
+                <div class="file-info">
+                  <div class="file-name">${safeFileName}</div>
+                  ${fileSize ? `<div class="file-size">${fileSize}</div>` : ""}
+                </div>
+                <div class="file-download-icon">
+                  <i class="fas ${downloadIconClass}" style="${downloadIconColor}"></i>
+                </div>
+              </div>
+              ${newDateTag(msg, {
+                  atLeft: msg.sender_id == CURRENT_USER_ID,
+                  topSpace: 1,
+                  fontSize: 8.5,
+                  extraStyles: "color: var(--text-color); font-weight: 600;",
+              })}
+            `;
+        }
         div.setAttribute("data-message-id", msg.id);
     } else if (msg.message_type === "sticker" && Number(msg.sticker_id || 0) > 0) {
         div.classList.add("is-sticker-message");
@@ -6404,6 +6661,7 @@ async function addMessageToChat(msg, prepend = false) {
             canCopy,
             canCopyImage,
             canForward,
+            canSave: true,
             canDetails: true,
             messageData: msg,
         });
@@ -7061,6 +7319,112 @@ window.playVoiceMessage = async function (messageId) {
     }
 };
 
+/* ── Music message player ── */
+window.playMusicMessage = async function (messageId) {
+    const messageDiv = getMessageElementById(messageId);
+    if (!messageDiv) return;
+
+    const messageMeta = messageMetaById.get(Number(messageId));
+    if (!messageMeta) {
+        showModal("Audio Error", "Unable to load music metadata.", "error");
+        return;
+    }
+
+    const playBtn = messageDiv.querySelector(".music-play-btn");
+    const durationDisplay = messageDiv.querySelector(".music-duration");
+    const progressBar = messageDiv.querySelector(".music-progress-bar");
+    const container = messageDiv.querySelector(".music-player-container");
+
+    let audio = messageDiv.querySelector("audio");
+    if (!audio) {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        audio = document.createElement("audio");
+        try {
+            const mediaResource = await getDecryptedMediaResource(messageMeta);
+            audio.src = mediaResource.objectUrl;
+        } catch (error) {
+            showModal("Audio Error", "Unable to decrypt music file.", "error");
+            return;
+        }
+        audio.preload = "metadata";
+        audio.style.display = "none";
+        messageDiv.appendChild(audio);
+
+        audio.addEventListener("loadedmetadata", function () {
+            if (isFinite(audio.duration)) {
+                const dur = Math.round(audio.duration);
+                const m = Math.floor(dur / 60);
+                const s = dur % 60;
+                durationDisplay.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+            }
+        });
+
+        audio.addEventListener("timeupdate", function () {
+            if (isFinite(audio.duration) && audio.duration > 0) {
+                const cur = Math.round(audio.currentTime);
+                const m = Math.floor(cur / 60);
+                const s = cur % 60;
+                durationDisplay.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+                const pct = (audio.currentTime / audio.duration) * 100;
+                if (progressBar) progressBar.style.width = `${pct}%`;
+            }
+        });
+
+        audio.addEventListener("ended", function () {
+            playBtn.innerHTML = `<i class="fas fa-play"></i>`;
+            playBtn.classList.remove("playing");
+            container?.classList.remove("is-playing");
+            if (progressBar) progressBar.style.width = "100%";
+        });
+
+        audio.addEventListener("error", function () {
+            showModal("Audio Error", "Unable to play music file.", "error");
+            playBtn.disabled = true;
+            playBtn.style.opacity = "0.5";
+        });
+
+        // Click on progress bar to seek
+        const progressWrap = messageDiv.querySelector(".music-progress-wrap");
+        if (progressWrap) {
+            progressWrap.addEventListener("click", function (e) {
+                if (!audio || !isFinite(audio.duration)) return;
+                const rect = progressWrap.getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                audio.currentTime = ratio * audio.duration;
+                if (progressBar) progressBar.style.width = `${ratio * 100}%`;
+            });
+        }
+    }
+
+    if (audio.paused) {
+        // Pause any other playing audio (voice or music)
+        document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
+            const otherAudio = btn.closest(".message")?.querySelector("audio");
+            if (otherAudio && !otherAudio.paused) otherAudio.pause();
+            btn.classList.remove("playing");
+            btn.innerHTML = `<i class="fas fa-play"></i>`;
+            btn.closest(".voice-player-container")?.classList.remove("is-playing");
+            btn.closest(".music-player-container")?.classList.remove("is-playing");
+        });
+
+        if (audioContext.state === "suspended") audioContext.resume();
+        audio.play().catch(() => {
+            showModal("Playback Error", "Unable to play this audio.", "error");
+        });
+        playBtn.classList.add("playing");
+        container?.classList.add("is-playing");
+        playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
+    } else {
+        audio.pause();
+        playBtn.classList.remove("playing");
+        container?.classList.remove("is-playing");
+        playBtn.innerHTML = `<i class="fas fa-play"></i>`;
+    }
+};
+
 const sendTextMessage = async () => {
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
@@ -7112,6 +7476,7 @@ const sendTextMessage = async () => {
             addUserToChatList(currentChatUser);
         }
         chatInput.value = "";
+    chatInput.style.height = "";
         clearReplyState();
         if (!isGroupToken(currentChatUser)) {
             if (typingStopTimer) {
@@ -7353,15 +7718,27 @@ chatForm.addEventListener("submit", async (e) => {
 });
 
 chatInput.addEventListener("keydown", async (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && activeEditMessageId) {
+    if (e.key !== "Enter") return;
+
+    // Ctrl/Cmd+Enter always saves edit when in edit mode
+    if ((e.ctrlKey || e.metaKey) && activeEditMessageId) {
         e.preventDefault();
         await saveEditedMessage();
         return;
     }
 
-    if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        await sendTextMessage();
+    if (appSettings.sendByEnter) {
+        // Enter sends, Shift+Enter adds newline
+        if (!e.shiftKey) {
+            e.preventDefault();
+            await sendTextMessage();
+        }
+    } else {
+        // Enter adds newline, Ctrl/Cmd+Enter sends
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            await sendTextMessage();
+        }
     }
 });
 
@@ -7442,6 +7819,10 @@ document.addEventListener("keydown", async (event) => {
 });
 
 chatInput.addEventListener("input", () => {
+    // Auto-grow textarea to fit content
+    chatInput.style.height = "auto";
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + "px";
+
     chatInput.dir = isTextPersian(chatInput.value) ? "rtl" : "ltr";
 
     if (!currentChatUser) {
@@ -7633,8 +8014,16 @@ async function searchUserSuggestions(query) {
             `api/users/search.php?query=${encodeURIComponent(query)}`
         );
 
-        if (data.users && data.users.length > 0) {
-            showSuggestions(data.users);
+        const users = Array.isArray(data.users) ? data.users : [];
+        // Inject Saved Messages if query matches
+        const lq = query.toLowerCase();
+        if ("saved messages".includes(lq) || CURRENT_USER.toLowerCase().includes(lq)) {
+            if (!users.includes(CURRENT_USER)) {
+                users.unshift(CURRENT_USER);
+            }
+        }
+        if (users.length > 0) {
+            showSuggestions(users);
         } else {
             hideSuggestions();
             if (window.updateSearchState) {
@@ -7664,15 +8053,17 @@ function showSuggestions(users) {
         item.dataset.username = username;
         item.dataset.index = index;
 
-        const initials = username
+        const isSelf = username === CURRENT_USER;
+        const displayName = isSelf ? "Saved Messages" : username;
+        const initials = isSelf ? '<i class="fas fa-bookmark"></i>' : username
             .split(" ")
             .map((n) => n[0])
             .join("")
             .toUpperCase();
 
         item.innerHTML = `
-            <div class="search-suggestion-avatar">${initials}</div>
-            <div class="search-suggestion-username">${username}</div>
+            <div class="search-suggestion-avatar${isSelf ? " saved-messages-avatar" : ""}">${initials}</div>
+            <div class="search-suggestion-username">${escapeHtml(displayName)}</div>
             <i class="fas fa-arrow-right search-suggestion-icon"></i>
         `;
 
@@ -7722,7 +8113,8 @@ async function selectSuggestion(username) {
     hideSuggestions();
 
     if (isANewUser && window.UIEnhancements) {
-        window.UIEnhancements.showSearchNotification(`Started chat with ${username}`, "success");
+        const label = isSavedMessagesChat(username) ? "Opened Saved Messages" : `Started chat with ${username}`;
+        window.UIEnhancements.showSearchNotification(label, "success");
     }
 }
 
@@ -8219,6 +8611,8 @@ async function loadChatList(_force = false) {
         });
 
         incomingGroups.forEach(addGroupToChatList);
+        // Always ensure Saved Messages is in the chat list
+        addUserToChatList(CURRENT_USER, { userId: CURRENT_USER_ID });
         clearChatListErrorState();
     } catch (e) {
         showChatListErrorState();
@@ -8398,6 +8792,7 @@ lastRecentPollTime = "";
         clearDecryptedMediaCache();
         chatWithElem.textContent = "Select a chat";
         chatInput.value = "";
+    chatInput.style.height = "";
         chatInput.disabled = true;
         chatInput.placeholder = "Select someone to chat...";
 

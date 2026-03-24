@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/session.php';
+require_once __DIR__ . '/../../includes/constants.php';
 
 function redirectToApp(string $target): void
 {
@@ -58,6 +59,17 @@ $stmt->execute([$username]);
 $user = $stmt->fetch();
 
 if (!$user) {
+	// Check username blacklist for new registrations
+	$lowerUsername = strtolower($username);
+	$lowerNoSep = str_replace(['-', '_'], '', $lowerUsername);
+	foreach (TTC_USERNAME_BLACKLIST as $reserved) {
+		$reservedClean = str_replace(['-', '_', ' '], '', strtolower($reserved));
+		if ($lowerUsername === strtolower($reserved) || $lowerNoSep === $reservedClean) {
+			$_SESSION['login_error'] = 'This username is not available';
+			redirectToApp('/index.php');
+		}
+	}
+
 	if (!isValidPassword($password)) {
 		$_SESSION['login_error'] = 'Password must be at least 8 characters and contain at least one digit, one letter, and one special character';
 		redirectToApp('/index.php');

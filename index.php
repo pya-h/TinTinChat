@@ -91,8 +91,11 @@ $csrfToken = generateCsrfToken();
     <script src="assets/js/pwa.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/pwa.js')); ?>"></script>
     <script src="assets/js/ui-enhancements.js"></script>
     <script>
+        const RESERVED_USERNAMES = <?php require_once __DIR__ . '/includes/constants.php'; echo json_encode(array_map('strtolower', array_map(function($n) { return str_replace(['-', '_', ' '], '', strtolower($n)); }, TTC_USERNAME_BLACKLIST))); ?>;
         function isValidUsername(username) {
-            return /^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(username);
+            if (!/^[a-zA-Z][a-zA-Z0-9_-]{2,}$/.test(username)) return false;
+            const clean = username.toLowerCase().replace(/[-_]/g, '');
+            return !RESERVED_USERNAMES.includes(clean);
         }
 
         function isValidPassword(password) {

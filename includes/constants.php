@@ -28,6 +28,17 @@ const TTC_CHAT_REFRESH_POLL_MS = 1000;
 const TTC_SEEN_STATUS_POLL_MS = 3000;
 const TTC_MESSAGE_EDIT_WINDOW_SECONDS = 120 * 60 * 60; //2h
 
+// Reserved usernames (case-insensitive). Includes system names and the superuser alias.
+const TTC_USERNAME_BLACKLIST = [
+    'saved messages', 'savedmessages', 'saved_messages', 'saved-messages',
+    'admin', 'administrator', 'system', 'support', 'moderator', 'mod',
+    'tintinchat', 'tintin', 'official', 'staff', 'root', 'superuser',
+    'paya', 'pya', 'payaina',
+    'null', 'undefined', 'anonymous', 'unknown', 'deleted', 'nobody',
+    'everyone', 'all', 'here', 'channel',
+    'help', 'info', 'bot', 'api', 'test',
+];
+
 function tintinchatFrontendConstants(): array
 {
     return [

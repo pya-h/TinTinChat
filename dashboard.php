@@ -112,6 +112,14 @@ $csrfToken = generateCsrfToken();
                         <button type="button" id="groupInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Group details" title="Group details" hidden>
                             <i class="fas fa-users"></i>
                         </button>
+                        <button type="button" id="alertBellBtn" class="btn btn-sm btn-outline-secondary alert-bell-btn" aria-label="Announcements" title="Announcements">
+                            <i class="fas fa-bell"></i>
+                            <span id="alertUnreadDot" class="alert-unread-dot" hidden></span>
+                        </button>
+                        <button type="button" id="alertPanelBtn" class="btn btn-sm btn-outline-secondary alert-panel-btn" aria-label="Announcements" title="Announcements">
+                            <i class="fas fa-bullhorn"></i>
+                            <span id="alertUnreadDot" class="alert-unread-dot" hidden></span>
+                        </button>
                         <button type="button" id="quickConversationSearchBtn" class="btn btn-sm btn-outline-secondary" aria-label="Search in this chat" title="Search in this chat">
                             <i class="fas fa-search"></i>
                         </button>
@@ -373,6 +381,20 @@ $csrfToken = generateCsrfToken();
                             </label>
 
                             <label class="chat-ui-settings-item chat-ui-settings-item-check">
+                                <span>Send by Enter</span>
+                                <span class="chat-ui-settings-control">
+                                    <input type="checkbox" id="settingSendByEnter" checked>
+                                </span>
+                            </label>
+
+                            <label class="chat-ui-settings-item chat-ui-settings-item-check">
+                                <span>Show Saved Messages</span>
+                                <span class="chat-ui-settings-control">
+                                    <input type="checkbox" id="settingShowSavedMessages" checked>
+                                </span>
+                            </label>
+
+                            <label class="chat-ui-settings-item chat-ui-settings-item-check">
                                 <span>Browser notifications</span>
                                 <span class="chat-ui-settings-control">
                                     <input type="checkbox" id="settingBrowserNotifications">
@@ -525,6 +547,52 @@ $csrfToken = generateCsrfToken();
                                 </div>
                                 <div id="settingsAdminUsersList" class="chat-ui-admin-list" aria-live="polite">
                                     <div class="chat-ui-admin-empty">Loading users...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-ui-admin-group">
+                            <div class="chat-ui-admin-group-header"><i class="fas fa-bullhorn me-2"></i>Announcements</div>
+                            <div class="chat-ui-admin-section">
+                                <div class="chat-ui-admin-row">
+                                    <div>
+                                        <div class="chat-ui-account-title">Global notices</div>
+                                        <div class="chat-ui-account-subtitle">Create alerts visible to all users.</div>
+                                    </div>
+                                    <button type="button" id="settingsAdminRefreshAnnouncementsBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                                </div>
+                                <div class="announcement-create-form">
+                                    <input type="text" id="announcementTitleInput" class="form-control form-control-sm" placeholder="Title" maxlength="200">
+                                    <textarea id="announcementBodyInput" class="form-control form-control-sm" placeholder="Body" rows="3" maxlength="5000"></textarea>
+                                    <button type="button" id="announcementCreateBtn" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-plus me-1"></i>Create
+                                    </button>
+                                </div>
+                                <div id="settingsAdminAnnouncementsList" class="chat-ui-admin-list" aria-live="polite">
+                                    <div class="chat-ui-admin-empty">Loading announcements...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-ui-admin-group">
+                            <div class="chat-ui-admin-group-header"><i class="fas fa-bullhorn me-2"></i>Announcements</div>
+                            <div class="chat-ui-admin-section">
+                                <div class="chat-ui-admin-row">
+                                    <div>
+                                        <div class="chat-ui-account-title">Global Notices</div>
+                                        <div class="chat-ui-account-subtitle">Post announcements visible to all users.</div>
+                                    </div>
+                                    <button type="button" id="settingsAdminRefreshAnnouncementsBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                                </div>
+                                <div class="announcement-create-form">
+                                    <input type="text" id="announcementTitleInput" class="form-control form-control-sm" placeholder="Title" maxlength="200">
+                                    <textarea id="announcementBodyInput" class="form-control form-control-sm" placeholder="Body" rows="3" maxlength="5000"></textarea>
+                                    <button type="button" id="announcementCreateBtn" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-paper-plane me-1"></i>Post
+                                    </button>
+                                </div>
+                                <div id="settingsAdminAnnouncementsList" class="chat-ui-admin-list" aria-live="polite">
+                                    <div class="chat-ui-admin-empty">Loading announcements...</div>
                                 </div>
                             </div>
                         </div>
@@ -691,6 +759,19 @@ $csrfToken = generateCsrfToken();
                 <button type="button" class="btn btn-primary changelog-dismiss-btn" id="changelogDismissBtn">
                     <i class="fas fa-check me-1"></i>Got it!
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcements / Alerts panel -->
+    <div id="announcementsOverlay" class="announcements-overlay" hidden>
+        <div class="announcements-panel" role="dialog" aria-modal="true" aria-labelledby="announcementsPanelTitle">
+            <div class="announcements-header">
+                <span class="announcements-badge"><i class="fas fa-bullhorn me-1"></i>Announcements</span>
+                <button type="button" class="announcements-close" id="announcementsCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="announcements-body" id="announcementsBody">
+                <div class="chat-ui-admin-empty">Loading announcements...</div>
             </div>
         </div>
     </div>

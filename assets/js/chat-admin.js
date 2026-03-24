@@ -205,7 +205,108 @@
         await loadAdminStickerSettings();
         if (window.CURRENT_USER_IS_SUPERUSER) {
             await loadAdminUsersSettings();
+            await loadAdminAnnouncements();
         }
+    }
+
+    /* ── Announcements (superuser) ── */
+
+    let adminAnnouncementsList = [];
+
+    function renderAdminAnnouncements() {
+        const container = document.getElementById("settingsAdminAnnouncementsList");
+        if (!container) return;
+        container.innerHTML = "";
+        if (!adminAnnouncementsList.length) {
+            container.innerHTML = '<div class="chat-ui-admin-empty">No announcements yet.</div>';
+            return;
+        }
+        adminAnnouncementsList.forEach((a) => {
+            const row = document.createElement("div");
+            row.className = "chat-ui-announcement-item";
+            row.innerHTML = `
+                <div class="chat-ui-announcement-item-content">
+                    <div class="chat-ui-announcement-item-title">${escapeHtml(String(a.title || ""))}</div>
+                    <div class="chat-ui-announcement-item-body">${escapeHtml(String(a.body || "")).replace(/\n/g, "<br>")}</div>
+                    <div class="chat-ui-announcement-item-date">${escapeHtml(String(a.created_at || ""))}</div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger chat-ui-announcement-delete-btn" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            const delBtn = row.querySelector(".chat-ui-announcement-delete-btn");
+            delBtn?.addEventListener("click", async () => {
+                if (!window.confirm("Delete this announcement?")) return;
+                delBtn.disabled = true;
+                delBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                try {
+                    await window.ApiService.jsonOk("api/admin/announcements/delete.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...window.getCsrfHeaders() },
+                        body: JSON.stringify({ id: Number(a.id) }),
+                    });
+                    adminAnnouncementsList = adminAnnouncementsList.filter((x) => x.id !== a.id);
+                    renderAdminAnnouncements();
+                    window.setComposerStatus("Announcement deleted", "success");
+                } catch (error) {
+                    delBtn.disabled = false;
+                    delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    showModal("Delete Failed", error?.message || "Unable to delete announcement.", "error");
+                }
+            });
+            container.appendChild(row);
+        });
+    }
+
+    async function loadAdminAnnouncements() {
+        const container = document.getElementById("settingsAdminAnnouncementsList");
+        if (!container) return;
+        container.innerHTML = '<div class="chat-ui-admin-empty">Loading announcements...</div>';
+        try {
+            const response = await window.ApiService.jsonOk("api/admin/announcements/fetch.php");
+            adminAnnouncementsList = Array.isArray(response?.announcements) ? response.announcements : [];
+            renderAdminAnnouncements();
+        } catch (error) {
+            container.innerHTML = `<div class="chat-ui-admin-empty">${escapeHtml(String(error?.message || "Unable to load announcements."))}</div>`;
+        }
+    }
+
+    function bindAnnouncementEvents() {
+        const createBtn = document.getElementById("announcementCreateBtn");
+        const titleInput = document.getElementById("announcementTitleInput");
+        const bodyInput = document.getElementById("announcementBodyInput");
+        const refreshBtn = document.getElementById("settingsAdminRefreshAnnouncementsBtn");
+
+        createBtn?.addEventListener("click", async () => {
+            const title = titleInput?.value.trim() || "";
+            const body = bodyInput?.value.trim() || "";
+            if (!title || !body) {
+                showModal("Missing Fields", "Both title and body are required.", "warning");
+                return;
+            }
+            createBtn.disabled = true;
+            createBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Posting...';
+            try {
+                await window.ApiService.jsonOk("api/admin/announcements/create.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...window.getCsrfHeaders() },
+                    body: JSON.stringify({ title, body }),
+                });
+                titleInput.value = "";
+                bodyInput.value = "";
+                await loadAdminAnnouncements();
+                window.setComposerStatus("Announcement posted", "success");
+            } catch (error) {
+                showModal("Post Failed", error?.message || "Unable to post announcement.", "error");
+            } finally {
+                createBtn.disabled = false;
+                createBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Post';
+            }
+        });
+
+        refreshBtn?.addEventListener("click", async () => {
+            await loadAdminAnnouncements();
+        });
     }
 
     /* ── Blocked Users ── */
@@ -353,6 +454,7 @@
         });
 
         bindMediaCleanupEvents();
+        bindAnnouncementEvents();
     }
 
     /* ── Init ── */
