@@ -6,6 +6,17 @@ BASE_URL="${1:-http://localhost:8080}"
 AUTO_SERVER="${2:-auto}"
 SERVER_PID=""
 SERVER_PID_FILE="/tmp/tintin_test_server.pid"
+ENV_FILE="${ROOT_DIR}/.env.test"
+
+if [[ ! -f "${ENV_FILE}" ]]; then
+  echo "[FAIL] Missing .env.test — copy .env.test.example and adjust credentials" >&2
+  exit 1
+fi
+
+# Export test env vars so the PHP server and setup scripts use the test database
+set -a
+source "${ENV_FILE}"
+set +a
 
 cleanup() {
   bash "${ROOT_DIR}/tests/stop_test_server.sh" --pid-file "${SERVER_PID_FILE}" >/dev/null 2>&1 || true
@@ -33,7 +44,7 @@ start_server_if_needed() {
     exit 1
   fi
 
-  echo "[INFO] Starting local PHP server for tests"
+  echo "[INFO] Starting local PHP server for tests (DB: ${DB_NAME})"
   (
     cd "${ROOT_DIR}"
     php -d upload_max_filesize=110M -d post_max_size=120M -S localhost:8080 >/tmp/tintin_test_server.log 2>&1

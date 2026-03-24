@@ -10,14 +10,7 @@ apiRequireSuperuserAdmin($pdo, $userId);
 
 $superuserUsername = apiGetConfiguredSuperuserUsername();
 
-$includeTestUsers = isset($_GET['include_test_users']) && (string) $_GET['include_test_users'] === '1';
-
-$sql = 'SELECT id, username, is_admin, banned_at, last_login FROM users';
-if (!$includeTestUsers) {
-    $sql .= " WHERE username NOT LIKE 'phaseh_%'";
-    $sql .= " AND username NOT LIKE 'st_%'";
-}
-$sql .= ' ORDER BY is_admin DESC, username ASC';
+$sql = 'SELECT id, username, is_admin, banned_at, last_login FROM users ORDER BY is_admin DESC, username ASC';
 
 $stmt = $pdo->query($sql);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

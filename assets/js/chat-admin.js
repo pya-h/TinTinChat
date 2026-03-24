@@ -1,11 +1,8 @@
 (function () {
     "use strict";
 
-    const ADMIN_USERS_INCLUDE_TEST_STORAGE_KEY = "tintinchat.adminUsers.includeTestUsers.v1";
-
     let adminStickerSettings = [];
     let adminUsersList = [];
-    let adminUsersIncludeTestUsers = false;
     let blockedUsersList = [];
 
     const escapeHtml = (str) => window.ChatUtils.escapeHtml(str);
@@ -195,8 +192,7 @@
 
         container.innerHTML = '<div class="chat-ui-admin-empty">Loading users...</div>';
         try {
-            const query = adminUsersIncludeTestUsers ? "?include_test_users=1" : "";
-            const response = await window.ApiService.jsonOk(`api/admin/users/list.php${query}`);
+            const response = await window.ApiService.jsonOk("api/admin/users/list.php");
             adminUsersList = Array.isArray(response?.users) ? response.users : [];
             renderAdminUsersSettings();
         } catch (error) {
@@ -344,8 +340,6 @@
         const settingsAdminRefreshStickersBtn = document.getElementById("settingsAdminRefreshStickersBtn");
         const settingsAdminRefreshUsersBtn = document.getElementById("settingsAdminRefreshUsersBtn");
         const settingsRefreshBlockedBtn = document.getElementById("settingsRefreshBlockedBtn");
-        const settingsAdminIncludeTestUsers = document.getElementById("settingsAdminIncludeTestUsers");
-
         settingsAdminRefreshStickersBtn?.addEventListener("click", async () => {
             await loadAdminStickerSettings();
         });
@@ -358,27 +352,13 @@
             await loadBlockedUsersSettings();
         });
 
-        settingsAdminIncludeTestUsers?.addEventListener("change", async (event) => {
-            adminUsersIncludeTestUsers = Boolean(event.target?.checked);
-            localStorage.setItem(ADMIN_USERS_INCLUDE_TEST_STORAGE_KEY, adminUsersIncludeTestUsers ? "true" : "false");
-            await loadAdminUsersSettings();
-        });
-
         bindMediaCleanupEvents();
     }
 
     /* ── Init ── */
 
-    function initAdminIncludeTestUsers() {
-        const stored = localStorage.getItem(ADMIN_USERS_INCLUDE_TEST_STORAGE_KEY);
-        adminUsersIncludeTestUsers = stored === "true";
-        const checkbox = document.getElementById("settingsAdminIncludeTestUsers");
-        if (checkbox) checkbox.checked = adminUsersIncludeTestUsers;
-    }
-
     window.AdminPanel = {
         init: function () {
-            initAdminIncludeTestUsers();
             bindAdminEvents();
         },
         refreshAdminSettingsData: refreshAdminSettingsData,

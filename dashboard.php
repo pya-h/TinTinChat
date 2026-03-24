@@ -520,10 +520,6 @@ $csrfToken = generateCsrfToken();
                                         <div class="chat-ui-account-subtitle">Manage admin roles and ban users.</div>
                                     </div>
                                     <div class="chat-ui-admin-row-tools">
-                                        <label class="chat-ui-admin-inline-toggle">
-                                            <input type="checkbox" id="settingsAdminIncludeTestUsers">
-                                            <span>Show test users</span>
-                                        </label>
                                         <button type="button" id="settingsAdminRefreshUsersBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
                                     </div>
                                 </div>
