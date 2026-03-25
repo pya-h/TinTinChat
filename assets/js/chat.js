@@ -247,6 +247,9 @@ let recordingStartTime = null;
 let shouldSendRecording = true;
 let audioContext = null;
 let activeAnalyser = null;
+let globalNpAudio = null;
+let globalNpCaption = "";
+let globalNpType = ""; // "voice" or "music"
 
 let initialViewportHeight = window.innerHeight;
 let lastContextMenuMessageElement = null;
@@ -1597,6 +1600,7 @@ async function playPlaylistTrack(track, btnEl) {
         await playlistAudio.play();
         btnEl.innerHTML = '<i class="fas fa-pause"></i>';
         btnEl.classList.add("playing");
+        showGlobalNowPlaying(playlistAudio, track.title || "Playlist track", "music");
     } catch (error) {
         btnEl.innerHTML = '<i class="fas fa-play"></i>';
         showModal("Playback Error", error?.message || "Unable to play track.", "error");
@@ -1822,6 +1826,8 @@ async function playSavedPanelTrack(idx) {
         showNowPlaying(track);
         updateNowPlayingUi(true);
         renderSavedPlaylistPanel();
+        // Also show global now-playing bar
+        showGlobalNowPlaying(savedPanelPlaylistAudio, track.title || "Playlist track", "music");
     } catch (error) {
         showModal("Playback Error", error?.message || "Unable to play track.", "error");
         stopSavedPanelAudio();
@@ -3821,6 +3827,130 @@ function buildForwardedPreviewHtml(msg) {
             <span class="forwarded-meta-detail">by ${escapeHtml(forwardedBy)} · from ${escapeHtml(originalSender)}</span>
         </div>
     `;
+}
+
+/* ── Global Now Playing bar ── */
+const globalNpBar = document.getElementById("globalNowPlayingBar");
+const globalNpToggleBtn = document.getElementById("globalNpToggle");
+const globalNpCaptionEl = document.getElementById("globalNpCaption");
+const globalNpProgressWrap = document.getElementById("globalNpProgressWrap");
+const globalNpProgressBar = document.getElementById("globalNpProgressBar");
+const globalNpTimeEl = document.getElementById("globalNpTime");
+const globalNpCloseBtn = document.getElementById("globalNpClose");
+
+function showGlobalNowPlaying(audio, caption, type) {
+    // Clean up previous audio listeners if switching tracks
+    if (globalNpAudio && globalNpAudio !== audio) {
+        globalNpAudio.removeEventListener("timeupdate", globalNpAudio._gnpTimeUpdate);
+        globalNpAudio.removeEventListener("ended", globalNpAudio._gnpEnded);
+        globalNpAudio.removeEventListener("pause", globalNpAudio._gnpPause);
+        globalNpAudio.removeEventListener("play", globalNpAudio._gnpPlay);
+    }
+    globalNpAudio = audio;
+    globalNpCaption = caption || "Now Playing";
+    globalNpType = type || "music";
+    if (globalNpBar) globalNpBar.hidden = false;
+    if (globalNpCaptionEl) globalNpCaptionEl.textContent = globalNpCaption;
+    if (globalNpProgressBar) globalNpProgressBar.style.width = "0%";
+    if (globalNpTimeEl) globalNpTimeEl.textContent = "0:00";
+    updateGlobalNpToggleIcon(true);
+
+    // Remove any previous listeners by replacing the handler reference
+    audio._gnpTimeUpdate = () => {
+        if (!isFinite(audio.duration) || audio.duration <= 0) return;
+        const pct = (audio.currentTime / audio.duration) * 100;
+        if (globalNpProgressBar) globalNpProgressBar.style.width = `${pct}%`;
+        if (globalNpTimeEl) globalNpTimeEl.textContent = formatTimeShort(audio.currentTime);
+    };
+    audio._gnpEnded = () => {
+        hideGlobalNowPlaying();
+    };
+    audio._gnpPause = () => {
+        updateGlobalNpToggleIcon(false);
+    };
+    audio._gnpPlay = () => {
+        updateGlobalNpToggleIcon(true);
+    };
+    audio.addEventListener("timeupdate", audio._gnpTimeUpdate);
+    audio.addEventListener("ended", audio._gnpEnded);
+    audio.addEventListener("pause", audio._gnpPause);
+    audio.addEventListener("play", audio._gnpPlay);
+}
+
+function hideGlobalNowPlaying() {
+    if (globalNpAudio) {
+        globalNpAudio.removeEventListener("timeupdate", globalNpAudio._gnpTimeUpdate);
+        globalNpAudio.removeEventListener("ended", globalNpAudio._gnpEnded);
+        globalNpAudio.removeEventListener("pause", globalNpAudio._gnpPause);
+        globalNpAudio.removeEventListener("play", globalNpAudio._gnpPlay);
+    }
+    globalNpAudio = null;
+    globalNpCaption = "";
+    globalNpType = "";
+    if (globalNpBar) globalNpBar.hidden = true;
+    if (globalNpProgressBar) globalNpProgressBar.style.width = "0%";
+}
+
+function updateGlobalNpToggleIcon(isPlaying) {
+    if (globalNpToggleBtn) {
+        globalNpToggleBtn.innerHTML = isPlaying
+            ? '<i class="fas fa-pause"></i>'
+            : '<i class="fas fa-play"></i>';
+    }
+}
+
+// Toggle play/pause
+globalNpToggleBtn?.addEventListener("click", () => {
+    if (!globalNpAudio) return;
+    if (globalNpAudio.paused) {
+        globalNpAudio.play();
+    } else {
+        globalNpAudio.pause();
+    }
+});
+
+// Stop and close
+globalNpCloseBtn?.addEventListener("click", () => {
+    if (globalNpAudio && !globalNpAudio.paused) {
+        globalNpAudio.pause();
+    }
+    // Also stop any in-message playing state
+    document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
+        btn.classList.remove("playing");
+        btn.innerHTML = '<i class="fas fa-play"></i>';
+        btn.closest(".voice-player-container")?.classList.remove("is-playing");
+        btn.closest(".music-player-container")?.classList.remove("is-playing");
+    });
+    hideGlobalNowPlaying();
+});
+
+// Seek on global progress bar
+if (globalNpProgressWrap) {
+    function seekGlobalNp(clientX) {
+        if (!globalNpAudio || !isFinite(globalNpAudio.duration)) return;
+        const rect = globalNpProgressWrap.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        globalNpAudio.currentTime = ratio * globalNpAudio.duration;
+        if (globalNpProgressBar) globalNpProgressBar.style.width = `${ratio * 100}%`;
+    }
+    globalNpProgressWrap.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        seekGlobalNp(e.clientX);
+        function onMove(ev) { seekGlobalNp(ev.clientX); }
+        function onUp() { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); }
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+    });
+    globalNpProgressWrap.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        seekGlobalNp(e.touches[0].clientX);
+    });
+    globalNpProgressWrap.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        seekGlobalNp(e.touches[0].clientX);
+    });
 }
 
 function clearInlineChatState() {
@@ -6099,6 +6229,10 @@ lastRecentPollTime = "";
     exitSelectMode({ clearSelection: true });
     clearReplyState();
     closeConversationSearchBar({ clearInput: true });
+    // Preserve playing audio from being destroyed by innerHTML clear
+    if (globalNpAudio && globalNpAudio.parentElement && chatMessagesElem.contains(globalNpAudio)) {
+        globalNpAudio.parentElement.removeChild(globalNpAudio);
+    }
     chatMessagesElem.innerHTML = "";
     pendingSeenMessageIds.clear();
     messageMetaById.clear();
@@ -6896,6 +7030,7 @@ async function addMessageToChat(msg, prepend = false) {
         canForward = true;
 
         div.innerHTML = `
+          ${buildForwardedPreviewHtml(msg)}
           <div class="voice-player-container">
             <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id})">
               <i class="fas fa-play"></i>
@@ -6922,7 +7057,7 @@ async function addMessageToChat(msg, prepend = false) {
         canForward = true;
         canCopyImage = true;
 
-        div.innerHTML = `<a href="#" class="image-message-link" title="View full image">
+        div.innerHTML = `${buildForwardedPreviewHtml(msg)}<a href="#" class="image-message-link" title="View full image">
                 <img src="" class="message-image" alt="Encrypted image" data-ready="0" style="display:none;">
                 <div class="image-message-loading" style="padding: 20px; text-align: center; color: #6c757d;">Decrypting image...</div>
                 </a>${newDateTag(msg, {
@@ -6940,6 +7075,7 @@ async function addMessageToChat(msg, prepend = false) {
         canForward = true;
 
         div.innerHTML = `
+            ${buildForwardedPreviewHtml(msg)}
             <div class="video-message-container">
                 <video class="message-video" controls playsinline preload="metadata" style="display:none;"></video>
                 <div class="video-message-loading">Decrypting video...</div>
@@ -6977,6 +7113,7 @@ async function addMessageToChat(msg, prepend = false) {
             const ext = getFileExtension(fileName).toUpperCase();
 
             div.innerHTML = `
+              ${buildForwardedPreviewHtml(msg)}
               <div class="music-player-container" data-file-msg-id="${msg.id}">
                 <button class="music-play-btn" onclick="playMusicMessage(${msg.id})" type="button">
                   <i class="fas fa-play"></i>
@@ -7012,6 +7149,7 @@ async function addMessageToChat(msg, prepend = false) {
             const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
 
             div.innerHTML = `
+              ${buildForwardedPreviewHtml(msg)}
               <div class="file-message-container" data-file-msg-id="${msg.id}" onclick="downloadAndOpenFile(${msg.id})" ${cacheTitle}>
                 <div class="file-icon">
                   <i class="fas fa-file"></i>
@@ -7053,6 +7191,7 @@ async function addMessageToChat(msg, prepend = false) {
             `;
         } else {
             div.innerHTML = `
+                ${buildForwardedPreviewHtml(msg)}
                 <button type="button" class="sticker-message-button" aria-label="Open sticker" title="Open sticker">
                     <img src="api/messages/stickers/get.php?id=${stickerId}" class="sticker-message-image" alt="Sticker" loading="lazy" decoding="async" />
                 </button>
@@ -7906,6 +8045,9 @@ window.playVoiceMessage = async function (messageId) {
         voiceContainer?.classList.add("is-playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
         draw();
+        // Show global now-playing bar
+        const voiceCaption = (messageMeta.sender_username || "Voice") + " · " + formatMessageTimeLabel(messageMeta.created_at);
+        showGlobalNowPlaying(audio, voiceCaption, "voice");
     } else {
         audio.pause();
         playBtn.classList.remove("playing");
@@ -8043,6 +8185,9 @@ window.playMusicMessage = async function (messageId) {
         playBtn.classList.add("playing");
         container?.classList.add("is-playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
+        // Show global now-playing bar
+        const musicCaption = messageDiv.querySelector(".music-title")?.textContent || "Music";
+        showGlobalNowPlaying(audio, musicCaption, "music");
     } else {
         audio.pause();
         playBtn.classList.remove("playing");

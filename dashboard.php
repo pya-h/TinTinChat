@@ -163,6 +163,22 @@ $csrfToken = generateCsrfToken();
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
+                <!-- Global Now Playing bar -->
+                <div id="globalNowPlayingBar" class="global-now-playing-bar" hidden>
+                    <button type="button" id="globalNpToggle" class="global-np-toggle" title="Play/Pause">
+                        <i class="fas fa-pause"></i>
+                    </button>
+                    <div class="global-np-info">
+                        <span id="globalNpCaption" class="global-np-caption">Now Playing</span>
+                        <div class="global-np-progress-wrap" id="globalNpProgressWrap">
+                            <div class="global-np-progress-bar" id="globalNpProgressBar"></div>
+                        </div>
+                    </div>
+                    <span id="globalNpTime" class="global-np-time">0:00</span>
+                    <button type="button" id="globalNpClose" class="global-np-close" title="Stop">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <div id="groupInfoPanel" class="group-info-panel" role="region" aria-label="Group details" hidden>
                     <div class="group-page-header">
                         <button type="button" id="groupInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back to group chat" title="Back to group chat">

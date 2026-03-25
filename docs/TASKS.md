@@ -405,6 +405,19 @@ Legend:
 	- Progress bar increased to 6px, fully draggable (mouse + touch), with seek handle indicator.
 	- Music player container fills message bubble width properly.
 
+### Phase M.3 — Forwarded Tag, Global Now Playing & Polish
+- [x] (`P1`) **Forwarded-by tag on multimedia messages**:
+	- All forwarded multimedia messages (voice, image, video, file, sticker) now show "Forwarded by ... · from ..." tag.
+- [x] (`P1`) **Global Now Playing bar**:
+	- Persistent mini-player below chat header; shows when voice/music is playing.
+	- Play/pause, seekable progress slider, time display, caption (filename for music, sender · time for voice).
+	- Audio persists across chat switches (detached from DOM before chat clear).
+	- Hooks into in-message voice/music players and saved panel playlist.
+- [ ] (`P2`) **Caption for multimedia messages**:
+	- Allow adding text captions to voice, image, video, and file messages (like Telegram).
+- [ ] (`P2`) **Style/animation upgrade**:
+	- Platform-wide visual polish: smoother transitions, refined animations, UI beautification.
+
 ## 4) Suggested Execution Order
 
 1. Security and endpoint consistency (`P0`)  
