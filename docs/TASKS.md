@@ -388,6 +388,23 @@ Legend:
 - [ ] (`P2`) **Saved Messages click-to-navigate**:
 	- Clicking a saved message (forwarded from another chat) should navigate to the original chat and scroll to the source message.
 
+### Phase M.2 — Media Forward, Saved Messages Panel & Fixes
+- [x] (`P1`) **Actual media forwarding**:
+	- Forwarding multimedia messages now re-encrypts and sends the actual media (voice, image, video, file, sticker) instead of text labels.
+	- Backend: added `forwarded_from_message_id` support to all media send endpoints (voice, image, file, sticker).
+	- Save to Saved Messages also sends actual media now.
+- [x] (`P2`) **Saved Messages details panel**:
+	- New side panel (like group info) with message type statistics and full playlist management.
+	- Playlist section with play/pause/prev/next controls, seekable progress bar, and track delete.
+	- Now Playing bar with live progress, time display, and seek support.
+- [x] (`P2`) **Playlist orphan cleanup**:
+	- Deleting a message now removes it from the playlist automatically.
+- [x] (`P2`) **Announcement button visibility**:
+	- Announcement button now only visible when no chat is selected; hidden once a chat is opened.
+- [x] (`P2`) **Music player UI improvements**:
+	- Progress bar increased to 6px, fully draggable (mouse + touch), with seek handle indicator.
+	- Music player container fills message bubble width properly.
+
 ## 4) Suggested Execution Order
 
 1. Security and endpoint consistency (`P0`)  

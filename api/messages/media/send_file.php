@@ -36,6 +36,9 @@ $messageType = strtolower(trim((string) ($_POST['message_type'] ?? 'file')));
 $messageType = in_array($messageType, ['file', 'video'], true) ? $messageType : 'file';
 $messageEncryptedForRecipient = trim((string) ($_POST['message'] ?? ''));
 $messageEncryptedForSender = trim((string) ($_POST['message_for_sender'] ?? ''));
+$forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numeric($_POST['forwarded_from_message_id'])
+	? (int) $_POST['forwarded_from_message_id']
+	: null;
 
 $file = apiRequireUploadedFile('file');
 
@@ -87,7 +90,7 @@ if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
 	}
 }
 
-$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, any_file_path, file_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, any_file_path, file_size, forwarded_from_message_id, forwarded_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 if (
 	!$stmt->execute([
 		$userId,
@@ -98,6 +101,8 @@ if (
 		$messageType,
 		$uniqueFilename,
 		$file['size'],
+		$forwardedFromMessageId,
+		$forwardedFromMessageId ? $userId : null,
 	])
 ) {
 	apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);

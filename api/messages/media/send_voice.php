@@ -18,6 +18,9 @@ $target = $groupId > 0
 	: apiNormalizeUsername($_POST['target'] ?? '', 'INVALID_TARGET_USERNAME');
 $messageEncryptedForRecipient = trim((string) ($_POST['message'] ?? ''));
 $messageEncryptedForSender = trim((string) ($_POST['message_for_sender'] ?? ''));
+$forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numeric($_POST['forwarded_from_message_id'])
+	? (int) $_POST['forwarded_from_message_id']
+	: null;
 
 $voiceFile = apiRequireUploadedFile('voice_file');
 
@@ -59,7 +62,7 @@ if (!move_uploaded_file($voiceFile['tmp_name'], $uploadPath)) {
 	}
 }
 
-$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, voice_file_path, file_size) VALUES (?, ?, ?, ?, ?, 'voice', ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, voice_file_path, file_size, forwarded_from_message_id, forwarded_by_user_id) VALUES (?, ?, ?, ?, ?, 'voice', ?, ?, ?, ?)");
 if (
 	!$stmt->execute([
 		$userId,
@@ -69,6 +72,8 @@ if (
 		$messageEncryptedForSender,
 		$uniqueFilename,
 		(int) $voiceFile['size'],
+		$forwardedFromMessageId,
+		$forwardedFromMessageId ? $userId : null,
 	])
 ) {
 	apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);

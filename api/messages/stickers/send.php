@@ -13,6 +13,9 @@ apiRequireCsrf();
 $groupId = groupParseId($_POST['group_id'] ?? null);
 $target = $groupId > 0 ? '' : apiNormalizeUsername($_POST['target'] ?? '', 'INVALID_TARGET_USERNAME');
 $stickerId = isset($_POST['sticker_id']) ? (int) $_POST['sticker_id'] : 0;
+$forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numeric($_POST['forwarded_from_message_id'])
+	? (int) $_POST['forwarded_from_message_id']
+	: null;
 
 if ($stickerId <= 0) {
 	apiError('INVALID_STICKER_ID', 'Invalid sticker id.', 400);
@@ -67,14 +70,16 @@ if ($groupId > 0) {
 }
 
 $insert = $pdo->prepare(
-	"INSERT INTO messages (sender_id, receiver_id, group_id, message_type, sticker_id)
-	 VALUES (?, ?, ?, 'sticker', ?)"
+	"INSERT INTO messages (sender_id, receiver_id, group_id, message_type, sticker_id, forwarded_from_message_id, forwarded_by_user_id)
+	 VALUES (?, ?, ?, 'sticker', ?, ?, ?)"
 );
 $ok = $insert->execute([
 	$userId,
 	$receiverId,
 	$groupId > 0 ? $groupId : null,
 	$stickerId,
+	$forwardedFromMessageId,
+	$forwardedFromMessageId ? $userId : null,
 ]);
 
 if (!$ok) {

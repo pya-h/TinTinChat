@@ -19,6 +19,9 @@ $target_username = $groupId > 0
 	: apiNormalizeUsername($_POST['target'] ?? null, 'INVALID_TARGET_USERNAME');
 $message_for_recipient = trim((string) ($_POST['message'] ?? ''));
 $message_for_sender = trim((string) ($_POST['message_for_sender'] ?? ''));
+$forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numeric($_POST['forwarded_from_message_id'])
+	? (int) $_POST['forwarded_from_message_id']
+	: null;
 $image_file = apiRequireUploadedFile('image_file');
 
 if ($message_for_recipient === '' || $message_for_sender === '') {
@@ -58,8 +61,8 @@ if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
 
 try {
 	$stmt = $pdo->prepare(
-		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size) 
-		 VALUES (?, ?, ?, ?, ?, 'image', ?, ?)"
+		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size, forwarded_from_message_id, forwarded_by_user_id)
+		 VALUES (?, ?, ?, ?, ?, 'image', ?, ?, ?, ?)"
 	);
 	if (
 		!$stmt->execute([
@@ -70,6 +73,8 @@ try {
 			$message_for_sender,
 			'uploads/images/' . $unique_filename,
 			(int) $image_file['size'],
+			$forwardedFromMessageId,
+			$forwardedFromMessageId ? $sender_id : null,
 		])
 	) {
 		apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);

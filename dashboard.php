@@ -112,8 +112,8 @@ $csrfToken = generateCsrfToken();
                         <button type="button" id="groupInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Group details" title="Group details" hidden>
                             <i class="fas fa-users"></i>
                         </button>
-                        <button type="button" id="playlistBtn" class="btn btn-sm btn-outline-secondary" aria-label="Playlist" title="Playlist" hidden>
-                            <i class="fas fa-music"></i>
+                        <button type="button" id="savedMessagesInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Saved Messages details" title="Saved Messages details" hidden>
+                            <i class="fas fa-bookmark"></i>
                         </button>
                         <button type="button" id="alertPanelBtn" class="btn btn-sm btn-outline-secondary alert-panel-btn" aria-label="Announcements" title="Announcements">
                             <i class="fas fa-bullhorn"></i>
@@ -192,6 +192,52 @@ $csrfToken = generateCsrfToken();
                             <button type="button" id="groupAddMemberBtn" class="btn btn-sm btn-outline-primary" hidden>Add Member</button>
                             <button type="button" id="groupTransferOwnerBtn" class="btn btn-sm btn-outline-warning" hidden>Transfer Ownership</button>
                             <button type="button" id="groupLeaveBtn" class="btn btn-sm btn-outline-danger">Leave Group</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="savedMessagesInfoPanel" class="saved-messages-info-panel" role="region" aria-label="Saved Messages details" hidden>
+                    <div class="saved-info-header">
+                        <button type="button" id="savedInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back" title="Back">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <h6 class="mb-0"><i class="fas fa-bookmark me-1"></i>Saved Messages</h6>
+                        </div>
+                    </div>
+                    <div class="saved-info-stats" id="savedInfoStats">
+                        <div class="saved-stats-grid">
+                            <div class="saved-stat-item saved-stat-total"><span class="saved-stat-count" id="savedStatTotal">0</span><span class="saved-stat-label">Total</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="savedStatText">0</span><span class="saved-stat-label"><i class="fas fa-comment"></i> Text</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="savedStatVoice">0</span><span class="saved-stat-label"><i class="fas fa-microphone"></i> Voice</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="savedStatImage">0</span><span class="saved-stat-label"><i class="fas fa-image"></i> Image</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="savedStatVideo">0</span><span class="saved-stat-label"><i class="fas fa-video"></i> Video</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="savedStatFile">0</span><span class="saved-stat-label"><i class="fas fa-file"></i> File</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="savedStatSticker">0</span><span class="saved-stat-label"><i class="fas fa-smile"></i> Sticker</span></div>
+                        </div>
+                    </div>
+                    <div class="saved-info-playlist">
+                        <div class="saved-playlist-header">
+                            <h6 class="mb-0"><i class="fas fa-music me-1"></i>Playlist <span id="savedPlaylistCount" class="text-muted">(0)</span></h6>
+                        </div>
+                        <div class="saved-playlist-body" id="savedPlaylistBody">
+                            <div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet. Add music from context menu.</div>
+                        </div>
+                        <div class="saved-playlist-now-playing" id="savedNowPlaying" hidden>
+                            <div class="now-playing-info">
+                                <span class="now-playing-label"><i class="fas fa-volume-up me-1"></i>Now Playing</span>
+                                <span class="now-playing-title" id="nowPlayingTitle"></span>
+                            </div>
+                            <div class="now-playing-controls">
+                                <button type="button" id="nowPlayingPrev" class="now-playing-btn" title="Previous"><i class="fas fa-step-backward"></i></button>
+                                <button type="button" id="nowPlayingToggle" class="now-playing-btn now-playing-main" title="Play/Pause"><i class="fas fa-play"></i></button>
+                                <button type="button" id="nowPlayingNext" class="now-playing-btn" title="Next"><i class="fas fa-step-forward"></i></button>
+                            </div>
+                            <div class="now-playing-progress-wrap" id="nowPlayingProgressWrap">
+                                <div class="now-playing-progress-bar" id="nowPlayingProgressBar"></div>
+                            </div>
+                            <div class="now-playing-time">
+                                <span id="nowPlayingCurrent">0:00</span> / <span id="nowPlayingDuration">0:00</span>
+                            </div>
                         </div>
                     </div>
                 </div>

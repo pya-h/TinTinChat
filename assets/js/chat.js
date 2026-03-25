@@ -72,7 +72,7 @@ const settingBrowserNotifications = document.getElementById("settingBrowserNotif
 const settingSendByEnter = document.getElementById("settingSendByEnter");
 const settingShowSavedMessages = document.getElementById("settingShowSavedMessages");
 const settingsGroupKeyHealthBtn = document.getElementById("settingsGroupKeyHealthBtn");
-const playlistBtn = document.getElementById("playlistBtn");
+const savedMessagesInfoBtn = document.getElementById("savedMessagesInfoBtn");
 const playlistOverlay = document.getElementById("playlistOverlay");
 const playlistBody = document.getElementById("playlistBody");
 const playlistCloseBtn = document.getElementById("playlistCloseBtn");
@@ -1635,6 +1635,282 @@ function closePlaylistPanel() {
     }, 250);
 }
 
+/* ── Saved Messages Info Panel ── */
+const savedMessagesInfoPanel = document.getElementById("savedMessagesInfoPanel");
+const savedInfoBackBtn = document.getElementById("savedInfoBackBtn");
+const savedPlaylistBody = document.getElementById("savedPlaylistBody");
+const savedNowPlaying = document.getElementById("savedNowPlaying");
+const nowPlayingTitle = document.getElementById("nowPlayingTitle");
+const nowPlayingToggle = document.getElementById("nowPlayingToggle");
+const nowPlayingPrev = document.getElementById("nowPlayingPrev");
+const nowPlayingNext = document.getElementById("nowPlayingNext");
+const nowPlayingProgressWrap = document.getElementById("nowPlayingProgressWrap");
+const nowPlayingProgressBar = document.getElementById("nowPlayingProgressBar");
+const nowPlayingCurrent = document.getElementById("nowPlayingCurrent");
+const nowPlayingDuration = document.getElementById("nowPlayingDuration");
+const savedPlaylistCount = document.getElementById("savedPlaylistCount");
+
+let savedPanelPlaylistAudio = null;
+let savedPanelCurrentTrackIdx = -1;
+
+function formatTimeShort(secs) {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function openSavedMessagesInfoPanel() {
+    if (!savedMessagesInfoPanel) return;
+    savedMessagesInfoPanel.hidden = false;
+    chatAreaElem?.classList.add("saved-panel-open");
+    loadSavedMessagesStats();
+    renderSavedPlaylistPanel();
+    savedInfoBackBtn?.addEventListener("click", closeSavedMessagesInfoPanel);
+}
+
+function closeSavedMessagesInfoPanel() {
+    if (!savedMessagesInfoPanel) return;
+    savedMessagesInfoPanel.hidden = true;
+    chatAreaElem?.classList.remove("saved-panel-open");
+}
+
+function toggleSavedMessagesInfoPanel() {
+    if (savedMessagesInfoPanel && !savedMessagesInfoPanel.hidden) {
+        closeSavedMessagesInfoPanel();
+    } else {
+        openSavedMessagesInfoPanel();
+    }
+}
+
+function loadSavedMessagesStats() {
+    // Count from DOM — reflects all loaded messages
+    const msgs = chatMessagesElem?.querySelectorAll(".message") || [];
+    const stats = { total: 0, text: 0, voice: 0, image: 0, video: 0, file: 0, sticker: 0 };
+    msgs.forEach((el) => {
+        stats.total++;
+        const type = el.getAttribute("data-message-type") || "text";
+        if (type === "voice") stats.voice++;
+        else if (type === "image") stats.image++;
+        else if (type === "video") stats.video++;
+        else if (type === "file") stats.file++;
+        else if (type === "sticker") stats.sticker++;
+        else stats.text++;
+    });
+    const el = (id) => document.getElementById(id);
+    el("savedStatTotal") && (el("savedStatTotal").textContent = String(stats.total));
+    el("savedStatText") && (el("savedStatText").textContent = String(stats.text));
+    el("savedStatVoice") && (el("savedStatVoice").textContent = String(stats.voice));
+    el("savedStatImage") && (el("savedStatImage").textContent = String(stats.image));
+    el("savedStatVideo") && (el("savedStatVideo").textContent = String(stats.video));
+    el("savedStatFile") && (el("savedStatFile").textContent = String(stats.file));
+    el("savedStatSticker") && (el("savedStatSticker").textContent = String(stats.sticker));
+}
+
+function renderSavedPlaylistPanel() {
+    if (!savedPlaylistBody) return;
+    const list = getPlaylist();
+    if (savedPlaylistCount) savedPlaylistCount.textContent = `(${list.length})`;
+    savedPlaylistBody.innerHTML = "";
+    if (!list.length) {
+        savedPlaylistBody.innerHTML = '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet. Add music from the context menu.</div>';
+        return;
+    }
+    list.forEach((track, idx) => {
+        const item = document.createElement("div");
+        item.className = "saved-playlist-item" + (idx === savedPanelCurrentTrackIdx ? " active" : "");
+        item.setAttribute("data-playlist-idx", String(idx));
+        item.innerHTML = `
+            <button type="button" class="saved-pl-play" title="Play">
+                <i class="fas ${idx === savedPanelCurrentTrackIdx && savedPanelPlaylistAudio && !savedPanelPlaylistAudio.paused ? "fa-pause" : "fa-play"}"></i>
+            </button>
+            <div class="saved-pl-info">
+                <div class="saved-pl-title">${ChatUtils.escapeHtml(String(track.title || "Unknown"))}</div>
+                <div class="saved-pl-meta">${ChatUtils.escapeHtml(String(track.ext || "").toUpperCase())}${track.addedAt ? " · added " + new Date(track.addedAt).toLocaleDateString() : ""}</div>
+            </div>
+            <button type="button" class="saved-pl-remove" title="Remove from playlist">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        `;
+        item.querySelector(".saved-pl-play")?.addEventListener("click", () => playSavedPanelTrack(idx));
+        item.querySelector(".saved-pl-remove")?.addEventListener("click", () => {
+            removeFromPlaylist(track.msgId);
+            if (savedPanelCurrentTrackIdx === idx) {
+                stopSavedPanelAudio();
+            } else if (savedPanelCurrentTrackIdx > idx) {
+                savedPanelCurrentTrackIdx--;
+            }
+            renderSavedPlaylistPanel();
+        });
+        savedPlaylistBody.appendChild(item);
+    });
+}
+
+async function playSavedPanelTrack(idx) {
+    const list = getPlaylist();
+    if (idx < 0 || idx >= list.length) return;
+    const track = list[idx];
+
+    // Toggle pause if same track
+    if (savedPanelPlaylistAudio && savedPanelCurrentTrackIdx === idx) {
+        if (savedPanelPlaylistAudio.paused) {
+            savedPanelPlaylistAudio.play();
+            updateNowPlayingUi(true);
+        } else {
+            savedPanelPlaylistAudio.pause();
+            updateNowPlayingUi(false);
+        }
+        renderSavedPlaylistPanel();
+        return;
+    }
+
+    // Stop current
+    stopSavedPanelAudio();
+
+    savedPanelCurrentTrackIdx = idx;
+    renderSavedPlaylistPanel();
+
+    try {
+        if (!track.meta) throw new Error("Track metadata missing — re-add from chat");
+        const mediaResource = await getDecryptedMediaResource(track.meta);
+
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === "suspended") audioContext.resume();
+
+        // Stop any in-chat audio
+        document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
+            const otherAudio = btn.closest(".message")?.querySelector("audio");
+            if (otherAudio && !otherAudio.paused) otherAudio.pause();
+            btn.classList.remove("playing");
+            btn.innerHTML = '<i class="fas fa-play"></i>';
+            btn.closest(".voice-player-container")?.classList.remove("is-playing");
+            btn.closest(".music-player-container")?.classList.remove("is-playing");
+        });
+
+        savedPanelPlaylistAudio = new Audio(mediaResource.objectUrl);
+
+        savedPanelPlaylistAudio.addEventListener("loadedmetadata", () => {
+            if (isFinite(savedPanelPlaylistAudio.duration) && nowPlayingDuration) {
+                nowPlayingDuration.textContent = formatTimeShort(savedPanelPlaylistAudio.duration);
+            }
+        });
+
+        savedPanelPlaylistAudio.addEventListener("timeupdate", () => {
+            if (!savedPanelPlaylistAudio || !isFinite(savedPanelPlaylistAudio.duration)) return;
+            if (nowPlayingCurrent) nowPlayingCurrent.textContent = formatTimeShort(savedPanelPlaylistAudio.currentTime);
+            const pct = (savedPanelPlaylistAudio.currentTime / savedPanelPlaylistAudio.duration) * 100;
+            if (nowPlayingProgressBar) nowPlayingProgressBar.style.width = `${pct}%`;
+        });
+
+        savedPanelPlaylistAudio.addEventListener("ended", () => {
+            updateNowPlayingUi(false);
+            // Auto-play next
+            if (idx < list.length - 1) {
+                playSavedPanelTrack(idx + 1);
+            } else {
+                stopSavedPanelAudio();
+                renderSavedPlaylistPanel();
+            }
+        });
+
+        savedPanelPlaylistAudio.addEventListener("error", () => {
+            showModal("Playback Error", "Unable to play this track.", "error");
+            stopSavedPanelAudio();
+            renderSavedPlaylistPanel();
+        });
+
+        await savedPanelPlaylistAudio.play();
+        showNowPlaying(track);
+        updateNowPlayingUi(true);
+        renderSavedPlaylistPanel();
+    } catch (error) {
+        showModal("Playback Error", error?.message || "Unable to play track.", "error");
+        stopSavedPanelAudio();
+        renderSavedPlaylistPanel();
+    }
+}
+
+function stopSavedPanelAudio() {
+    if (savedPanelPlaylistAudio) {
+        savedPanelPlaylistAudio.pause();
+        savedPanelPlaylistAudio.src = "";
+        savedPanelPlaylistAudio = null;
+    }
+    savedPanelCurrentTrackIdx = -1;
+    if (savedNowPlaying) savedNowPlaying.hidden = true;
+}
+
+function showNowPlaying(track) {
+    if (!savedNowPlaying) return;
+    savedNowPlaying.hidden = false;
+    if (nowPlayingTitle) nowPlayingTitle.textContent = track.title || "Unknown";
+    if (nowPlayingCurrent) nowPlayingCurrent.textContent = "0:00";
+    if (nowPlayingDuration) nowPlayingDuration.textContent = "0:00";
+    if (nowPlayingProgressBar) nowPlayingProgressBar.style.width = "0%";
+}
+
+function updateNowPlayingUi(isPlaying) {
+    if (nowPlayingToggle) {
+        nowPlayingToggle.innerHTML = isPlaying
+            ? '<i class="fas fa-pause"></i>'
+            : '<i class="fas fa-play"></i>';
+    }
+}
+
+// Bind now-playing controls
+nowPlayingToggle?.addEventListener("click", () => {
+    if (!savedPanelPlaylistAudio) return;
+    if (savedPanelPlaylistAudio.paused) {
+        savedPanelPlaylistAudio.play();
+        updateNowPlayingUi(true);
+    } else {
+        savedPanelPlaylistAudio.pause();
+        updateNowPlayingUi(false);
+    }
+    renderSavedPlaylistPanel();
+});
+
+nowPlayingPrev?.addEventListener("click", () => {
+    if (savedPanelCurrentTrackIdx > 0) {
+        playSavedPanelTrack(savedPanelCurrentTrackIdx - 1);
+    }
+});
+
+nowPlayingNext?.addEventListener("click", () => {
+    const list = getPlaylist();
+    if (savedPanelCurrentTrackIdx < list.length - 1) {
+        playSavedPanelTrack(savedPanelCurrentTrackIdx + 1);
+    }
+});
+
+// Seek on now-playing progress bar
+if (nowPlayingProgressWrap) {
+    function seekNowPlaying(clientX) {
+        if (!savedPanelPlaylistAudio || !isFinite(savedPanelPlaylistAudio.duration)) return;
+        const rect = nowPlayingProgressWrap.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        savedPanelPlaylistAudio.currentTime = ratio * savedPanelPlaylistAudio.duration;
+        if (nowPlayingProgressBar) nowPlayingProgressBar.style.width = `${ratio * 100}%`;
+    }
+    nowPlayingProgressWrap.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        seekNowPlaying(e.clientX);
+        function onMove(ev) { seekNowPlaying(ev.clientX); }
+        function onUp() { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); }
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+    });
+    nowPlayingProgressWrap.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        seekNowPlaying(e.touches[0].clientX);
+    });
+    nowPlayingProgressWrap.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        seekNowPlaying(e.touches[0].clientX);
+    });
+}
+
 function setComposerStatus(message = "", type = "neutral") {
     if (!composerStatusElem) {
         return;
@@ -2500,9 +2776,9 @@ function bindSettingsUiEvents() {
         if (event.target === announcementsOverlay) closeAnnouncementsPanel();
     });
 
-    playlistBtn?.addEventListener("click", (event) => {
+    savedMessagesInfoBtn?.addEventListener("click", (event) => {
         event.stopPropagation();
-        openPlaylistPanel();
+        toggleSavedMessagesInfoPanel();
     });
     playlistCloseBtn?.addEventListener("click", () => closePlaylistPanel());
     playlistOverlay?.addEventListener("click", (event) => {
@@ -3847,25 +4123,102 @@ function showMessageDetailsModal(messageElement, messageData = null) {
     openMessageActionModal(I18N_TEXT.messageDetailsTitle, body);
 }
 
-function getForwardLabel(messageElement) {
-    if (messageElement.classList.contains("is-voice-message")) return "[Forwarded Voice message]";
-    if (messageElement.classList.contains("is-image-message")) return "[Forwarded Image]";
-    if (messageElement.classList.contains("is-video-message")) return "[Forwarded Video]";
-    if (messageElement.classList.contains("is-music-message")) return "[Forwarded Music]";
-    if (messageElement.classList.contains("is-file-message")) return "[Forwarded File]";
-    if (messageElement.classList.contains("is-sticker-message")) return "[Forwarded Sticker]";
+function getMediaMessageType(messageElement) {
+    if (messageElement.classList.contains("is-voice-message")) return "voice";
+    if (messageElement.classList.contains("is-image-message")) return "image";
+    if (messageElement.classList.contains("is-video-message")) return "video";
+    if (messageElement.classList.contains("is-music-message")) return "file";
+    if (messageElement.classList.contains("is-file-message")) return "file";
+    if (messageElement.classList.contains("is-sticker-message")) return "sticker";
     return null;
 }
 
+async function forwardMediaToDestination(messageMeta, mediaType, destination, sourceMessageId) {
+    const groupId = isGroupToken(destination) ? parseGroupIdFromToken(destination) : 0;
+    const targetUsername = groupId > 0 ? null : destination;
+
+    if (mediaType === "sticker") {
+        const stickerId = Number(messageMeta.sticker_id || 0);
+        if (stickerId <= 0) throw new Error("Invalid sticker");
+        const payload = new URLSearchParams();
+        if (groupId > 0) {
+            payload.set("group_id", String(groupId));
+        } else {
+            payload.set("target", targetUsername);
+        }
+        payload.set("sticker_id", String(stickerId));
+        if (sourceMessageId) payload.set("forwarded_from_message_id", String(sourceMessageId));
+        await window.ApiService.jsonOk("api/messages/stickers/send.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded", ...getCsrfHeaders() },
+            body: payload.toString(),
+        });
+        return;
+    }
+
+    // Decrypt the original media
+    const mediaResource = await getDecryptedMediaResource(messageMeta);
+    const blob = mediaResource.blob;
+    const metadata = mediaResource.metadata || {};
+    const fileName = metadata.file_name || "attachment";
+    const mimeType = metadata.mime_type || "application/octet-stream";
+
+    // Re-encrypt for the destination
+    const context = groupId > 0 ? { groupId } : { targetUsername };
+    const mediaPayload = await encryptMediaForMessage(
+        blob,
+        { file_name: fileName, mime_type: mimeType, file_size: Number(blob.size || 0) },
+        context
+    );
+
+    const formData = new FormData();
+    if (groupId > 0) {
+        formData.append("group_id", String(groupId));
+    } else {
+        formData.append("target", targetUsername);
+    }
+    formData.append("message", mediaPayload.messageForRecipient);
+    formData.append("message_for_sender", mediaPayload.messageForSender);
+    if (sourceMessageId) formData.append("forwarded_from_message_id", String(sourceMessageId));
+
+    if (mediaType === "voice") {
+        formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
+        await window.ApiService.jsonOk("api/messages/media/send_voice.php", {
+            method: "POST", headers: getCsrfHeaders(), body: formData,
+        });
+    } else if (mediaType === "image") {
+        formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
+        await window.ApiService.jsonOk("api/messages/media/send_image.php", {
+            method: "POST", headers: getCsrfHeaders(), body: formData,
+        });
+    } else if (mediaType === "video") {
+        formData.append("message_type", "video");
+        formData.append("file", mediaPayload.encryptedBlob, "video.enc");
+        await window.ApiService.jsonOk("api/messages/media/send_file.php", {
+            method: "POST", headers: getCsrfHeaders(), body: formData,
+        });
+    } else {
+        // file (including music)
+        formData.append("message_type", "file");
+        formData.append("file", mediaPayload.encryptedBlob, "file.enc");
+        await window.ApiService.jsonOk("api/messages/media/send_file.php", {
+            method: "POST", headers: getCsrfHeaders(), body: formData,
+        });
+    }
+}
+
 async function forwardMessageText(messageElement) {
+    const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const messageMeta = messageMetaById.get(sourceMessageId);
+    const mediaType = getMediaMessageType(messageElement);
     const messageText = getMessageTextForCopy(messageElement);
-    const forwardLabel = messageText || getForwardLabel(messageElement);
-    if (!forwardLabel) {
+
+    // Must have either text or be a known media type
+    if (!messageText && !mediaType) {
         showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedOnlyText, "warning");
         return;
     }
 
-    const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
     const content = createForwardTargetListContent(async (destination, button) => {
         if (!destination) {
             showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedInvalidTarget, "warning");
@@ -3877,13 +4230,20 @@ async function forwardMessageText(messageElement) {
                 button.disabled = true;
                 button.classList.add("is-forwarding");
             }
-            if (isGroupToken(destination)) {
-                const groupId = parseGroupIdFromToken(destination);
-                await sendGroupTextMessage(groupId, forwardLabel, null, sourceMessageId || null);
+
+            if (mediaType && messageMeta) {
+                // Forward actual media
+                await forwardMediaToDestination(messageMeta, mediaType, destination, sourceMessageId || null);
             } else {
-                await sendEncryptedTextMessage(destination, forwardLabel, null, sourceMessageId || null);
-                addUserToChatList(destination);
+                // Forward text
+                if (isGroupToken(destination)) {
+                    const groupId = parseGroupIdFromToken(destination);
+                    await sendGroupTextMessage(groupId, messageText, null, sourceMessageId || null);
+                } else {
+                    await sendEncryptedTextMessage(destination, messageText, null, sourceMessageId || null);
+                }
             }
+            if (!isGroupToken(destination)) addUserToChatList(destination);
             closeMessageActionModal();
             showModal(
                 I18N_TEXT.forwardedTitle,
@@ -3911,29 +4271,19 @@ async function saveMessageToSavedMessages(messageElement) {
     const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
     if (!msgId) return;
 
-    // For text messages, forward as a message to self
+    const messageMeta = messageMetaById.get(msgId);
+    const mediaType = getMediaMessageType(messageElement);
     const messageText = getMessageTextForCopy(messageElement);
-    if (messageText) {
-        try {
-            await sendEncryptedTextMessage(CURRENT_USER, messageText, null, msgId || null);
-            addUserToChatList(CURRENT_USER, { userId: CURRENT_USER_ID });
-            setComposerStatus("Saved to Saved Messages", "success");
-        } catch (error) {
-            showModal("Save Failed", error.message || "Unable to save message.", "error");
-        }
-        return;
-    }
 
-    // For non-text messages, save a "[Saved]" note with the forward reference
     try {
-        const label = messageElement.classList.contains("is-voice-message") ? "Voice message"
-            : messageElement.classList.contains("is-image-message") ? "Image"
-            : messageElement.classList.contains("is-video-message") ? "Video"
-            : messageElement.classList.contains("is-music-message") ? "Music"
-            : messageElement.classList.contains("is-file-message") ? "File"
-            : messageElement.classList.contains("is-sticker-message") ? "Sticker"
-            : "Message";
-        await sendEncryptedTextMessage(CURRENT_USER, `[Saved ${label}]`, null, msgId || null);
+        if (mediaType && messageMeta) {
+            // Save actual media to self
+            await forwardMediaToDestination(messageMeta, mediaType, CURRENT_USER, msgId);
+        } else if (messageText) {
+            await sendEncryptedTextMessage(CURRENT_USER, messageText, null, msgId || null);
+        } else {
+            throw new Error("Unable to identify message content");
+        }
         addUserToChatList(CURRENT_USER, { userId: CURRENT_USER_ID });
         setComposerStatus("Saved to Saved Messages", "success");
     } catch (error) {
@@ -4672,6 +5022,11 @@ async function deleteMessageFromContext(messageElement) {
         pendingSeenMessageIds.delete(messageId);
         messageMetaById.delete(messageId);
         void removeMediaFromCache(messageId);
+        // Clean up playlist if this message was a playlist track
+        const playlist = getPlaylist();
+        if (playlist.some((t) => Number(t.msgId) === messageId)) {
+            removeFromPlaylist(messageId);
+        }
     } catch (error) {
         showModal("Delete Failed", error.message || "Unable to delete message.", "error");
     }
@@ -5762,11 +6117,13 @@ lastRecentPollTime = "";
     const isGroup = isGroupToken(currentChatUser);
     groupInfoBtn.hidden = !isGroup;
     userInfoBtn && (userInfoBtn.hidden = isGroup || !currentChatUser || isSavedMessagesChat(currentChatUser));
-    if (playlistBtn) playlistBtn.hidden = !isSavedMessagesChat(currentChatUser);
+    if (savedMessagesInfoBtn) savedMessagesInfoBtn.hidden = !isSavedMessagesChat(currentChatUser);
+    if (alertPanelBtn) alertPanelBtn.hidden = true;
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
     closeGroupInfoPanel();
+    closeSavedMessagesInfoPanel();
     setTypingIndicator("");
     if (!isGroupToken(target)) {
         setUserUnreadBadge(target, 0);
@@ -9100,6 +9457,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
         groupKeyVersionCache.delete(Number(groupId));
         groupInfoBtn.hidden = true;
         groupInfoBtn.setAttribute("aria-expanded", "false");
+        if (alertPanelBtn) alertPanelBtn.hidden = false;
         currentChatUser = null;
         currentChatRecentMessages = null;
 lastRecentPollTime = "";
