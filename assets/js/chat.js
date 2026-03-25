@@ -2876,6 +2876,11 @@ function bindSettingsUiEvents() {
         avatarUploadInput?.click();
     });
 
+    document.getElementById("openAnnouncementsBtn")?.addEventListener("click", () => {
+        toggleSettingsPanel(false);
+        openAnnouncementsPanel();
+    });
+
     settingsAvatarUploadBtn?.addEventListener("click", () => {
         avatarUploadInput?.click();
     });
@@ -4157,9 +4162,11 @@ function createForwardTargetListContent(onSelectUsername) {
     }
 
     // Saved Messages always first in forward target list
+    let fwdIdx = 0;
     const savedBtn = document.createElement("button");
     savedBtn.type = "button";
     savedBtn.className = "forward-target-item";
+    savedBtn.style.setProperty("--i", String(fwdIdx++));
     savedBtn.innerHTML = `
         <span class="forward-target-avatar saved-messages-avatar"><i class="fas fa-bookmark"></i></span>
         <span class="forward-target-name">Saved Messages</span>
@@ -4171,6 +4178,7 @@ function createForwardTargetListContent(onSelectUsername) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "forward-target-item";
+        button.style.setProperty("--i", String(fwdIdx++));
         button.innerHTML = `
             <span class="forward-target-avatar">${escapeHtml((username[0] || "?").toUpperCase())}</span>
             <span class="forward-target-name">${escapeHtml(username)}</span>
@@ -4183,6 +4191,7 @@ function createForwardTargetListContent(onSelectUsername) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "forward-target-item";
+        button.style.setProperty("--i", String(fwdIdx++));
         button.innerHTML = `
             <span class="forward-target-avatar"><i class="fas fa-users"></i></span>
             <span class="forward-target-name">${escapeHtml(group.title || `Group ${group.id}`)}</span>
@@ -4375,15 +4384,10 @@ async function forwardMessageText(messageElement) {
             }
             if (!isGroupToken(destination)) addUserToChatList(destination);
             closeMessageActionModal();
-            showModal(
-                I18N_TEXT.forwardedTitle,
-                formatI18nText(I18N_TEXT.forwardedBody, {
-                    destination: isGroupToken(destination)
-                        ? chatGroupsById.get(parseGroupIdFromToken(destination))?.title || "group"
-                        : destination,
-                }),
-                "success"
-            );
+            const destLabel = isGroupToken(destination)
+                ? chatGroupsById.get(parseGroupIdFromToken(destination))?.title || "group"
+                : destination;
+            setComposerStatus(`Forwarded to ${destLabel}`, "success");
         } catch (error) {
             showModal(I18N_TEXT.forwardFailedTitle, error.message || "Unable to forward message.", "error");
         } finally {

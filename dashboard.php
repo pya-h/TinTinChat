@@ -146,6 +146,10 @@ $csrfToken = generateCsrfToken();
                                 <i class="fas fa-user-circle"></i>
                                 <span>Update profile avatar</span>
                             </button>
+                            <button type="button" id="openAnnouncementsBtn" class="chat-setting-item chat-setting-button" aria-label="Announcements">
+                                <i class="fas fa-bullhorn"></i>
+                                <span>Announcements</span>
+                            </button>
                         </div>
                     </div>
                 </div>

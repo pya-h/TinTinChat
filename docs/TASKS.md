@@ -415,8 +415,20 @@ Legend:
 	- Hooks into in-message voice/music players and saved panel playlist.
 - [ ] (`P2`) **Caption for multimedia messages**:
 	- Allow adding text captions to voice, image, video, and file messages (like Telegram).
+
+### Phase M.4 - Minor UI Improvements
 - [ ] (`P2`) **Style/animation upgrade**:
 	- Platform-wide visual polish: smoother transitions, refined animations, UI beautification.
+- [ ] (`P3`) **Constant Add to Playlist**:
+		- Find a way to prevent Add to playlist again, on a music message which has been added.
+- [ ] (`P3`) **Anouncement Red Counter**:
+		- It seems that its not working (or at least working properly).
+- [ ] (`P3`) **Admin Section UI**:
+		- Improve and Beautfy Admin section, esp. Post anouncement section & Refresh button
+- [ ] (`P3`) **Stupid Action bar**:
+		- The action bar was always this way despite how many times i asked for improvement and styling.
+- [ ] (`P3`) **Magnifying Input Message**:
+		- Magnifying input message on hold, works stupidly. Improve it.
 
 ## 4) Suggested Execution Order
 
