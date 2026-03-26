@@ -430,6 +430,28 @@ Legend:
 - [ ] (`P3`) **Magnifying Input Message**:
 		- Magnifying input message on hold, works stupidly. Improve it.
 
+### Phase N — E2E Encryption Upgrade (Private Key Protection) (`P1`)
+- [ ] (`P1`) **Password-derived KEK for private key encryption**:
+	- Encrypt user private keys at rest using AES-GCM with a PBKDF2-derived Key Encryption Key (KEK).
+	- Move RSA keypair generation from server-side (OpenSSL) to client-side (WebCrypto).
+	- Convert login flow to AJAX for password availability during KEK derivation.
+	- Dual-mode support: legacy (plaintext) and upgraded (encrypted) accounts during migration.
+	- Auto-migration: legacy users transparently upgrade on next login.
+	- Full design doc: `docs/E2E_ENCRYPTION_UPGRADE.md`
+- [ ] (`P1`) **Client-side group key distribution**:
+	- Move group shared key distribution from server-side to client-side.
+	- Server can no longer read private keys to unwrap/re-wrap group keys.
+	- Pending distribution table for deferred key delivery when no member is online.
+	- Online members auto-distribute keys to pending new members.
+- [ ] (`P2`) **Password change re-encryption**:
+	- Re-encrypt private key with new KEK on password change.
+	- Atomic update of password hash + encrypted private key + kek_salt.
+- [ ] (`P3`) **Split auth/KEK derivation (Phase 2 hardening)**:
+	- Derive auth_hash and KEK separately client-side so server never sees raw password.
+	- Requires full auth flow rewrite (server stores bcrypt of auth_hash, not password).
+- [ ] (`P3`) **Group key rotation on member removal**:
+	- Generate new group key when a member is removed, re-distribute to remaining members.
+
 ## 4) Suggested Execution Order
 
 1. Security and endpoint consistency (`P0`)  
