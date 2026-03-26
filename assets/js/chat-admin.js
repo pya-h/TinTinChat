@@ -213,44 +213,65 @@
 
     let adminAnnouncementsList = [];
 
+    function formatAdminAnnouncementTime(dateStr) {
+        if (!dateStr) return "";
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return "Just now";
+        if (diffMin < 60) return `${diffMin}m ago`;
+        const diffHr = Math.floor(diffMin / 60);
+        if (diffHr < 24) return `${diffHr}h ago`;
+        const diffDay = Math.floor(diffHr / 24);
+        if (diffDay < 7) return `${diffDay}d ago`;
+        return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+
     function renderAdminAnnouncements() {
         const container = document.getElementById("settingsAdminAnnouncementsList");
         if (!container) return;
         container.innerHTML = "";
         if (!adminAnnouncementsList.length) {
-            container.innerHTML = '<div class="chat-ui-admin-empty">No announcements yet.</div>';
+            container.innerHTML = '<div class="chat-ui-admin-empty"><i class="far fa-folder-open me-2"></i>No announcements posted yet.</div>';
             return;
         }
-        adminAnnouncementsList.forEach((a) => {
+        adminAnnouncementsList.forEach((a, i) => {
             const row = document.createElement("div");
             row.className = "chat-ui-announcement-item";
+            row.style.animationDelay = `${i * 0.05}s`;
             row.innerHTML = `
                 <div class="chat-ui-announcement-item-content">
                     <div class="chat-ui-announcement-item-title">${escapeHtml(String(a.title || ""))}</div>
                     <div class="chat-ui-announcement-item-body">${escapeHtml(String(a.body || "")).replace(/\n/g, "<br>")}</div>
-                    <div class="chat-ui-announcement-item-date">${escapeHtml(String(a.created_at || ""))}</div>
+                    <div class="chat-ui-announcement-item-meta">
+                        <span class="chat-ui-announcement-item-date"><i class="far fa-clock me-1"></i>${formatAdminAnnouncementTime(a.created_at)}</span>
+                        <span class="chat-ui-announcement-item-author">${escapeHtml(String(a.author || ""))}</span>
+                    </div>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-danger chat-ui-announcement-delete-btn" title="Delete">
-                    <i class="fas fa-trash"></i>
+                <button type="button" class="chat-ui-announcement-delete-btn" title="Delete announcement">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             `;
             const delBtn = row.querySelector(".chat-ui-announcement-delete-btn");
             delBtn?.addEventListener("click", async () => {
                 if (!window.confirm("Delete this announcement?")) return;
+                row.classList.add("chat-ui-announcement-item-removing");
                 delBtn.disabled = true;
-                delBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 try {
                     await window.ApiService.jsonOk("api/admin/announcements/delete.php", {
                         method: "POST",
                         headers: { "Content-Type": "application/json", ...window.getCsrfHeaders() },
                         body: JSON.stringify({ id: Number(a.id) }),
                     });
-                    adminAnnouncementsList = adminAnnouncementsList.filter((x) => x.id !== a.id);
-                    renderAdminAnnouncements();
+                    setTimeout(() => {
+                        adminAnnouncementsList = adminAnnouncementsList.filter((x) => x.id !== a.id);
+                        renderAdminAnnouncements();
+                    }, 300);
                     window.setComposerStatus("Announcement deleted", "success");
                 } catch (error) {
+                    row.classList.remove("chat-ui-announcement-item-removing");
                     delBtn.disabled = false;
-                    delBtn.innerHTML = '<i class="fas fa-trash"></i>';
                     showModal("Delete Failed", error?.message || "Unable to delete announcement.", "error");
                 }
             });
@@ -276,6 +297,17 @@
         const titleInput = document.getElementById("announcementTitleInput");
         const bodyInput = document.getElementById("announcementBodyInput");
         const refreshBtn = document.getElementById("settingsAdminRefreshAnnouncementsBtn");
+        const titleCounter = document.getElementById("announcementTitleCharCount");
+        const bodyCounter = document.getElementById("announcementBodyCharCount");
+
+        function updateCharCount(input, counter, max) {
+            if (!input || !counter) return;
+            const len = input.value.length;
+            counter.textContent = `${len}/${max}`;
+            counter.classList.toggle("announcement-char-count-warn", len > max * 0.9);
+        }
+        titleInput?.addEventListener("input", () => updateCharCount(titleInput, titleCounter, 200));
+        bodyInput?.addEventListener("input", () => updateCharCount(bodyInput, bodyCounter, 5000));
 
         createBtn?.addEventListener("click", async () => {
             const title = titleInput?.value.trim() || "";
@@ -285,7 +317,7 @@
                 return;
             }
             createBtn.disabled = true;
-            createBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Posting...';
+            createBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Publishing...';
             try {
                 await window.ApiService.jsonOk("api/admin/announcements/create.php", {
                     method: "POST",
@@ -294,18 +326,30 @@
                 });
                 titleInput.value = "";
                 bodyInput.value = "";
+                if (titleCounter) titleCounter.textContent = "0/200";
+                if (bodyCounter) bodyCounter.textContent = "0/5000";
+                titleCounter?.classList.remove("announcement-char-count-warn");
+                bodyCounter?.classList.remove("announcement-char-count-warn");
+                createBtn.innerHTML = '<i class="fas fa-check me-1"></i>Published!';
+                createBtn.classList.add("announcement-post-btn-success");
+                setTimeout(() => {
+                    createBtn.classList.remove("announcement-post-btn-success");
+                    createBtn.disabled = false;
+                    createBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Publish';
+                }, 1500);
                 await loadAdminAnnouncements();
                 window.setComposerStatus("Announcement posted", "success");
             } catch (error) {
-                showModal("Post Failed", error?.message || "Unable to post announcement.", "error");
-            } finally {
                 createBtn.disabled = false;
-                createBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Post';
+                createBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Publish';
+                showModal("Post Failed", error?.message || "Unable to post announcement.", "error");
             }
         });
 
         refreshBtn?.addEventListener("click", async () => {
+            refreshBtn.classList.add("announcement-refresh-spinning");
             await loadAdminAnnouncements();
+            setTimeout(() => refreshBtn.classList.remove("announcement-refresh-spinning"), 500);
         });
     }
 

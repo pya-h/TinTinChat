@@ -624,14 +624,30 @@ $csrfToken = generateCsrfToken();
                                         <div class="chat-ui-account-title">Global Notices</div>
                                         <div class="chat-ui-account-subtitle">Post announcements visible to all users.</div>
                                     </div>
-                                    <button type="button" id="settingsAdminRefreshAnnouncementsBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
                                 </div>
                                 <div class="announcement-create-form">
-                                    <input type="text" id="announcementTitleInput" class="form-control form-control-sm" placeholder="Title" maxlength="200">
-                                    <textarea id="announcementBodyInput" class="form-control form-control-sm" placeholder="Body" rows="3" maxlength="5000"></textarea>
-                                    <button type="button" id="announcementCreateBtn" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-paper-plane me-1"></i>Post
-                                    </button>
+                                    <div class="announcement-create-form-header">
+                                        <i class="fas fa-pen-fancy"></i>
+                                        <span>New Announcement</span>
+                                    </div>
+                                    <div class="announcement-input-wrap">
+                                        <input type="text" id="announcementTitleInput" class="form-control form-control-sm" placeholder="Announcement title..." maxlength="200">
+                                        <span class="announcement-char-count" id="announcementTitleCharCount">0/200</span>
+                                    </div>
+                                    <div class="announcement-input-wrap">
+                                        <textarea id="announcementBodyInput" class="form-control form-control-sm" placeholder="Write your announcement..." rows="3" maxlength="5000"></textarea>
+                                        <span class="announcement-char-count" id="announcementBodyCharCount">0/5000</span>
+                                    </div>
+                                    <div class="announcement-create-form-actions">
+                                        <span class="announcement-form-hint"><i class="fas fa-globe me-1"></i>Visible to all users</span>
+                                        <button type="button" id="announcementCreateBtn" class="btn btn-sm announcement-post-btn">
+                                            <i class="fas fa-paper-plane me-1"></i>Publish
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="announcement-admin-list-header">
+                                    <span>Previous Announcements</span>
+                                    <button type="button" id="settingsAdminRefreshAnnouncementsBtn" class="announcement-refresh-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
                                 </div>
                                 <div id="settingsAdminAnnouncementsList" class="chat-ui-admin-list" aria-live="polite">
                                     <div class="chat-ui-admin-empty">Loading announcements...</div>
@@ -822,11 +838,17 @@ $csrfToken = generateCsrfToken();
     <div id="announcementsOverlay" class="announcements-overlay" hidden>
         <div class="announcements-panel" role="dialog" aria-modal="true" aria-labelledby="announcementsPanelTitle">
             <div class="announcements-header">
-                <span class="announcements-badge"><i class="fas fa-bullhorn me-1"></i>Announcements</span>
+                <div class="announcements-header-left">
+                    <span class="announcements-icon-wrap"><i class="fas fa-bullhorn"></i></span>
+                    <div>
+                        <span class="announcements-badge" id="announcementsPanelTitle">Announcements</span>
+                        <span class="announcements-count" id="announcementsCount"></span>
+                    </div>
+                </div>
                 <button type="button" class="announcements-close" id="announcementsCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
             </div>
             <div class="announcements-body" id="announcementsBody">
-                <div class="chat-ui-admin-empty">Loading announcements...</div>
+                <div class="announcements-loading"><i class="fas fa-circle-notch fa-spin"></i><span>Loading...</span></div>
             </div>
         </div>
     </div>
