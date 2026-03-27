@@ -80,6 +80,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+function showModalHtml(title, html, type = "info") {
+    const modalOverlay = document.getElementById("modalOverlay");
+    if (!modalOverlay) return;
+    const modalContainer = document.getElementById("modalContainer");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalMessage = document.getElementById("modalMessage");
+    const modalIcon = document.getElementById("modalIcon");
+
+    modalTitle.textContent = title;
+    modalMessage.innerHTML = html;
+
+    const iconContainer = modalIcon.parentElement;
+    iconContainer.className = "modal-icon " + type;
+    modalIcon.className = `fas ${getIconClass(type)}`;
+
+    modalOverlay.style.display = "flex";
+    setTimeout(() => {
+        modalOverlay.classList.add("visible");
+        modalContainer.classList.add("visible");
+    }, 10);
+
+    modalOverlay.focus();
+}
+
 window.alert = function (message) {
     showModal("Information", message, "info");
 };

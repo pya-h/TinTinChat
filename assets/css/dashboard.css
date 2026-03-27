@@ -8055,6 +8055,237 @@ textarea,
     flex: 0 0 auto;
 }
 
+/* ── Media Analysis Modal ── */
+.media-analysis {
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.media-analysis-summary {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 0.8rem 0 0.6rem;
+}
+
+.media-analysis-stat {
+    text-align: center;
+}
+
+.media-analysis-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1.2;
+}
+
+.media-analysis-stat-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.6;
+    margin-top: 2px;
+}
+
+.media-analysis-criteria {
+    text-align: center;
+    font-size: 0.76rem;
+    opacity: 0.65;
+    padding: 0 0 0.7rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    margin-bottom: 0.6rem;
+}
+
+.media-analysis-section-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.5;
+    margin: 0.7rem 0 0.35rem;
+}
+
+.media-analysis-types {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.media-analysis-type-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.media-analysis-type-icon {
+    width: 18px;
+    text-align: center;
+    opacity: 0.5;
+    font-size: 0.8rem;
+}
+
+.media-analysis-type-label {
+    flex: 1;
+}
+
+.media-analysis-type-count {
+    font-weight: 600;
+    min-width: 28px;
+    text-align: right;
+}
+
+.media-analysis-type-size {
+    opacity: 0.6;
+    min-width: 60px;
+    text-align: right;
+}
+
+.media-analysis-largest {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    flex-wrap: wrap;
+}
+
+.media-analysis-date {
+    font-size: 0.72rem;
+    opacity: 0.5;
+    margin-left: auto;
+}
+
+.media-analysis-users {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.media-analysis-user-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.media-analysis-user-name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.media-analysis-user-count {
+    font-size: 0.75rem;
+    opacity: 0.55;
+    white-space: nowrap;
+}
+
+.media-analysis-user-size {
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.media-analysis-bar-track {
+    grid-column: 1 / -1;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.media-analysis-bar-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.media-analysis-extra {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    opacity: 0.55;
+    padding-top: 0.6rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.media-analysis-extra i {
+    margin-right: 3px;
+}
+
+.media-analysis-empty {
+    text-align: center;
+    padding: 1rem 0;
+    opacity: 0.6;
+}
+
+.media-analysis-empty i {
+    color: #22c55e;
+    margin-right: 4px;
+}
+
+.media-analysis-confirm {
+    text-align: center;
+    padding-top: 0.8rem;
+    margin-top: 0.8rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.media-analysis-confirm-warning {
+    font-size: 0.78rem;
+    color: #b45309;
+    margin-bottom: 0.6rem;
+}
+
+.media-analysis-confirm-warning i {
+    margin-right: 4px;
+}
+
+/* Dark mode */
+.dark-mode .media-analysis-criteria {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .media-analysis-type-row,
+.dark-mode .media-analysis-user-row {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .media-analysis-largest {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.18);
+}
+
+.dark-mode .media-analysis-bar-track {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .media-analysis-extra {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.dark-mode .media-analysis-confirm {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .media-analysis-confirm-warning {
+    color: #fbbf24;
+}
+
 /* ── Guide Modal ── */
 .guide-overlay {
     position: fixed;

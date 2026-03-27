@@ -673,6 +673,9 @@ $csrfToken = generateCsrfToken();
                                         <span>Larger than (MB)</span>
                                         <input type="number" id="mediaCleanupMaxSize" class="form-control form-control-sm" min="1" value="5" step="0.5" style="max-width:120px">
                                     </label>
+                                    <button type="button" id="mediaAnalyzeBtn" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-chart-bar me-1"></i>Analyze
+                                    </button>
                                     <button type="button" id="mediaCleanupBtn" class="btn btn-sm btn-outline-danger">
                                         <i class="fas fa-broom me-1"></i>Clean up
                                     </button>

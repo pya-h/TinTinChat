@@ -432,46 +432,193 @@
 
     /* ── Media Cleanup ── */
 
+    function getMediaCleanupParams() {
+        const days = Number(document.getElementById("mediaCleanupDays")?.value || 0);
+        const maxSizeMB = Number(document.getElementById("mediaCleanupMaxSize")?.value || 0);
+        if (days < 1 || maxSizeMB <= 0) {
+            showModal("Invalid Input", "Please provide valid values for days and file size.", "warning");
+            return null;
+        }
+        return { days, maxSizeMB, maxSizeBytes: Math.round(maxSizeMB * 1024 * 1024) };
+    }
+
+    async function fetchMediaAnalysis(days, maxSizeBytes) {
+        return window.ApiService.jsonOk(
+            `api/admin/media_analyze.php?older_than_days=${days}&max_size_bytes=${maxSizeBytes}`,
+            { method: "GET" }
+        );
+    }
+
+    function buildAnalysisHtml(stats, days, maxSizeMB) {
+        const typeLabels = { image: "Images", voice: "Voice", file: "Files", video: "Videos" };
+        const typeIcons = { image: "fa-image", voice: "fa-microphone", file: "fa-file", video: "fa-video" };
+
+        let html = '<div class="media-analysis">';
+
+        // Summary row
+        html += '<div class="media-analysis-summary">';
+        html += `<div class="media-analysis-stat">
+            <div class="media-analysis-stat-value">${stats.total_files}</div>
+            <div class="media-analysis-stat-label">Files</div>
+        </div>`;
+        html += `<div class="media-analysis-stat">
+            <div class="media-analysis-stat-value">${formatFileSize(stats.total_size)}</div>
+            <div class="media-analysis-stat-label">To free</div>
+        </div>`;
+        html += '</div>';
+
+        // Criteria
+        html += `<div class="media-analysis-criteria">Older than <strong>${days}</strong> days &amp; larger than <strong>${maxSizeMB} MB</strong> &mdash; before ${stats.cutoff_date}</div>`;
+
+        // Breakdown by type
+        const types = stats.by_type || {};
+        const hasBreakdown = Object.values(types).some(t => t.count > 0);
+        if (hasBreakdown) {
+            html += '<div class="media-analysis-section-title">By type</div>';
+            html += '<div class="media-analysis-types">';
+            for (const [type, data] of Object.entries(types)) {
+                if (data.count === 0) continue;
+                html += `<div class="media-analysis-type-row">
+                    <i class="fas ${typeIcons[type] || "fa-file"} media-analysis-type-icon"></i>
+                    <span class="media-analysis-type-label">${typeLabels[type] || type}</span>
+                    <span class="media-analysis-type-count">${data.count}</span>
+                    <span class="media-analysis-type-size">${formatFileSize(data.size)}</span>
+                </div>`;
+            }
+            html += '</div>';
+        }
+
+        // Largest file
+        if (stats.largest_file) {
+            const lf = stats.largest_file;
+            html += '<div class="media-analysis-section-title">Largest file</div>';
+            html += `<div class="media-analysis-largest">
+                <i class="fas ${typeIcons[lf.type] || "fa-file"} media-analysis-type-icon"></i>
+                <span>${formatFileSize(lf.size)} ${typeLabels[lf.type] || lf.type} by <strong>${lf.sender_username}</strong></span>
+                <span class="media-analysis-date">${lf.created_at}</span>
+            </div>`;
+        }
+
+        // Top users
+        if (stats.top_users && stats.top_users.length > 0) {
+            html += '<div class="media-analysis-section-title">Top users by size</div>';
+            html += '<div class="media-analysis-users">';
+            for (const u of stats.top_users) {
+                const pct = stats.total_size > 0 ? Math.round((u.size / stats.total_size) * 100) : 0;
+                html += `<div class="media-analysis-user-row">
+                    <span class="media-analysis-user-name">${u.username}</span>
+                    <span class="media-analysis-user-count">${u.count} files</span>
+                    <span class="media-analysis-user-size">${formatFileSize(u.size)}</span>
+                    <div class="media-analysis-bar-track"><div class="media-analysis-bar-fill" style="width:${pct}%"></div></div>
+                </div>`;
+            }
+            html += '</div>';
+        }
+
+        // Extra info
+        if (stats.already_purged > 0 || stats.missing_from_disk > 0) {
+            html += '<div class="media-analysis-extra">';
+            if (stats.already_purged > 0) {
+                html += `<span><i class="fas fa-check-circle"></i> ${stats.already_purged} already purged</span>`;
+            }
+            if (stats.missing_from_disk > 0) {
+                html += `<span><i class="fas fa-ghost"></i> ${stats.missing_from_disk} missing from disk</span>`;
+            }
+            html += '</div>';
+        }
+
+        if (stats.total_files === 0) {
+            html += '<div class="media-analysis-empty"><i class="fas fa-check-circle"></i> No files match these criteria.</div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
     function bindMediaCleanupEvents() {
+        const mediaAnalyzeBtn = document.getElementById("mediaAnalyzeBtn");
         const mediaCleanupBtn = document.getElementById("mediaCleanupBtn");
-        const mediaCleanupDays = document.getElementById("mediaCleanupDays");
-        const mediaCleanupMaxSize = document.getElementById("mediaCleanupMaxSize");
         const mediaCleanupResult = document.getElementById("mediaCleanupResult");
 
-        mediaCleanupBtn?.addEventListener("click", async () => {
-            const days = Number(mediaCleanupDays?.value || 0);
-            const maxSizeMB = Number(mediaCleanupMaxSize?.value || 0);
-            if (days < 1 || maxSizeMB <= 0) {
-                showModal("Invalid Input", "Please provide valid values for days and file size.", "warning");
-                return;
+        // ── Analyze button ──
+        mediaAnalyzeBtn?.addEventListener("click", async () => {
+            const p = getMediaCleanupParams();
+            if (!p) return;
+
+            mediaAnalyzeBtn.disabled = true;
+            mediaAnalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Analyzing...';
+
+            try {
+                const stats = await fetchMediaAnalysis(p.days, p.maxSizeBytes);
+                const html = buildAnalysisHtml(stats, p.days, p.maxSizeMB);
+                showModalHtml("Storage Analysis", html, "info");
+            } catch (error) {
+                showModal("Analysis Failed", error?.message || "Unable to analyze media.", "error");
+            } finally {
+                mediaAnalyzeBtn.disabled = false;
+                mediaAnalyzeBtn.innerHTML = '<i class="fas fa-chart-bar me-1"></i>Analyze';
             }
-            const maxSizeBytes = Math.round(maxSizeMB * 1024 * 1024);
-            const confirmed = window.confirm(
-                `Delete all media files older than ${days} days and larger than ${maxSizeMB} MB? This cannot be undone.`
-            );
-            if (!confirmed) return;
+        });
+
+        // ── Clean up button (now with preview) ──
+        mediaCleanupBtn?.addEventListener("click", async () => {
+            const p = getMediaCleanupParams();
+            if (!p) return;
 
             mediaCleanupBtn.disabled = true;
-            mediaCleanupBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Cleaning...';
+            mediaCleanupBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Analyzing...';
             if (mediaCleanupResult) { mediaCleanupResult.style.display = "none"; }
 
             try {
-                const result = await window.ApiService.jsonOk("api/admin/media_cleanup.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", ...window.getCsrfHeaders() },
-                    body: JSON.stringify({ older_than_days: days, max_size_bytes: maxSizeBytes }),
-                });
-                const freed = formatFileSize(result.freed_bytes || 0);
-                const msg = result.deleted_count > 0
-                    ? `Deleted ${result.deleted_count} file(s), freed ${freed}.${result.failed_count ? ` ${result.failed_count} failed.` : ""}`
-                    : "No matching files found.";
-                if (mediaCleanupResult) {
-                    mediaCleanupResult.textContent = msg;
-                    mediaCleanupResult.style.display = "block";
+                // Step 1: fetch analysis first
+                const stats = await fetchMediaAnalysis(p.days, p.maxSizeBytes);
+
+                if (stats.total_files === 0) {
+                    showModal("Nothing to clean", "No files match the specified criteria.", "info");
+                    return;
                 }
-                window.setComposerStatus(msg, "success");
+
+                // Step 2: show preview and confirm
+                let html = buildAnalysisHtml(stats, p.days, p.maxSizeMB);
+                html += `<div class="media-analysis-confirm">
+                    <div class="media-analysis-confirm-warning"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone.</div>
+                    <button type="button" id="mediaCleanupConfirmBtn" class="btn btn-sm btn-danger">
+                        <i class="fas fa-broom me-1"></i>Confirm cleanup
+                    </button>
+                </div>`;
+                showModalHtml("Confirm Cleanup", html, "warning");
+
+                // Step 3: wait for confirm click inside modal
+                const confirmBtn = document.getElementById("mediaCleanupConfirmBtn");
+                if (confirmBtn) {
+                    confirmBtn.addEventListener("click", async () => {
+                        confirmBtn.disabled = true;
+                        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Cleaning...';
+
+                        try {
+                            const result = await window.ApiService.jsonOk("api/admin/media_cleanup.php", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json", ...window.getCsrfHeaders() },
+                                body: JSON.stringify({ older_than_days: p.days, max_size_bytes: p.maxSizeBytes }),
+                            });
+                            closeModal();
+                            const freed = formatFileSize(result.freed_bytes || 0);
+                            const msg = result.deleted_count > 0
+                                ? `Deleted ${result.deleted_count} file(s), freed ${freed}.${result.failed_count ? ` ${result.failed_count} failed.` : ""}`
+                                : "No matching files found.";
+                            if (mediaCleanupResult) {
+                                mediaCleanupResult.textContent = msg;
+                                mediaCleanupResult.style.display = "block";
+                            }
+                            window.setComposerStatus(msg, "success");
+                        } catch (err) {
+                            closeModal();
+                            showModal("Cleanup Failed", err?.message || "Unable to run media cleanup.", "error");
+                        }
+                    });
+                }
             } catch (error) {
-                showModal("Cleanup Failed", error?.message || "Unable to run media cleanup.", "error");
+                showModal("Analysis Failed", error?.message || "Unable to analyze media.", "error");
             } finally {
                 mediaCleanupBtn.disabled = false;
                 mediaCleanupBtn.innerHTML = '<i class="fas fa-broom me-1"></i>Clean up';
