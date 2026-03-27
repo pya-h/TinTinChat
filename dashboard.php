@@ -999,19 +999,70 @@ $csrfToken = generateCsrfToken();
             applyMobileDrawerState(false);
         });
 
-        // --- Touch drag gesture for mobile drawer (Android notification-bar style) ---
+        // --- Drag gesture for mobile drawer (Android notification-bar style) ---
+        // The drawer follows the finger/mouse 1:1, anchored to the handle.
         let drawerDragState = null;
         let drawerDragJustEnded = false;
+        let drawerTransitionCleanup = 0; // timeout id for post-transition cleanup
+
+        function drawerCancelPendingCleanup() {
+            if (drawerTransitionCleanup) {
+                clearTimeout(drawerTransitionCleanup);
+                drawerTransitionCleanup = 0;
+            }
+        }
+
+        // Reset all inline drag styles and ensure state is consistent
+        function drawerResetInlineStyles() {
+            if (!sidebarElement) return;
+            sidebarElement.style.transform = '';
+            sidebarElement.style.transition = '';
+            sidebarElement.style.animation = '';
+            if (mobileChatListBackdrop) {
+                mobileChatListBackdrop.style.transition = '';
+                mobileChatListBackdrop.style.opacity = '';
+            }
+        }
 
         function startDrawerDrag(startY) {
+            drawerCancelPendingCleanup();
+            const h = window.innerHeight;
+
+            // Anchor: compute where the handle sits so the drawer starts there
+            let anchorOffset = 0; // = distance from top of viewport to handle bottom
+            if (!isMobileDrawerOpen && mobileChatListPullHandle) {
+                const handleRect = mobileChatListPullHandle.getBoundingClientRect();
+                anchorOffset = handleRect.bottom;
+            }
+
             drawerDragState = {
-                startY: startY,
+                startY,
                 currentY: startY,
                 startTime: Date.now(),
+                lastY: startY,
+                lastTime: Date.now(),
                 wasOpen: isMobileDrawerOpen,
-                drawerHeight: window.innerHeight,
+                drawerHeight: h,
+                anchorOffset,
                 moved: false,
             };
+
+            // If closed, show the drawer positioned so its bottom edge = handle position
+            if (!isMobileDrawerOpen) {
+                sidebarElement.classList.add('mobile-chatlist-drawer-open');
+                sidebarElement.style.animation = 'none';
+                sidebarElement.style.transition = 'none';
+                sidebarElement.style.transform = `translateY(${anchorOffset - h}px)`;
+                setCompactChatListVisible(true);
+                if (mobileChatListBackdrop) {
+                    mobileChatListBackdrop.removeAttribute('hidden');
+                    mobileChatListBackdrop.style.opacity = String(Math.max(0, anchorOffset / h));
+                }
+            } else {
+                sidebarElement.style.animation = 'none';
+                sidebarElement.style.transition = 'none';
+                sidebarElement.style.transform = 'translateY(0)';
+            }
         }
 
         function moveDrawerDrag(clientY) {
@@ -1019,36 +1070,35 @@ $csrfToken = generateCsrfToken();
             drawerDragState.currentY = clientY;
             const dy = clientY - drawerDragState.startY;
 
-            // Require minimum 8px movement to start drag visual
-            if (Math.abs(dy) < 8 && !drawerDragState.moved) return;
+            // Require minimum 6px movement to start visual drag
+            if (Math.abs(dy) < 6 && !drawerDragState.moved) return;
             drawerDragState.moved = true;
 
-            if (drawerDragState.wasOpen) {
-                // Dragging up to close — clamp to [-height, 0]
-                const clampedDy = Math.min(0, Math.max(-drawerDragState.drawerHeight, dy));
-                sidebarElement.style.transition = 'none';
-                sidebarElement.style.transform = `translateY(${clampedDy}px)`;
-                // Fade backdrop proportionally
-                if (mobileChatListBackdrop) {
-                    const progress = 1 - Math.abs(clampedDy) / (drawerDragState.drawerHeight * 0.5);
-                    mobileChatListBackdrop.style.opacity = Math.max(0, progress);
-                }
-            } else {
-                // Dragging down to open — translate from -100% + dy, clamp
-                const openProgress = Math.min(1, Math.max(0, dy / (drawerDragState.drawerHeight * 0.45)));
-                const translateY = -(1 - openProgress) * drawerDragState.drawerHeight;
+            // Track recent velocity (sliding 50ms window for snappy feel)
+            const now = Date.now();
+            if (now - drawerDragState.lastTime > 50) {
+                drawerDragState.lastY = clientY;
+                drawerDragState.lastTime = now;
+            }
 
-                // Need to show drawer classes during drag
-                if (!sidebarElement.classList.contains('mobile-chatlist-drawer-open')) {
-                    sidebarElement.classList.add('mobile-chatlist-drawer-open');
-                    setCompactChatListVisible(true);
-                    if (mobileChatListBackdrop) mobileChatListBackdrop.removeAttribute('hidden');
-                }
-                sidebarElement.style.transition = 'none';
-                sidebarElement.style.transform = `translateY(${translateY}px)`;
-                if (mobileChatListBackdrop) {
-                    mobileChatListBackdrop.style.opacity = openProgress;
-                }
+            const h = drawerDragState.drawerHeight;
+
+            // 1:1 finger tracking
+            let translateY;
+            if (drawerDragState.wasOpen) {
+                // Open → dragging up: starts at 0, goes to -h
+                translateY = Math.min(0, Math.max(-h, dy));
+            } else {
+                // Closed → dragging down: starts at (anchorOffset - h), moves toward 0
+                translateY = Math.min(0, Math.max(-h, (drawerDragState.anchorOffset - h) + dy));
+            }
+
+            sidebarElement.style.transform = `translateY(${translateY}px)`;
+
+            // Backdrop opacity proportional to how visible the drawer is
+            if (mobileChatListBackdrop) {
+                const openRatio = 1 - Math.abs(translateY) / h;
+                mobileChatListBackdrop.style.opacity = String(Math.max(0, Math.min(1, openRatio)));
             }
         }
 
@@ -1057,80 +1107,93 @@ $csrfToken = generateCsrfToken();
             const ds = drawerDragState;
             drawerDragState = null;
 
-            if (!ds.moved) return; // Was just a tap — let click handler handle it
-            drawerDragJustEnded = true;
-            setTimeout(() => { drawerDragJustEnded = false; }, 50);
+            if (!ds.moved) {
+                // Was just a tap — restore everything and let click handler fire
+                if (!ds.wasOpen) {
+                    sidebarElement.classList.remove('mobile-chatlist-drawer-open');
+                    setCompactChatListVisible(
+                        document.activeElement === searchUserElement
+                    );
+                    if (mobileChatListBackdrop) {
+                        mobileChatListBackdrop.setAttribute('hidden', 'hidden');
+                    }
+                }
+                drawerResetInlineStyles();
+                return;
+            }
 
-            const dy = ds.currentY - ds.startY;
-            const velocity = dy / Math.max(1, Date.now() - ds.startTime); // px/ms
-            const VELOCITY_THRESHOLD = 0.35; // px/ms
-            const DISTANCE_THRESHOLD = ds.drawerHeight * 0.2;
+            drawerDragJustEnded = true;
+            setTimeout(() => { drawerDragJustEnded = false; }, 80);
+
+            // Recent velocity (last ~50ms window) for snappy gesture detection
+            const recentDy = ds.currentY - ds.lastY;
+            const recentDt = Math.max(1, Date.now() - ds.lastTime);
+            const velocity = recentDy / recentDt; // px/ms, positive=down, negative=up
+
+            const totalDy = ds.currentY - ds.startY;
+            const VELOCITY_THRESHOLD = 0.3; // px/ms
+            const DISTANCE_THRESHOLD = ds.drawerHeight * 0.25;
 
             let shouldOpen;
             if (ds.wasOpen) {
-                // Was open, dragging up to close
-                shouldOpen = !(dy < -DISTANCE_THRESHOLD || velocity < -VELOCITY_THRESHOLD);
+                shouldOpen = !(totalDy < -DISTANCE_THRESHOLD || velocity < -VELOCITY_THRESHOLD);
             } else {
-                // Was closed, dragging down to open
-                shouldOpen = (dy > DISTANCE_THRESHOLD || velocity > VELOCITY_THRESHOLD);
+                shouldOpen = (totalDy > DISTANCE_THRESHOLD || velocity > VELOCITY_THRESHOLD);
             }
 
-            // Snap to final state with spring transition
-            sidebarElement.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            // Set logical state IMMEDIATELY so other handlers see the correct value
+            isMobileDrawerOpen = shouldOpen;
+            mobileChatListPullHandle?.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+
+            // Animate to final position with spring easing
+            const springDuration = '0.3s';
+            const springEasing = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+            sidebarElement.style.transition = `transform ${springDuration} ${springEasing}`;
+
             if (shouldOpen) {
                 sidebarElement.style.transform = 'translateY(0)';
-                isMobileDrawerOpen = true;
-                mobileChatListPullHandle?.setAttribute('aria-expanded', 'true');
                 if (mobileChatListBackdrop) {
-                    mobileChatListBackdrop.style.transition = 'opacity 0.28s ease';
+                    mobileChatListBackdrop.style.transition = `opacity ${springDuration} ease`;
                     mobileChatListBackdrop.style.opacity = '1';
                 }
-                // After transition, clear inline styles
-                setTimeout(() => {
-                    sidebarElement.style.transform = '';
-                    sidebarElement.style.transition = '';
-                    if (mobileChatListBackdrop) {
-                        mobileChatListBackdrop.style.transition = '';
-                        mobileChatListBackdrop.style.opacity = '';
-                    }
-                }, 300);
+                // Deferred: clear inline styles after spring animation finishes
+                drawerTransitionCleanup = setTimeout(() => {
+                    drawerTransitionCleanup = 0;
+                    drawerResetInlineStyles();
+                }, 320);
             } else {
-                sidebarElement.style.transform = `translateY(-110%)`;
+                sidebarElement.style.transform = 'translateY(-110%)';
                 if (mobileChatListBackdrop) {
-                    mobileChatListBackdrop.style.transition = 'opacity 0.28s ease';
+                    mobileChatListBackdrop.style.transition = `opacity ${springDuration} ease`;
                     mobileChatListBackdrop.style.opacity = '0';
                 }
-                setTimeout(() => {
-                    sidebarElement.style.transform = '';
-                    sidebarElement.style.transition = '';
+                // Deferred: remove classes and hide backdrop after spring finishes
+                drawerTransitionCleanup = setTimeout(() => {
+                    drawerTransitionCleanup = 0;
                     sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
-                    isMobileDrawerOpen = false;
-                    mobileChatListPullHandle?.setAttribute('aria-expanded', 'false');
-                    setCompactChatListVisible(false);
+                    setCompactChatListVisible(
+                        document.activeElement === searchUserElement
+                    );
+                    drawerResetInlineStyles();
                     if (mobileChatListBackdrop) {
                         mobileChatListBackdrop.setAttribute('hidden', 'hidden');
-                        mobileChatListBackdrop.style.transition = '';
-                        mobileChatListBackdrop.style.opacity = '';
                     }
-                }, 300);
+                }, 320);
             }
         }
 
-        // Attach drag listeners to the pull handle (works for both open and close)
+        // --- Touch listeners ---
         mobileChatListPullHandle?.addEventListener('touchstart', function (e) {
             if (!isMobileDrawerViewport()) return;
-            const touch = e.touches[0];
-            startDrawerDrag(touch.clientY);
+            startDrawerDrag(e.touches[0].clientY);
         }, { passive: true });
 
-        // Also allow dragging from the sidebar top edge when open
+        // Allow drag from bottom 80px of open sidebar (near pull handle)
         sidebarElement?.addEventListener('touchstart', function (e) {
             if (!isMobileDrawerViewport() || !isMobileDrawerOpen) return;
-            // Only start drag from the bottom 60px of the sidebar (near pull handle)
             const rect = sidebarElement.getBoundingClientRect();
-            const touch = e.touches[0];
-            if (touch.clientY > rect.bottom - 60) {
-                startDrawerDrag(touch.clientY);
+            if (e.touches[0].clientY > rect.bottom - 80) {
+                startDrawerDrag(e.touches[0].clientY);
             }
         }, { passive: true });
 
@@ -1148,6 +1211,24 @@ $csrfToken = generateCsrfToken();
             if (!drawerDragState) return;
             endDrawerDrag();
         }, { passive: true });
+
+        // --- Mouse listeners (desktop drag on pull handle) ---
+        mobileChatListPullHandle?.addEventListener('mousedown', function (e) {
+            if (!isMobileDrawerViewport()) return;
+            e.preventDefault();
+            startDrawerDrag(e.clientY);
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!drawerDragState) return;
+            e.preventDefault();
+            moveDrawerDrag(e.clientY);
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!drawerDragState) return;
+            endDrawerDrag();
+        });
 
         // Click handler — only fires when no drag occurred
         mobileChatListPullHandle?.addEventListener('click', function () {

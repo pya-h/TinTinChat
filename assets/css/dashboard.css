@@ -4846,7 +4846,7 @@ textarea,
         );
         color: color-mix(in srgb, var(--secondary-color) 75%, var(--text-color));
         border-radius: 999px;
-        width: 4.5rem;
+        width: calc(100% - 1.5rem);
         margin: 0.22rem auto 0.38rem;
         padding: 0;
         display: flex;
