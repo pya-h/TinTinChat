@@ -149,6 +149,7 @@ $csrfToken = generateCsrfToken();
                             <button type="button" id="openAnnouncementsBtn" class="chat-setting-item chat-setting-button" aria-label="Announcements">
                                 <i class="fas fa-bullhorn"></i>
                                 <span>Announcements</span>
+                                <span id="announcementsMenuDot" class="alert-unread-dot announcement-menu-dot" hidden></span>
                             </button>
                         </div>
                     </div>

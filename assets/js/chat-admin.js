@@ -646,6 +646,37 @@
 
         bindMediaCleanupEvents();
         bindAnnouncementEvents();
+        bindAdminCollapsibleSections();
+    }
+
+    function bindAdminCollapsibleSections() {
+        const adminPanel = document.getElementById("chatUiSettingsPanelAdmin");
+        if (!adminPanel) return;
+        const groups = adminPanel.querySelectorAll(".chat-ui-admin-group");
+        const isSuperuser = window.CURRENT_USER_IS_SUPERUSER === true;
+
+        groups.forEach((group) => {
+            const header = group.querySelector(".chat-ui-admin-group-header");
+            const section = group.querySelector(".chat-ui-admin-section");
+            if (!header || !section) return;
+
+            // Add toggle chevron
+            const chevron = document.createElement("i");
+            chevron.className = "fas fa-chevron-down admin-group-chevron";
+            header.appendChild(chevron);
+            header.classList.add("admin-group-header-collapsible");
+
+            // Superusers start collapsed; normal admins start expanded
+            if (isSuperuser) {
+                section.classList.add("admin-section-collapsed");
+                chevron.classList.add("admin-chevron-collapsed");
+            }
+
+            header.addEventListener("click", () => {
+                const isCollapsed = section.classList.toggle("admin-section-collapsed");
+                chevron.classList.toggle("admin-chevron-collapsed", isCollapsed);
+            });
+        });
     }
 
     /* ── Init ── */

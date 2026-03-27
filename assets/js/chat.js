@@ -1459,7 +1459,7 @@ async function openAnnouncementsPanel() {
             body: "{}",
         });
     } catch { /* best-effort */ }
-    if (alertUnreadDot) alertUnreadDot.hidden = true;
+    setAnnouncementUnreadState(false);
 }
 
 function closeAnnouncementsPanel() {
@@ -1472,14 +1472,23 @@ function closeAnnouncementsPanel() {
     }, 250);
 }
 
+function setAnnouncementUnreadState(hasUnread) {
+    if (alertUnreadDot) alertUnreadDot.hidden = !hasUnread;
+    const menuDot = document.getElementById("announcementsMenuDot");
+    if (menuDot) menuDot.hidden = !hasUnread;
+    if (alertPanelBtn) {
+        alertPanelBtn.classList.toggle("alert-panel-btn-unread", hasUnread);
+    }
+}
+
 async function checkAnnouncementUnread() {
     const list = await fetchAnnouncements();
     announcementsCachedList = list;
-    if (!list.length || !alertUnreadDot) return;
+    if (!list.length) { setAnnouncementUnreadState(false); return; }
     const latestTs = new Date(list[0].created_at).getTime();
     const seenTs = (typeof USER_TIPS_SEEN_AT !== "undefined" && USER_TIPS_SEEN_AT)
         ? new Date(USER_TIPS_SEEN_AT).getTime() : 0;
-    alertUnreadDot.hidden = !(latestTs > seenTs);
+    setAnnouncementUnreadState(latestTs > seenTs);
 }
 
 /* ── Playlist ── */
@@ -5745,7 +5754,7 @@ function addMessageActionHandlers(
                 lastTapX = currentX;
                 lastTapY = currentY;
 
-                if (!isMultimediaMessage && !isSelectModeActive) {
+                if (!isMultimediaMessage && !isSelectModeActive && !event.target?.closest?.(".reply-quote")) {
                     // Text messages: delayed context menu (cancelled if double-tap follows)
                     if (singleTapTimer) clearTimeout(singleTapTimer);
                     singleTapTimer = setTimeout(() => {
@@ -5809,7 +5818,7 @@ function addMessageActionHandlers(
             }
 
             // Don't intercept clicks on interactive child elements
-            if (event.target.closest("a, button, .message-reaction-chip, .voice-play-btn")) {
+            if (event.target.closest("a, button, .message-reaction-chip, .voice-play-btn, .reply-quote")) {
                 return;
             }
 
@@ -8471,6 +8480,7 @@ const sendTextMessage = async () => {
         }
         chatInput.value = "";
     chatInput.style.height = "";
+        updateSendButtonIcon();
         clearReplyState();
         if (!isGroupToken(currentChatUser)) {
             if (typingStopTimer) {
@@ -8670,44 +8680,29 @@ fileUploadInput.addEventListener("change", (e) => {
     e.target.value = null;
 });
 
-(function sendButtonFileHintOnce() {
-    const btn = document.getElementById("sendBtn");
-    if (!btn) return;
-    const icon = btn.querySelector("i");
+// Send button icon: file when empty, paper-plane when typing
+function updateSendButtonIcon() {
+    const icon = sendBtn?.querySelector("i");
     if (!icon) return;
-
-    const defaultIcon = "fa-paper-plane";
-    const fileIcon = "fa-file";
-
-    function changeIcon(fromIcon, toIcon, delay) {
-        setTimeout(function () {
-            icon.classList.add("icon-exit");
-
-            setTimeout(function () {
-                icon.classList.remove(fromIcon);
-                icon.classList.add(toIcon);
-            }, 300); // Change icon at midpoint of animation
-
-            setTimeout(function () {
-                icon.classList.remove("icon-exit");
-                icon.classList.add("icon-enter");
-            }, 300);
-
-            setTimeout(function () {
-                icon.classList.remove("icon-enter");
-            }, 900);
-        }, delay);
+    const hasText = Boolean(chatInput.value.trim().length);
+    if (hasText) {
+        icon.classList.remove("fa-file");
+        icon.classList.add("fa-paper-plane");
+        sendBtn.title = "Send message";
+    } else {
+        icon.classList.remove("fa-paper-plane");
+        icon.classList.add("fa-file");
+        sendBtn.title = "Send file";
     }
-
-    // First change: Send -> File (after 3 seconds)
-    changeIcon(defaultIcon, fileIcon, 3000);
-
-    // Second change: File -> Send (after 6 seconds)
-    changeIcon(fileIcon, defaultIcon, 6000);
-})();
+}
+updateSendButtonIcon();
 
 chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!chatInput.value.trim()) {
+        fileUploadInput.click();
+        return;
+    }
     await sendTextMessage();
 });
 
@@ -8823,6 +8818,7 @@ chatInput.addEventListener("input", () => {
     chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + "px";
 
     chatInput.dir = isTextPersian(chatInput.value) ? "rtl" : "ltr";
+    updateSendButtonIcon();
 
     if (!currentChatUser) {
         return;
