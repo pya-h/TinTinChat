@@ -15,9 +15,10 @@ $is_admin = false;
 $superuser_username = trim((string) ($_ENV['SUPERUSER_USERNAME'] ?? 'paya'));
 $is_superuser = ($superuser_username !== '' && strcasecmp((string) $username, $superuser_username) === 0);
 $tips_seen_at = null;
+$last_read_announcement_id = 0;
 
 try {
-    $adminStmt = $pdo->prepare('SELECT is_admin, banned_at, tips_seen_at FROM users WHERE id = ? LIMIT 1');
+    $adminStmt = $pdo->prepare('SELECT is_admin, banned_at, tips_seen_at, last_read_announcement_id FROM users WHERE id = ? LIMIT 1');
     $adminStmt->execute([$user_id]);
     $adminRow = $adminStmt->fetch(PDO::FETCH_ASSOC);
     if (!empty($adminRow['banned_at'])) {
@@ -28,6 +29,7 @@ try {
     }
     $is_admin = (bool) ($adminRow['is_admin'] ?? false);
     $tips_seen_at = $adminRow['tips_seen_at'] ?? null;
+    $last_read_announcement_id = (int) ($adminRow['last_read_announcement_id'] ?? 0);
     if ($tips_seen_at !== null) {
         $ts = strtotime($tips_seen_at);
         if ($ts !== false) {
@@ -112,7 +114,7 @@ $csrfToken = generateCsrfToken();
                         <button type="button" id="groupInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Group details" title="Group details" hidden>
                             <i class="fas fa-users"></i>
                         </button>
-                        <button type="button" id="savedMessagesInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Saved Messages details" title="Saved Messages details" hidden>
+                        <button type="button" id="savedMessagesInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="Your messages details" title="Your messages details" hidden>
                             <i class="fas fa-bookmark"></i>
                         </button>
                         <button type="button" id="alertPanelBtn" class="btn btn-sm btn-outline-secondary alert-panel-btn" aria-label="Announcements" title="Announcements">
@@ -216,13 +218,13 @@ $csrfToken = generateCsrfToken();
                         </div>
                     </div>
                 </div>
-                <div id="savedMessagesInfoPanel" class="saved-messages-info-panel" role="region" aria-label="Saved Messages details" hidden>
+                <div id="savedMessagesInfoPanel" class="saved-messages-info-panel" role="region" aria-label="Your messages details" hidden>
                     <div class="saved-info-header">
                         <button type="button" id="savedInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back" title="Back">
                             <i class="fas fa-arrow-left"></i>
                         </button>
                         <div>
-                            <h6 class="mb-0"><i class="fas fa-bookmark me-1"></i>Saved Messages</h6>
+                            <h6 class="mb-0"><i class="fas fa-bookmark me-1"></i>You</h6>
                         </div>
                     </div>
                     <div class="saved-info-stats" id="savedInfoStats">
@@ -454,7 +456,7 @@ $csrfToken = generateCsrfToken();
                             </label>
 
                             <label class="chat-ui-settings-item chat-ui-settings-item-check">
-                                <span>Show Saved Messages</span>
+                                <span>Show "You" in chat list</span>
                                 <span class="chat-ui-settings-control">
                                     <input type="checkbox" id="settingShowSavedMessages" checked>
                                 </span>
@@ -883,6 +885,7 @@ $csrfToken = generateCsrfToken();
         window.CURRENT_USER_IS_ADMIN = CURRENT_USER_IS_ADMIN;
         window.CURRENT_USER_IS_SUPERUSER = CURRENT_USER_IS_SUPERUSER;
         const USER_TIPS_SEEN_AT = <?= json_encode($tips_seen_at) ?>;
+        const LAST_READ_ANNOUNCEMENT_ID = <?= json_encode($last_read_announcement_id) ?>;
         const PWA_SW_VERSION = <?= json_encode((string) @filemtime(__DIR__ . '/service-worker.js')) ?>;
         const currentUserIdent = <?= json_encode($user_ident) ?>;
         if(currentUserIdent?.length) {

@@ -1025,7 +1025,7 @@ function getCurrentChatDisplayName() {
         return "";
     }
     if (isSavedMessagesChat(currentChatUser)) {
-        return "Saved Messages";
+        return "You";
     }
     const groupId = parseGroupIdFromToken(currentChatUser);
     if (groupId > 0) {
@@ -1380,8 +1380,8 @@ function closeUiSettingsModal({ restoreFocus = true } = {}) {
 /* ── Announcements Panel ── */
 
 let announcementsCachedList = null;
-let announcementLastSeenTs = (typeof USER_TIPS_SEEN_AT !== "undefined" && USER_TIPS_SEEN_AT)
-    ? new Date(USER_TIPS_SEEN_AT).getTime() : 0;
+let lastReadAnnouncementId = (typeof LAST_READ_ANNOUNCEMENT_ID !== "undefined")
+    ? Number(LAST_READ_ANNOUNCEMENT_ID) || 0 : 0;
 
 async function fetchAnnouncements() {
     try {
@@ -1406,9 +1406,8 @@ function formatAnnouncementTime(dateStr) {
     return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
 }
 
-function isAnnouncementNew(dateStr) {
-    if (!dateStr) return false;
-    return new Date(dateStr).getTime() > announcementLastSeenTs;
+function isAnnouncementNew(announcementId) {
+    return Number(announcementId) > lastReadAnnouncementId;
 }
 
 function renderAnnouncementsPanel(list) {
@@ -1429,7 +1428,7 @@ function renderAnnouncementsPanel(list) {
         const item = document.createElement("div");
         item.className = "announcements-item";
         item.style.animationDelay = `${i * 0.06}s`;
-        const isNew = isAnnouncementNew(a.created_at);
+        const isNew = isAnnouncementNew(a.id);
         const authorInitial = (a.author || "?")[0].toUpperCase();
         item.innerHTML = `
             ${isNew ? '<span class="announcements-new-badge">NEW</span>' : ''}
@@ -1451,14 +1450,15 @@ async function openAnnouncementsPanel() {
     const list = await fetchAnnouncements();
     announcementsCachedList = list;
     renderAnnouncementsPanel(list);
-    // Mark as seen — update tips_seen_at
+    // Mark as seen — send the latest announcement ID
+    const latestId = list.length ? Number(list[0].id) || 0 : 0;
     try {
-        await window.ApiService.jsonOk("api/users/dismiss_changelog.php", {
+        await window.ApiService.jsonOk("api/users/dismiss_announcements.php", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-            body: "{}",
+            body: JSON.stringify({ last_announcement_id: latestId }),
         });
-        announcementLastSeenTs = Date.now();
+        if (latestId > lastReadAnnouncementId) lastReadAnnouncementId = latestId;
     } catch { /* best-effort */ }
     setAnnouncementUnreadState(false);
 }
@@ -1486,8 +1486,8 @@ async function checkAnnouncementUnread() {
     const list = await fetchAnnouncements();
     announcementsCachedList = list;
     if (!list.length) { setAnnouncementUnreadState(false); return; }
-    const latestTs = new Date(list[0].created_at).getTime();
-    setAnnouncementUnreadState(latestTs > announcementLastSeenTs);
+    const latestId = Number(list[0].id) || 0;
+    setAnnouncementUnreadState(latestId > lastReadAnnouncementId);
 }
 
 /* ── Playlist ── */
@@ -3069,7 +3069,7 @@ function bindSettingsUiEvents() {
                 savedMsgItem.style.display = appSettings.showSavedMessages ? "" : "none";
             }
             setComposerStatus(
-                appSettings.showSavedMessages ? "Saved Messages shown in chat list" : "Saved Messages hidden from chat list",
+                appSettings.showSavedMessages ? "\"You\" shown in chat list" : "\"You\" hidden from chat list",
                 "success"
             );
         });
@@ -4249,7 +4249,7 @@ function createForwardTargetListContent(onSelectUsername) {
     savedBtn.style.setProperty("--i", String(fwdIdx++));
     savedBtn.innerHTML = `
         <span class="forward-target-avatar saved-messages-avatar"><i class="fas fa-bookmark"></i></span>
-        <span class="forward-target-name">Saved Messages</span>
+        <span class="forward-target-name">You</span>
     `;
     savedBtn.addEventListener("click", () => onSelectUsername(CURRENT_USER, savedBtn));
     wrapper.appendChild(savedBtn);
@@ -4499,7 +4499,7 @@ async function saveMessageToSavedMessages(messageElement) {
             throw new Error("Unable to identify message content");
         }
         addUserToChatList(CURRENT_USER, { userId: CURRENT_USER_ID });
-        setComposerStatus("Saved to Saved Messages", "success");
+        setComposerStatus("Saved to your messages", "success");
     } catch (error) {
         showModal("Save Failed", error.message || "Unable to save message.", "error");
     }
@@ -6175,8 +6175,8 @@ function addUserToChatList(username, options = {}) {
     li.style.setProperty("--i", chatListElem.children.length);
 
     if (isSelf) {
-        li.setAttribute("aria-label", "Open Saved Messages");
-        li.innerHTML = `<span class="avatar saved-messages-avatar"><i class="fas fa-bookmark"></i></span> <span>Saved Messages</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
+        li.setAttribute("aria-label", "Open your messages");
+        li.innerHTML = `<span class="avatar saved-messages-avatar"><i class="fas fa-bookmark"></i></span> <span>You</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
             username
         )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
         if (!appSettings.showSavedMessages) li.style.display = "none";
@@ -9058,7 +9058,7 @@ async function searchUserSuggestions(query) {
         const users = Array.isArray(data.users) ? data.users : [];
         // Inject Saved Messages if query matches
         const lq = query.toLowerCase();
-        if ("saved messages".includes(lq) || CURRENT_USER.toLowerCase().includes(lq)) {
+        if ("you".includes(lq) || "saved messages".includes(lq) || CURRENT_USER.toLowerCase().includes(lq)) {
             if (!users.includes(CURRENT_USER)) {
                 users.unshift(CURRENT_USER);
             }
@@ -9095,7 +9095,7 @@ function showSuggestions(users) {
         item.dataset.index = index;
 
         const isSelf = username === CURRENT_USER;
-        const displayName = isSelf ? "Saved Messages" : username;
+        const displayName = isSelf ? "You" : username;
         const initials = isSelf ? '<i class="fas fa-bookmark"></i>' : username
             .split(" ")
             .map((n) => n[0])
@@ -9154,7 +9154,7 @@ async function selectSuggestion(username) {
     hideSuggestions();
 
     if (isANewUser && window.UIEnhancements) {
-        const label = isSavedMessagesChat(username) ? "Opened Saved Messages" : `Started chat with ${username}`;
+        const label = isSavedMessagesChat(username) ? "Opened your messages" : `Started chat with ${username}`;
         window.UIEnhancements.showSearchNotification(label, "success");
     }
 }
