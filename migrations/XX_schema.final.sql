@@ -57,6 +57,7 @@ CREATE TABLE messages (
   voice_file_path VARCHAR(255),
   image_file_path VARCHAR(255),
   any_file_path VARCHAR(255),
+  file_purged_at TIMESTAMP NULL DEFAULT NULL,
   file_size BIGINT,
   sticker_id INT NULL,
   reply_to_message_id INT NULL,

@@ -1607,6 +1607,12 @@ async function playPlaylistTrack(track, btnEl) {
 
     try {
         if (!track.meta) throw new Error("Track metadata missing — re-add from chat");
+
+        const freshMeta = messageMetaById.get(Number(track.meta?.id || track.msgId || 0));
+        if ((freshMeta && freshMeta.file_purged_at) || track.meta.file_purged_at) {
+            throw new Error("FILE_UNAVAILABLE");
+        }
+
         const mediaResource = await getDecryptedMediaResource(track.meta);
 
         if (!audioContext) {
@@ -1637,7 +1643,12 @@ async function playPlaylistTrack(track, btnEl) {
         showGlobalNowPlaying(playlistAudio, track.title || "Playlist track", "music");
     } catch (error) {
         btnEl.innerHTML = '<i class="fas fa-play"></i>';
-        showModal("Playback Error", error?.message || "Unable to play track.", "error");
+        if (error?.message === "FILE_UNAVAILABLE") {
+            setComposerStatus(`"${track.title || "Track"}" — file expired, skipping...`, "warning");
+            autoPlayNextTrack(track);
+        } else {
+            showModal("Playback Error", error?.message || "Unable to play track.", "error");
+        }
     }
 }
 
@@ -1755,21 +1766,25 @@ function renderSavedPlaylistPanel() {
     }
     list.forEach((track, idx) => {
         const item = document.createElement("div");
-        item.className = "saved-playlist-item" + (idx === savedPanelCurrentTrackIdx ? " active" : "");
+        const freshMeta = messageMetaById.get(Number(track.meta?.id || track.msgId || 0));
+        const isPurged = Boolean((freshMeta && freshMeta.file_purged_at) || track.meta?.file_purged_at);
+        item.className = "saved-playlist-item" + (idx === savedPanelCurrentTrackIdx ? " active" : "") + (isPurged ? " playlist-item-purged" : "");
         item.setAttribute("data-playlist-idx", String(idx));
         item.innerHTML = `
-            <button type="button" class="saved-pl-play" title="Play">
-                <i class="fas ${idx === savedPanelCurrentTrackIdx && savedPanelPlaylistAudio && !savedPanelPlaylistAudio.paused ? "fa-pause" : "fa-play"}"></i>
+            <button type="button" class="saved-pl-play" title="${isPurged ? "File expired" : "Play"}" ${isPurged ? "disabled" : ""}>
+                <i class="fas ${isPurged ? "fa-clock" : (idx === savedPanelCurrentTrackIdx && savedPanelPlaylistAudio && !savedPanelPlaylistAudio.paused ? "fa-pause" : "fa-play")}"></i>
             </button>
             <div class="saved-pl-info">
-                <div class="saved-pl-title">${ChatUtils.escapeHtml(String(track.title || "Unknown"))}</div>
-                <div class="saved-pl-meta">${ChatUtils.escapeHtml(String(track.ext || "").toUpperCase())}${track.addedAt ? " · added " + new Date(track.addedAt).toLocaleDateString() : ""}</div>
+                <div class="saved-pl-title${isPurged ? " file-purged-title" : ""}">${ChatUtils.escapeHtml(String(track.title || "Unknown"))}</div>
+                <div class="saved-pl-meta">${isPurged ? '<span class="file-purged-badge" style="font-size:0.6rem;padding:1px 6px;"><i class="fas fa-clock"></i> Expired</span>' : `${ChatUtils.escapeHtml(String(track.ext || "").toUpperCase())}${track.addedAt ? " · added " + new Date(track.addedAt).toLocaleDateString() : ""}`}</div>
             </div>
             <button type="button" class="saved-pl-remove" title="Remove from playlist">
                 <i class="fas fa-trash-alt"></i>
             </button>
         `;
-        item.querySelector(".saved-pl-play")?.addEventListener("click", () => playSavedPanelTrack(idx));
+        if (!isPurged) {
+            item.querySelector(".saved-pl-play")?.addEventListener("click", () => playSavedPanelTrack(idx));
+        }
         item.querySelector(".saved-pl-remove")?.addEventListener("click", () => {
             removeFromPlaylist(track.msgId);
             if (savedPanelCurrentTrackIdx === idx) {
@@ -1809,6 +1824,13 @@ async function playSavedPanelTrack(idx) {
 
     try {
         if (!track.meta) throw new Error("Track metadata missing — re-add from chat");
+
+        // Check if file was purged (proactive check from fresh message meta)
+        const freshMeta = messageMetaById.get(Number(track.meta?.id || track.msgId || 0));
+        if ((freshMeta && freshMeta.file_purged_at) || track.meta.file_purged_at) {
+            throw new Error("FILE_UNAVAILABLE");
+        }
+
         const mediaResource = await getDecryptedMediaResource(track.meta);
 
         if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1863,9 +1885,21 @@ async function playSavedPanelTrack(idx) {
         // Also show global now-playing bar
         showGlobalNowPlaying(savedPanelPlaylistAudio, track.title || "Playlist track", "music");
     } catch (error) {
-        showModal("Playback Error", error?.message || "Unable to play track.", "error");
-        stopSavedPanelAudio();
-        renderSavedPlaylistPanel();
+        const isPurged = error?.message === "FILE_UNAVAILABLE";
+        if (isPurged) {
+            // Auto-skip to next track instead of blocking
+            setComposerStatus(`Skipped "${track.title || "track"}" — file expired`, "warning");
+            stopSavedPanelAudio();
+            renderSavedPlaylistPanel();
+            const list = getPlaylist();
+            if (idx < list.length - 1) {
+                setTimeout(() => playSavedPanelTrack(idx + 1), 300);
+            }
+        } else {
+            showModal("Playback Error", error?.message || "Unable to play track.", "error");
+            stopSavedPanelAudio();
+            renderSavedPlaylistPanel();
+        }
     }
 }
 
@@ -6685,6 +6719,47 @@ async function loadMoreMessages() {
 
     updateGoToLatestButton();
 }
+
+function highlightReplyTarget(targetElement) {
+    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    targetElement.classList.add("reply-target-highlight");
+    setTimeout(() => targetElement.classList.remove("reply-target-highlight"), 2000);
+}
+
+async function scrollToReplyTarget(targetId) {
+    // 1. Check if already in DOM
+    let targetMessage = chatMessagesElem.querySelector(`[data-message-id="${targetId}"]`);
+    if (targetMessage) {
+        highlightReplyTarget(targetMessage);
+        return;
+    }
+
+    // 2. Not loaded — iteratively load older messages until found or exhausted
+    if (!currentChatUser || !hasMoreMessages) {
+        setComposerStatus("Original message is no longer available.", "warning");
+        return;
+    }
+
+    setComposerStatus("Loading older messages...", "success");
+    let batchesLoaded = 0;
+    const maxBatches = 20;
+
+    while (!targetMessage && hasMoreMessages && currentChatUser && batchesLoaded < maxBatches) {
+        await loadMessages(currentChatUser, false, false);
+        batchesLoaded++;
+        targetMessage = chatMessagesElem.querySelector(`[data-message-id="${targetId}"]`);
+    }
+
+    if (targetMessage) {
+        setComposerStatus("");
+        // Small delay to let DOM settle after batch load
+        await new Promise((r) => setTimeout(r, 100));
+        highlightReplyTarget(targetMessage);
+    } else {
+        setComposerStatus("Could not find the original message.", "warning");
+    }
+}
+
 function newDateTag(
     msg,
     { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "" }
@@ -7060,153 +7135,260 @@ async function addMessageToChat(msg, prepend = false) {
     div.classList.add("message");
     div.classList.add(msg.sender_id == CURRENT_USER_ID ? "sent" : "received");
 
+    const isFilePurged = Boolean(msg.file_purged_at);
+
     if (msg.message_type === "voice" && msg.voice_file_path) {
 
         div.classList.add("is-voice-message");
         hasContextActions = true;
         canReact = true;
-        canForward = true;
+        canForward = !isFilePurged;
 
-        div.innerHTML = `
-          ${buildForwardedPreviewHtml(msg)}
-          <div class="voice-player-container">
-            <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id})">
-              <i class="fas fa-play"></i>
-            </button>
-            <div class="voice-waveform">
-              <div class="waveform-bars">
-                ${generateWaveformBars()}
+        if (isFilePurged) {
+            div.innerHTML = `
+              ${buildForwardedPreviewHtml(msg)}
+              <div class="voice-player-container file-purged-container">
+                <button class="voice-play-btn" disabled style="opacity:0.4">
+                  <i class="fas fa-play"></i>
+                </button>
+                <div class="voice-waveform file-purged-waveform">
+                  <div class="waveform-bars">
+                    ${generateWaveformBars()}
+                  </div>
+                </div>
+                <div class="file-purged-badge"><i class="fas fa-clock"></i> Expired</div>
               </div>
-            </div>
-            <div class="voice-duration-display">--:--</div>
-          </div>
-        ${newDateTag(msg, {
-            atLeft: msg.sender_id == CURRENT_USER_ID,
-            topSpace: 1,
-            fontSize: 8.5,
-            extraStyles: "color: var(--text-color); font-weight: 600;",
-        })}
-        `;
-        div.setAttribute("data-message-id", msg.id);
-    } else if (msg.message_type === "image" && msg.image_file_path) {
-        div.classList.add("is-image-message");
-        hasContextActions = true;
-        canReact = true;
-        canForward = true;
-        canCopyImage = true;
-
-        div.innerHTML = `${buildForwardedPreviewHtml(msg)}<a href="#" class="image-message-link" title="View full image">
-                <img src="" class="message-image" alt="Encrypted image" data-ready="0" style="display:none;">
-                <div class="image-message-loading" style="padding: 20px; text-align: center; color: #6c757d;">Decrypting image...</div>
-                </a>${newDateTag(msg, {
-                    atLeft: msg.sender_id == CURRENT_USER_ID,
-                    topSpace: 1,
-                    fontSize: 8.5,
-                    extraStyles: "color: var(--text-color); font-weight: 600;",
-                })}`;
-                div.setAttribute("data-message-id", msg.id);
-
-    } else if (msg.message_type === "video" && msg.any_file_path) {
-        div.classList.add("is-video-message");
-        hasContextActions = true;
-        canReact = true;
-        canForward = true;
-
-        div.innerHTML = `
-            ${buildForwardedPreviewHtml(msg)}
-            <div class="video-message-container">
-                <video class="message-video" controls playsinline preload="metadata" style="display:none;"></video>
-                <div class="video-message-loading">Decrypting video...</div>
-            </div>
             ${newDateTag(msg, {
                 atLeft: msg.sender_id == CURRENT_USER_ID,
                 topSpace: 1,
                 fontSize: 8.5,
                 extraStyles: "color: var(--text-color); font-weight: 600;",
             })}
-        `;
+            `;
+        } else {
+            div.innerHTML = `
+              ${buildForwardedPreviewHtml(msg)}
+              <div class="voice-player-container">
+                <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id})">
+                  <i class="fas fa-play"></i>
+                </button>
+                <div class="voice-waveform">
+                  <div class="waveform-bars">
+                    ${generateWaveformBars()}
+                  </div>
+                </div>
+                <div class="voice-duration-display">--:--</div>
+              </div>
+            ${newDateTag(msg, {
+                atLeft: msg.sender_id == CURRENT_USER_ID,
+                topSpace: 1,
+                fontSize: 8.5,
+                extraStyles: "color: var(--text-color); font-weight: 600;",
+            })}
+            `;
+        }
+        div.setAttribute("data-message-id", msg.id);
+    } else if (msg.message_type === "image" && msg.image_file_path) {
+        div.classList.add("is-image-message");
+        hasContextActions = true;
+        canReact = true;
+        canForward = !isFilePurged;
+        canCopyImage = !isFilePurged;
+
+        if (isFilePurged) {
+            div.innerHTML = `${buildForwardedPreviewHtml(msg)}<div class="file-purged-media-placeholder">
+                    <i class="fas fa-image file-purged-media-icon"></i>
+                    <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
+                </div>${newDateTag(msg, {
+                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    topSpace: 1,
+                    fontSize: 8.5,
+                    extraStyles: "color: var(--text-color); font-weight: 600;",
+                })}`;
+        } else {
+            div.innerHTML = `${buildForwardedPreviewHtml(msg)}<a href="#" class="image-message-link" title="View full image">
+                    <img src="" class="message-image" alt="Encrypted image" data-ready="0" style="display:none;">
+                    <div class="image-message-loading" style="padding: 20px; text-align: center; color: #6c757d;">Decrypting image...</div>
+                    </a>${newDateTag(msg, {
+                        atLeft: msg.sender_id == CURRENT_USER_ID,
+                        topSpace: 1,
+                        fontSize: 8.5,
+                        extraStyles: "color: var(--text-color); font-weight: 600;",
+                    })}`;
+        }
+        div.setAttribute("data-message-id", msg.id);
+
+    } else if (msg.message_type === "video" && msg.any_file_path) {
+        div.classList.add("is-video-message");
+        hasContextActions = true;
+        canReact = true;
+        canForward = !isFilePurged;
+
+        if (isFilePurged) {
+            div.innerHTML = `
+                ${buildForwardedPreviewHtml(msg)}
+                <div class="file-purged-media-placeholder">
+                    <i class="fas fa-video file-purged-media-icon"></i>
+                    <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
+                </div>
+                ${newDateTag(msg, {
+                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    topSpace: 1,
+                    fontSize: 8.5,
+                    extraStyles: "color: var(--text-color); font-weight: 600;",
+                })}
+            `;
+        } else {
+            div.innerHTML = `
+                ${buildForwardedPreviewHtml(msg)}
+                <div class="video-message-container">
+                    <video class="message-video" controls playsinline preload="metadata" style="display:none;"></video>
+                    <div class="video-message-loading">Decrypting video...</div>
+                </div>
+                ${newDateTag(msg, {
+                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    topSpace: 1,
+                    fontSize: 8.5,
+                    extraStyles: "color: var(--text-color); font-weight: 600;",
+                })}
+            `;
+        }
         div.setAttribute("data-message-id", msg.id);
 
     } else if (msg.message_type === "file" && msg.any_file_path) {
         hasContextActions = true;
         canReact = true;
-        canForward = true;
+        canForward = !isFilePurged;
 
-        let fileName = "Encrypted file";
-        try {
-            const mediaMeta = await getDecryptedMediaMetadata(msg);
-            fileName = sanitizeAttachmentFileName(
-                String(mediaMeta?.file_name || "").trim(),
-                fileName
-            );
-        } catch (error) {}
-        const fileSize = msg.file_size ? formatFileSize(msg.file_size) : "";
-        const safeFileName = escapeHtml(fileName);
-        const isAudio = isAudioFileName(fileName);
+        if (isFilePurged) {
+            // ── Purged file — try to show name from metadata, fall back gracefully ──
+            let fileName = "File";
+            try {
+                const mediaMeta = await getDecryptedMediaMetadata(msg);
+                fileName = sanitizeAttachmentFileName(String(mediaMeta?.file_name || "").trim(), fileName);
+            } catch (_) {}
+            const safeFileName = escapeHtml(fileName);
+            const isAudio = isAudioFileName(fileName);
 
-        if (isAudio) {
-            // ── Music file: Telegram-style player ──
-            div.classList.add("is-file-message", "is-music-message");
-            const musicTitle = safeFileName.replace(/\.[^.]+$/, "");
-            const ext = getFileExtension(fileName).toUpperCase();
-
-            div.innerHTML = `
-              ${buildForwardedPreviewHtml(msg)}
-              <div class="music-player-container" data-file-msg-id="${msg.id}">
-                <button class="music-play-btn" onclick="playMusicMessage(${msg.id})" type="button">
-                  <i class="fas fa-play"></i>
-                </button>
-                <div class="music-info">
-                  <div class="music-title">${musicTitle}</div>
-                  <div class="music-meta">
-                    <span class="music-duration">--:--</span>
-                    ${fileSize ? `<span class="music-sep">&middot;</span><span class="music-size">${fileSize}</span>` : ""}
-                    <span class="music-sep">&middot;</span><span class="music-format">${ext}</span>
+            if (isAudio) {
+                div.classList.add("is-file-message", "is-music-message");
+                const musicTitle = safeFileName.replace(/\.[^.]+$/, "");
+                div.innerHTML = `
+                  ${buildForwardedPreviewHtml(msg)}
+                  <div class="music-player-container file-purged-container" data-file-msg-id="${msg.id}">
+                    <button class="music-play-btn" disabled style="opacity:0.4" type="button">
+                      <i class="fas fa-play"></i>
+                    </button>
+                    <div class="music-info">
+                      <div class="music-title file-purged-title">${musicTitle}</div>
+                      <div class="file-purged-badge"><i class="fas fa-clock"></i> Expired</div>
+                    </div>
                   </div>
-                  <div class="music-progress-wrap">
-                    <div class="music-progress-bar"></div>
+                  ${newDateTag(msg, {
+                      atLeft: msg.sender_id == CURRENT_USER_ID,
+                      topSpace: 1,
+                      fontSize: 8.5,
+                      extraStyles: "color: var(--text-color); font-weight: 600;",
+                  })}
+                `;
+            } else {
+                div.classList.add("is-file-message");
+                div.innerHTML = `
+                  ${buildForwardedPreviewHtml(msg)}
+                  <div class="file-message-container file-purged-container" data-file-msg-id="${msg.id}">
+                    <div class="file-icon" style="opacity:0.4">
+                      <i class="fas fa-file"></i>
+                    </div>
+                    <div class="file-info">
+                      <div class="file-name file-purged-title">${safeFileName}</div>
+                      <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
+                    </div>
                   </div>
-                </div>
-                <button class="music-download-btn" onclick="downloadAndOpenFile(${msg.id})" type="button" title="Download">
-                  <i class="fas fa-download"></i>
-                </button>
-              </div>
-              ${newDateTag(msg, {
-                  atLeft: msg.sender_id == CURRENT_USER_ID,
-                  topSpace: 1,
-                  fontSize: 8.5,
-                  extraStyles: "color: var(--text-color); font-weight: 600;",
-              })}
-            `;
+                  ${newDateTag(msg, {
+                      atLeft: msg.sender_id == CURRENT_USER_ID,
+                      topSpace: 1,
+                      fontSize: 8.5,
+                      extraStyles: "color: var(--text-color); font-weight: 600;",
+                  })}
+                `;
+            }
         } else {
-            // ── Generic file ──
-            div.classList.add("is-file-message");
-            const isDownloaded = await isFileDownloaded(msg.id);
-            const downloadIconClass = isDownloaded ? "fa-check-circle" : "fa-download";
-            const downloadIconColor = isDownloaded ? "color: var(--primary-color);" : "";
-            const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
+            let fileName = "Encrypted file";
+            try {
+                const mediaMeta = await getDecryptedMediaMetadata(msg);
+                fileName = sanitizeAttachmentFileName(
+                    String(mediaMeta?.file_name || "").trim(),
+                    fileName
+                );
+            } catch (error) {}
+            const fileSize = msg.file_size ? formatFileSize(msg.file_size) : "";
+            const safeFileName = escapeHtml(fileName);
+            const isAudio = isAudioFileName(fileName);
 
-            div.innerHTML = `
-              ${buildForwardedPreviewHtml(msg)}
-              <div class="file-message-container" data-file-msg-id="${msg.id}" onclick="downloadAndOpenFile(${msg.id})" ${cacheTitle}>
-                <div class="file-icon">
-                  <i class="fas fa-file"></i>
-                </div>
-                <div class="file-info">
-                  <div class="file-name">${safeFileName}</div>
-                  ${fileSize ? `<div class="file-size">${fileSize}</div>` : ""}
-                </div>
-                <div class="file-download-icon">
-                  <i class="fas ${downloadIconClass}" style="${downloadIconColor}"></i>
-                </div>
-              </div>
-              ${newDateTag(msg, {
-                  atLeft: msg.sender_id == CURRENT_USER_ID,
-                  topSpace: 1,
-                  fontSize: 8.5,
-                  extraStyles: "color: var(--text-color); font-weight: 600;",
-              })}
-            `;
+            if (isAudio) {
+                // ── Music file: Telegram-style player ──
+                div.classList.add("is-file-message", "is-music-message");
+                const musicTitle = safeFileName.replace(/\.[^.]+$/, "");
+                const ext = getFileExtension(fileName).toUpperCase();
+
+                div.innerHTML = `
+                  ${buildForwardedPreviewHtml(msg)}
+                  <div class="music-player-container" data-file-msg-id="${msg.id}">
+                    <button class="music-play-btn" onclick="playMusicMessage(${msg.id})" type="button">
+                      <i class="fas fa-play"></i>
+                    </button>
+                    <div class="music-info">
+                      <div class="music-title">${musicTitle}</div>
+                      <div class="music-meta">
+                        <span class="music-duration">--:--</span>
+                        ${fileSize ? `<span class="music-sep">&middot;</span><span class="music-size">${fileSize}</span>` : ""}
+                        <span class="music-sep">&middot;</span><span class="music-format">${ext}</span>
+                      </div>
+                      <div class="music-progress-wrap">
+                        <div class="music-progress-bar"></div>
+                      </div>
+                    </div>
+                    <button class="music-download-btn" onclick="downloadAndOpenFile(${msg.id})" type="button" title="Download">
+                      <i class="fas fa-download"></i>
+                    </button>
+                  </div>
+                  ${newDateTag(msg, {
+                      atLeft: msg.sender_id == CURRENT_USER_ID,
+                      topSpace: 1,
+                      fontSize: 8.5,
+                      extraStyles: "color: var(--text-color); font-weight: 600;",
+                  })}
+                `;
+            } else {
+                // ── Generic file ──
+                div.classList.add("is-file-message");
+                const isDownloaded = await isFileDownloaded(msg.id);
+                const downloadIconClass = isDownloaded ? "fa-check-circle" : "fa-download";
+                const downloadIconColor = isDownloaded ? "color: var(--primary-color);" : "";
+                const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
+
+                div.innerHTML = `
+                  ${buildForwardedPreviewHtml(msg)}
+                  <div class="file-message-container" data-file-msg-id="${msg.id}" onclick="downloadAndOpenFile(${msg.id})" ${cacheTitle}>
+                    <div class="file-icon">
+                      <i class="fas fa-file"></i>
+                    </div>
+                    <div class="file-info">
+                      <div class="file-name">${safeFileName}</div>
+                      ${fileSize ? `<div class="file-size">${fileSize}</div>` : ""}
+                    </div>
+                    <div class="file-download-icon">
+                      <i class="fas ${downloadIconClass}" style="${downloadIconColor}"></i>
+                    </div>
+                  </div>
+                  ${newDateTag(msg, {
+                      atLeft: msg.sender_id == CURRENT_USER_ID,
+                      topSpace: 1,
+                      fontSize: 8.5,
+                      extraStyles: "color: var(--text-color); font-weight: 600;",
+                  })}
+                `;
+            }
         }
         div.setAttribute("data-message-id", msg.id);
     } else if (msg.message_type === "sticker" && Number(msg.sticker_id || 0) > 0) {
@@ -7338,12 +7520,7 @@ async function addMessageToChat(msg, prepend = false) {
                 if (!targetId) {
                     return;
                 }
-                const targetMessage = chatMessagesElem.querySelector(`[data-message-id="${targetId}"]`);
-                if (targetMessage) {
-                    targetMessage.scrollIntoView({ behavior: "smooth", block: "center" });
-                    targetMessage.classList.add("reply-target-highlight");
-                    setTimeout(() => targetMessage.classList.remove("reply-target-highlight"), 1100);
-                }
+                void scrollToReplyTarget(targetId);
             });
         }
     }
@@ -7367,7 +7544,7 @@ async function addMessageToChat(msg, prepend = false) {
         `;
     }
 
-    if (msg.message_type === "image" && msg.image_file_path) {
+    if (msg.message_type === "image" && msg.image_file_path && !isFilePurged) {
         const imageLink = div.querySelector(".image-message-link");
         if (imageLink) {
             imageLink.addEventListener("click", async (e) => {
@@ -7385,7 +7562,7 @@ async function addMessageToChat(msg, prepend = false) {
             });
         }
         void hydrateImageMessageElement(div, msg);
-    } else if (msg.message_type === "video" && msg.any_file_path) {
+    } else if (msg.message_type === "video" && msg.any_file_path && !isFilePurged) {
         void hydrateVideoMessageElement(div, msg);
     }
 
@@ -7928,11 +8105,13 @@ window.playVoiceMessage = async function (messageId) {
             const mediaResource = await getDecryptedMediaResource(messageMeta);
             audio.src = mediaResource.objectUrl;
         } catch (error) {
+            const isPurged = error?.message === "FILE_UNAVAILABLE";
             showModal(
-                "Audio Error",
-                "Unable to decrypt voice message.",
-                "error"
+                isPurged ? "File Expired" : "Audio Error",
+                isPurged ? "This voice message has been removed due to server cleanup." : "Unable to decrypt voice message.",
+                isPurged ? "warning" : "error"
             );
+            if (playBtn) { playBtn.disabled = true; playBtn.style.opacity = "0.4"; }
             return;
         }
         audio.preload = "metadata";
@@ -8121,7 +8300,13 @@ window.playMusicMessage = async function (messageId) {
             const mediaResource = await getDecryptedMediaResource(messageMeta);
             audio.src = mediaResource.objectUrl;
         } catch (error) {
-            showModal("Audio Error", "Unable to decrypt music file.", "error");
+            const isPurged = error?.message === "FILE_UNAVAILABLE";
+            showModal(
+                isPurged ? "File Expired" : "Audio Error",
+                isPurged ? "This music file has been removed due to server cleanup." : "Unable to decrypt music file.",
+                isPurged ? "warning" : "error"
+            );
+            if (playBtn) { playBtn.disabled = true; playBtn.style.opacity = "0.4"; }
             return;
         }
         audio.preload = "metadata";

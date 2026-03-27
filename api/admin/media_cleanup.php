@@ -82,6 +82,10 @@ foreach ($rows as $row) {
     if ($fileDeleted) {
         $deletedCount++;
         $freedBytes += $fileSize;
+
+        // Mark the message so clients show "file expired" without attempting a fetch
+        $purgeStmt = $pdo->prepare('UPDATE messages SET file_purged_at = NOW() WHERE id = ?');
+        $purgeStmt->execute([$row['id']]);
     } else {
         $failedCount++;
     }
