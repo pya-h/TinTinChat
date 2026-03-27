@@ -1452,15 +1452,19 @@ async function openAnnouncementsPanel() {
     renderAnnouncementsPanel(list);
     // Mark as seen — send the latest announcement ID
     const latestId = list.length ? Number(list[0].id) || 0 : 0;
-    try {
-        await window.ApiService.jsonOk("api/users/dismiss_announcements.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-            body: JSON.stringify({ last_announcement_id: latestId }),
-        });
-        if (latestId > lastReadAnnouncementId) lastReadAnnouncementId = latestId;
-    } catch { /* best-effort */ }
-    setAnnouncementUnreadState(false);
+    if (latestId > 0) {
+        try {
+            await window.ApiService.jsonOk("api/users/dismiss_announcements.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                body: JSON.stringify({ last_announcement_id: latestId }),
+            });
+            lastReadAnnouncementId = latestId;
+            setAnnouncementUnreadState(false);
+        } catch { /* best-effort — keep current unread state */ }
+    } else {
+        setAnnouncementUnreadState(false);
+    }
 }
 
 function closeAnnouncementsPanel() {
@@ -6336,7 +6340,6 @@ lastRecentPollTime = "";
     groupInfoBtn.hidden = !isGroup;
     userInfoBtn && (userInfoBtn.hidden = isGroup || !currentChatUser || isSavedMessagesChat(currentChatUser));
     if (savedMessagesInfoBtn) savedMessagesInfoBtn.hidden = !isSavedMessagesChat(currentChatUser);
-    if (alertPanelBtn) alertPanelBtn.hidden = true;
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
@@ -6732,45 +6735,101 @@ async function loadMoreMessages() {
     updateGoToLatestButton();
 }
 
-function highlightReplyTarget(targetElement) {
+function targetElement_playHighlight(el) {
+    el.classList.remove("reply-target-highlight");
+    // Clear any inline animation override (prepended messages set animation:none)
+    el.style.animation = '';
+    void el.offsetWidth; // force reflow to restart animation if re-triggered
+    el.classList.add("reply-target-highlight");
+    setTimeout(() => el.classList.remove("reply-target-highlight"), 2500);
+}
+
+function scrollToMessageAndHighlight(targetElement) {
+    // Step 1: Scroll to the element (smooth)
     targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-    targetElement.classList.add("reply-target-highlight");
-    setTimeout(() => targetElement.classList.remove("reply-target-highlight"), 2000);
+    // Step 2: Wait for scroll to finish, THEN play highlight animation
+    // Use IntersectionObserver to detect when element is actually in view
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            observer.disconnect();
+            // Small extra delay so the scroll fully settles visually
+            setTimeout(() => targetElement_playHighlight(targetElement), 150);
+        }
+    }, { root: chatMessagesElem, threshold: 0.5 });
+    observer.observe(targetElement);
+    // Safety: if observer never fires (edge case), highlight after 2s
+    setTimeout(() => {
+        observer.disconnect();
+        if (!targetElement.classList.contains("reply-target-highlight")) {
+            targetElement_playHighlight(targetElement);
+        }
+    }, 2000);
 }
 
 async function scrollToReplyTarget(targetId) {
     // 1. Check if already in DOM
     let targetMessage = chatMessagesElem.querySelector(`[data-message-id="${targetId}"]`);
     if (targetMessage) {
-        highlightReplyTarget(targetMessage);
+        scrollToMessageAndHighlight(targetMessage);
         return;
     }
 
-    // 2. Not loaded — iteratively load older messages until found or exhausted
+    // 2. Not loaded — fetch all messages from current offset to target in one request
     if (!currentChatUser || !hasMoreMessages) {
         setComposerStatus("Original message is no longer available.", "warning");
         return;
     }
 
-    setComposerStatus("Loading older messages...", "success");
-    let batchesLoaded = 0;
-    const maxBatches = 20;
+    setComposerStatus("Loading messages...", "success");
+    try {
+        const query = buildChatQueryParams(currentChatUser, {
+            offset: messageOffset,
+            target_id: targetId,
+        });
+        const data = await window.ApiService.json(`api/messages/fetch.php?${query.toString()}`);
 
-    while (!targetMessage && hasMoreMessages && currentChatUser && batchesLoaded < maxBatches) {
-        await loadMessages(currentChatUser, false, false);
-        batchesLoaded++;
+        if (!data.messages?.length) {
+            setComposerStatus("Could not find the original message.", "warning");
+            return;
+        }
+
+        // Remove existing "Load More" button before prepending
+        const existingLoadMore = document.getElementById("loadMoreBtn");
+        if (existingLoadMore) existingLoadMore.remove();
+
+        // Prepend all messages at once, preserving scroll position
+        const savedScrollTop = chatMessagesElem.scrollTop;
+        let runningHeightDelta = 0;
+
+        for (let i = data.messages.length - 1; i >= 0; i--) {
+            const prevH = chatMessagesElem.scrollHeight;
+            await addMessageToChat(data.messages[i], true);
+            const addedH = chatMessagesElem.scrollHeight - prevH;
+            runningHeightDelta += addedH;
+            chatMessagesElem.scrollTop = savedScrollTop + runningHeightDelta;
+        }
+
+        messageOffset += data.messages.length;
+        hasMoreMessages = data.hasMore;
+        if (hasMoreMessages) addLoadMoreButton();
+        updateGoToLatestButton();
+
+        // Now find the target — wait for layout to settle, then scroll once + highlight
         targetMessage = chatMessagesElem.querySelector(`[data-message-id="${targetId}"]`);
-    }
-
-    if (targetMessage) {
-        setComposerStatus("");
-        // Wait for layout to fully stabilise after batch prepend
-        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 80))));
-        // Use instant scroll first — smooth scroll can be interrupted after heavy DOM changes
-        targetMessage.scrollIntoView({ behavior: "auto", block: "center" });
-        highlightReplyTarget(targetMessage);
-    } else {
-        setComposerStatus("Could not find the original message.", "warning");
+        if (targetMessage) {
+            setComposerStatus("");
+            // Give the DOM a moment to finish rendering all prepended messages
+            await new Promise((r) => setTimeout(r, 300));
+            // Single instant jump to position the message in view
+            targetMessage.scrollIntoView({ behavior: "auto", block: "center" });
+            // Wait one more frame for the scroll to take effect, then highlight
+            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+            targetElement_playHighlight(targetMessage);
+        } else {
+            setComposerStatus("Could not find the original message.", "warning");
+        }
+    } catch {
+        setComposerStatus("Failed to load messages.", "error");
     }
 }
 
@@ -9826,7 +9885,6 @@ groupLeaveBtn?.addEventListener("click", async () => {
         groupKeyVersionCache.delete(Number(groupId));
         groupInfoBtn.hidden = true;
         groupInfoBtn.setAttribute("aria-expanded", "false");
-        if (alertPanelBtn) alertPanelBtn.hidden = false;
         currentChatUser = null;
         currentChatRecentMessages = null;
 lastRecentPollTime = "";

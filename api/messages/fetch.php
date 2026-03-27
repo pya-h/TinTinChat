@@ -60,6 +60,36 @@ if ($offset >= $total_count) {
 	]);
 }
 
+// Jump-to-message: if target_id is provided, calculate how many messages
+// need to be loaded to reach that message and override the limit accordingly.
+$targetId = isset($_GET['target_id']) ? (int) $_GET['target_id'] : 0;
+if ($targetId > 0) {
+	if ($groupId > 0) {
+		$posStmt = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE group_id = ? AND id >= ?');
+		$posStmt->execute([$groupId, $targetId]);
+	} else {
+		$posStmt = $pdo->prepare(
+			'SELECT COUNT(*) FROM messages
+			 WHERE ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) AND id >= ?'
+		);
+		$posStmt->execute([$userId, $otherUserId, $otherUserId, $userId, $targetId]);
+	}
+	$newerCount = (int) $posStmt->fetchColumn(); // messages from target to newest (inclusive)
+	$neededLimit = max(0, $newerCount - $offset);
+
+	if ($neededLimit <= 0) {
+		// Target should already be in the loaded range
+		apiSuccess([
+			'messages' => [],
+			'hasMore' => ($newerCount < $total_count),
+			'total' => $total_count,
+			'offset' => $offset,
+			'limit' => 0,
+		]);
+	}
+	$limit = min($neededLimit, 500); // safety cap
+}
+
 $hasMore = ($offset + $limit) < $total_count;
 
 if(!$hasMore) {
