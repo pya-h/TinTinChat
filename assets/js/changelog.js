@@ -17,43 +17,50 @@
 (function initChangelog() {
     "use strict";
 
-    const CHANGELOG_LAST_UPDATED = "2026-03-18T12:00:00Z";
+    const CHANGELOG_LAST_UPDATED = "2026-03-28T13:44:23.752Z";
 
     const CHANGELOG_HTML = `
 <ul class="changelog-list">
     <li class="changelog-item changelog-highlight">
-        <span class="changelog-icon"><i class="fas fa-hand-pointer"></i></span>
+        <span class="changelog-icon"><i class="fas fa-music"></i></span>
         <div>
-            <strong>Swipe Gestures</strong>
-            <p>Swipe right on any message to <em>reply</em> to it. Swipe left on your own messages to <em>edit</em> or <em>forward</em>. Works on both mobile and desktop (click-drag).</p>
+            <strong>Music Messages &amp; Playlists</strong>
+            <p>Send and receive music files with a dedicated player. Your music messages are collected in a <em>Playlist</em> section for easy access.</p>
         </div>
     </li>
     <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-lightbulb"></i></span>
+        <span class="changelog-icon"><i class="fas fa-mouse-pointer"></i></span>
         <div>
-            <strong>Ideas &amp; Feedback</strong>
-            <p>Head to <em>Settings → Ideas</em> to submit feature requests or bug reports, and vote on others' ideas.</p>
+            <strong>New Click &amp; Long-press Actions</strong>
+            <p><em>Double-click</em> a message to heart/unheart it. <em>Click</em>/<em>Long-press</em> (or right-click) to open the message action menu. Single click on a reply banner now scrolls to the original message.</p>
         </div>
     </li>
     <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-bell"></i></span>
+        <span class="changelog-icon"><i class="fas fa-play-circle"></i></span>
         <div>
-            <strong>Browser Notifications</strong>
-            <p>Enable in <em>Settings → General</em> to get desktop notifications for new messages even when the tab is in the background.</p>
+            <strong>Now Playing Bar</strong>
+            <p>A floating mini-player appears at the top when a voice or music message is playing, so you can keep scrolling without losing your spot.</p>
         </div>
     </li>
     <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-ban"></i></span>
+        <span class="changelog-icon"><i class="fas fa-bookmark"></i></span>
         <div>
-            <strong>Block Users</strong>
-            <p>You can now block/unblock users from their profile popup. Manage blocked users in <em>Settings → Account</em>.</p>
+            <strong>Saved Messages (You)</strong>
+            <p>Forward any message to <em>Saved Messages</em> to keep it for later. Access it from the top of your chat list.</p>
         </div>
     </li>
     <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-paint-brush"></i></span>
+        <span class="changelog-icon"><i class="fas fa-bullhorn"></i></span>
         <div>
-            <strong>UI Refresh &amp; Improvements</strong>
-            <p>Modernized design, smoother animations, improved dark mode, and better voice message waveforms.</p>
+            <strong>Announcements</strong>
+            <p>Important platform announcements now appear with a notification badge. Tap the bell icon in the header to view them.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-sliders-h"></i></span>
+        <div>
+            <strong>Voice Seek &amp; Drag</strong>
+            <p>Drag on the voice message waveform to seek to any position in the recording.</p>
         </div>
     </li>
 </ul>
