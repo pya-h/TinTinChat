@@ -17,7 +17,7 @@
 (function initChangelog() {
     "use strict";
 
-    const CHANGELOG_LAST_UPDATED = "2026-03-28T13:44:23.752Z";
+    const CHANGELOG_LAST_UPDATED = "2026-03-28T00:00:00.000Z";
 
     const CHANGELOG_HTML = `
 <ul class="changelog-list">
@@ -32,7 +32,14 @@
         <span class="changelog-icon"><i class="fas fa-mouse-pointer"></i></span>
         <div>
             <strong>New Click &amp; Long-press Actions</strong>
-            <p><em>Double-click</em> a message to heart/unheart it. <em>Click</em>/<em>Long-press</em> (or right-click) to open the message action menu. Single click on a reply banner now scrolls to the original message.</p>
+            <p><em>Double-click</em> a message to heart/unheart it. <em>Click</em>/<em>Long-press</em> (or right-click) to open the message action menu. Tap on a reply banner to scroll to the original message.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-hand-pointer"></i></span>
+        <div>
+            <strong>Swipe Chat List (Mobile)</strong>
+            <p>On mobile, <em>drag</em> the pull handle down to expand your chat list full-screen, and drag it back up to collapse &mdash; just like a notification shade.</p>
         </div>
     </li>
     <li class="changelog-item">

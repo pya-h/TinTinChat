@@ -231,6 +231,7 @@ const groupKeyVersionCache = new Map();
 let messageOffset = 0;
 let hasMoreMessages = true;
 let isLoadingMessages = false;
+let isBatchRendering = false; // Skip per-message rebuildMessageDaySeparators during batch loads
 let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
 const MESSAGES_PER_PAGE = Number(appConstants.messagesPerPage) || 50;
 
@@ -6473,9 +6474,12 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
         }
 
         if (isInitialLoad) {
+            isBatchRendering = true;
             for (const msg of data.messages) {
                 await addMessageToChat(msg);
             }
+            isBatchRendering = false;
+            rebuildMessageDaySeparators();
 
             if (hasMoreMessages) {
                 addLoadMoreButton();
@@ -6495,6 +6499,7 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             const savedScrollTop = chatMessagesElem.scrollTop;
             let runningHeightDelta = 0;
 
+            isBatchRendering = true;
             for (let i = data.messages.length - 1; i >= 0; i--) {
                 const prevH = chatMessagesElem.scrollHeight;
                 await addMessageToChat(data.messages[i], true);
@@ -6502,6 +6507,8 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                 runningHeightDelta += addedH;
                 chatMessagesElem.scrollTop = savedScrollTop + runningHeightDelta;
             }
+            isBatchRendering = false;
+            rebuildMessageDaySeparators();
 
             hasLoadedMoreMessages = true;
             updateGoToLatestButton();
@@ -6801,6 +6808,7 @@ async function scrollToReplyTarget(targetId) {
         const savedScrollTop = chatMessagesElem.scrollTop;
         let runningHeightDelta = 0;
 
+        isBatchRendering = true;
         for (let i = data.messages.length - 1; i >= 0; i--) {
             const prevH = chatMessagesElem.scrollHeight;
             await addMessageToChat(data.messages[i], true);
@@ -6808,6 +6816,8 @@ async function scrollToReplyTarget(targetId) {
             runningHeightDelta += addedH;
             chatMessagesElem.scrollTop = savedScrollTop + runningHeightDelta;
         }
+        isBatchRendering = false;
+        rebuildMessageDaySeparators();
 
         messageOffset += data.messages.length;
         hasMoreMessages = data.hasMore;
@@ -7705,14 +7715,16 @@ async function addMessageToChat(msg, prepend = false) {
         chatMessagesElem.appendChild(div);
     }
 
-    rebuildMessageDaySeparators();
-    if (
-        !isLoadingMessages &&
-        conversationSearchBar &&
-        !conversationSearchBar.hidden &&
-        conversationSearchInput?.value.trim()
-    ) {
-        runConversationSearch();
+    if (!isBatchRendering) {
+        rebuildMessageDaySeparators();
+        if (
+            !isLoadingMessages &&
+            conversationSearchBar &&
+            !conversationSearchBar.hidden &&
+            conversationSearchInput?.value.trim()
+        ) {
+            runConversationSearch();
+        }
     }
 }
 
