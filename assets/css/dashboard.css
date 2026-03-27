@@ -1061,10 +1061,11 @@ nav.navbar::after {
     max-width: min(11rem, 44vw);
 }
 
-.group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media {
+.group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media,
+.group-incoming-media-message.is-music-message .group-message-content.group-message-content-media {
     flex: 1 1 auto;
-    width: min(34rem, 80vw);
-    max-width: min(34rem, 80vw);
+    width: min(36rem, 78vw);
+    max-width: min(36rem, 78vw);
 }
 
 .group-incoming-media-message.is-voice-message .voice-player-container {
@@ -1072,29 +1073,19 @@ nav.navbar::after {
     min-width: 15.5rem;
 }
 
-.group-incoming-media-message.is-music-message .group-message-content.group-message-content-media {
-    flex: 1 1 auto;
-    width: min(22rem, 80vw);
-    max-width: min(22rem, 80vw);
-}
-
 @media (max-width: 767.98px) {
     .group-incoming-media-message .group-message-content.group-message-content-media {
         max-width: min(75vw, 23rem);
     }
 
-    .group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media {
+    .group-incoming-media-message.is-voice-message .group-message-content.group-message-content-media,
+    .group-incoming-media-message.is-music-message .group-message-content.group-message-content-media {
         width: min(78vw, 24rem);
         max-width: min(78vw, 24rem);
     }
 
     .group-incoming-media-message.is-voice-message .voice-player-container {
         min-width: 0;
-    }
-
-    .group-incoming-media-message.is-music-message .group-message-content.group-message-content-media {
-        width: min(75vw, 22rem);
-        max-width: min(75vw, 22rem);
     }
 }
 
@@ -4428,6 +4419,32 @@ textarea,
     100% {
         background-color: transparent;
         box-shadow: 0 0 0 0 transparent;
+    }
+}
+
+.message.sent.reply-target-highlight {
+    animation: replyTargetFlashSent 2s ease-out;
+}
+
+@keyframes replyTargetFlashSent {
+    0% {
+        background-color: color-mix(in srgb, white 32%, var(--sent-bg));
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.40),
+                    0 0 16px rgba(255, 255, 255, 0.20);
+    }
+    15% {
+        background-color: color-mix(in srgb, white 24%, var(--sent-bg));
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.30),
+                    0 0 24px rgba(255, 255, 255, 0.15);
+    }
+    40% {
+        background-color: color-mix(in srgb, white 12%, var(--sent-bg));
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.16),
+                    0 0 12px transparent;
+    }
+    100% {
+        background-color: var(--sent-bg);
+        box-shadow: 0 2px 12px rgba(106, 17, 203, 0.25), 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 }
 

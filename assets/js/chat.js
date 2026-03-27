@@ -1380,6 +1380,8 @@ function closeUiSettingsModal({ restoreFocus = true } = {}) {
 /* ── Announcements Panel ── */
 
 let announcementsCachedList = null;
+let announcementLastSeenTs = (typeof USER_TIPS_SEEN_AT !== "undefined" && USER_TIPS_SEEN_AT)
+    ? new Date(USER_TIPS_SEEN_AT).getTime() : 0;
 
 async function fetchAnnouncements() {
     try {
@@ -1406,9 +1408,7 @@ function formatAnnouncementTime(dateStr) {
 
 function isAnnouncementNew(dateStr) {
     if (!dateStr) return false;
-    const seenTs = (typeof USER_TIPS_SEEN_AT !== "undefined" && USER_TIPS_SEEN_AT)
-        ? new Date(USER_TIPS_SEEN_AT).getTime() : 0;
-    return new Date(dateStr).getTime() > seenTs;
+    return new Date(dateStr).getTime() > announcementLastSeenTs;
 }
 
 function renderAnnouncementsPanel(list) {
@@ -1458,6 +1458,7 @@ async function openAnnouncementsPanel() {
             headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
             body: "{}",
         });
+        announcementLastSeenTs = Date.now();
     } catch { /* best-effort */ }
     setAnnouncementUnreadState(false);
 }
@@ -1486,9 +1487,7 @@ async function checkAnnouncementUnread() {
     announcementsCachedList = list;
     if (!list.length) { setAnnouncementUnreadState(false); return; }
     const latestTs = new Date(list[0].created_at).getTime();
-    const seenTs = (typeof USER_TIPS_SEEN_AT !== "undefined" && USER_TIPS_SEEN_AT)
-        ? new Date(USER_TIPS_SEEN_AT).getTime() : 0;
-    setAnnouncementUnreadState(latestTs > seenTs);
+    setAnnouncementUnreadState(latestTs > announcementLastSeenTs);
 }
 
 /* ── Playlist ── */
@@ -3445,6 +3444,10 @@ document.addEventListener("DOMContentLoaded", () => {
     bindCreateGroupModalEvents();
     notificationPlayer.preloadCustom();
     checkAnnouncementUnread();
+    // Re-check for new announcements every 60 s so online users get notified
+    setInterval(() => {
+        if (!document.hidden && navigator.onLine) checkAnnouncementUnread();
+    }, 60_000);
 });
 
 function getCsrfHeaders() {
@@ -6761,8 +6764,10 @@ async function scrollToReplyTarget(targetId) {
 
     if (targetMessage) {
         setComposerStatus("");
-        // Small delay to let DOM settle after batch load
-        await new Promise((r) => setTimeout(r, 100));
+        // Wait for layout to fully stabilise after batch prepend
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 80))));
+        // Use instant scroll first — smooth scroll can be interrupted after heavy DOM changes
+        targetMessage.scrollIntoView({ behavior: "auto", block: "center" });
         highlightReplyTarget(targetMessage);
     } else {
         setComposerStatus("Could not find the original message.", "warning");
