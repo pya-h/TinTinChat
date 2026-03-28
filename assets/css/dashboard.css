@@ -365,6 +365,10 @@ nav.navbar::after {
     left: 1rem;
     bottom: 1.65rem;
     z-index: 120;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 0.6rem;
 }
 
 .create-group-fab {
@@ -381,6 +385,32 @@ nav.navbar::after {
 
 .create-group-fab i {
     font-size: 1rem;
+}
+
+.add-chat-fab {
+    width: 2.35rem;
+    height: 2.35rem;
+    min-width: 2.35rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--secondary-color) 22%, transparent);
+    transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+
+.add-chat-fab i {
+    font-size: 0.82rem;
+}
+
+.add-chat-fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--secondary-color) 30%, transparent);
+}
+
+.add-chat-fab:active {
+    transform: scale(0.93);
 }
 
 .chat-list li {
@@ -4853,7 +4883,7 @@ textarea,
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        width: 3.2rem;
+        width: 3.8rem;
         height: 1.5rem;
         border: none;
         border-radius: 0.6rem;
@@ -4868,23 +4898,22 @@ textarea,
 
     .mobile-chatlist-pull-bar {
         display: block;
-        width: 2rem;
+        width: 3rem;
         height: 0.24rem;
         border-radius: 999px;
-        background: color-mix(in srgb, var(--text-color) 35%, transparent);
-        transition: background-color 0.15s ease, width 0.2s ease;
-        animation: grabBarPulse 3s ease-in-out infinite;
+        background: color-mix(in srgb, var(--text-color) 30%, transparent);
+        transition: background-color 0.15s ease;
+        animation: grabBarGlow 3.5s ease-in-out infinite;
     }
 
-    @keyframes grabBarPulse {
-        0%, 100% { width: 2rem; opacity: 0.85; }
-        50% { width: 2.3rem; opacity: 1; }
+    @keyframes grabBarGlow {
+        0%, 100% { background: color-mix(in srgb, var(--text-color) 22%, transparent); }
+        50% { background: color-mix(in srgb, var(--secondary-color) 28%, var(--text-color) 12%); }
     }
 
     .mobile-chatlist-pull-handle:hover .mobile-chatlist-pull-bar,
     .mobile-chatlist-pull-handle:active .mobile-chatlist-pull-bar {
-        background: color-mix(in srgb, var(--secondary-color) 60%, var(--text-color));
-        width: 2.4rem;
+        background: color-mix(in srgb, var(--secondary-color) 55%, var(--text-color));
         animation: none;
     }
 
@@ -4978,13 +5007,27 @@ textarea,
 
     .sidebar.mobile-chatlist-drawer-open .group-actions {
         position: fixed;
-        left: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
         bottom: 1.65rem;
         width: auto;
-        display: block;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.8rem;
         padding-top: 0;
         background: none;
         z-index: 240;
+    }
+
+    .sidebar.mobile-chatlist-drawer-open .add-chat-fab {
+        width: 3.15rem;
+        height: 3.15rem;
+        min-width: 3.15rem;
+    }
+
+    .sidebar.mobile-chatlist-drawer-open .add-chat-fab i {
+        font-size: 1rem;
     }
 
     /* Bottom grab bar in expanded drawer — real element for proper touch target */
@@ -7416,6 +7459,215 @@ textarea,
     .create-group-modal {
         width: 100%;
         border-radius: 0.95rem;
+    }
+}
+
+/* ══════════════════════════════════════════
+   Add Chat Modal
+   ══════════════════════════════════════════ */
+
+.add-chat-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: create-group-overlay-in 0.36s ease;
+}
+
+.add-chat-modal {
+    width: min(28rem, 100%);
+    max-height: 70vh;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    transform-origin: center;
+    animation: create-group-modal-in 0.48s var(--ease-spring);
+    display: flex;
+    flex-direction: column;
+}
+
+.add-chat-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.add-chat-modal-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.add-chat-modal-close {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 88%, var(--background-color));
+    color: var(--subtle-text-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+    cursor: pointer;
+}
+
+.add-chat-modal-close:hover,
+.add-chat-modal-close:focus-visible {
+    color: var(--text-color);
+    border-color: color-mix(in srgb, var(--secondary-color) 38%, var(--border-color));
+    transform: translateY(-1px);
+}
+
+.add-chat-modal-body {
+    padding: 0.85rem 0.9rem 0.95rem;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.add-chat-search-wrap {
+    position: relative;
+}
+
+.add-chat-search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.82rem;
+    color: var(--subtle-text-color);
+    pointer-events: none;
+}
+
+.add-chat-search-wrap .form-control {
+    padding-left: 2.2rem;
+    border-radius: 0.7rem;
+    border-color: var(--border-color);
+    background: color-mix(in srgb, var(--surface-color) 90%, var(--background-color));
+    color: var(--text-color);
+    font-size: 0.88rem;
+}
+
+.add-chat-search-wrap .form-control:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--secondary-color) 18%, transparent);
+}
+
+.add-chat-results {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 40vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.add-chat-result-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.add-chat-result-item:hover {
+    background: color-mix(in srgb, var(--secondary-color) 10%, transparent);
+    transform: translateX(2px);
+}
+
+.add-chat-result-item:active {
+    transform: scale(0.98);
+}
+
+.add-chat-result-avatar {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    background: var(--sent-bg);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.add-chat-result-avatar.saved-messages-avatar {
+    background: color-mix(in srgb, var(--secondary-color) 60%, var(--surface-color));
+}
+
+.add-chat-result-name {
+    flex: 1;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-color);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.add-chat-result-action {
+    color: var(--secondary-color);
+    font-size: 0.82rem;
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+}
+
+.add-chat-result-item:hover .add-chat-result-action {
+    opacity: 1;
+}
+
+.add-chat-no-results {
+    text-align: center;
+    padding: 1.5rem 0;
+    color: var(--subtle-text-color);
+    font-size: 0.85rem;
+}
+
+.add-chat-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem 0;
+    color: color-mix(in srgb, var(--subtle-text-color) 60%, transparent);
+}
+
+.add-chat-empty i {
+    font-size: 1.8rem;
+}
+
+.add-chat-empty p {
+    margin: 0;
+    font-size: 0.82rem;
+}
+
+@media (max-width: 767.98px) {
+    .add-chat-modal-overlay {
+        align-items: flex-end;
+        padding: 0.6rem;
+    }
+
+    .add-chat-modal {
+        width: 100%;
+        border-radius: 0.95rem;
+        max-height: 75vh;
     }
 }
 

@@ -90,6 +90,9 @@ $csrfToken = generateCsrfToken();
                     <ul class="chat-list" id="chatList" role="list" aria-label="Chats"></ul>
 
                     <div class="group-actions" aria-hidden="false">
+                        <button type="button" id="addChatBtn" class="btn btn-primary add-chat-fab" aria-label="New chat" title="New chat">
+                            <i class="fas fa-plus"></i>
+                        </button>
                         <button type="button" id="createGroupBtn" class="btn btn-primary create-group-fab" aria-label="Create group" title="Create group">
                             <i class="fas fa-users"></i>
                         </button>
@@ -724,6 +727,28 @@ $csrfToken = generateCsrfToken();
         </div>
     </div>
 
+    <div id="addChatModalOverlay" class="add-chat-modal-overlay" hidden>
+        <div class="add-chat-modal" role="dialog" aria-modal="true" aria-labelledby="addChatModalTitle">
+            <div class="add-chat-modal-header">
+                <h5 id="addChatModalTitle" class="add-chat-modal-title">New Chat</h5>
+                <button type="button" id="addChatModalClose" class="add-chat-modal-close" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="add-chat-modal-body">
+                <div class="add-chat-search-wrap">
+                    <i class="fas fa-search add-chat-search-icon"></i>
+                    <input type="text" id="addChatSearchInput" class="form-control" placeholder="Search username..." autocomplete="off" maxlength="60" />
+                </div>
+                <div id="addChatResults" class="add-chat-results"></div>
+                <div id="addChatEmpty" class="add-chat-empty" hidden>
+                    <i class="fas fa-user-plus"></i>
+                    <p>Type a username to find someone</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="createGroupModalOverlay" class="create-group-modal-overlay" hidden>
         <div class="create-group-modal" role="dialog" aria-modal="true" aria-labelledby="createGroupModalTitle">
             <div class="create-group-modal-header">
@@ -945,6 +970,7 @@ $csrfToken = generateCsrfToken();
         let drawerDragJustEnded = false;
         let drawerTransitionCleanup = 0;
         let drawerSpacer = null; // placeholder to prevent layout jump
+        let drawerCompactHeight = 0; // cached compact sidebar height for pull-up
 
         function drawerCancelPendingCleanup() {
             if (drawerTransitionCleanup) {
@@ -1017,6 +1043,10 @@ $csrfToken = generateCsrfToken();
             sidebarElement.classList.remove('mobile-chatlist-drawer-closing');
 
             if (shouldOpen) {
+                // Cache compact height before going fixed
+                if (!mobileChatSelected && sidebarElement.offsetHeight > 0) {
+                    drawerCompactHeight = sidebarElement.offsetHeight;
+                }
                 // Show sidebar for drawer regardless of chat selection state
                 sidebarElement.style.display = '';
                 ensureDrawerSpacer();
@@ -1091,11 +1121,18 @@ $csrfToken = generateCsrfToken();
             drawerCancelPendingCleanup();
             const h = window.innerHeight;
 
-            // When chat is selected the sidebar is hidden; anchor = 0 (start from top)
-            // Otherwise anchor = compact sidebar height
-            const anchor = (mobileChatSelected && !isMobileDrawerOpen)
-                ? 0
-                : (sidebarElement ? sidebarElement.offsetHeight : 150);
+            let anchor;
+            if (isMobileDrawerOpen) {
+                // When expanded, anchor = compact sidebar height for snap target
+                // We need to measure BEFORE layout changes, but sidebar is fixed so
+                // we use a cached or fallback value (compact height ≈ search + list row)
+                anchor = drawerCompactHeight || 150;
+            } else if (mobileChatSelected) {
+                anchor = 0;
+            } else {
+                anchor = sidebarElement ? sidebarElement.offsetHeight : 150;
+                drawerCompactHeight = anchor; // cache for pull-up from expanded
+            }
 
             drawerDragState = {
                 startY,
@@ -1148,8 +1185,8 @@ $csrfToken = generateCsrfToken();
 
             let translateY;
             if (drawerDragState.wasOpen) {
-                // Expanded → pull up clamps at compact position
-                const minTy = anchor - h;
+                // Expanded → pull up; clamp at hidden (-h) when chat selected, compact when not
+                const minTy = drawerDragState.chatSelected ? -h : (anchor - h);
                 translateY = Math.min(0, Math.max(minTy, dy));
             } else {
                 // Compact → pull down toward 0, pull up toward hide
@@ -1281,8 +1318,9 @@ $csrfToken = generateCsrfToken();
 
         document.addEventListener('touchmove', function (e) {
             if (!drawerDragState) return;
+            if (e.cancelable) e.preventDefault();
             moveDrawerDrag(e.touches[0].clientY);
-        }, { passive: true });
+        }, { passive: false });
 
         document.addEventListener('touchend', function () {
             if (!drawerDragState) return;

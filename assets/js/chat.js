@@ -132,6 +132,12 @@ const conversationSearchCount = document.getElementById("conversationSearchCount
 const conversationSearchPrevBtn = document.getElementById("conversationSearchPrev");
 const conversationSearchNextBtn = document.getElementById("conversationSearchNext");
 const conversationSearchCloseBtn = document.getElementById("conversationSearchClose");
+const addChatBtn = document.getElementById("addChatBtn");
+const addChatModalOverlay = document.getElementById("addChatModalOverlay");
+const addChatModalClose = document.getElementById("addChatModalClose");
+const addChatSearchInput = document.getElementById("addChatSearchInput");
+const addChatResults = document.getElementById("addChatResults");
+const addChatEmpty = document.getElementById("addChatEmpty");
 const createGroupModalOverlay = document.getElementById("createGroupModalOverlay");
 const createGroupModalClose = document.getElementById("createGroupModalClose");
 const createGroupForm = document.getElementById("createGroupForm");
@@ -9740,6 +9746,99 @@ handleJoinGroupFromUrl();
 createGroupBtn?.addEventListener("click", () => {
     openCreateGroupModal();
 });
+
+// --- Add Chat modal ---
+(function initAddChatModal() {
+    if (!addChatModalOverlay || !addChatSearchInput) return;
+
+    let addChatDebounce = null;
+    let addChatSearching = false;
+
+    function openAddChatModal() {
+        addChatModalOverlay.hidden = false;
+        addChatSearchInput.value = "";
+        addChatResults.innerHTML = "";
+        if (addChatEmpty) addChatEmpty.hidden = false;
+        setTimeout(() => addChatSearchInput.focus(), 60);
+    }
+
+    function closeAddChatModal() {
+        addChatModalOverlay.hidden = true;
+        addChatSearchInput.value = "";
+        addChatResults.innerHTML = "";
+        if (addChatEmpty) addChatEmpty.hidden = false;
+    }
+
+    addChatBtn?.addEventListener("click", openAddChatModal);
+    addChatModalClose?.addEventListener("click", closeAddChatModal);
+    addChatModalOverlay?.addEventListener("click", (e) => {
+        if (e.target === addChatModalOverlay) closeAddChatModal();
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && addChatModalOverlay && !addChatModalOverlay.hidden) {
+            closeAddChatModal();
+        }
+    });
+
+    addChatSearchInput.addEventListener("input", () => {
+        clearTimeout(addChatDebounce);
+        const q = addChatSearchInput.value.trim();
+        if (q.length < 2) {
+            addChatResults.innerHTML = "";
+            if (addChatEmpty) addChatEmpty.hidden = false;
+            return;
+        }
+        addChatDebounce = setTimeout(() => searchAddChat(q), 280);
+    });
+
+    async function searchAddChat(query) {
+        if (addChatSearching) return;
+        addChatSearching = true;
+        try {
+            const data = await window.ApiService.json(
+                `api/users/search.php?query=${encodeURIComponent(query)}`
+            );
+            const users = Array.isArray(data.users) ? data.users : [];
+            renderAddChatResults(users);
+        } catch (_) {
+            addChatResults.innerHTML = `<div class="add-chat-no-results">Search failed</div>`;
+        } finally {
+            addChatSearching = false;
+        }
+    }
+
+    function renderAddChatResults(users) {
+        addChatResults.innerHTML = "";
+        if (addChatEmpty) addChatEmpty.hidden = users.length > 0;
+
+        if (!users.length) {
+            addChatResults.innerHTML = `<div class="add-chat-no-results">No users found</div>`;
+            return;
+        }
+
+        users.forEach((username) => {
+            const isSelf = username === CURRENT_USER;
+            const displayName = isSelf ? "Saved Messages" : username;
+            const initials = isSelf
+                ? '<i class="fas fa-bookmark"></i>'
+                : username.split(" ").map((n) => n[0]).join("").toUpperCase();
+
+            const item = document.createElement("div");
+            item.className = "add-chat-result-item";
+            item.innerHTML = `
+                <div class="add-chat-result-avatar${isSelf ? " saved-messages-avatar" : ""}">${initials}</div>
+                <span class="add-chat-result-name">${escapeHtml(displayName)}</span>
+                <i class="fas fa-comment-dots add-chat-result-action"></i>
+            `;
+            item.addEventListener("click", async () => {
+                closeAddChatModal();
+                addUserToChatList(username);
+                await selectChatUser(username);
+            });
+            addChatResults.appendChild(item);
+        });
+    }
+})();
 
 groupKeyHealthBtn?.addEventListener("click", async () => {
     await runGroupKeyHealthCheck();
