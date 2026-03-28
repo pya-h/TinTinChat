@@ -1,4 +1,16 @@
 <?php
+function envGet(string $name, string $default = ''): string
+{
+    // Check $_ENV first (populated when variables_order includes E),
+    // then getenv() (always works with shell-exported vars),
+    // then fall back to default.
+    if (isset($_ENV[$name]) && $_ENV[$name] !== '') {
+        return $_ENV[$name];
+    }
+    $val = getenv($name);
+    return ($val !== false && $val !== '') ? $val : $default;
+}
+
 function loadEnv(string $path)
 {
     if (!file_exists($path))
@@ -13,9 +25,15 @@ function loadEnv(string $path)
         [$name, $value] = array_map('trim', explode('=', $line, 2));
         if ($name === '')
             continue;
-        if (!isset($_ENV[$name])) {
+        $existing = envGet($name);
+        if ($existing !== '') {
+            // Shell env already has it — mirror into $_ENV so legacy $_ENV reads work
+            $_ENV[$name] = $existing;
+        } else {
+            // Set from file
             $value = trim($value, '"\'');
             $_ENV[$name] = $value;
+            putenv("{$name}={$value}");
         }
     }
 }
@@ -24,10 +42,10 @@ $pdo = null;
 function loadPDO() {
     loadEnv(__DIR__ . '/../.env');
     global $pdo;
-    $host = $_ENV['DB_HOST'] ?? 'localhost';
-    $db = $_ENV['DB_NAME'] ?? 'minichat';
-    $user = $_ENV['DB_USER'] ?? 'root';
-    $pass = $_ENV['DB_PASS'] ?? '';
+    $host = envGet('DB_HOST', 'localhost');
+    $db = envGet('DB_NAME', 'minichat');
+    $user = envGet('DB_USER', 'root');
+    $pass = envGet('DB_PASS', '');
     try {
         $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

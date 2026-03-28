@@ -37,10 +37,10 @@ echo "[PASS] Upload directories are present"
 
 # Create test database if it doesn't exist, then run full schema + migrations
 php -r '
-$host = $_ENV["DB_HOST"] ?? "localhost";
-$db   = $_ENV["DB_NAME"] ?? "minichatdb_test";
-$user = $_ENV["DB_USER"] ?? "test";
-$pass = $_ENV["DB_PASS"] ?? "test";
+$host = getenv("DB_HOST") ?: "localhost";
+$db   = getenv("DB_NAME") ?: "minichatdb_test";
+$user = getenv("DB_USER") ?: "paya";
+$pass = getenv("DB_PASS") ?: "";
 
 $pdo = new PDO("mysql:host={$host};charset=utf8mb4", $user, $pass);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
