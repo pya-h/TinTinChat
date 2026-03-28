@@ -1043,6 +1043,8 @@ $csrfToken = generateCsrfToken();
             sidebarElement.classList.remove('mobile-chatlist-drawer-closing');
 
             if (shouldOpen) {
+                // Show navbar when drawer opens
+                document.querySelector('nav.navbar')?.classList.remove('navbar-hidden');
                 // Cache compact height before going fixed
                 if (!mobileChatSelected && sidebarElement.offsetHeight > 0) {
                     drawerCompactHeight = sidebarElement.offsetHeight;
@@ -1429,6 +1431,51 @@ $csrfToken = generateCsrfToken();
         } else {
             setCompactChatListVisible(true);
         }
+
+        // --- Auto-hide navbar on mobile scroll ---
+        (function initNavbarAutoHide() {
+            const navbarEl = document.querySelector('nav.navbar');
+            const chatMessagesEl = document.getElementById('chatMessages');
+            if (!navbarEl || !chatMessagesEl) return;
+
+            let lastScrollTop = 0;
+            const SCROLL_THRESHOLD = 8; // minimum px delta to trigger hide/show
+
+            chatMessagesEl.addEventListener('scroll', function () {
+                if (!isMobileDrawerViewport() || !mobileChatSelected) {
+                    // Ensure navbar is visible on desktop or when no chat selected
+                    navbarEl.classList.remove('navbar-hidden');
+                    return;
+                }
+                const st = chatMessagesEl.scrollTop;
+                const delta = st - lastScrollTop;
+
+                if (delta < -SCROLL_THRESHOLD) {
+                    // Scrolling up (toward older messages) → hide navbar for more space
+                    navbarEl.classList.add('navbar-hidden');
+                } else if (delta > SCROLL_THRESHOLD) {
+                    // Scrolling down (toward newer messages) → show navbar
+                    navbarEl.classList.remove('navbar-hidden');
+                }
+                lastScrollTop = Math.max(0, st);
+            }, { passive: true });
+
+            // Always show navbar when drawer opens or chat deselected
+            const origSetMobileChatSelected = window.setMobileChatSelected;
+            window.setMobileChatSelected = function (selected) {
+                origSetMobileChatSelected(selected);
+                if (!selected) {
+                    navbarEl.classList.remove('navbar-hidden');
+                }
+            };
+
+            // Show navbar when window resizes to desktop
+            window.addEventListener('resize', function () {
+                if (!isMobileDrawerViewport()) {
+                    navbarEl.classList.remove('navbar-hidden');
+                }
+            });
+        })();
 
     </script>
 
