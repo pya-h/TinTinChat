@@ -3,8 +3,10 @@
 function configSession()
 {
     $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $lifetime = 72 * 60 * 60; // 72 hours
+    ini_set('session.gc_maxlifetime', (string) $lifetime);
     session_set_cookie_params([
-        'lifetime' => 0,
+        'lifetime' => $lifetime,
         'path' => '/',
         'secure' => $isSecure,
         'httponly' => true,

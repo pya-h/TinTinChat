@@ -64,11 +64,11 @@ $csrfToken = generateCsrfToken();
         <nav class="navbar navbar-expand-lg px-3">
             <a class="navbar-brand" href="#">TinTinChat</a>
             <div class="ms-auto d-flex align-items-center">
-                <span class="me-3 logged-in-as">Logged in as <strong id="loggedInUsername"><?= htmlspecialchars($username) ?></strong></span>
                 <form id="logoutForm" method="post" action="api/auth/logout.php" class="m-0">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>" />
-                    <button type="submit" class="btn btn-logout btn-sm">
-                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    <button type="button" id="logoutBtn" class="btn btn-logout btn-sm">
+                        <span id="loggedInUsername"><?= htmlspecialchars($username) ?></span>
+                        <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </form>
             </div>
@@ -1460,19 +1460,51 @@ $csrfToken = generateCsrfToken();
                 lastScrollTop = Math.max(0, st);
             }, { passive: true });
 
-            // Always show navbar when drawer opens or chat deselected
+            // Always show navbar when drawer opens or chat deselected;
+            // also toggle announcement button visibility
+            const alertPanelBtn = document.getElementById('alertPanelBtn');
             const origSetMobileChatSelected = window.setMobileChatSelected;
             window.setMobileChatSelected = function (selected) {
                 origSetMobileChatSelected(selected);
                 if (!selected) {
                     navbarEl.classList.remove('navbar-hidden');
                 }
+                if (alertPanelBtn && isMobileDrawerViewport()) {
+                    alertPanelBtn.style.display = selected ? 'none' : '';
+                }
             };
 
-            // Show navbar when window resizes to desktop
+            // Show navbar & restore announcement btn when window resizes to desktop
             window.addEventListener('resize', function () {
                 if (!isMobileDrawerViewport()) {
                     navbarEl.classList.remove('navbar-hidden');
+                    if (alertPanelBtn) alertPanelBtn.style.display = '';
+                } else if (alertPanelBtn && mobileChatSelected) {
+                    alertPanelBtn.style.display = 'none';
+                }
+            });
+        })();
+
+        // --- Logout confirmation ---
+        (function initLogoutConfirm() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            const logoutForm = document.getElementById('logoutForm');
+            if (!logoutBtn || !logoutForm) return;
+
+            logoutBtn.addEventListener('click', function () {
+                showModalHtml('Logout', '<p>Are you sure you want to log out?</p><div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;"><button class="btn btn-sm btn-outline-secondary" id="logoutCancelBtn">Cancel</button><button class="btn btn-sm btn-logout" id="logoutConfirmBtn"><i class="fas fa-sign-out-alt me-1"></i>Logout</button></div>', 'warning');
+                const confirmBtn = document.getElementById('logoutConfirmBtn');
+                const cancelBtn = document.getElementById('logoutCancelBtn');
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', function () {
+                        closeModal();
+                        logoutForm.submit();
+                    });
+                }
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', function () {
+                        closeModal();
+                    });
                 }
             });
         })();

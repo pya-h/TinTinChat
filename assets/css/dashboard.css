@@ -4806,6 +4806,7 @@ textarea,
         margin-bottom: -60px;
         box-shadow: none;
         pointer-events: none;
+        z-index: -1;
     }
 
     .chat-container {
