@@ -67,8 +67,8 @@ $csrfToken = generateCsrfToken();
                 <form id="logoutForm" method="post" action="api/auth/logout.php" class="m-0">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>" />
                     <button type="button" id="logoutBtn" class="btn btn-logout btn-sm">
-                        <span id="loggedInUsername"><?= htmlspecialchars($username) ?></span>
                         <i class="fas fa-sign-out-alt"></i>
+                        <span id="loggedInUsername"><?= htmlspecialchars($username) ?></span>
                     </button>
                 </form>
             </div>

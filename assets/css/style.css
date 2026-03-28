@@ -14,19 +14,24 @@
 
 .connection-status {
     position: fixed;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    top: 0.55rem;
+    right: 0.55rem;
+    padding: 0.22rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
     z-index: 1000;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease;
     backdrop-filter: blur(10px);
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    letter-spacing: 0.02em;
 }
 
 .connection-status.online {
-    background: rgba(72, 187, 120, 0.9);
+    background: rgba(72, 187, 120, 0.85);
     color: white;
 }
 
@@ -34,6 +39,7 @@
     background: rgba(245, 101, 101, 0.9);
     color: white;
     animation: connectionPulse 2s infinite;
+    pointer-events: auto;
 }
 
 .card {

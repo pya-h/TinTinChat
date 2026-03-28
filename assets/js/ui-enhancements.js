@@ -118,16 +118,16 @@ class UIEnhancements {
     setupConnectionStatus() {
         const statusIndicator = document.createElement("div");
         statusIndicator.className = "connection-status online";
-        statusIndicator.textContent = "Online";
+        statusIndicator.innerHTML = '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.8"></span> Online';
         document.body.appendChild(statusIndicator);
 
         const updateConnectionStatus = () => {
             if (navigator.onLine) {
                 statusIndicator.className = "connection-status online";
-                statusIndicator.textContent = "Online";
+                statusIndicator.innerHTML = '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.8"></span> Online';
             } else {
                 statusIndicator.className = "connection-status offline";
-                statusIndicator.textContent = "Offline";
+                statusIndicator.innerHTML = '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:0.8"></span> Offline';
             }
         };
 
@@ -135,13 +135,19 @@ class UIEnhancements {
         window.addEventListener("offline", updateConnectionStatus);
 
         let hideTimeout;
+        const hideIndicator = () => {
+            statusIndicator.style.opacity = "0";
+            statusIndicator.style.visibility = "hidden";
+        };
+        const showIndicator = () => {
+            statusIndicator.style.visibility = "visible";
+            statusIndicator.style.opacity = "1";
+        };
         const resetHideTimeout = () => {
             clearTimeout(hideTimeout);
-            statusIndicator.style.opacity = "1";
+            showIndicator();
             if (navigator.onLine) {
-                hideTimeout = setTimeout(() => {
-                    statusIndicator.style.opacity = "0";
-                }, 3000);
+                hideTimeout = setTimeout(hideIndicator, 3000);
             }
         };
 
@@ -149,7 +155,7 @@ class UIEnhancements {
         window.addEventListener("online", resetHideTimeout);
         window.addEventListener("offline", () => {
             clearTimeout(hideTimeout);
-            statusIndicator.style.opacity = "1";
+            showIndicator();
         });
     }
 

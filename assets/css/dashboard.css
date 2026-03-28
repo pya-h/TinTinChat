@@ -239,9 +239,9 @@ nav.navbar::after {
 }
 
 .btn-logout {
-    background: color-mix(in srgb, var(--surface-color) 88%, var(--background-color));
-    color: var(--text-color);
-    border: 1px solid color-mix(in srgb, var(--secondary-color) 24%, var(--border-color));
+    background: color-mix(in srgb, var(--danger-color) 10%, var(--surface-color));
+    color: var(--danger-color);
+    border: 1px solid color-mix(in srgb, var(--danger-color) 30%, var(--border-color));
     border-radius: 999px;
     min-height: 2.1rem;
     padding: 0.34rem 0.82rem;
@@ -257,15 +257,15 @@ nav.navbar::after {
 }
 
 .btn-logout:hover {
-    background-color: color-mix(in srgb, var(--secondary-color) 12%, transparent);
-    border-color: color-mix(in srgb, var(--secondary-color) 40%, var(--border-color));
-    color: var(--primary-color);
+    background: color-mix(in srgb, var(--danger-color) 18%, var(--surface-color));
+    border-color: color-mix(in srgb, var(--danger-color) 50%, var(--border-color));
+    color: var(--danger-color);
     transform: translateY(-1px);
-    box-shadow: 0 6px 14px color-mix(in srgb, var(--secondary-color) 20%, transparent);
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--danger-color) 20%, transparent);
 }
 
 .btn-logout:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--secondary-color) 45%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--danger-color) 45%, transparent);
     outline-offset: 2px;
 }
 
@@ -4797,7 +4797,8 @@ textarea,
         flex-shrink: 0;
         transform: translateY(0);
         transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
-                    margin-top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    margin-bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    visibility 0s linear 0s,
                     box-shadow 0.3s ease;
     }
 
@@ -4806,7 +4807,11 @@ textarea,
         margin-bottom: -60px;
         box-shadow: none;
         pointer-events: none;
-        z-index: -1;
+        visibility: hidden;
+        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    margin-bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                    visibility 0s linear 0.3s,
+                    box-shadow 0.3s ease;
     }
 
     .chat-container {
