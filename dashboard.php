@@ -1492,18 +1492,14 @@ $csrfToken = generateCsrfToken();
             if (!logoutBtn || !logoutForm) return;
 
             logoutBtn.addEventListener('click', function () {
-                showModalHtml('Logout', '<p>Are you sure you want to log out?</p><div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;"><button class="btn btn-sm btn-outline-secondary" id="logoutCancelBtn">Cancel</button><button class="btn btn-sm btn-logout" id="logoutConfirmBtn"><i class="fas fa-sign-out-alt me-1"></i>Logout</button></div>', 'warning');
-                const confirmBtn = document.getElementById('logoutConfirmBtn');
-                const cancelBtn = document.getElementById('logoutCancelBtn');
-                if (confirmBtn) {
-                    confirmBtn.addEventListener('click', function () {
+                showModal('Logout', 'Are you sure you want to log out?', 'warning');
+                // Replace the OK button in the footer with a red Logout button
+                const footer = document.querySelector('#modalOverlay .modal-footer');
+                if (footer) {
+                    footer.innerHTML = '<button type="button" class="btn btn-logout" id="logoutConfirmBtn"><i class="fas fa-sign-out-alt me-1"></i>Logout</button>';
+                    document.getElementById('logoutConfirmBtn').addEventListener('click', function () {
                         closeModal();
                         logoutForm.submit();
-                    });
-                }
-                if (cancelBtn) {
-                    cancelBtn.addEventListener('click', function () {
-                        closeModal();
                     });
                 }
             });
