@@ -95,11 +95,11 @@ $csrfToken = generateCsrfToken();
                         </button>
                     </div>
                 </div>
-                <button type="button" id="mobileChatListPullHandle" class="mobile-chatlist-pull-handle" aria-label="Expand chats" aria-expanded="false">
-                    <i class="fas fa-angle-down mobile-chatlist-pull-icon" aria-hidden="true"></i>
-                </button>
-                <div id="mobileChatListBackdrop" class="mobile-chatlist-backdrop" hidden></div>
+                <div id="drawerBottomGrabBar" class="drawer-bottom-grab-bar" aria-hidden="true">
+                    <span class="drawer-bottom-grab-pill"></span>
+                </div>
             </aside>
+            <div id="mobileChatListBackdrop" class="mobile-chatlist-backdrop" hidden></div>
 
             <section class="chat-area d-flex flex-column">
                 <div class="chat-header">
@@ -107,6 +107,9 @@ $csrfToken = generateCsrfToken();
                         <h5 id="chatWith">Select a chat</h5>
                         <div id="typingIndicator" class="typing-indicator" aria-live="polite" aria-atomic="true" hidden></div>
                     </div>
+                    <button type="button" id="mobileChatListPullHandle" class="mobile-chatlist-pull-handle" aria-label="Expand chats" aria-expanded="false">
+                        <span class="mobile-chatlist-pull-bar" aria-hidden="true"></span>
+                    </button>
                     <div class="chat-header-actions ms-auto">
                         <button type="button" id="userInfoBtn" class="btn btn-sm btn-outline-secondary" aria-label="User info" title="User info" hidden>
                             <i class="fas fa-user"></i>
@@ -896,114 +899,52 @@ $csrfToken = generateCsrfToken();
         const chatListWrapperElement = document.getElementById('chatListWrapper');
         const mobileChatListPullHandle = document.getElementById('mobileChatListPullHandle');
         const mobileChatListBackdrop = document.getElementById('mobileChatListBackdrop');
+        const drawerBottomGrabBar = document.getElementById('drawerBottomGrabBar');
         const sidebarElement = document.querySelector('.sidebar');
         const MOBILE_DRAWER_BREAKPOINT = 767.98;
         let isMobileDrawerOpen = false;
+        let mobileChatSelected = false;
 
         function isMobileDrawerViewport() {
             return window.innerWidth <= MOBILE_DRAWER_BREAKPOINT;
         }
 
-        function setCompactChatListVisible(visible) {
-            if (!chatListWrapperElement) {
+        // Hide/show entire sidebar on mobile when a chat is selected/deselected
+        function updateMobileSidebarVisibility() {
+            if (!sidebarElement) return;
+            if (!isMobileDrawerViewport()) {
+                sidebarElement.style.display = '';
                 return;
             }
+            if (mobileChatSelected && !isMobileDrawerOpen) {
+                sidebarElement.style.display = 'none';
+            } else {
+                sidebarElement.style.display = '';
+            }
+        }
 
+        window.setMobileChatSelected = function (selected) {
+            mobileChatSelected = Boolean(selected);
+            if (isMobileDrawerViewport()) {
+                updateMobileSidebarVisibility();
+            }
+        };
+
+        function setCompactChatListVisible(visible) {
+            if (!chatListWrapperElement) return;
             if (!isMobileDrawerViewport()) {
                 chatListWrapperElement.style.display = 'block';
-                if (mobileChatListPullHandle) {
-                    mobileChatListPullHandle.style.display = 'none';
-                }
                 return;
             }
-
-            const shouldShow = Boolean(visible);
-            chatListWrapperElement.style.display = shouldShow ? 'block' : 'none';
-            if (mobileChatListPullHandle) {
-                mobileChatListPullHandle.style.display = shouldShow ? 'flex' : 'none';
-            }
+            chatListWrapperElement.style.display = Boolean(visible) ? 'block' : 'none';
         }
 
-        function applyMobileDrawerState(open, animate = true) {
-            if (!sidebarElement) {
-                return;
-            }
-
-            if (!isMobileDrawerViewport()) {
-                isMobileDrawerOpen = false;
-                sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
-                sidebarElement.style.transform = '';
-                sidebarElement.style.transition = '';
-                mobileChatListBackdrop?.setAttribute('hidden', 'hidden');
-                if (mobileChatListBackdrop) mobileChatListBackdrop.style.opacity = '';
-                setCompactChatListVisible(true);
-                return;
-            }
-
-            const shouldOpen = Boolean(open);
-            isMobileDrawerOpen = shouldOpen;
-
-            // Clear any inline drag styles
-            sidebarElement.style.transform = '';
-            sidebarElement.style.transition = '';
-
-            if (shouldOpen) {
-                sidebarElement.classList.remove('mobile-chatlist-drawer-closing');
-                sidebarElement.classList.add('mobile-chatlist-drawer-open');
-            } else {
-                if (animate && sidebarElement.classList.contains('mobile-chatlist-drawer-open')) {
-                    // Play close animation
-                    sidebarElement.classList.add('mobile-chatlist-drawer-closing');
-                    sidebarElement.addEventListener('animationend', function onEnd() {
-                        sidebarElement.removeEventListener('animationend', onEnd);
-                        sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
-                    }, { once: true });
-                    // Safety fallback
-                    setTimeout(() => {
-                        sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
-                    }, 350);
-                } else {
-                    sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
-                }
-            }
-
-            mobileChatListPullHandle?.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-            setCompactChatListVisible(
-                shouldOpen || document.activeElement === searchUserElement
-            );
-            if (mobileChatListBackdrop) {
-                mobileChatListBackdrop.style.opacity = '';
-                if (shouldOpen) {
-                    mobileChatListBackdrop.removeAttribute('hidden');
-                } else {
-                    mobileChatListBackdrop.setAttribute('hidden', 'hidden');
-                }
-            }
-        }
-
-        window.setMobileChatListOpen = function (open) {
-            applyMobileDrawerState(Boolean(open));
-        };
-
-        window.toggleMobileChatList = function () {
-            if (!isMobileDrawerViewport()) {
-                return;
-            }
-            applyMobileDrawerState(!isMobileDrawerOpen);
-        };
-
-        mobileChatListBackdrop?.addEventListener('click', function () {
-            if (!isMobileDrawerViewport()) {
-                return;
-            }
-            applyMobileDrawerState(false);
-        });
-
-        // --- Drag gesture for mobile drawer (Android notification-bar style) ---
-        // The drawer follows the finger/mouse 1:1, anchored to the handle.
+        // --- Drawer state machine ---
+        // States: hidden (no list) → compact (horizontal list) → expanded (full-screen drawer)
         let drawerDragState = null;
         let drawerDragJustEnded = false;
-        let drawerTransitionCleanup = 0; // timeout id for post-transition cleanup
+        let drawerTransitionCleanup = 0;
+        let drawerSpacer = null; // placeholder to prevent layout jump
 
         function drawerCancelPendingCleanup() {
             if (drawerTransitionCleanup) {
@@ -1012,7 +953,6 @@ $csrfToken = generateCsrfToken();
             }
         }
 
-        // Reset all inline drag styles and ensure state is consistent
         function drawerResetInlineStyles() {
             if (!sidebarElement) return;
             sidebarElement.style.transform = '';
@@ -1024,16 +964,138 @@ $csrfToken = generateCsrfToken();
             }
         }
 
+        function ensureDrawerSpacer() {
+            if (drawerSpacer || !sidebarElement) return;
+            drawerSpacer = document.createElement('div');
+            drawerSpacer.style.height = sidebarElement.offsetHeight + 'px';
+            drawerSpacer.style.flexShrink = '0';
+            drawerSpacer.style.pointerEvents = 'none';
+            sidebarElement.insertAdjacentElement('afterend', drawerSpacer);
+        }
+
+        function removeDrawerSpacer() {
+            if (drawerSpacer) {
+                drawerSpacer.remove();
+                drawerSpacer = null;
+            }
+        }
+
+        function showBackdrop(opacity) {
+            if (!mobileChatListBackdrop) return;
+            mobileChatListBackdrop.classList.add('is-visible');
+            mobileChatListBackdrop.removeAttribute('hidden');
+            if (opacity !== undefined) mobileChatListBackdrop.style.opacity = String(opacity);
+        }
+
+        function hideBackdrop() {
+            if (!mobileChatListBackdrop) return;
+            mobileChatListBackdrop.classList.remove('is-visible');
+            mobileChatListBackdrop.setAttribute('hidden', 'hidden');
+            mobileChatListBackdrop.style.opacity = '';
+            mobileChatListBackdrop.style.transition = '';
+        }
+
+        function applyMobileDrawerState(open, animate = true) {
+            if (!sidebarElement) return;
+
+            drawerCancelPendingCleanup();
+            drawerDragState = null;
+            drawerResetInlineStyles();
+
+            if (!isMobileDrawerViewport()) {
+                isMobileDrawerOpen = false;
+                sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
+                removeDrawerSpacer();
+                hideBackdrop();
+                setCompactChatListVisible(true);
+                sidebarElement.style.display = '';
+                return;
+            }
+
+            const shouldOpen = Boolean(open);
+            isMobileDrawerOpen = shouldOpen;
+            sidebarElement.classList.remove('mobile-chatlist-drawer-closing');
+
+            if (shouldOpen) {
+                // Show sidebar for drawer regardless of chat selection state
+                sidebarElement.style.display = '';
+                ensureDrawerSpacer();
+                sidebarElement.classList.add('mobile-chatlist-drawer-open');
+                if (animate) {
+                    sidebarElement.style.transform = 'translateY(-100%)';
+                    void sidebarElement.offsetHeight;
+                    sidebarElement.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    sidebarElement.style.transform = 'translateY(0)';
+                }
+                showBackdrop(animate ? 0 : 1);
+                if (animate && mobileChatListBackdrop) {
+                    mobileChatListBackdrop.style.transition = 'opacity 0.3s ease';
+                    void mobileChatListBackdrop.offsetHeight;
+                    mobileChatListBackdrop.style.opacity = '1';
+                }
+                drawerTransitionCleanup = setTimeout(() => {
+                    drawerTransitionCleanup = 0;
+                    drawerResetInlineStyles();
+                }, 320);
+            } else {
+                const wasDrawerOpen = sidebarElement.classList.contains('mobile-chatlist-drawer-open');
+                if (animate && wasDrawerOpen) {
+                    sidebarElement.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 1, 1)';
+                    sidebarElement.style.transform = 'translateY(-100%)';
+                    if (mobileChatListBackdrop) {
+                        mobileChatListBackdrop.style.transition = 'opacity 0.25s ease';
+                        mobileChatListBackdrop.style.opacity = '0';
+                    }
+                    drawerTransitionCleanup = setTimeout(() => {
+                        drawerTransitionCleanup = 0;
+                        sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
+                        drawerResetInlineStyles();
+                        removeDrawerSpacer();
+                        hideBackdrop();
+                        updateMobileSidebarVisibility();
+                    }, 270);
+                } else {
+                    sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
+                    removeDrawerSpacer();
+                    hideBackdrop();
+                    updateMobileSidebarVisibility();
+                }
+            }
+
+            mobileChatListPullHandle?.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+            if (shouldOpen) {
+                setCompactChatListVisible(true);
+            }
+        }
+
+        window.setMobileChatListOpen = function (open) {
+            applyMobileDrawerState(Boolean(open));
+        };
+
+        window.toggleMobileChatList = function () {
+            if (!isMobileDrawerViewport()) return;
+            // When chat selected, toggle always goes to expanded (full drawer) or closes
+            applyMobileDrawerState(!isMobileDrawerOpen);
+        };
+
+        mobileChatListBackdrop?.addEventListener('click', function () {
+            if (!isMobileDrawerViewport()) return;
+            applyMobileDrawerState(false);
+        });
+
+        // --- Drag gesture ---
+        // Handle in chat-header: finger drags down → drawer slides down from top.
+        // Grab bar at bottom of expanded drawer: finger drags up → drawer collapses.
+
         function startDrawerDrag(startY) {
             drawerCancelPendingCleanup();
             const h = window.innerHeight;
 
-            // Anchor: compute where the handle sits so the drawer starts there
-            let anchorOffset = 0; // = distance from top of viewport to handle bottom
-            if (!isMobileDrawerOpen && mobileChatListPullHandle) {
-                const handleRect = mobileChatListPullHandle.getBoundingClientRect();
-                anchorOffset = handleRect.bottom;
-            }
+            // When chat is selected the sidebar is hidden; anchor = 0 (start from top)
+            // Otherwise anchor = compact sidebar height
+            const anchor = (mobileChatSelected && !isMobileDrawerOpen)
+                ? 0
+                : (sidebarElement ? sidebarElement.offsetHeight : 150);
 
             drawerDragState = {
                 startY,
@@ -1043,21 +1105,23 @@ $csrfToken = generateCsrfToken();
                 lastTime: Date.now(),
                 wasOpen: isMobileDrawerOpen,
                 drawerHeight: h,
-                anchorOffset,
+                anchor,
                 moved: false,
+                chatSelected: mobileChatSelected,
             };
 
-            // If closed, show the drawer positioned so its bottom edge = handle position
+            // Make sidebar visible for drag
+            sidebarElement.style.display = '';
+
             if (!isMobileDrawerOpen) {
+                if (!mobileChatSelected) ensureDrawerSpacer();
                 sidebarElement.classList.add('mobile-chatlist-drawer-open');
                 sidebarElement.style.animation = 'none';
                 sidebarElement.style.transition = 'none';
-                sidebarElement.style.transform = `translateY(${anchorOffset - h}px)`;
+                // Position drawer: bottom edge at anchor position
+                sidebarElement.style.transform = `translateY(${anchor - h}px)`;
                 setCompactChatListVisible(true);
-                if (mobileChatListBackdrop) {
-                    mobileChatListBackdrop.removeAttribute('hidden');
-                    mobileChatListBackdrop.style.opacity = String(Math.max(0, anchorOffset / h));
-                }
+                showBackdrop(Math.max(0, anchor / h));
             } else {
                 sidebarElement.style.animation = 'none';
                 sidebarElement.style.transition = 'none';
@@ -1070,11 +1134,9 @@ $csrfToken = generateCsrfToken();
             drawerDragState.currentY = clientY;
             const dy = clientY - drawerDragState.startY;
 
-            // Require minimum 6px movement to start visual drag
             if (Math.abs(dy) < 6 && !drawerDragState.moved) return;
             drawerDragState.moved = true;
 
-            // Track recent velocity (sliding 50ms window for snappy feel)
             const now = Date.now();
             if (now - drawerDragState.lastTime > 50) {
                 drawerDragState.lastY = clientY;
@@ -1082,20 +1144,22 @@ $csrfToken = generateCsrfToken();
             }
 
             const h = drawerDragState.drawerHeight;
+            const anchor = drawerDragState.anchor;
 
-            // 1:1 finger tracking
             let translateY;
             if (drawerDragState.wasOpen) {
-                // Open → dragging up: starts at 0, goes to -h
-                translateY = Math.min(0, Math.max(-h, dy));
+                // Expanded → pull up clamps at compact position
+                const minTy = anchor - h;
+                translateY = Math.min(0, Math.max(minTy, dy));
             } else {
-                // Closed → dragging down: starts at (anchorOffset - h), moves toward 0
-                translateY = Math.min(0, Math.max(-h, (drawerDragState.anchorOffset - h) + dy));
+                // Compact → pull down toward 0, pull up toward hide
+                const base = anchor - h;
+                const minTy = Math.max(-h, base - 60);
+                translateY = Math.min(0, Math.max(minTy, base + dy));
             }
 
             sidebarElement.style.transform = `translateY(${translateY}px)`;
 
-            // Backdrop opacity proportional to how visible the drawer is
             if (mobileChatListBackdrop) {
                 const openRatio = 1 - Math.abs(translateY) / h;
                 mobileChatListBackdrop.style.opacity = String(Math.max(0, Math.min(1, openRatio)));
@@ -1108,15 +1172,12 @@ $csrfToken = generateCsrfToken();
             drawerDragState = null;
 
             if (!ds.moved) {
-                // Was just a tap — restore everything and let click handler fire
+                // Tap — revert to pre-drag state; let click handler fire
                 if (!ds.wasOpen) {
                     sidebarElement.classList.remove('mobile-chatlist-drawer-open');
-                    setCompactChatListVisible(
-                        document.activeElement === searchUserElement
-                    );
-                    if (mobileChatListBackdrop) {
-                        mobileChatListBackdrop.setAttribute('hidden', 'hidden');
-                    }
+                    removeDrawerSpacer();
+                    hideBackdrop();
+                    updateMobileSidebarVisibility();
                 }
                 drawerResetInlineStyles();
                 return;
@@ -1125,59 +1186,76 @@ $csrfToken = generateCsrfToken();
             drawerDragJustEnded = true;
             setTimeout(() => { drawerDragJustEnded = false; }, 80);
 
-            // Recent velocity (last ~50ms window) for snappy gesture detection
             const recentDy = ds.currentY - ds.lastY;
             const recentDt = Math.max(1, Date.now() - ds.lastTime);
-            const velocity = recentDy / recentDt; // px/ms, positive=down, negative=up
+            const velocity = recentDy / recentDt;
 
             const totalDy = ds.currentY - ds.startY;
-            const VELOCITY_THRESHOLD = 0.3; // px/ms
-            const DISTANCE_THRESHOLD = ds.drawerHeight * 0.25;
+            const VEL_THRESH = 0.3;
+            const EXPAND_DIST = ds.drawerHeight * 0.2;
+            const HIDE_DIST = 35;
 
-            let shouldOpen;
+            let target;
             if (ds.wasOpen) {
-                shouldOpen = !(totalDy < -DISTANCE_THRESHOLD || velocity < -VELOCITY_THRESHOLD);
+                // From expanded: pull up → hidden (when chat selected) or compact (when not)
+                if (totalDy < -EXPAND_DIST || velocity < -VEL_THRESH) {
+                    target = ds.chatSelected ? 'hidden' : 'compact';
+                } else {
+                    target = 'expanded';
+                }
             } else {
-                shouldOpen = (totalDy > DISTANCE_THRESHOLD || velocity > VELOCITY_THRESHOLD);
+                if (totalDy > EXPAND_DIST || velocity > VEL_THRESH) target = 'expanded';
+                else if (totalDy < -HIDE_DIST || velocity < -VEL_THRESH) target = 'hidden';
+                else target = ds.chatSelected ? 'hidden' : 'compact';
             }
 
-            // Set logical state IMMEDIATELY so other handlers see the correct value
-            isMobileDrawerOpen = shouldOpen;
-            mobileChatListPullHandle?.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+            isMobileDrawerOpen = (target === 'expanded');
+            mobileChatListPullHandle?.setAttribute('aria-expanded', isMobileDrawerOpen ? 'true' : 'false');
 
-            // Animate to final position with spring easing
-            const springDuration = '0.3s';
-            const springEasing = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
-            sidebarElement.style.transition = `transform ${springDuration} ${springEasing}`;
+            const spring = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            sidebarElement.style.transition = spring;
 
-            if (shouldOpen) {
+            if (target === 'expanded') {
                 sidebarElement.style.transform = 'translateY(0)';
                 if (mobileChatListBackdrop) {
-                    mobileChatListBackdrop.style.transition = `opacity ${springDuration} ease`;
+                    mobileChatListBackdrop.style.transition = 'opacity 0.3s ease';
                     mobileChatListBackdrop.style.opacity = '1';
                 }
-                // Deferred: clear inline styles after spring animation finishes
                 drawerTransitionCleanup = setTimeout(() => {
                     drawerTransitionCleanup = 0;
                     drawerResetInlineStyles();
                 }, 320);
-            } else {
-                sidebarElement.style.transform = 'translateY(-110%)';
+
+            } else if (target === 'compact') {
+                const compactTy = ds.anchor - ds.drawerHeight;
+                sidebarElement.style.transform = `translateY(${compactTy}px)`;
                 if (mobileChatListBackdrop) {
-                    mobileChatListBackdrop.style.transition = `opacity ${springDuration} ease`;
+                    mobileChatListBackdrop.style.transition = 'opacity 0.3s ease';
                     mobileChatListBackdrop.style.opacity = '0';
                 }
-                // Deferred: remove classes and hide backdrop after spring finishes
                 drawerTransitionCleanup = setTimeout(() => {
                     drawerTransitionCleanup = 0;
                     sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
-                    setCompactChatListVisible(
-                        document.activeElement === searchUserElement
-                    );
                     drawerResetInlineStyles();
-                    if (mobileChatListBackdrop) {
-                        mobileChatListBackdrop.setAttribute('hidden', 'hidden');
-                    }
+                    removeDrawerSpacer();
+                    setCompactChatListVisible(true);
+                    hideBackdrop();
+                }, 320);
+
+            } else {
+                sidebarElement.style.transform = `translateY(-${ds.drawerHeight + 20}px)`;
+                if (mobileChatListBackdrop) {
+                    mobileChatListBackdrop.style.transition = 'opacity 0.3s ease';
+                    mobileChatListBackdrop.style.opacity = '0';
+                }
+                drawerTransitionCleanup = setTimeout(() => {
+                    drawerTransitionCleanup = 0;
+                    sidebarElement.classList.remove('mobile-chatlist-drawer-open', 'mobile-chatlist-drawer-closing');
+                    drawerResetInlineStyles();
+                    removeDrawerSpacer();
+                    setCompactChatListVisible(false);
+                    hideBackdrop();
+                    updateMobileSidebarVisibility();
                 }, 320);
             }
         }
@@ -1188,14 +1266,18 @@ $csrfToken = generateCsrfToken();
             startDrawerDrag(e.touches[0].clientY);
         }, { passive: true });
 
-        // Allow drag from bottom 80px of open sidebar (near pull handle)
-        sidebarElement?.addEventListener('touchstart', function (e) {
+        // Bottom grab bar in expanded drawer — touch + mouse
+        drawerBottomGrabBar?.addEventListener('touchstart', function (e) {
             if (!isMobileDrawerViewport() || !isMobileDrawerOpen) return;
-            const rect = sidebarElement.getBoundingClientRect();
-            if (e.touches[0].clientY > rect.bottom - 80) {
-                startDrawerDrag(e.touches[0].clientY);
-            }
-        }, { passive: true });
+            e.preventDefault();
+            startDrawerDrag(e.touches[0].clientY);
+        }, { passive: false });
+
+        drawerBottomGrabBar?.addEventListener('mousedown', function (e) {
+            if (!isMobileDrawerViewport() || !isMobileDrawerOpen) return;
+            e.preventDefault();
+            startDrawerDrag(e.clientY);
+        });
 
         document.addEventListener('touchmove', function (e) {
             if (!drawerDragState) return;
@@ -1212,7 +1294,7 @@ $csrfToken = generateCsrfToken();
             endDrawerDrag();
         }, { passive: true });
 
-        // --- Mouse listeners (desktop drag on pull handle) ---
+        // --- Mouse listeners ---
         mobileChatListPullHandle?.addEventListener('mousedown', function (e) {
             if (!isMobileDrawerViewport()) return;
             e.preventDefault();
@@ -1230,16 +1312,14 @@ $csrfToken = generateCsrfToken();
             endDrawerDrag();
         });
 
-        // Click handler — only fires when no drag occurred
+        // Click — only fires when no drag occurred
         mobileChatListPullHandle?.addEventListener('click', function () {
-            if (!isMobileDrawerViewport() || drawerDragJustEnded) {
-                return;
-            }
+            if (!isMobileDrawerViewport() || drawerDragJustEnded) return;
             window.toggleMobileChatList();
         });
 
         searchUserElement?.addEventListener('focus', function () {
-            if (isMobileDrawerViewport()) {
+            if (isMobileDrawerViewport() && !mobileChatSelected) {
                 setCompactChatListVisible(true);
             }
         });
@@ -1286,14 +1366,18 @@ $csrfToken = generateCsrfToken();
 
         window.addEventListener('resize', function () {
             if (isMobileDrawerViewport()) {
-                const shouldShowCompact =
-                    isMobileDrawerOpen ||
-                    document.activeElement === searchUserElement ||
-                    Boolean(searchUserElement?.value?.trim().length);
-                setCompactChatListVisible(shouldShowCompact);
+                updateMobileSidebarVisibility();
+                if (!mobileChatSelected) {
+                    const shouldShowCompact =
+                        isMobileDrawerOpen ||
+                        document.activeElement === searchUserElement ||
+                        Boolean(searchUserElement?.value?.trim().length);
+                    setCompactChatListVisible(shouldShowCompact);
+                }
                 return;
             }
             applyMobileDrawerState(false);
+            sidebarElement.style.display = '';
         });
 
         document.addEventListener('keydown', function (event) {

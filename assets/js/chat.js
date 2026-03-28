@@ -6355,6 +6355,9 @@ lastRecentPollTime = "";
         li.classList.toggle("active", li.id === chatListItemId(target));
     });
 
+    if (typeof window.setMobileChatSelected === "function") {
+        window.setMobileChatSelected(Boolean(target));
+    }
     if (typeof window.setMobileChatListOpen === "function") {
         window.setMobileChatListOpen(false);
     }
@@ -9907,6 +9910,9 @@ lastRecentPollTime = "";
     chatInput.style.height = "";
         chatInput.disabled = true;
         chatInput.placeholder = "Select someone to chat...";
+        if (typeof window.setMobileChatSelected === "function") {
+            window.setMobileChatSelected(false);
+        }
 
         await loadChatList(true);
         setComposerStatus("Left group", "success");
