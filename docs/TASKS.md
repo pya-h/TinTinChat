@@ -413,34 +413,6 @@ Legend:
 	- Play/pause, seekable progress slider, time display, caption (filename for music, sender · time for voice).
 	- Audio persists across chat switches (detached from DOM before chat clear).
 	- Hooks into in-message voice/music players and saved panel playlist.
-- [ ] (`P2`) **Caption for multimedia messages**:
-	- Allow adding text captions to voice, image, video, and file messages (like Telegram).
-
-### Phase M.4 - Favorite chats
-- [ ] (`P2`) **Decode on Interface**:
-	- Decide on ways to go to it, where it should be, what other roperties it should have, etc.
-- [ ] (`P3`) **Database structure upgrade & migrations**:
-		- Write migrations that adds the table and columns requied.
-- [ ] (`P3`) **Implement The Section**:
-		- Implement the actual Favorite Chat section.
-- [ ] (`P3`) **Add to Favorites**:
-		- The interface to add chats to favorites.
-- [ ] (`P3`) **Animations & Improvements & Shortcuts**:
-		- Add animations & extra creative options & also shortcut approach on opening the section
-
-### Phase M.5 - Minor UI Improvements
-- [ ] (`P2`) **Style/animation upgrade**:
-	- Platform-wide visual polish: smoother transitions, refined animations, UI beautification.
-- [ ] (`P3`) **Constant Add to Playlist**:
-		- Find a way to prevent Add to playlist again, on a music message which has been added.
-- [ ] (`P3`) **Anouncement Red Counter**:
-		- It seems that its not working (or at least working properly).
-- [ ] (`P3`) **Admin Section UI**:
-		- Improve and Beautfy Admin section, esp. Post anouncement section & Refresh button
-- [ ] (`P3`) **Stupid Action bar**:
-		- The action bar was always this way despite how many times i asked for improvement and styling.
-- [ ] (`P3`) **Magnifying Input Message**:
-		- Magnifying input message on hold, works stupidly. Improve it.
 
 ### Phase N — E2E Encryption Upgrade (Private Key Protection) (`P1`)
 - [ ] (`P1`) **Password-derived KEK for private key encryption**:
@@ -463,6 +435,34 @@ Legend:
 	- Requires full auth flow rewrite (server stores bcrypt of auth_hash, not password).
 - [ ] (`P3`) **Group key rotation on member removal**:
 	- Generate new group key when a member is removed, re-distribute to remaining members.
+
+### Phase O - Private chat Categorization & Improvement
+- [ ] (`P2`) **Caption for multimedia messages**:
+	- Allow adding text captions to voice, image, video, and file messages (like Telegram).
+- [ ] (`P2`) **Message categorization in Chat details**:
+	- Like Telegram, there should be section to show messages categorized: Media, Images, etc.
+- [ ] (`P3`) **Style/animation upgrade**:
+	- Platform-wide visual polish: smoother transitions, refined animations, UI beautification.
+- [ ] (`P3`) **Constant Add to Playlist**:
+		- Find a way to prevent Add to playlist again, on a music message which has been added.
+- [x] (`P3`) **Admin Section UI**:
+		- Improve and Beautfy Admin section, esp. Post anouncement section & Refresh button
+- [x] (`P3`) **Stupid Action bar**:
+		- The action bar was always this way despite how many times i asked for improvement and styling.
+- [ ] (`P3`) **Magnifying Input Message**:
+		- Magnifying input message on hold, works stupidly. Improve it.
+
+### Phase O.2 - Favorite chats
+- [ ] (`P2`) **Decode on Interface**:
+	- Decide on ways to go to it, where it should be, what other roperties it should have, etc.
+- [ ] (`P3`) **Database structure upgrade & migrations**:
+		- Write migrations that adds the table and columns requied.
+- [ ] (`P3`) **Implement The Section**:
+		- Implement the actual Favorite Chat section.
+- [ ] (`P3`) **Add to Favorites**:
+		- The interface to add chats to favorites.
+- [ ] (`P3`) **Animations & Improvements & Shortcuts**:
+		- Add animations & extra creative options & also shortcut approach on opening the section
 
 ## 4) Suggested Execution Order
 

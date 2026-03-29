@@ -8541,7 +8541,7 @@ const sendTextMessage = async () => {
 
     const sendBtn = chatForm.querySelector('button[type="submit"]');
     sendBtn.disabled = true;
-    sendBtn.classList.add("btn-tap");
+    playSendBtnTap(sendBtn);
     setComposerStatus("");
 
     try {
@@ -8603,7 +8603,6 @@ const sendTextMessage = async () => {
         );
     } finally {
         sendBtn.disabled = false;
-        sendBtn.classList.remove("btn-tap");
     }
 };
 
@@ -8766,6 +8765,19 @@ fileUploadInput.addEventListener("change", (e) => {
 });
 
 // Send button icon: file when empty, paper-plane when typing
+// Send button tap animation — uses Web Animations API to bypass CSS conflicts
+function playSendBtnTap(btn) {
+    if (!btn || typeof btn.animate !== "function") return;
+    btn.animate([
+        { transform: "rotate(0deg) scale(1)",   offset: 0 },
+        { transform: "rotate(-14deg) scale(0.9)", offset: 0.15 },
+        { transform: "rotate(12deg) scale(1.06)",  offset: 0.35 },
+        { transform: "rotate(-6deg)",              offset: 0.55 },
+        { transform: "rotate(3deg)",               offset: 0.75 },
+        { transform: "rotate(0deg) scale(1)",      offset: 1 },
+    ], { duration: 400, easing: "ease-out", composite: "replace" });
+}
+
 // Animates the swap with a vertical slide (old icon exits up, new enters from below)
 let _sendBtnIconState = null; // track current icon to avoid redundant swaps
 let _iconSwapAbort = null;    // abort controller for in-flight animation

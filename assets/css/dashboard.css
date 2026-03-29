@@ -3611,16 +3611,6 @@ textarea,
     transition-duration: 0.08s;
 }
 
-.chat-header-actions .btn.btn-glow {
-    animation: headerBtnGlow 0.5s ease-out;
-}
-
-@keyframes headerBtnGlow {
-    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--secondary-color) 50%, transparent); }
-    40%  { box-shadow: 0 0 12px 6px color-mix(in srgb, var(--secondary-color) 35%, transparent); }
-    100% { box-shadow: 0 0 0 0 transparent; }
-}
-
 .chat-settings-panel {
     position: absolute;
     top: calc(100% + 0.4rem);
@@ -4682,27 +4672,13 @@ textarea,
     box-shadow: 0 6px 24px rgba(106, 17, 203, 0.4), 0 0 12px rgba(37, 117, 252, 0.15);
 }
 
-.chat-input:focus-within button[type="submit"]:not(:active):not(.btn-tap) {
+.chat-input:focus-within button[type="submit"] {
     animation: submitPulse 2s ease-in-out infinite;
 }
 
 @keyframes submitPulse {
     0%, 100% { box-shadow: 0 2px 12px rgba(106, 17, 203, 0.3); }
     50% { box-shadow: 0 2px 18px rgba(106, 17, 203, 0.45), 0 0 8px rgba(37, 117, 252, 0.2); }
-}
-
-.chat-input button.btn-tap {
-    animation: buttonShake 0.4s ease-out;
-}
-
-@keyframes buttonShake {
-    0%   { transform: rotate(0deg); }
-    15%  { transform: rotate(-12deg) scale(0.92); }
-    30%  { transform: rotate(10deg) scale(1.05); }
-    45%  { transform: rotate(-6deg); }
-    60%  { transform: rotate(4deg); }
-    75%  { transform: rotate(-2deg); }
-    100% { transform: rotate(0deg) scale(1); }
 }
 
 #pasteClipboardImageBtn {

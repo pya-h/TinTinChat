@@ -186,13 +186,16 @@ class UIEnhancements {
             });
         });
 
-        // Glow animation on header action buttons click
+        // Glow animation on header action buttons click — uses Web Animations API
         document.querySelectorAll(".chat-header-actions .btn").forEach((btn) => {
             btn.addEventListener("click", () => {
-                btn.classList.remove("btn-glow");
-                void btn.offsetWidth;
-                btn.classList.add("btn-glow");
-                btn.addEventListener("animationend", () => btn.classList.remove("btn-glow"), { once: true });
+                if (typeof btn.animate !== "function") return;
+                btn.animate([
+                    { boxShadow: "0 0 0 0 rgba(37, 117, 252, 0.6)", offset: 0 },
+                    { boxShadow: "0 0 18px 8px rgba(37, 117, 252, 0.45)", offset: 0.35 },
+                    { boxShadow: "0 0 6px 2px rgba(37, 117, 252, 0.15)", offset: 0.7 },
+                    { boxShadow: "0 0 0 0 transparent", offset: 1 },
+                ], { duration: 500, easing: "ease-out", composite: "replace" });
             });
         });
 
