@@ -385,6 +385,7 @@ $csrfToken = generateCsrfToken();
                     <div class="chat-ui-settings-tabs" role="tablist" aria-label="Settings sections">
                         <button type="button" id="chatUiSettingsTabGeneral" class="chat-ui-settings-tab is-active" role="tab" aria-selected="true" aria-controls="chatUiSettingsPanelGeneral">General</button>
                         <button type="button" id="chatUiSettingsTabAccount" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelAccount">Account</button>
+                        <button type="button" id="chatUiSettingsTabSessions" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelSessions">Sessions</button>
                         <button type="button" id="chatUiSettingsTabIdeas" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelIdeas">Ideas</button>
                         <?php if ($is_admin): ?>
                         <button type="button" id="chatUiSettingsTabAdmin" class="chat-ui-settings-tab" role="tab" aria-selected="false" aria-controls="chatUiSettingsPanelAdmin">Admin</button>
@@ -520,6 +521,21 @@ $csrfToken = generateCsrfToken();
                             <button type="submit" class="btn btn-sm btn-primary">Save username</button>
                         </form>
 
+                        <div class="chat-ui-account-section">
+                            <div class="chat-ui-account-row">
+                                <div class="chat-ui-account-row-content">
+                                    <div class="chat-ui-account-title">Blocked users</div>
+                                    <div class="chat-ui-account-subtitle">Users you've blocked cannot message you.</div>
+                                </div>
+                                <button type="button" id="settingsRefreshBlockedBtn" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                                </button>
+                            </div>
+                            <div id="settingsBlockedUsersList" class="chat-ui-blocked-list" aria-live="polite">
+                                <div class="chat-ui-admin-empty">Click refresh to load blocked users.</div>
+                            </div>
+                        </div>
+
                         <form id="settingsPasswordForm" class="chat-ui-account-section">
                             <div class="chat-ui-account-title">Password</div>
                             <label class="chat-ui-settings-field" for="settingsCurrentPasswordInput">
@@ -536,19 +552,21 @@ $csrfToken = generateCsrfToken();
                             </label>
                             <button type="submit" class="btn btn-sm btn-primary">Change password</button>
                         </form>
+                    </section>
 
+                    <section id="chatUiSettingsPanelSessions" class="chat-ui-settings-panel" role="tabpanel" aria-labelledby="chatUiSettingsTabSessions" hidden>
                         <div class="chat-ui-account-section">
                             <div class="chat-ui-account-row">
                                 <div class="chat-ui-account-row-content">
-                                    <div class="chat-ui-account-title">Blocked users</div>
-                                    <div class="chat-ui-account-subtitle">Users you've blocked cannot message you.</div>
+                                    <div class="chat-ui-account-title">Active sessions</div>
+                                    <div class="chat-ui-account-subtitle">Devices where you're currently logged in.</div>
                                 </div>
-                                <button type="button" id="settingsRefreshBlockedBtn" class="btn btn-sm btn-outline-secondary">
+                                <button type="button" id="settingsRefreshSessionsBtn" class="btn btn-sm btn-outline-secondary">
                                     <i class="fas fa-sync-alt me-1"></i>Refresh
                                 </button>
                             </div>
-                            <div id="settingsBlockedUsersList" class="chat-ui-blocked-list" aria-live="polite">
-                                <div class="chat-ui-admin-empty">Click refresh to load blocked users.</div>
+                            <div id="settingsSessionsList" class="chat-ui-sessions-list" aria-live="polite">
+                                <div class="chat-ui-admin-empty">Loading sessions...</div>
                             </div>
                         </div>
                     </section>

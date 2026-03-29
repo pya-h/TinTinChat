@@ -38,4 +38,8 @@ $_SESSION['ident'] = $newIdent;
 $updateStmt = $pdo->prepare('UPDATE users SET ident = ?, last_login = NOW() WHERE id = ?');
 $updateStmt->execute([$newIdent, $user['id']]);
 
+// Update session token in user_sessions table (swap old → new)
+$swapStmt = $pdo->prepare('UPDATE user_sessions SET session_token = ?, last_active_at = NOW() WHERE session_token = ? AND user_id = ?');
+$swapStmt->execute([$newIdent, $ident, (int)$user['id']]);
+
 apiSuccess(['result' => 'ok']);

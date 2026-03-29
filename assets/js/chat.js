@@ -62,10 +62,12 @@ const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
 const chatUiSettingsTabGeneral = document.getElementById("chatUiSettingsTabGeneral");
 const chatUiSettingsTabAccount = document.getElementById("chatUiSettingsTabAccount");
+const chatUiSettingsTabSessions = document.getElementById("chatUiSettingsTabSessions");
 const chatUiSettingsTabIdeas = document.getElementById("chatUiSettingsTabIdeas");
 const chatUiSettingsTabAdmin = document.getElementById("chatUiSettingsTabAdmin");
 const chatUiSettingsPanelGeneral = document.getElementById("chatUiSettingsPanelGeneral");
 const chatUiSettingsPanelAccount = document.getElementById("chatUiSettingsPanelAccount");
+const chatUiSettingsPanelSessions = document.getElementById("chatUiSettingsPanelSessions");
 const chatUiSettingsPanelIdeas = document.getElementById("chatUiSettingsPanelIdeas");
 const chatUiSettingsPanelAdmin = document.getElementById("chatUiSettingsPanelAdmin");
 const settingBrowserNotifications = document.getElementById("settingBrowserNotifications");
@@ -1278,6 +1280,8 @@ function applySettingsTabUi(tabName = "general") {
     let normalizedTab = "general";
     if (tabName === "account") {
         normalizedTab = "account";
+    } else if (tabName === "sessions" && chatUiSettingsTabSessions && chatUiSettingsPanelSessions) {
+        normalizedTab = "sessions";
     } else if (tabName === "ideas" && chatUiSettingsTabIdeas && chatUiSettingsPanelIdeas) {
         normalizedTab = "ideas";
     } else if (tabName === "admin" && chatUiSettingsTabAdmin && chatUiSettingsPanelAdmin) {
@@ -1286,6 +1290,7 @@ function applySettingsTabUi(tabName = "general") {
 
     const isGeneral = normalizedTab === "general";
     const isAccount = normalizedTab === "account";
+    const isSessions = normalizedTab === "sessions";
     const isIdeas = normalizedTab === "ideas";
     const isAdmin = normalizedTab === "admin";
     activeSettingsTab = normalizedTab;
@@ -1300,6 +1305,12 @@ function applySettingsTabUi(tabName = "general") {
     chatUiSettingsTabAccount?.setAttribute("aria-selected", isAccount ? "true" : "false");
     if (chatUiSettingsPanelAccount) {
         chatUiSettingsPanelAccount.hidden = !isAccount;
+    }
+
+    chatUiSettingsTabSessions?.classList.toggle("is-active", isSessions);
+    chatUiSettingsTabSessions?.setAttribute("aria-selected", isSessions ? "true" : "false");
+    if (chatUiSettingsPanelSessions) {
+        chatUiSettingsPanelSessions.hidden = !isSessions;
     }
 
     chatUiSettingsTabIdeas?.classList.toggle("is-active", isIdeas);
@@ -3027,6 +3038,11 @@ function bindSettingsUiEvents() {
         if (window.AdminPanel) await window.AdminPanel.refreshAdminSettingsData();
     });
 
+    chatUiSettingsTabSessions?.addEventListener("click", async () => {
+        applySettingsTabUi("sessions");
+        await loadSessionsList();
+    });
+
     chatUiSettingsTabIdeas?.addEventListener("click", async () => {
         applySettingsTabUi("ideas");
         if (typeof window.loadIdeasList === "function") await window.loadIdeasList();
@@ -3237,6 +3253,10 @@ function bindSettingsUiEvents() {
             setComposerStatus("Unable to update password", "error");
         }
     });
+
+    // Sessions tab — refresh button
+    const settingsRefreshSessionsBtn = document.getElementById("settingsRefreshSessionsBtn");
+    settingsRefreshSessionsBtn?.addEventListener("click", () => loadSessionsList());
 
     if (composerToolsToggleBtn) {
         composerToolsToggleBtn.addEventListener("click", () => {
@@ -8763,6 +8783,128 @@ fileUploadInput.addEventListener("change", (e) => {
     }
     e.target.value = null;
 });
+
+// ── Sessions tab ──────────────────────────────────────────────
+async function loadSessionsList() {
+    const container = document.getElementById("settingsSessionsList");
+    if (!container) return;
+    container.innerHTML = '<div class="chat-ui-admin-empty"><i class="fas fa-spinner fa-spin me-1"></i>Loading sessions...</div>';
+    try {
+        const data = await window.ApiService.jsonOk("api/users/list_sessions.php");
+        renderSessionsList(data.sessions || [], container);
+    } catch (err) {
+        container.innerHTML = `<div class="chat-ui-admin-empty" style="color:var(--error-color)">Failed to load sessions.</div>`;
+    }
+}
+
+function parseUserAgent(ua) {
+    if (!ua) return { device: "Unknown", os: "Unknown", browser: "Unknown" };
+
+    let os = "Unknown";
+    if (/Windows/i.test(ua)) os = "Windows";
+    else if (/Macintosh|Mac OS/i.test(ua)) os = "macOS";
+    else if (/Android/i.test(ua)) os = "Android";
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+    else if (/Linux/i.test(ua)) os = "Linux";
+    else if (/CrOS/i.test(ua)) os = "ChromeOS";
+
+    let browser = "Unknown";
+    if (/Edg\//i.test(ua)) browser = "Edge";
+    else if (/OPR\//i.test(ua)) browser = "Opera";
+    else if (/Chrome\//i.test(ua)) browser = "Chrome";
+    else if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+    else if (/Firefox\//i.test(ua)) browser = "Firefox";
+
+    let device = "Desktop";
+    if (/Mobile|Android.*Mobile|iPhone|iPod/i.test(ua)) device = "Mobile";
+    else if (/iPad|Android(?!.*Mobile)|Tablet/i.test(ua)) device = "Tablet";
+
+    return { device, os, browser };
+}
+
+function deviceIcon(device) {
+    if (device === "Mobile") return "fa-mobile-alt";
+    if (device === "Tablet") return "fa-tablet-alt";
+    return "fa-desktop";
+}
+
+function formatSessionTime(dateStr) {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr.replace(" ", "T") + "Z");
+    if (isNaN(d.getTime())) return dateStr;
+    const now = new Date();
+    const diffMs = now - d;
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return "Just now";
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `${diffH}h ago`;
+    const diffD = Math.floor(diffH / 24);
+    if (diffD < 7) return `${diffD}d ago`;
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function renderSessionsList(sessions, container) {
+    if (!sessions.length) {
+        container.innerHTML = '<div class="chat-ui-admin-empty">No active sessions found.</div>';
+        return;
+    }
+    let html = "";
+    sessions.forEach((s, i) => {
+        const info = parseUserAgent(s.user_agent);
+        const isCurrent = s.is_current;
+        const canRevoke = s.can_revoke;
+        html += `<div class="session-item${isCurrent ? " session-current" : ""}" style="animation-delay:${i * 60}ms">
+            <div class="session-icon"><i class="fas ${deviceIcon(info.device)}"></i></div>
+            <div class="session-details">
+                <div class="session-device">
+                    ${info.browser} on ${info.os}
+                    ${isCurrent ? '<span class="session-badge-current">This device</span>' : ""}
+                </div>
+                <div class="session-meta">
+                    <span><i class="fas fa-clock me-1"></i>Login: ${formatSessionTime(s.created_at)}</span>
+                    <span><i class="fas fa-signal me-1"></i>Active: ${formatSessionTime(s.last_active_at)}</span>
+                    ${s.ip_address ? `<span><i class="fas fa-globe me-1"></i>${s.ip_address}</span>` : ""}
+                </div>
+            </div>
+            <div class="session-actions">
+                ${canRevoke
+                    ? `<button type="button" class="btn btn-sm btn-outline-danger session-revoke-btn" data-session-id="${s.id}"><i class="fas fa-sign-out-alt me-1"></i>Revoke</button>`
+                    : isCurrent
+                        ? ""
+                        : `<span class="session-hint">< 12h</span>`
+                }
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll(".session-revoke-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const sessionId = Number(btn.dataset.sessionId);
+            if (!sessionId) return;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            try {
+                await window.ApiService.jsonOk("api/users/revoke_session.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                    body: JSON.stringify({ session_id: sessionId }),
+                });
+                const item = btn.closest(".session-item");
+                if (item) {
+                    item.style.animation = "sessionSlideOut 0.3s ease forwards";
+                    item.addEventListener("animationend", () => item.remove(), { once: true });
+                }
+                setComposerStatus("Session revoked", "success");
+            } catch (err) {
+                showModal("Revoke Failed", err?.message || "Unable to revoke session.", "error");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i>Revoke';
+            }
+        });
+    });
+}
 
 // Send button icon: file when empty, paper-plane when typing
 // Send button tap animation — uses Web Animations API to bypass CSS conflicts

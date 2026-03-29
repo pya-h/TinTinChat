@@ -69,4 +69,45 @@ function clearPossibleLoginSession() {
         $stmt->execute([$_SESSION['user_id']]);
     }
 }
+
+function createUserSession(int $userId, string $sessionToken): void {
+    global $pdo;
+    $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? null;
+    $stmt = $pdo->prepare(
+        'INSERT INTO user_sessions (user_id, session_token, ip_address, user_agent, is_current)
+         VALUES (?, ?, ?, ?, 0)'
+    );
+    $stmt->execute([$userId, $sessionToken, $ip, $ua]);
+}
+
+function deleteUserSession(int $sessionId, int $userId): bool {
+    global $pdo;
+    $stmt = $pdo->prepare('DELETE FROM user_sessions WHERE id = ? AND user_id = ?');
+    $stmt->execute([$sessionId, $userId]);
+    return $stmt->rowCount() > 0;
+}
+
+function deleteUserSessionByToken(string $token): void {
+    global $pdo;
+    $stmt = $pdo->prepare('DELETE FROM user_sessions WHERE session_token = ?');
+    $stmt->execute([$token]);
+}
+
+function listUserSessions(int $userId): array {
+    global $pdo;
+    $stmt = $pdo->prepare(
+        'SELECT id, session_token, ip_address, user_agent, created_at, last_active_at
+         FROM user_sessions WHERE user_id = ? ORDER BY last_active_at DESC LIMIT 50'
+    );
+    $stmt->execute([$userId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function touchUserSession(string $token): void {
+    global $pdo;
+    $stmt = $pdo->prepare('UPDATE user_sessions SET last_active_at = NOW() WHERE session_token = ?');
+    $stmt->execute([$token]);
+}
+
 loadPDO();

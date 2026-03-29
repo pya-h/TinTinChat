@@ -106,7 +106,8 @@ if (!$user) {
 
 	$new_ident = setSessionUser(['id' => $user_id, 'username' => $username]);
 	if($new_ident) {
-	   updateLoginSession($user_id, $new_ident); 
+	   updateLoginSession($user_id, $new_ident);
+	   createUserSession($user_id, $new_ident);
 	}
 	redirectToApp('/dashboard.php');
 }
@@ -123,6 +124,7 @@ if (!empty($user['banned_at'])) {
 
 $new_ident = setSessionUser($user);
 if($new_ident) {
-   updateLoginSession($user['id'], $new_ident); 
+   updateLoginSession($user['id'], $new_ident);
+   createUserSession((int)$user['id'], $new_ident);
 }
 redirectToApp('/dashboard.php');

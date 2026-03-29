@@ -18,6 +18,10 @@ function logout(): void {
     $redirectTo = ($basePath === '' ? '' : $basePath) . '/index.php';
     $safeRedirect = htmlspecialchars(addslashes($redirectTo), ENT_QUOTES, 'UTF-8');
 
+    // Remove session record from user_sessions table
+    if (!empty($_SESSION['ident'])) {
+        deleteUserSessionByToken($_SESSION['ident']);
+    }
     clearPossibleLoginSession();
     $_SESSION = [];
     session_destroy();
