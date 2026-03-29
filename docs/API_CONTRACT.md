@@ -1,6 +1,6 @@
 # TinTinChat API Contract & Error Codes
 
-Last updated: 2026-03-18
+Last updated: 2026-03-29
 Audience: developers extending `api/*.php` and frontend consumers in `assets/js/*`.
 
 ## 1) Response Envelope
@@ -128,13 +128,28 @@ All routes use organized domains under `api/<domain>/...`.
   - `api/users/update_profile.php`
   - `api/users/block.php`
   - `api/users/unblock.php`
+  - `api/users/list_blocked.php`
+  - `api/users/list_sessions.php`
+  - `api/users/revoke_session.php`
   - `api/users/dismiss_changelog.php`
+  - `api/users/dismiss_announcements.php`
 - Ideas:
   - `api/ideas/create.php`
   - `api/ideas/fetch.php`
   - `api/ideas/vote.php`
   - `api/ideas/reply.php`
   - `api/ideas/delete.php`
+- Admin:
+  - `api/admin/users/list.php`
+  - `api/admin/users/set_admin.php`
+  - `api/admin/users/set_ban.php`
+  - `api/admin/stickers/fetch.php`
+  - `api/admin/stickers/toggle_admin_only.php`
+  - `api/admin/announcements/create.php`
+  - `api/admin/announcements/fetch.php`
+  - `api/admin/announcements/delete.php`
+  - `api/admin/media_analyze.php`
+  - `api/admin/media_cleanup.php`
 - System:
   - `api/system/notrace.php`
 
@@ -155,6 +170,13 @@ All routes use organized domains under `api/<domain>/...`.
 
 ### L.2 Changelog dismiss endpoint
 - `api/users/dismiss_changelog.php` — POST, auth + CSRF. Sets `users.tips_seen_at = CURRENT_TIMESTAMP`. No body required.
+
+### M.4 Session management endpoints
+- `api/users/list_sessions.php` — GET, auth + ban check. Returns array of sessions with fields: `id`, `ip_address`, `user_agent`, `created_at`, `last_active_at`, `is_current`, `can_revoke`. `can_revoke` is true only when session is not current AND age >= 12 hours.
+- `api/users/revoke_session.php` — POST, auth + CSRF + ban check, JSON body `{session_id}`. Validates session exists and belongs to caller. Rejects revoking the current session and sessions younger than 12 hours. Error codes: `INVALID_SESSION_ID`, `SESSION_NOT_FOUND`, `CANNOT_REVOKE_CURRENT`, `SESSION_TOO_NEW`, `REVOKE_FAILED`.
+
+### M.4 Announcement read tracking
+- `api/users/dismiss_announcements.php` — POST, auth + CSRF. Marks all current announcements as read for the user.
 
 ---
 
@@ -206,9 +228,17 @@ All routes use organized domains under `api/<domain>/...`.
 - `INVALID_REACTION` → unsupported reaction emoji.
 - `INVALID_MESSAGE_ID` / `MESSAGE_NOT_FOUND` → bad/missing reaction target.
 
+### Session Management
+- `INVALID_SESSION_ID` → missing or invalid session ID in request body.
+- `SESSION_NOT_FOUND` → target session does not exist or does not belong to caller.
+- `CANNOT_REVOKE_CURRENT` → attempt to revoke the active session.
+- `SESSION_TOO_NEW` → session younger than 12 hours (revocation not allowed).
+- `REVOKE_FAILED` → server-side session deletion failed.
+
 ### Security / Access
 - `FORBIDDEN` (or endpoint-specific equivalent) → resource exists but user not permitted.
 - `GROUP_FORBIDDEN` → user lacks required group membership/role.
+- `ACCOUNT_BANNED` → user account is suspended.
 
 ### Group Domain
 - `INVALID_GROUP_ID` → malformed/invalid group identifier.

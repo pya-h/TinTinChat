@@ -1,7 +1,7 @@
 # TinTinChat Product Requirements Document (PRD)
 
-Version: 1.4
-Date: 2026-03-18
+Version: 1.5
+Date: 2026-03-29
 Owner: Product + Engineering
 
 ## 1) Product Summary
@@ -46,8 +46,9 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 - Avatar upload/retrieval with fallback avatar rendering
 - User Info modal with avatar enlargement + send-message shortcut
 - Block/unblock with direct-message send enforcement and blocked-users management UI in settings
-- Settings modal with tabbed sections (General/Account/Admin)
+- Settings modal with tabbed sections (General/Account/Sessions/Admin)
 - Account settings updates (username/password/avatar)
+- Active sessions management (list, revoke) with device/OS detection
 - Font-size customization preference
 
 ### 3.6 Ideas / Feedback
@@ -59,12 +60,20 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 - Browser Notification API for new messages when tab is hidden/unfocused
 - Changelog / What's New modal with DB-backed dismiss tracking
 - Swipe gestures on messages (reply / edit / forward) for mobile/touch UX
+- Global Announcements system (superuser-only create/delete, alert button with unread indicator)
 
-### 3.8 Performance optimizations
+### 3.8 Music & media
+- Music file detection with inline audio player (play/pause, seekable progress, format badge)
+- Saved Messages (self-chat with bookmark icon, save context menu action)
+- Playlist (localStorage-based, add/remove tracks, auto-advance)
+- Global Now Playing bar (persistent across chat switches, seekable)
+- Actual media forwarding (re-encrypts and sends media, not just text labels)
+
+### 3.9 Performance optimizations
 - Typing status inlined into fetch_recent response (reduced polling requests)
 - Hidden-tab notification-aware polling (5s interval when notifications enabled)
 
-### 3.9 Quality & reliability
+### 3.10 Quality & reliability
 - Unit + E2E smoke suite and one-command runner
 - Test env setup + test server lifecycle helper scripts
 
@@ -126,12 +135,15 @@ Provide a secure, usable, low-ops chat platform with modern baseline features (d
 ## 11) Phase Status Snapshot
 
 Completed:
-- A, B, C, D, E, E.1, E.2, F, F.5, F.6, G, H, I, J, J.2, K, L
+- A, B, C, D, E, E.1, E.2, F, F.5, F.6, G, H, I, J, J.2, K, L, M, M.1, M.2, M.3, M.4
 
 In progress:
-- Post-Phase L optimization + audit loop
+- Post-Phase M stabilization + audit loop
 
 Planned:
-- Further modularization and additional focused test expansion
+- Phase N: E2E Encryption Upgrade (private key protection)
+- Phase O: Private chat categorization & improvements
+- Phase O.2: Favorite chats
+- Further modularization and test expansion
 
 Source of truth for detailed task lines: `docs/TASKS.md`.

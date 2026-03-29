@@ -1,7 +1,7 @@
 # TinTinChat Technical Design
 
-Version: 1.4
-Date: 2026-03-18
+Version: 1.5
+Date: 2026-03-29
 
 ## 1) Overview
 
@@ -24,7 +24,7 @@ The design emphasizes low operational complexity, predictable API contracts, and
   - `api/system/*`
   - `api/typing/*`
   - `api/users/*`
-  - `api/admin/*`
+  - `api/admin/*` (users, stickers, announcements, media)
 - Shared backend helpers:
   - `includes/db.php`, `includes/api_helpers.php`, `includes/auth.php`, `includes/group_helpers.php`, `includes/group_crypto_helpers.php`, `includes/block_helpers.php`, `includes/constants.php`, etc.
 - Frontend:
@@ -58,7 +58,10 @@ The design emphasizes low operational complexity, predictable API contracts, and
 - `message_reactions`
 - `ideas`, `idea_votes`, `idea_replies`
 - `stickers`
-- supporting tables for typing/block/session-related features
+- `user_sessions` (multi-session tracking with token, IP, user-agent)
+- `announcements` (global announcements with title, body, user_id)
+- `announcement_reads` (per-user read tracking)
+- supporting tables for typing/block features
 
 ### 3.2 Message model highlights
 - `messages.group_id` nullable for direct/group split.
@@ -105,6 +108,14 @@ Reference: `docs/API_CONTRACT.md`
 
 Reference: `docs/ENCRYPTION.md`
 
+## 5.1) Session Management
+
+- Multi-session tracking via `user_sessions` table (token, IP, user-agent, timestamps).
+- Login creates session record; logout and ident-swap maintain records.
+- Sessions listed in Settings modal with device/OS/browser detection via user-agent parsing.
+- Session revocation enforces 12-hour minimum age and ownership.
+- Session endpoints enforce ban check.
+
 ## 6) Frontend Interaction Model
 
 - Chat state tracks selected target, pagination offset, recent window, unread/status metadata.
@@ -148,7 +159,8 @@ Reference: `docs/ENCRYPTION.md`
 
 ## 10) Forward Design Priorities
 
-- Continue UI/performance hardening and bug-sweep iterations after Phase L.
+- Phase N: E2E Encryption Upgrade — password-derived KEK for private key protection (see `docs/ENCRYPTION.md` Part 2).
+- Continue UI/performance hardening and bug-sweep iterations.
 - Continue decomposing `assets/js/chat.js` into smaller modules without changing behavior.
-- Expand smoke coverage for recently added surfaces (Ideas, swipe gestures, notifications).
+- Expand smoke coverage for recently added surfaces (sessions, announcements, media forwarding).
 - Evaluate WebSocket readiness as polling surfaces grow.

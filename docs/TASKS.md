@@ -1,6 +1,6 @@
 # TinTinChat Tasks
 
-Date: 2026-03-18  
+Date: 2026-03-29
 Source: Current codebase review + PRD + Technical Design
 
 Legend:
@@ -414,6 +414,20 @@ Legend:
 	- Audio persists across chat switches (detached from DOM before chat clear).
 	- Hooks into in-message voice/music players and saved panel playlist.
 
+### Phase M.4 — Sessions & Settings Improvements
+- [x] (`P2`) **Active Sessions management**:
+	- DB migration (`user_sessions` table with token, IP, user-agent, timestamps).
+	- Login/logout/ident-swap maintain session records.
+	- `list_sessions.php` (GET) and `revoke_session.php` (POST + CSRF) API endpoints.
+	- Sessions tab in Settings modal with device/OS/browser detection, relative timestamps.
+	- Revoke button with 12-hour minimum age restriction, slide-out animation.
+	- Ban check enforced on session endpoints.
+- [x] (`P3`) **Settings Account tab reorder**:
+	- Moved password change section below blocked users section.
+- [x] (`P3`) **Chat input button animation fix**:
+	- Fixed stuck/stuttering send button animation caused by `btn-pressed` CSS class conflict.
+	- Chat-input buttons now use Web Animations API instead of CSS class toggles.
+
 ### Phase N — E2E Encryption Upgrade (Private Key Protection) (`P1`)
 - [ ] (`P1`) **Password-derived KEK for private key encryption**:
 	- Encrypt user private keys at rest using AES-GCM with a PBKDF2-derived Key Encryption Key (KEK).
@@ -421,7 +435,7 @@ Legend:
 	- Convert login flow to AJAX for password availability during KEK derivation.
 	- Dual-mode support: legacy (plaintext) and upgraded (encrypted) accounts during migration.
 	- Auto-migration: legacy users transparently upgrade on next login.
-	- Full design doc: `docs/E2E_ENCRYPTION_UPGRADE.md`
+	- Full design doc: `docs/ENCRYPTION.md` (Part 2)
 - [ ] (`P1`) **Client-side group key distribution**:
 	- Move group shared key distribution from server-side to client-side.
 	- Server can no longer read private keys to unwrap/re-wrap group keys.
