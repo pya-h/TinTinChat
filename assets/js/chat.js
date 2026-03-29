@@ -8541,7 +8541,7 @@ const sendTextMessage = async () => {
 
     const sendBtn = chatForm.querySelector('button[type="submit"]');
     sendBtn.disabled = true;
-    sendBtn.classList.add("btn-pressed");
+    sendBtn.classList.add("btn-tap");
     setComposerStatus("");
 
     try {
@@ -8603,7 +8603,7 @@ const sendTextMessage = async () => {
         );
     } finally {
         sendBtn.disabled = false;
-        sendBtn.classList.remove("btn-pressed");
+        sendBtn.classList.remove("btn-tap");
     }
 };
 
@@ -8766,19 +8766,57 @@ fileUploadInput.addEventListener("change", (e) => {
 });
 
 // Send button icon: file when empty, paper-plane when typing
+// Animates the swap with a vertical slide (old icon exits up, new enters from below)
+let _sendBtnIconState = null; // track current icon to avoid redundant swaps
+let _iconSwapAbort = null;    // abort controller for in-flight animation
 function updateSendButtonIcon() {
     const icon = sendBtn?.querySelector("i");
     if (!icon) return;
-    const hasText = Boolean(chatInput.value.trim().length);
-    if (hasText) {
-        icon.classList.remove("fa-file");
-        icon.classList.add("fa-paper-plane");
-        sendBtn.title = "Send message";
-    } else {
-        icon.classList.remove("fa-paper-plane");
-        icon.classList.add("fa-file");
-        sendBtn.title = "Send file";
+    const wantPlane = Boolean(chatInput.value.trim().length);
+    const nextState = wantPlane ? "plane" : "file";
+    if (nextState === _sendBtnIconState) return; // no change needed
+
+    // If a swap animation is in progress, cancel it and jump to final state
+    if (_iconSwapAbort) {
+        _iconSwapAbort.abort();
+        _iconSwapAbort = null;
+        icon.classList.remove("icon-exit", "icon-enter");
+        icon.getAnimations().forEach(a => a.cancel());
     }
+
+    const isFirstCall = _sendBtnIconState === null;
+    _sendBtnIconState = nextState;
+
+    // Apply the correct icon immediately (animation or not)
+    const applyIcon = () => {
+        icon.classList.remove("fa-file", "fa-paper-plane");
+        icon.classList.add(wantPlane ? "fa-paper-plane" : "fa-file");
+        sendBtn.title = wantPlane ? "Send message" : "Send file";
+    };
+
+    if (isFirstCall) {
+        icon.classList.remove("icon-exit", "icon-enter");
+        applyIcon();
+        return;
+    }
+
+    // Animate: exit current icon up, enter new icon from below
+    const ac = new AbortController();
+    _iconSwapAbort = ac;
+
+    icon.classList.add("icon-exit");
+    icon.addEventListener("animationend", () => {
+        if (ac.signal.aborted) return;
+        icon.classList.remove("icon-exit");
+        applyIcon();
+        void icon.offsetWidth; // force reflow
+        icon.classList.add("icon-enter");
+        icon.addEventListener("animationend", () => {
+            if (ac.signal.aborted) return;
+            icon.classList.remove("icon-enter");
+            _iconSwapAbort = null;
+        }, { once: true, signal: ac.signal });
+    }, { once: true, signal: ac.signal });
 }
 updateSendButtonIcon();
 

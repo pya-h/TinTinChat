@@ -4672,7 +4672,7 @@ textarea,
     box-shadow: 0 6px 24px rgba(106, 17, 203, 0.4), 0 0 12px rgba(37, 117, 252, 0.15);
 }
 
-.chat-input:focus-within button[type="submit"] {
+.chat-input:focus-within button[type="submit"]:not(:active):not(.btn-tap) {
     animation: submitPulse 2s ease-in-out infinite;
 }
 
@@ -4681,15 +4681,15 @@ textarea,
     50% { box-shadow: 0 2px 18px rgba(106, 17, 203, 0.45), 0 0 8px rgba(37, 117, 252, 0.2); }
 }
 
-.chat-input button:active {
-    animation: buttonTap 0.35s var(--ease-out);
+.chat-input button:active,
+.chat-input button.btn-tap {
+    animation: buttonTap 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes buttonTap {
     0% { transform: scale(1); filter: brightness(1); }
-    25% { transform: scale(0.85) rotate(-5deg); filter: brightness(1.2); }
-    55% { transform: scale(1.06) rotate(2deg); filter: brightness(1); }
-    80% { transform: scale(0.97) rotate(-1deg); }
+    30% { transform: scale(0.82) rotate(-4deg); filter: brightness(1.15); }
+    60% { transform: scale(1.08) rotate(2deg); filter: brightness(1); }
     100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
 }
 
@@ -7069,53 +7069,40 @@ textarea,
     }
 }
 
-/* Icon transition animations */
-@keyframes iconFadeOut {
+/* Icon transition animations — vertical slide swap */
+@keyframes iconSlideOut {
     0% {
         opacity: 1;
-        transform: scale(1) rotateY(0deg);
+        transform: translateY(0) scale(1);
     }
-
-    50% {
-        opacity: 0;
-        transform: scale(0.7) rotateY(90deg);
-    }
-
     100% {
         opacity: 0;
-        transform: scale(0.7) rotateY(90deg);
+        transform: translateY(-14px) scale(0.7);
     }
 }
 
-@keyframes iconFadeIn {
+@keyframes iconSlideIn {
     0% {
         opacity: 0;
-        transform: scale(0.7) rotateY(-90deg);
+        transform: translateY(14px) scale(0.7);
     }
-
-    50% {
-        opacity: 0;
-        transform: scale(0.7) rotateY(-90deg);
-    }
-
     100% {
         opacity: 1;
-        transform: scale(1) rotateY(0deg);
+        transform: translateY(0) scale(1);
     }
 }
 
 #sendBtn i {
     display: inline-block;
-    transition: transform 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    transform-style: preserve-3d;
+    transition: none;
 }
 
 #sendBtn i.icon-exit {
-    animation: iconFadeOut 0.6s ease-in-out forwards;
+    animation: iconSlideOut 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 #sendBtn i.icon-enter {
-    animation: iconFadeIn 0.6s ease-in-out forwards;
+    animation: iconSlideIn 0.22s cubic-bezier(0, 0, 0.2, 1.4) forwards;
 }
 
 #searchUser.suggestions-active {
