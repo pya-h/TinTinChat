@@ -508,7 +508,7 @@ function closeUserProfileModal() {
             lastFocusedElementBeforeUserProfileModal = null;
             activeUserProfile = null;
         }
-    }, 200);
+    }, 500);
 }
 
 async function openUserProfileModal({ userId = 0, username = "" } = {}) {
@@ -3818,7 +3818,7 @@ function closeMessageActionModal() {
                 });
             }
         }
-    }, 180);
+    }, 500);
 }
 
 function getMessageTextForCopy(messageElement) {
@@ -9885,6 +9885,11 @@ groupKeyHealthBtn?.addEventListener("click", async () => {
 groupInfoBtn?.addEventListener("click", async () => {
     const groupId = getCurrentGroupId();
     if (!groupId) {
+        return;
+    }
+    // Toggle: re-click closes the panel
+    if (groupInfoPanel && !groupInfoPanel.hidden) {
+        closeGroupInfoPanel();
         return;
     }
     await renderGroupInfoPanel(groupId);

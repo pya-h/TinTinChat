@@ -112,7 +112,7 @@
 
     function closeGuide() {
         overlay.classList.remove("visible");
-        setTimeout(() => { overlay.style.display = "none"; }, 300);
+        setTimeout(() => { overlay.style.display = "none"; }, 500);
     }
 
     openBtn?.addEventListener("click", openGuide);

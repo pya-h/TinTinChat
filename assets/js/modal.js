@@ -34,7 +34,7 @@ function closeModal() {
         if (!modalOverlay.classList.contains("visible")) {
             modalOverlay.style.display = "none";
         }
-    }, 400);
+    }, 500);
 }
 
 function getIconClass(type) {

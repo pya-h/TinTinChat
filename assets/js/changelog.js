@@ -100,7 +100,7 @@
 
     function dismiss() {
         overlay.classList.remove("visible");
-        setTimeout(() => { overlay.style.display = "none"; }, 350);
+        setTimeout(() => { overlay.style.display = "none"; }, 500);
         // Fire-and-forget server update
         try {
             const csrfHeaders = typeof window.getCsrfHeaders === "function"

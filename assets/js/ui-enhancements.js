@@ -186,6 +186,16 @@ class UIEnhancements {
             });
         });
 
+        // Glow animation on header action buttons click
+        document.querySelectorAll(".chat-header-actions .btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                btn.classList.remove("btn-glow");
+                void btn.offsetWidth;
+                btn.classList.add("btn-glow");
+                btn.addEventListener("animationend", () => btn.classList.remove("btn-glow"), { once: true });
+            });
+        });
+
         const chatItems = document.querySelectorAll(".chat-list li");
         chatItems.forEach((item, index) => {
             item.style.setProperty("--i", index);

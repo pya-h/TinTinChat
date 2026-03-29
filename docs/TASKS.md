@@ -416,7 +416,19 @@ Legend:
 - [ ] (`P2`) **Caption for multimedia messages**:
 	- Allow adding text captions to voice, image, video, and file messages (like Telegram).
 
-### Phase M.4 - Minor UI Improvements
+### Phase M.4 - Favorite chats
+- [ ] (`P2`) **Decode on Interface**:
+	- Decide on ways to go to it, where it should be, what other roperties it should have, etc.
+- [ ] (`P3`) **Database structure upgrade & migrations**:
+		- Write migrations that adds the table and columns requied.
+- [ ] (`P3`) **Implement The Section**:
+		- Implement the actual Favorite Chat section.
+- [ ] (`P3`) **Add to Favorites**:
+		- The interface to add chats to favorites.
+- [ ] (`P3`) **Animations & Improvements & Shortcuts**:
+		- Add animations & extra creative options & also shortcut approach on opening the section
+
+### Phase M.5 - Minor UI Improvements
 - [ ] (`P2`) **Style/animation upgrade**:
 	- Platform-wide visual polish: smoother transitions, refined animations, UI beautification.
 - [ ] (`P3`) **Constant Add to Playlist**:

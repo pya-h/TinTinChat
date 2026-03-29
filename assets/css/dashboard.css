@@ -2318,9 +2318,9 @@ textarea,
     border: 1px solid var(--border-color);
     border-radius: 1rem;
     box-shadow: var(--shadow-lg);
-    transform: translateY(24px) scale(0.9);
+    transform: translateY(100vh) scale(0.94);
     opacity: 0;
-    transition: transform 0.48s var(--ease-spring), opacity 0.32s var(--ease-out);
+    transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.3s var(--ease-out);
     overflow: hidden;
 }
 
@@ -2411,9 +2411,9 @@ textarea,
         color-mix(in srgb, var(--secondary-color) 7%, var(--surface-color))
     );
     box-shadow: var(--shadow-lg);
-    transform: translateY(28px) scale(0.88);
+    transform: translateY(100vh) scale(0.94);
     opacity: 0;
-    transition: transform 0.5s var(--ease-spring), opacity 0.34s var(--ease-out);
+    transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.3s var(--ease-out);
     overflow: hidden;
 }
 
@@ -3611,6 +3611,16 @@ textarea,
     transition-duration: 0.08s;
 }
 
+.chat-header-actions .btn.btn-glow {
+    animation: headerBtnGlow 0.5s ease-out;
+}
+
+@keyframes headerBtnGlow {
+    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--secondary-color) 50%, transparent); }
+    40%  { box-shadow: 0 0 12px 6px color-mix(in srgb, var(--secondary-color) 35%, transparent); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
 .chat-settings-panel {
     position: absolute;
     top: calc(100% + 0.4rem);
@@ -4681,16 +4691,18 @@ textarea,
     50% { box-shadow: 0 2px 18px rgba(106, 17, 203, 0.45), 0 0 8px rgba(37, 117, 252, 0.2); }
 }
 
-.chat-input button:active,
 .chat-input button.btn-tap {
-    animation: buttonTap 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: buttonShake 0.4s ease-out;
 }
 
-@keyframes buttonTap {
-    0% { transform: scale(1); filter: brightness(1); }
-    30% { transform: scale(0.82) rotate(-4deg); filter: brightness(1.15); }
-    60% { transform: scale(1.08) rotate(2deg); filter: brightness(1); }
-    100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+@keyframes buttonShake {
+    0%   { transform: rotate(0deg); }
+    15%  { transform: rotate(-12deg) scale(0.92); }
+    30%  { transform: rotate(10deg) scale(1.05); }
+    45%  { transform: rotate(-6deg); }
+    60%  { transform: rotate(4deg); }
+    75%  { transform: rotate(-2deg); }
+    100% { transform: rotate(0deg) scale(1); }
 }
 
 #pasteClipboardImageBtn {
@@ -7413,7 +7425,7 @@ textarea,
 @keyframes create-group-modal-in {
     from {
         opacity: 0;
-        transform: translateY(28px) scale(0.88);
+        transform: translateY(100vh) scale(0.94);
     }
     to {
         opacity: 1;
@@ -8332,8 +8344,9 @@ textarea,
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transform: translateY(20px) scale(0.96);
-    transition: transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+    transform: translateY(100vh) scale(0.96);
+    transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1),
+                opacity 0.3s ease;
 }
 
 .changelog-overlay.visible .changelog-modal {
@@ -8795,8 +8808,9 @@ textarea,
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transform: translateY(20px) scale(0.96);
-    transition: transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+    transform: translateY(100vh) scale(0.96);
+    transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1),
+                opacity 0.3s ease;
 }
 
 .guide-overlay.visible .guide-modal {
