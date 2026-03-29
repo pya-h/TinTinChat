@@ -109,7 +109,7 @@
     }
 }
 
-.chat-input button.btn-pressed {
+button.btn-pressed {
     transform: scale(0.85);
     transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }

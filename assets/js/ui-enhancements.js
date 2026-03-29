@@ -173,6 +173,22 @@ class UIEnhancements {
 
         const buttons = document.querySelectorAll("button");
         buttons.forEach((button) => {
+            // Chat-input buttons use Web Animations API instead — the
+            // btn-pressed CSS class conflicts with their hover/pulse transforms
+            // and causes a visible "stuck" moment.
+            if (button.closest(".chat-input")) {
+                button.addEventListener("click", () => {
+                    if (typeof button.animate !== "function") return;
+                    button.animate([
+                        { transform: "scale(1)",    offset: 0 },
+                        { transform: "scale(0.88)", offset: 0.25 },
+                        { transform: "scale(1.05)", offset: 0.6 },
+                        { transform: "scale(1)",    offset: 1 },
+                    ], { duration: 300, easing: "ease-out", composite: "replace" });
+                });
+                return;
+            }
+
             button.addEventListener("mousedown", () => {
                 button.classList.add("btn-pressed");
             });
