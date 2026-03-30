@@ -1883,6 +1883,7 @@ function toggleSavedMessagesInfoPanel() {
 // ── Private Chat Info Panel ──────────────────────────────────
 function closePrivateChatInfoPanel() {
     if (!privateChatInfoPanel || privateChatInfoPanel.hidden) return;
+    resetPrivateOpinionForm();
     let done = false;
     const finish = () => {
         if (done) return;
@@ -1896,8 +1897,18 @@ function closePrivateChatInfoPanel() {
     setTimeout(finish, 350);
 }
 
+function resetPrivateOpinionForm() {
+    const formWrap = document.getElementById("privateOpinionFormWrap");
+    const input = document.getElementById("privateOpinionInput");
+    const cc = document.getElementById("privateOpinionCharCount");
+    if (formWrap) formWrap.hidden = true;
+    if (input) input.value = "";
+    if (cc) cc.textContent = "0";
+}
+
 async function openPrivateChatInfoPanel() {
     if (!privateChatInfoPanel) return;
+    resetPrivateOpinionForm();
     privateChatInfoPanel.hidden = false;
     chatAreaElem?.classList.add("private-panel-open");
 
@@ -1952,6 +1963,21 @@ function loadPrivateChatStats() {
     el("pvStatSticker") && (el("pvStatSticker").textContent = String(stats.sticker));
 }
 
+let privateMusicAudio = null;
+let privateMusicCurrentBtn = null;
+
+function stopPrivateMusicAudio() {
+    if (privateMusicAudio) {
+        privateMusicAudio.pause();
+        privateMusicAudio.src = "";
+        privateMusicAudio = null;
+    }
+    if (privateMusicCurrentBtn) {
+        privateMusicCurrentBtn.innerHTML = '<i class="fas fa-play"></i>';
+        privateMusicCurrentBtn = null;
+    }
+}
+
 function loadPrivateChatMusicMessages() {
     const body = document.getElementById("privateMusicBody");
     const countEl = document.getElementById("privateMusicCount");
@@ -1984,32 +2010,68 @@ function loadPrivateChatMusicMessages() {
             </div>
         `;
         if (!isPurged) {
-            item.querySelector(".saved-pl-play")?.addEventListener("click", async () => {
+            const playBtn = item.querySelector(".saved-pl-play");
+            playBtn?.addEventListener("click", async () => {
+                // Toggle pause if same track
+                if (privateMusicAudio && privateMusicCurrentBtn === playBtn) {
+                    if (privateMusicAudio.paused) {
+                        privateMusicAudio.play();
+                        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    } else {
+                        privateMusicAudio.pause();
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                    return;
+                }
+
+                // Stop previous private music audio
+                stopPrivateMusicAudio();
+
+                // Stop any in-chat playing audio
+                document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
+                    const otherAudio = btn.closest(".message")?.querySelector("audio");
+                    if (otherAudio && !otherAudio.paused) otherAudio.pause();
+                    btn.classList.remove("playing");
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                    btn.closest(".voice-player-container")?.classList.remove("is-playing");
+                    btn.closest(".music-player-container")?.classList.remove("is-playing");
+                });
+
                 const freshMeta = messageMetaById.get(msgId);
                 if (!freshMeta) return;
+
+                playBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
                 try {
                     const mediaResource = await getDecryptedMediaResource(freshMeta);
                     if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     if (audioContext.state === "suspended") audioContext.resume();
-                    document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
-                        const otherAudio = btn.closest(".message")?.querySelector("audio");
-                        if (otherAudio && !otherAudio.paused) otherAudio.pause();
-                        btn.classList.remove("playing");
-                        btn.innerHTML = '<i class="fas fa-play"></i>';
-                    });
+
                     const audio = new Audio(mediaResource.objectUrl);
-                    audio.play();
-                    const playBtn = item.querySelector(".saved-pl-play");
-                    if (playBtn) {
-                        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                        audio.addEventListener("ended", () => { playBtn.innerHTML = '<i class="fas fa-play"></i>'; });
-                        audio.addEventListener("pause", () => { playBtn.innerHTML = '<i class="fas fa-play"></i>'; });
-                        playBtn.addEventListener("click", () => {
-                            if (audio.paused) { audio.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
-                            else { audio.pause(); }
-                        }, { once: false });
-                    }
-                } catch { /* ignore */ }
+                    privateMusicAudio = audio;
+                    privateMusicCurrentBtn = playBtn;
+
+                    audio.addEventListener("ended", () => {
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        privateMusicAudio = null;
+                        privateMusicCurrentBtn = null;
+                        hideGlobalNowPlaying();
+                    });
+
+                    audio.addEventListener("error", () => {
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        privateMusicAudio = null;
+                        privateMusicCurrentBtn = null;
+                        hideGlobalNowPlaying();
+                    });
+
+                    await audio.play();
+                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    showGlobalNowPlaying(audio, title, "music");
+                } catch {
+                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    privateMusicCurrentBtn = null;
+                }
             });
         }
         body.appendChild(item);

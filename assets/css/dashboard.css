@@ -940,6 +940,10 @@ nav.navbar::after {
     padding: 0.5rem 0.9rem 0.9rem;
     animation: panelSlideIn 0.5s var(--ease-spring);
     overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .private-info-header {
@@ -1062,7 +1066,6 @@ nav.navbar::after {
 /* ── Private Chat Opinion Section ── */
 .private-info-opinion {
     margin-bottom: 0.5rem;
-    min-width: 0;
     overflow: hidden;
 }
 
@@ -1172,16 +1175,17 @@ nav.navbar::after {
 
 .private-opinion-form-wrap {
     margin-top: 0.5rem;
-    min-width: 0;
+    overflow: hidden;
 }
 
-.private-opinion-form-wrap textarea {
+.private-opinion-form-wrap textarea.form-control {
     font-size: 0.82rem;
     resize: none;
     border-radius: 10px;
-    width: 100% !important;
-    min-width: 0;
+    width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    display: block;
 }
 
 .private-opinion-form-actions {

@@ -17,8 +17,8 @@ if ($action !== 'username' && $action !== 'password' && $action !== 'bio') {
 
 if ($action === 'bio') {
     $bio = trim((string) ($data['bio'] ?? ''));
-    if (strlen($bio) > 300) {
-        apiError('INVALID_BIO', 'Bio must be 300 characters or fewer', 400);
+    if (strlen($bio) > 255) {
+        apiError('INVALID_BIO', 'Bio must be 255 characters or fewer', 400);
     }
     $bioValue = $bio === '' ? null : $bio;
     $stmt = $pdo->prepare('UPDATE users SET bio = ? WHERE id = ?');

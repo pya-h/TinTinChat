@@ -584,9 +584,9 @@ $csrfToken = generateCsrfToken();
                             <div class="chat-ui-account-subtitle">A short description about yourself.</div>
                             <label class="chat-ui-settings-field" for="settingsBioInput">
                                 <span>Your bio</span>
-                                <textarea id="settingsBioInput" class="form-control form-control-sm" maxlength="300" rows="3" placeholder="Tell others a bit about yourself..."></textarea>
+                                <textarea id="settingsBioInput" class="form-control form-control-sm" maxlength="255" rows="3" placeholder="Tell others a bit about yourself..."></textarea>
                             </label>
-                            <div class="settings-bio-counter"><span id="settingsBioCharCount">0</span> / 300</div>
+                            <div class="settings-bio-counter"><span id="settingsBioCharCount">0</span> / 255</div>
                             <button type="submit" class="btn btn-sm btn-polished btn-polished-primary">Save bio</button>
                         </form>
 
