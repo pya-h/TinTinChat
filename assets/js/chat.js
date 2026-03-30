@@ -92,6 +92,9 @@ const avatarUploadInput = document.getElementById("avatarUploadInput");
 const settingsUsernameForm = document.getElementById("settingsUsernameForm");
 const settingsCurrentUsername = document.getElementById("settingsCurrentUsername");
 const settingsUsernameInput = document.getElementById("settingsUsernameInput");
+const settingsBioForm = document.getElementById("settingsBioForm");
+const settingsBioInput = document.getElementById("settingsBioInput");
+const settingsBioCharCount = document.getElementById("settingsBioCharCount");
 const settingsPasswordForm = document.getElementById("settingsPasswordForm");
 const settingsCurrentPasswordInput = document.getElementById("settingsCurrentPasswordInput");
 const settingsNewPasswordInput = document.getElementById("settingsNewPasswordInput");
@@ -113,6 +116,8 @@ const messageActionModalClose = document.getElementById("messageActionModalClose
 const messageActionModalAnnouncer = document.getElementById("messageActionModalAnnouncer");
 const createGroupBtn = document.getElementById("createGroupBtn");
 const groupKeyHealthBtn = document.getElementById("groupKeyHealthBtn");
+const privateChatInfoPanel = document.getElementById("privateChatInfoPanel");
+const privateChatInfoBackBtn = document.getElementById("privateChatInfoBackBtn");
 const groupInfoBtn = document.getElementById("groupInfoBtn");
 const groupInfoBackBtn = document.getElementById("groupInfoBackBtn");
 const groupInfoPanel = document.getElementById("groupInfoPanel");
@@ -1512,6 +1517,102 @@ async function checkAnnouncementUnread() {
     setAnnouncementUnreadState(latestId > lastReadAnnouncementId);
 }
 
+/* ── Opinions Panel ── */
+
+const opinionsOverlay = document.getElementById("opinionsOverlay");
+const opinionsBody = document.getElementById("opinionsBody");
+const opinionsCount = document.getElementById("opinionsCount");
+
+async function openOpinionsPanel() {
+    if (!opinionsOverlay) return;
+    opinionsOverlay.hidden = false;
+    requestAnimationFrame(() => opinionsOverlay.classList.add("visible"));
+    try {
+        const res = await window.ApiService.jsonOk("api/opinions/fetch.php");
+        renderOpinionsList(res.opinions || []);
+    } catch {
+        if (opinionsBody) opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>Unable to load opinions.</div>';
+    }
+}
+
+function closeOpinionsPanel() {
+    if (!opinionsOverlay) return;
+    opinionsOverlay.classList.remove("visible");
+    setTimeout(() => {
+        if (!opinionsOverlay.classList.contains("visible")) {
+            opinionsOverlay.hidden = true;
+        }
+    }, 250);
+}
+
+function renderOpinionsList(opinions) {
+    if (!opinionsBody) return;
+    if (opinionsCount) opinionsCount.textContent = opinions.length ? `${opinions.length} opinion${opinions.length > 1 ? "s" : ""}` : "";
+    opinionsBody.innerHTML = "";
+    if (!opinions.length) {
+        opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>No opinions written yet.<br>Open a chat details panel to add one.</div>';
+        return;
+    }
+    opinions.forEach((op, idx) => {
+        const item = document.createElement("div");
+        item.className = "opinions-item";
+        item.style.animationDelay = `${idx * 0.04}s`;
+        const username = escapeHtml(op.target_username || "Unknown");
+        const date = op.updated_at || op.created_at || "";
+        const dateStr = date ? new Date(date).toLocaleDateString() : "";
+        const avatarUrl = "api/users/get_avatar.php?user_id=" + (op.target_user_id || 0) + "&size=64";
+        item.innerHTML = `
+            <div class="opinions-item-avatar">
+                <img src="${avatarUrl}" alt="${username}" loading="lazy">
+            </div>
+            <div class="opinions-item-content">
+                <div class="opinions-item-username">${username}</div>
+                <div class="opinions-item-text">${escapeHtml(op.body || "")}</div>
+                <div class="opinions-item-meta">
+                    <span>${dateStr}</span>
+                </div>
+            </div>
+            <div class="opinions-item-actions">
+                <button type="button" class="opinions-item-action-btn edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
+                <button type="button" class="opinions-item-action-btn delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        `;
+        item.querySelector(".edit-btn")?.addEventListener("click", () => {
+            const newText = prompt("Edit your opinion about " + (op.target_username || "this user") + ":", op.body || "");
+            if (newText === null || !newText.trim()) return;
+            (async () => {
+                try {
+                    await window.ApiService.jsonOk("api/opinions/save.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                        body: JSON.stringify({ target_user_id: op.target_user_id, body: newText.trim() }),
+                    });
+                    openOpinionsPanel();
+                } catch (e) { showModal("Error", e?.message || "Failed to save opinion.", "error"); }
+            })();
+        });
+        item.querySelector(".delete-btn")?.addEventListener("click", () => {
+            if (!confirm("Delete your opinion about " + (op.target_username || "this user") + "?")) return;
+            (async () => {
+                try {
+                    await window.ApiService.jsonOk("api/opinions/delete.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                        body: JSON.stringify({ target_user_id: op.target_user_id }),
+                    });
+                    openOpinionsPanel();
+                } catch { /* ignore */ }
+            })();
+        });
+        item.querySelector(".opinions-item-avatar")?.addEventListener("click", async () => {
+            if (op.target_username) {
+                await openUserProfileModal({ userId: Number(op.target_user_id || 0), username: op.target_username });
+            }
+        });
+        opinionsBody.appendChild(item);
+    });
+}
+
 /* ── Playlist ── */
 
 const PLAYLIST_STORAGE_KEY = "ttc_playlist";
@@ -1748,9 +1849,14 @@ function openSavedMessagesInfoPanel() {
 }
 
 function closeSavedMessagesInfoPanel() {
-    if (!savedMessagesInfoPanel) return;
-    savedMessagesInfoPanel.hidden = true;
-    chatAreaElem?.classList.remove("saved-panel-open");
+    if (!savedMessagesInfoPanel || savedMessagesInfoPanel.hidden) return;
+    savedMessagesInfoPanel.classList.add("panel-closing");
+    savedMessagesInfoPanel.addEventListener("animationend", function handler() {
+        savedMessagesInfoPanel.removeEventListener("animationend", handler);
+        savedMessagesInfoPanel.classList.remove("panel-closing");
+        savedMessagesInfoPanel.hidden = true;
+        chatAreaElem?.classList.remove("saved-panel-open");
+    }, { once: true });
 }
 
 function toggleSavedMessagesInfoPanel() {
@@ -1759,6 +1865,198 @@ function toggleSavedMessagesInfoPanel() {
     } else {
         openSavedMessagesInfoPanel();
     }
+}
+
+// ── Private Chat Info Panel ──────────────────────────────────
+function closePrivateChatInfoPanel() {
+    if (!privateChatInfoPanel || privateChatInfoPanel.hidden) return;
+    privateChatInfoPanel.classList.add("panel-closing");
+    privateChatInfoPanel.addEventListener("animationend", function handler() {
+        privateChatInfoPanel.removeEventListener("animationend", handler);
+        privateChatInfoPanel.classList.remove("panel-closing");
+        privateChatInfoPanel.hidden = true;
+        chatAreaElem?.classList.remove("private-panel-open");
+    }, { once: true });
+}
+
+async function openPrivateChatInfoPanel() {
+    if (!privateChatInfoPanel) return;
+    privateChatInfoPanel.hidden = false;
+    chatAreaElem?.classList.add("private-panel-open");
+
+    const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
+    try {
+        const profile = await fetchUserProfile({ userId, username: currentChatUser });
+        const el = (id) => document.getElementById(id);
+        el("privateChatAvatarImg") && (el("privateChatAvatarImg").src = profile.avatar_url || "");
+        el("privateChatUsername") && (el("privateChatUsername").textContent = profile.username || "");
+        el("privateChatIdent") && (el("privateChatIdent").textContent = profile.public_ident || "");
+        el("privateChatBio") && (el("privateChatBio").textContent = profile.bio || "");
+        el("privateChatSince") && (el("privateChatSince").textContent = profile.member_since ? "Member since " + formatMemberSinceLabel(profile.member_since) : "");
+
+        const avatarBtn = document.getElementById("privateChatAvatarBtn");
+        avatarBtn?.replaceWith(avatarBtn.cloneNode(true));
+        document.getElementById("privateChatAvatarBtn")?.addEventListener("click", () => openAvatarViewer(profile));
+    } catch { /* ignore profile load error */ }
+
+    loadPrivateChatStats();
+    loadPrivateChatMusicMessages();
+    loadPrivateChatOpinion();
+}
+
+function togglePrivateChatInfoPanel() {
+    if (privateChatInfoPanel && !privateChatInfoPanel.hidden) {
+        closePrivateChatInfoPanel();
+    } else {
+        openPrivateChatInfoPanel();
+    }
+}
+
+function loadPrivateChatStats() {
+    const msgs = chatMessagesElem?.querySelectorAll(".message") || [];
+    const stats = { total: 0, text: 0, voice: 0, image: 0, video: 0, file: 0, sticker: 0 };
+    msgs.forEach((el) => {
+        stats.total++;
+        const type = el.getAttribute("data-message-type") || "text";
+        if (type === "voice") stats.voice++;
+        else if (type === "image") stats.image++;
+        else if (type === "video") stats.video++;
+        else if (type === "file") stats.file++;
+        else if (type === "sticker") stats.sticker++;
+        else stats.text++;
+    });
+    const el = (id) => document.getElementById(id);
+    el("pvStatTotal") && (el("pvStatTotal").textContent = String(stats.total));
+    el("pvStatText") && (el("pvStatText").textContent = String(stats.text));
+    el("pvStatVoice") && (el("pvStatVoice").textContent = String(stats.voice));
+    el("pvStatImage") && (el("pvStatImage").textContent = String(stats.image));
+    el("pvStatVideo") && (el("pvStatVideo").textContent = String(stats.video));
+    el("pvStatFile") && (el("pvStatFile").textContent = String(stats.file));
+    el("pvStatSticker") && (el("pvStatSticker").textContent = String(stats.sticker));
+}
+
+function loadPrivateChatMusicMessages() {
+    const body = document.getElementById("privateMusicBody");
+    const countEl = document.getElementById("privateMusicCount");
+    if (!body) return;
+    const musicEls = chatMessagesElem?.querySelectorAll(".message.is-music-message") || [];
+    if (countEl) countEl.textContent = `(${musicEls.length})`;
+    body.innerHTML = "";
+    if (!musicEls.length) {
+        body.innerHTML = '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No music shared yet.</div>';
+        return;
+    }
+    musicEls.forEach((msgEl) => {
+        const msgId = Number(msgEl.getAttribute("data-message-id") || 0);
+        const titleEl = msgEl.querySelector(".music-title");
+        const formatEl = msgEl.querySelector(".music-format");
+        const title = titleEl?.textContent || "Unknown";
+        const ext = formatEl?.textContent || "";
+        const isPurged = Boolean(msgEl.querySelector(".file-purged-badge"));
+        const isSent = msgEl.classList.contains("sent");
+
+        const item = document.createElement("div");
+        item.className = "saved-playlist-item" + (isPurged ? " playlist-item-purged" : "");
+        item.innerHTML = `
+            <button type="button" class="saved-pl-play" title="${isPurged ? "File expired" : "Play"}" ${isPurged ? "disabled" : ""}>
+                <i class="fas ${isPurged ? "fa-clock" : "fa-play"}"></i>
+            </button>
+            <div class="saved-pl-info">
+                <div class="saved-pl-title${isPurged ? " file-purged-title" : ""}">${escapeHtml(title)}</div>
+                <div class="saved-pl-meta">${isPurged ? '<span class="file-purged-badge" style="font-size:0.6rem;padding:1px 6px;"><i class="fas fa-clock"></i> Expired</span>' : `${escapeHtml(ext.toUpperCase())} · ${isSent ? "Sent" : "Received"}`}</div>
+            </div>
+        `;
+        if (!isPurged) {
+            item.querySelector(".saved-pl-play")?.addEventListener("click", async () => {
+                const freshMeta = messageMetaById.get(msgId);
+                if (!freshMeta) return;
+                try {
+                    const mediaResource = await getDecryptedMediaResource(freshMeta);
+                    if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioContext.state === "suspended") audioContext.resume();
+                    document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
+                        const otherAudio = btn.closest(".message")?.querySelector("audio");
+                        if (otherAudio && !otherAudio.paused) otherAudio.pause();
+                        btn.classList.remove("playing");
+                        btn.innerHTML = '<i class="fas fa-play"></i>';
+                    });
+                    const audio = new Audio(mediaResource.objectUrl);
+                    audio.play();
+                    const playBtn = item.querySelector(".saved-pl-play");
+                    if (playBtn) {
+                        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                        audio.addEventListener("ended", () => { playBtn.innerHTML = '<i class="fas fa-play"></i>'; });
+                        audio.addEventListener("pause", () => { playBtn.innerHTML = '<i class="fas fa-play"></i>'; });
+                        playBtn.addEventListener("click", () => {
+                            if (audio.paused) { audio.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
+                            else { audio.pause(); }
+                        }, { once: false });
+                    }
+                } catch { /* ignore */ }
+            });
+        }
+        body.appendChild(item);
+    });
+}
+
+let privateChatOpinionTargetUserId = 0;
+
+async function loadPrivateChatOpinion() {
+    const body = document.getElementById("privateOpinionBody");
+    if (!body) return;
+    const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
+    privateChatOpinionTargetUserId = userId;
+    if (!userId) { body.innerHTML = '<div class="opinion-empty">No opinion written yet.</div>'; return; }
+    try {
+        const res = await window.ApiService.jsonOk("api/opinions/fetch.php?target_user_id=" + userId);
+        renderPrivateOpinion(res.opinion);
+    } catch {
+        body.innerHTML = '<div class="opinion-empty">No opinion written yet.</div>';
+    }
+}
+
+function renderPrivateOpinion(opinion) {
+    const body = document.getElementById("privateOpinionBody");
+    if (!body) return;
+    if (!opinion) {
+        body.innerHTML = '<div class="opinion-empty">No opinion written yet.</div>';
+        return;
+    }
+    const date = opinion.updated_at || opinion.created_at || "";
+    const dateStr = date ? new Date(date).toLocaleDateString() : "";
+    body.innerHTML = "";
+    const card = document.createElement("div");
+    card.className = "private-opinion-card";
+    card.innerHTML = `
+        <div class="opinion-text">${escapeHtml(opinion.body)}</div>
+        <div class="opinion-date">${dateStr}</div>
+        <div class="opinion-actions">
+            <button type="button" class="opinion-action-btn edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
+            <button type="button" class="opinion-action-btn delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>
+        </div>
+    `;
+    card.querySelector(".edit-btn")?.addEventListener("click", () => {
+        const formWrap = document.getElementById("privateOpinionFormWrap");
+        const input = document.getElementById("privateOpinionInput");
+        if (formWrap && input) {
+            input.value = opinion.body;
+            const cc = document.getElementById("privateOpinionCharCount");
+            if (cc) cc.textContent = String(input.value.length);
+            formWrap.hidden = false;
+        }
+    });
+    card.querySelector(".delete-btn")?.addEventListener("click", async () => {
+        if (!confirm("Delete your opinion about this user?")) return;
+        try {
+            await window.ApiService.jsonOk("api/opinions/delete.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                body: JSON.stringify({ target_user_id: privateChatOpinionTargetUserId }),
+            });
+            renderPrivateOpinion(null);
+        } catch { /* ignore */ }
+    });
+    body.appendChild(card);
 }
 
 function loadSavedMessagesStats() {
@@ -2979,6 +3277,15 @@ function bindSettingsUiEvents() {
         openAnnouncementsPanel();
     });
 
+    document.getElementById("openOpinionsBtn")?.addEventListener("click", () => {
+        toggleSettingsPanel(false);
+        openOpinionsPanel();
+    });
+    document.getElementById("opinionsCloseBtn")?.addEventListener("click", () => closeOpinionsPanel());
+    opinionsOverlay?.addEventListener("click", (event) => {
+        if (event.target === opinionsOverlay) closeOpinionsPanel();
+    });
+
     settingsAvatarUploadBtn?.addEventListener("click", () => {
         avatarUploadInput?.click();
     });
@@ -3028,9 +3335,10 @@ function bindSettingsUiEvents() {
         applySettingsTabUi("general");
     });
 
-    chatUiSettingsTabAccount?.addEventListener("click", () => {
+    chatUiSettingsTabAccount?.addEventListener("click", async () => {
         applySettingsTabUi("account");
         if (window.AdminPanel) void window.AdminPanel.loadBlockedUsersSettings();
+        await loadSettingsBio();
     });
 
     chatUiSettingsTabAdmin?.addEventListener("click", async () => {
@@ -3174,6 +3482,25 @@ function bindSettingsUiEvents() {
 
     /* Admin refresh, blocked users, media cleanup events moved to chat-admin.js */
 
+    settingsBioInput?.addEventListener("input", () => {
+        if (settingsBioCharCount) settingsBioCharCount.textContent = String(settingsBioInput.value.length);
+    });
+
+    settingsBioForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const bio = String(settingsBioInput?.value || "").trim();
+        try {
+            await window.ApiService.jsonOk("api/users/update_profile.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                body: JSON.stringify({ action: "bio", bio }),
+            });
+            setComposerStatus("Bio updated", "success");
+        } catch (error) {
+            showModal("Bio Update Failed", error?.message || "Unable to update bio.", "error");
+        }
+    });
+
     settingsUsernameForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const username = String(settingsUsernameInput?.value || "").trim();
@@ -3287,6 +3614,10 @@ function bindSettingsUiEvents() {
         }
         if (event.key === "Escape" && chatUiSettingsOverlay && !chatUiSettingsOverlay.hidden) {
             closeUiSettingsModal();
+            return;
+        }
+        if (event.key === "Escape" && opinionsOverlay && !opinionsOverlay.hidden) {
+            closeOpinionsPanel();
         }
     });
 
@@ -3301,12 +3632,9 @@ function bindSettingsUiEvents() {
 
     window.addEventListener("resize", syncMobileComposerActions);
 
-    userInfoBtn?.addEventListener("click", async () => {
-        if (!currentChatUser || isGroupToken(currentChatUser)) {
-            return;
-        }
-        const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
-        await openUserProfileModal({ userId, username: currentChatUser });
+    userInfoBtn?.addEventListener("click", () => {
+        if (!currentChatUser || isGroupToken(currentChatUser) || isSavedMessagesChat(currentChatUser)) return;
+        togglePrivateChatInfoPanel();
     });
 
     chatWithElem?.addEventListener("click", async () => {
@@ -3324,8 +3652,11 @@ function bindSettingsUiEvents() {
             return;
         }
 
-        const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
-        await openUserProfileModal({ userId, username: currentChatUser });
+        if (isSavedMessagesChat(currentChatUser)) {
+            toggleSavedMessagesInfoPanel();
+            return;
+        }
+        togglePrivateChatInfoPanel();
     });
 
     chatWithElem?.addEventListener("keydown", async (event) => {
@@ -3347,8 +3678,11 @@ function bindSettingsUiEvents() {
             return;
         }
 
-        const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
-        await openUserProfileModal({ userId, username: currentChatUser });
+        if (isSavedMessagesChat(currentChatUser)) {
+            toggleSavedMessagesInfoPanel();
+            return;
+        }
+        togglePrivateChatInfoPanel();
     });
 
     userProfileModalClose?.addEventListener("click", closeUserProfileModal);
@@ -3375,6 +3709,11 @@ function bindSettingsUiEvents() {
         }
         if (userProfileModalOverlay && !userProfileModalOverlay.hidden) {
             closeUserProfileModal();
+            return;
+        }
+        if (privateChatInfoPanel && !privateChatInfoPanel.hidden) {
+            closePrivateChatInfoPanel();
+            return;
         }
     });
 
@@ -3494,13 +3833,17 @@ function getCsrfHeaders() {
 window.getCsrfHeaders = getCsrfHeaders;
 
 function closeGroupInfoPanel() {
-    if (groupInfoPanel) {
-        groupInfoPanel.hidden = true;
-    }
+    if (!groupInfoPanel || groupInfoPanel.hidden) return;
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
-    chatAreaElem?.classList.remove("group-panel-open");
+    groupInfoPanel.classList.add("panel-closing");
+    groupInfoPanel.addEventListener("animationend", function handler() {
+        groupInfoPanel.removeEventListener("animationend", handler);
+        groupInfoPanel.classList.remove("panel-closing");
+        groupInfoPanel.hidden = true;
+        chatAreaElem?.classList.remove("group-panel-open");
+    }, { once: true });
 }
 
 function openGroupInfoPanel() {
@@ -6372,6 +6715,7 @@ lastRecentPollTime = "";
     }
     closeGroupInfoPanel();
     closeSavedMessagesInfoPanel();
+    closePrivateChatInfoPanel();
     setTypingIndicator("");
     if (!isGroupToken(target)) {
         setUserUnreadBadge(target, 0);
@@ -8784,6 +9128,16 @@ fileUploadInput.addEventListener("change", (e) => {
     e.target.value = null;
 });
 
+// ── Bio settings loader ──────────────────────────────────────
+async function loadSettingsBio() {
+    if (!settingsBioInput) return;
+    try {
+        const profile = await fetchUserProfile({ username: CURRENT_USER });
+        settingsBioInput.value = profile.bio || "";
+        if (settingsBioCharCount) settingsBioCharCount.textContent = String(settingsBioInput.value.length);
+    } catch { /* ignore */ }
+}
+
 // ── Sessions tab ──────────────────────────────────────────────
 async function loadSessionsList() {
     const container = document.getElementById("settingsSessionsList");
@@ -10052,6 +10406,49 @@ groupInfoBtn?.addEventListener("click", async () => {
 
 groupInfoBackBtn?.addEventListener("click", () => {
     closeGroupInfoPanel();
+});
+
+privateChatInfoBackBtn?.addEventListener("click", () => {
+    closePrivateChatInfoPanel();
+});
+
+// Opinion form handlers
+document.getElementById("privateOpinionAddBtn")?.addEventListener("click", () => {
+    const formWrap = document.getElementById("privateOpinionFormWrap");
+    const input = document.getElementById("privateOpinionInput");
+    if (formWrap) {
+        formWrap.hidden = !formWrap.hidden;
+        if (!formWrap.hidden && input) input.focus();
+    }
+});
+
+document.getElementById("privateOpinionInput")?.addEventListener("input", () => {
+    const cc = document.getElementById("privateOpinionCharCount");
+    const input = document.getElementById("privateOpinionInput");
+    if (cc && input) cc.textContent = String(input.value.length);
+});
+
+document.getElementById("privateOpinionCancelBtn")?.addEventListener("click", () => {
+    const formWrap = document.getElementById("privateOpinionFormWrap");
+    if (formWrap) formWrap.hidden = true;
+});
+
+document.getElementById("privateOpinionSaveBtn")?.addEventListener("click", async () => {
+    const input = document.getElementById("privateOpinionInput");
+    const body = String(input?.value || "").trim();
+    if (!body || !privateChatOpinionTargetUserId) return;
+    try {
+        const res = await window.ApiService.jsonOk("api/opinions/save.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+            body: JSON.stringify({ target_user_id: privateChatOpinionTargetUserId, body }),
+        });
+        renderPrivateOpinion(res.opinion);
+        const formWrap = document.getElementById("privateOpinionFormWrap");
+        if (formWrap) formWrap.hidden = true;
+    } catch (error) {
+        showModal("Opinion Error", error?.message || "Failed to save opinion.", "error");
+    }
 });
 
 groupAddMemberBtn?.addEventListener("click", async () => {

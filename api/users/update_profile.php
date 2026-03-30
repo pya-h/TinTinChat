@@ -11,8 +11,21 @@ apiRequireCsrf();
 $data = apiGetJsonBody();
 $action = trim((string) ($data['action'] ?? ''));
 
-if ($action !== 'username' && $action !== 'password') {
+if ($action !== 'username' && $action !== 'password' && $action !== 'bio') {
     apiError('INVALID_ACTION', 'Invalid profile update action', 400);
+}
+
+if ($action === 'bio') {
+    $bio = trim((string) ($data['bio'] ?? ''));
+    if (strlen($bio) > 300) {
+        apiError('INVALID_BIO', 'Bio must be 300 characters or fewer', 400);
+    }
+    $bioValue = $bio === '' ? null : $bio;
+    $stmt = $pdo->prepare('UPDATE users SET bio = ? WHERE id = ?');
+    if (!$stmt->execute([$bioValue, $userId])) {
+        apiError('DB_SAVE_FAILED', 'Could not update bio', 500);
+    }
+    apiSuccess(['message' => 'Bio updated successfully', 'bio' => (string) ($bioValue ?? '')]);
 }
 
 if ($action === 'username') {

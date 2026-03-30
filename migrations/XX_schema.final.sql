@@ -7,6 +7,7 @@ CREATE TABLE users (
   avatar_path VARCHAR(255) DEFAULT NULL,
   avatar_mime VARCHAR(100) DEFAULT NULL,
   avatar_updated_at TIMESTAMP NULL DEFAULT NULL,
+  bio VARCHAR(300) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   ident VARCHAR(128),
@@ -206,6 +207,20 @@ CREATE TABLE IF NOT EXISTS announcements (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_announcements_created (created_at DESC),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS user_opinions (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  author_user_id INT NOT NULL,
+  target_user_id INT NOT NULL,
+  body VARCHAR(500) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_opinions_author (author_user_id),
+  INDEX idx_opinions_target (target_user_id),
+  UNIQUE KEY uq_opinion_author_target (author_user_id, target_user_id),
+  FOREIGN KEY (author_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Speeds up chat lookup between two users

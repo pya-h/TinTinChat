@@ -17,10 +17,10 @@ if ($userId <= 0 && $username === '') {
 }
 
 if ($userId > 0) {
-	$stmt = $pdo->prepare('SELECT id, username, created_at, avatar_updated_at FROM users WHERE id = ? LIMIT 1');
+	$stmt = $pdo->prepare('SELECT id, username, created_at, avatar_updated_at, bio FROM users WHERE id = ? LIMIT 1');
 	$stmt->execute([$userId]);
 } else {
-	$stmt = $pdo->prepare('SELECT id, username, created_at, avatar_updated_at FROM users WHERE username = ? LIMIT 1');
+	$stmt = $pdo->prepare('SELECT id, username, created_at, avatar_updated_at, bio FROM users WHERE username = ? LIMIT 1');
 	$stmt->execute([$username]);
 }
 
@@ -44,6 +44,7 @@ apiSuccess([
 		'username' => $targetUsername,
 		'public_ident' => 'usr-' . $targetUserId,
 		'member_since' => (string) ($userRow['created_at'] ?? ''),
+		'bio' => (string) ($userRow['bio'] ?? ''),
 		'is_current_user' => $targetUserId === $currentUserId,
 		'is_blocked_by_me' => $isBlockedByMe,
 		'avatar_url' => 'api/users/get_avatar.php?user_id=' . $targetUserId . '&size=256&v=' . urlencode($avatarVersion),

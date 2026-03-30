@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN bio VARCHAR(300) DEFAULT NULL AFTER avatar_updated_at;

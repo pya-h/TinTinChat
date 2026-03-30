@@ -159,6 +159,10 @@ $csrfToken = generateCsrfToken();
                                 <span>Announcements</span>
                                 <span id="announcementsMenuDot" class="alert-unread-dot announcement-menu-dot" hidden></span>
                             </button>
+                            <button type="button" id="openOpinionsBtn" class="chat-setting-item chat-setting-button" aria-label="Your opinions">
+                                <i class="fas fa-pen-fancy"></i>
+                                <span>Opinions</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -270,6 +274,70 @@ $csrfToken = generateCsrfToken();
                         </div>
                     </div>
                 </div>
+                <div id="privateChatInfoPanel" class="private-chat-info-panel" role="region" aria-label="Chat details" hidden>
+                    <div class="private-info-header">
+                        <button type="button" id="privateChatInfoBackBtn" class="btn btn-sm btn-outline-secondary" aria-label="Back" title="Back">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <h6 class="mb-0">Chat Details</h6>
+                        </div>
+                    </div>
+
+                    <div class="private-info-profile">
+                        <button type="button" id="privateChatAvatarBtn" class="private-info-avatar-btn" aria-label="Show enlarged avatar">
+                            <img id="privateChatAvatarImg" src="" alt="User avatar">
+                        </button>
+                        <div class="private-info-username" id="privateChatUsername"></div>
+                        <div class="private-info-ident" id="privateChatIdent"></div>
+                        <div class="private-info-bio" id="privateChatBio"></div>
+                        <div class="private-info-since" id="privateChatSince"></div>
+                    </div>
+
+                    <div class="private-info-stats" id="privateChatStats">
+                        <div class="saved-stats-grid">
+                            <div class="saved-stat-item saved-stat-total"><span class="saved-stat-count" id="pvStatTotal">0</span><span class="saved-stat-label">Total</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="pvStatText">0</span><span class="saved-stat-label"><i class="fas fa-comment"></i> Text</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="pvStatVoice">0</span><span class="saved-stat-label"><i class="fas fa-microphone"></i> Voice</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="pvStatImage">0</span><span class="saved-stat-label"><i class="fas fa-image"></i> Image</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="pvStatVideo">0</span><span class="saved-stat-label"><i class="fas fa-video"></i> Video</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="pvStatFile">0</span><span class="saved-stat-label"><i class="fas fa-file"></i> File</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="pvStatSticker">0</span><span class="saved-stat-label"><i class="fas fa-smile"></i> Sticker</span></div>
+                        </div>
+                    </div>
+
+                    <div class="private-info-music">
+                        <div class="private-music-header">
+                            <h6 class="mb-0"><i class="fas fa-music me-1"></i>Shared Music <span id="privateMusicCount" class="text-muted">(0)</span></h6>
+                        </div>
+                        <div class="private-music-body" id="privateMusicBody">
+                            <div class="playlist-empty"><i class="fas fa-music me-2"></i>No music shared yet.</div>
+                        </div>
+                    </div>
+
+                    <div class="private-info-opinion">
+                        <div class="private-opinion-header">
+                            <h6 class="mb-0"><i class="fas fa-pen-fancy me-1"></i>Your Opinion</h6>
+                            <button type="button" id="privateOpinionAddBtn" class="private-opinion-add-btn" title="Add or edit opinion">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="privateOpinionBody" class="private-opinion-body">
+                            <div class="opinion-empty">No opinion written yet.</div>
+                        </div>
+                        <div id="privateOpinionFormWrap" class="private-opinion-form-wrap" hidden>
+                            <textarea id="privateOpinionInput" class="form-control form-control-sm" maxlength="500" rows="3" placeholder="What do you think about this person?"></textarea>
+                            <div class="private-opinion-form-actions">
+                                <span class="private-opinion-char-count"><span id="privateOpinionCharCount">0</span>/500</span>
+                                <div class="d-flex gap-2">
+                                    <button type="button" id="privateOpinionCancelBtn" class="btn btn-sm btn-outline-secondary">Cancel</button>
+                                    <button type="button" id="privateOpinionSaveBtn" class="btn btn-sm btn-primary">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="selectModeBar" class="select-mode-bar" role="region" aria-label="Selected messages actions" hidden>
                     <div class="select-mode-meta">
                         <span id="selectModeCount" class="select-mode-count">0 selected</span>
@@ -510,6 +578,17 @@ $csrfToken = generateCsrfToken();
                                 <button type="button" id="settingsAvatarUploadBtn" class="btn btn-sm btn-outline-secondary">Change avatar</button>
                             </div>
                         </div>
+
+                        <form id="settingsBioForm" class="chat-ui-account-section">
+                            <div class="chat-ui-account-title">Bio</div>
+                            <div class="chat-ui-account-subtitle">A short description about yourself.</div>
+                            <label class="chat-ui-settings-field" for="settingsBioInput">
+                                <span>Your bio</span>
+                                <textarea id="settingsBioInput" class="form-control form-control-sm" maxlength="300" rows="3" placeholder="Tell others a bit about yourself..."></textarea>
+                            </label>
+                            <div class="settings-bio-counter"><span id="settingsBioCharCount">0</span> / 300</div>
+                            <button type="submit" class="btn btn-sm btn-primary">Save bio</button>
+                        </form>
 
                         <form id="settingsUsernameForm" class="chat-ui-account-section">
                             <div class="chat-ui-account-title">Username</div>
@@ -901,6 +980,25 @@ $csrfToken = generateCsrfToken();
             </div>
             <div class="announcements-body" id="announcementsBody">
                 <div class="announcements-loading"><i class="fas fa-circle-notch fa-spin"></i><span>Loading...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Opinions panel -->
+    <div id="opinionsOverlay" class="opinions-overlay" hidden>
+        <div class="opinions-panel" role="dialog" aria-modal="true" aria-labelledby="opinionsPanelTitle">
+            <div class="opinions-header">
+                <div class="opinions-header-left">
+                    <span class="opinions-icon-wrap"><i class="fas fa-pen-fancy"></i></span>
+                    <div>
+                        <span class="opinions-badge" id="opinionsPanelTitle">Your Opinions</span>
+                        <span class="opinions-count" id="opinionsCount"></span>
+                    </div>
+                </div>
+                <button type="button" class="opinions-close" id="opinionsCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="opinions-body" id="opinionsBody">
+                <div class="opinions-loading"><i class="fas fa-circle-notch fa-spin"></i><span>Loading...</span></div>
             </div>
         </div>
     </div>
