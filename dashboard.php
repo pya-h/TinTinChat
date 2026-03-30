@@ -330,8 +330,8 @@ $csrfToken = generateCsrfToken();
                             <div class="private-opinion-form-actions">
                                 <span class="private-opinion-char-count"><span id="privateOpinionCharCount">0</span>/500</span>
                                 <div class="d-flex gap-2">
-                                    <button type="button" id="privateOpinionCancelBtn" class="btn btn-sm btn-outline-secondary">Cancel</button>
-                                    <button type="button" id="privateOpinionSaveBtn" class="btn btn-sm btn-primary">Save</button>
+                                    <button type="button" id="privateOpinionCancelBtn" class="btn btn-sm btn-polished btn-polished-secondary">Cancel</button>
+                                    <button type="button" id="privateOpinionSaveBtn" class="btn btn-sm btn-polished btn-polished-primary">Save</button>
                                 </div>
                             </div>
                         </div>
@@ -550,7 +550,7 @@ $csrfToken = generateCsrfToken();
                                     <small id="mediaCacheSizeLabel" class="chat-ui-settings-hint">Calculating…</small>
                                 </span>
                                 <span class="chat-ui-settings-control">
-                                    <button type="button" id="clearMediaCacheBtn" class="btn btn-sm btn-outline-danger">Clear</button>
+                                    <button type="button" id="clearMediaCacheBtn" class="btn btn-sm btn-polished btn-polished-danger">Clear</button>
                                 </span>
                             </div>
                                 <div class="chat-ui-settings-item chat-ui-settings-item-action">
@@ -559,7 +559,7 @@ $csrfToken = generateCsrfToken();
                                         <small class="chat-ui-settings-hint">Clears cookies, localStorage, sessionStorage. You will be logged out and get the latest version.</small>
                                     </span>
                                     <span class="chat-ui-settings-control">
-                                        <button type="button" id="clearCookiesBtn" class="btn btn-sm btn-outline-danger">Clear</button>
+                                        <button type="button" id="clearCookiesBtn" class="btn btn-sm btn-polished btn-polished-danger">Clear</button>
                                     </span>
                                 </div>
                         </div>
@@ -587,7 +587,7 @@ $csrfToken = generateCsrfToken();
                                 <textarea id="settingsBioInput" class="form-control form-control-sm" maxlength="300" rows="3" placeholder="Tell others a bit about yourself..."></textarea>
                             </label>
                             <div class="settings-bio-counter"><span id="settingsBioCharCount">0</span> / 300</div>
-                            <button type="submit" class="btn btn-sm btn-primary">Save bio</button>
+                            <button type="submit" class="btn btn-sm btn-polished btn-polished-primary">Save bio</button>
                         </form>
 
                         <form id="settingsUsernameForm" class="chat-ui-account-section">
@@ -597,7 +597,7 @@ $csrfToken = generateCsrfToken();
                                 <span>New username</span>
                                 <input type="text" id="settingsUsernameInput" class="form-control form-control-sm" minlength="3" maxlength="50" value="<?= htmlspecialchars($username) ?>" autocomplete="username" required>
                             </label>
-                            <button type="submit" class="btn btn-sm btn-primary">Save username</button>
+                            <button type="submit" class="btn btn-sm btn-polished btn-polished-primary">Save username</button>
                         </form>
 
                         <div class="chat-ui-account-section">
@@ -629,7 +629,7 @@ $csrfToken = generateCsrfToken();
                                 <span>Confirm new password</span>
                                 <input type="password" id="settingsConfirmPasswordInput" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
                             </label>
-                            <button type="submit" class="btn btn-sm btn-primary">Change password</button>
+                            <button type="submit" class="btn btn-sm btn-polished btn-polished-primary">Change password</button>
                         </form>
                     </section>
 
@@ -658,7 +658,7 @@ $csrfToken = generateCsrfToken();
                         <?php if (!$is_superuser): ?>
                         <form id="ideasSubmitForm" class="ideas-compose">
                             <textarea id="ideasBodyInput" class="form-control" rows="3" maxlength="2000" placeholder="Describe your idea, feature request, or bug report..."></textarea>
-                            <button type="submit" class="btn btn-sm btn-primary ideas-submit-btn">
+                            <button type="submit" class="btn btn-sm btn-polished btn-polished-primary ideas-submit-btn">
                                 <i class="fas fa-paper-plane me-1"></i>Post Idea
                             </button>
                         </form>
@@ -779,10 +779,10 @@ $csrfToken = generateCsrfToken();
                                         <span>Larger than (MB)</span>
                                         <input type="number" id="mediaCleanupMaxSize" class="form-control form-control-sm" min="1" value="5" step="0.5" style="max-width:120px">
                                     </label>
-                                    <button type="button" id="mediaAnalyzeBtn" class="btn btn-sm btn-outline-primary">
+                                    <button type="button" id="mediaAnalyzeBtn" class="btn btn-sm btn-polished btn-polished-info">
                                         <i class="fas fa-chart-bar me-1"></i>Analyze
                                     </button>
-                                    <button type="button" id="mediaCleanupBtn" class="btn btn-sm btn-outline-danger">
+                                    <button type="button" id="mediaCleanupBtn" class="btn btn-sm btn-polished btn-polished-danger">
                                         <i class="fas fa-broom me-1"></i>Clean up
                                     </button>
                                 </div>
@@ -996,6 +996,10 @@ $csrfToken = generateCsrfToken();
                     </div>
                 </div>
                 <button type="button" class="opinions-close" id="opinionsCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="opinions-hint">
+                <i class="fas fa-lock"></i>
+                Opinions are private notes you keep for yourself. No one else can see or read them.
             </div>
             <div class="opinions-body" id="opinionsBody">
                 <div class="opinions-loading"><i class="fas fa-circle-notch fa-spin"></i><span>Loading...</span></div>

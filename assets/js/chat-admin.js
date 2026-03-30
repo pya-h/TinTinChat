@@ -155,7 +155,7 @@
                 const action = wantBan ? "ban" : "unban";
                 const targetUsername = String(user.username || "this user");
 
-                const confirmed = window.confirm(`${wantBan ? "Ban" : "Unban"} ${targetUsername}? ${wantBan ? "They will be logged out and unable to log in." : "They will be able to log in again."}`);
+                const confirmed = await showConfirmModal(wantBan ? "Ban User" : "Unban User", `${wantBan ? "Ban" : "Unban"} ${targetUsername}? ${wantBan ? "They will be logged out and unable to log in." : "They will be able to log in again."}`, { type: "warning", confirmLabel: wantBan ? "Ban" : "Unban" });
                 if (!confirmed) {
                     target.checked = !target.checked;
                     return;
@@ -255,7 +255,7 @@
             `;
             const delBtn = row.querySelector(".chat-ui-announcement-delete-btn");
             delBtn?.addEventListener("click", async () => {
-                if (!window.confirm("Delete this announcement?")) return;
+                if (!(await showConfirmModal("Delete Announcement", "Delete this announcement?", { type: "warning", confirmLabel: "Delete" }))) return;
                 row.classList.add("chat-ui-announcement-item-removing");
                 delBtn.disabled = true;
                 try {
@@ -388,7 +388,7 @@
                 const targetUsername = String(user.username || "this user");
                 if (!targetUserId) return;
 
-                const confirmed = window.confirm(`Unblock ${targetUsername}?`);
+                const confirmed = await showConfirmModal("Unblock User", `Unblock ${targetUsername}?`, { type: "info", confirmLabel: "Unblock" });
                 if (!confirmed) return;
 
                 const originalLabel = unblockBtn.innerHTML;

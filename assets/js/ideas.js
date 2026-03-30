@@ -213,7 +213,7 @@
         if (deleteBtn) {
             event.preventDefault();
             if (deleteBtn.disabled) return;
-            if (!confirm("Delete this idea? This cannot be undone.")) return;
+            if (!(await showConfirmModal("Delete Idea", "Delete this idea? This cannot be undone.", { type: "warning", confirmLabel: "Delete" }))) return;
             const ideaId = Number(deleteBtn.getAttribute("data-idea-id"));
             await deleteIdea(ideaId);
             return;

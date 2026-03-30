@@ -32,7 +32,7 @@ const TTC_MESSAGE_EDIT_WINDOW_SECONDS = 120 * 60 * 60; //2h
 const TTC_USERNAME_BLACKLIST = [
     'saved messages', 'savedmessages', 'saved_messages', 'saved-messages',
     'admin', 'administrator', 'system', 'support', 'moderator', 'mod',
-    'tintinchat', 'tintin', 'official', 'staff', 'root', 'superuser',
+    'official', 'staff', 'root', 'superuser',
     'null', 'undefined', 'anonymous', 'unknown', 'deleted', 'nobody',
     'everyone', 'all', 'here', 'channel',
     'help', 'info', 'bot', 'api', 'test',

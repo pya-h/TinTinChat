@@ -599,8 +599,10 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                 return;
             }
 
-            const confirmed = window.confirm(
-                `Delete all direct messages between you and ${String(profile.username || "this user")}? This cannot be undone.`
+            const confirmed = await showConfirmModal(
+                "Delete Chat",
+                `Delete all direct messages between you and ${String(profile.username || "this user")}? This cannot be undone.`,
+                { type: "error", confirmLabel: "Delete" }
             );
             if (!confirmed) {
                 return;
@@ -682,10 +684,12 @@ lastRecentPollTime = "";
 
             const willBlock = !Boolean(profile.is_blocked_by_me);
             const targetUsername = String(profile.username || "this user");
-            const confirmed = window.confirm(
+            const confirmed = await showConfirmModal(
+                willBlock ? "Block User" : "Unblock User",
                 willBlock
                     ? `Block ${targetUsername}? They will not be able to send messages to you.`
-                    : `Unblock ${targetUsername}?`
+                    : `Unblock ${targetUsername}?`,
+                { type: "warning", confirmLabel: willBlock ? "Block" : "Unblock" }
             );
             if (!confirmed) {
                 return;
@@ -1577,32 +1581,37 @@ function renderOpinionsList(opinions) {
                 <button type="button" class="opinions-item-action-btn delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>
             </div>
         `;
-        item.querySelector(".edit-btn")?.addEventListener("click", () => {
-            const newText = prompt("Edit your opinion about " + (op.target_username || "this user") + ":", op.body || "");
+        item.querySelector(".edit-btn")?.addEventListener("click", async () => {
+            const newText = await showPromptModal(
+                "Edit Opinion",
+                "Edit your opinion about " + (op.target_username || "this user") + ":",
+                { defaultValue: op.body || "", maxLength: 500, placeholder: "Your opinion..." }
+            );
             if (newText === null || !newText.trim()) return;
-            (async () => {
-                try {
-                    await window.ApiService.jsonOk("api/opinions/save.php", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                        body: JSON.stringify({ target_user_id: op.target_user_id, body: newText.trim() }),
-                    });
-                    openOpinionsPanel();
-                } catch (e) { showModal("Error", e?.message || "Failed to save opinion.", "error"); }
-            })();
+            try {
+                await window.ApiService.jsonOk("api/opinions/save.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                    body: JSON.stringify({ target_user_id: op.target_user_id, body: newText.trim() }),
+                });
+                openOpinionsPanel();
+            } catch (e) { showModal("Error", e?.message || "Failed to save opinion.", "error"); }
         });
-        item.querySelector(".delete-btn")?.addEventListener("click", () => {
-            if (!confirm("Delete your opinion about " + (op.target_username || "this user") + "?")) return;
-            (async () => {
-                try {
-                    await window.ApiService.jsonOk("api/opinions/delete.php", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                        body: JSON.stringify({ target_user_id: op.target_user_id }),
-                    });
-                    openOpinionsPanel();
-                } catch { /* ignore */ }
-            })();
+        item.querySelector(".delete-btn")?.addEventListener("click", async () => {
+            const confirmed = await showConfirmModal(
+                "Delete Opinion",
+                "Delete your opinion about " + (op.target_username || "this user") + "?",
+                { type: "warning", confirmLabel: "Delete" }
+            );
+            if (!confirmed) return;
+            try {
+                await window.ApiService.jsonOk("api/opinions/delete.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                    body: JSON.stringify({ target_user_id: op.target_user_id }),
+                });
+                openOpinionsPanel();
+            } catch { /* ignore */ }
         });
         item.querySelector(".opinions-item-avatar")?.addEventListener("click", async () => {
             if (op.target_username) {
@@ -2054,7 +2063,8 @@ function renderPrivateOpinion(opinion) {
         }
     });
     card.querySelector(".delete-btn")?.addEventListener("click", async () => {
-        if (!confirm("Delete your opinion about this user?")) return;
+        const confirmed = await showConfirmModal("Delete Opinion", "Delete your opinion about this user?", { type: "warning", confirmLabel: "Delete" });
+        if (!confirmed) return;
         try {
             await window.ApiService.jsonOk("api/opinions/delete.php", {
                 method: "POST",
@@ -3428,7 +3438,7 @@ function bindSettingsUiEvents() {
         const clearCookiesBtn = document.getElementById("clearCookiesBtn");
         if (clearCookiesBtn) {
             clearCookiesBtn.addEventListener("click", async () => {
-                const confirmed = window.confirm("Clear all cookies and storage? You will be logged out and get the latest version. Proceed?");
+                const confirmed = await showConfirmModal("Clear Storage", "Clear all cookies and storage? You will be logged out and get the latest version.", { type: "warning", confirmLabel: "Clear" });
                 if (!confirmed) return;
                 clearCookiesBtn.disabled = true;
                 clearCookiesBtn.textContent = "Clearing…";
@@ -3467,7 +3477,7 @@ function bindSettingsUiEvents() {
 
     if (clearMediaCacheBtn) {
         clearMediaCacheBtn.addEventListener("click", async () => {
-            const confirmed = window.confirm("Clear all cached media? Images and videos will need to be re-downloaded.");
+            const confirmed = await showConfirmModal("Clear Media Cache", "Clear all cached media? Images and videos will need to be re-downloaded.", { type: "warning", confirmLabel: "Clear" });
             if (!confirmed) return;
 
             clearMediaCacheBtn.disabled = true;
@@ -5117,8 +5127,10 @@ async function bulkDeleteSelectedMessages() {
         return;
     }
 
-    const confirmed = window.confirm(
-        `Delete ${selectedIds.length} selected message${selectedIds.length === 1 ? "" : "s"}?`
+    const confirmed = await showConfirmModal(
+        "Delete Messages",
+        `Delete ${selectedIds.length} selected message${selectedIds.length === 1 ? "" : "s"}?`,
+        { type: "warning", confirmLabel: "Delete" }
     );
     if (!confirmed) {
         return;
@@ -5593,7 +5605,7 @@ async function deleteMessageFromContext(messageElement) {
         return;
     }
 
-    const confirmed = window.confirm("Delete this message?");
+    const confirmed = await showConfirmModal("Delete Message", "Delete this message?", { type: "warning", confirmLabel: "Delete" });
     if (!confirmed) {
         return;
     }
@@ -6722,6 +6734,7 @@ lastRecentPollTime = "";
     groupInfoBtn.hidden = !isGroup;
     userInfoBtn && (userInfoBtn.hidden = isGroup || !currentChatUser || isSavedMessagesChat(currentChatUser));
     if (savedMessagesInfoBtn) savedMessagesInfoBtn.hidden = !isSavedMessagesChat(currentChatUser);
+    if (alertPanelBtn) alertPanelBtn.hidden = Boolean(currentChatUser);
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
@@ -9058,7 +9071,7 @@ async function sendClipboardImage({ requireConfirm = true } = {}) {
         return;
     }
 
-    const shouldSend = !requireConfirm || window.confirm("Send clipboard image to this chat?");
+    const shouldSend = !requireConfirm || await showConfirmModal("Send Image", "Send clipboard image to this chat?", { type: "info", confirmLabel: "Send" });
     if (!shouldSend) {
         return;
     }
@@ -10520,7 +10533,7 @@ groupInfoMembers?.addEventListener("click", async (event) => {
     }
 
     if (action === "remove-member") {
-        const confirmed = window.confirm(`Remove ${username} from this group?`);
+        const confirmed = await showConfirmModal("Remove Member", `Remove ${username} from this group?`, { type: "warning", confirmLabel: "Remove" });
         if (!confirmed) {
             return;
         }
@@ -10544,7 +10557,7 @@ groupInfoMembers?.addEventListener("click", async (event) => {
     }
 
     if (action === "transfer-owner") {
-        const confirmed = window.confirm(`Transfer ownership to ${username}?`);
+        const confirmed = await showConfirmModal("Transfer Ownership", `Transfer ownership to ${username}?`, { type: "warning", confirmLabel: "Transfer" });
         if (!confirmed) {
             return;
         }
@@ -10582,8 +10595,10 @@ groupLeaveBtn?.addEventListener("click", async () => {
         return;
     }
 
-    const confirmed = window.confirm(
-        "Leave this group? If you are the owner, transfer ownership first unless you are the last member."
+    const confirmed = await showConfirmModal(
+        "Leave Group",
+        "Leave this group? If you are the owner, transfer ownership first unless you are the last member.",
+        { type: "warning", confirmLabel: "Leave" }
     );
     if (!confirmed) {
         return;
@@ -10605,6 +10620,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
         groupKeyVersionCache.delete(Number(groupId));
         groupInfoBtn.hidden = true;
         groupInfoBtn.setAttribute("aria-expanded", "false");
+        if (alertPanelBtn) alertPanelBtn.hidden = false;
         currentChatUser = null;
         currentChatRecentMessages = null;
 lastRecentPollTime = "";
