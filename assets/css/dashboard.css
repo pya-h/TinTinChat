@@ -529,10 +529,10 @@ nav.navbar::after {
     }
 }
 
-.group-info-panel.panel-closing,
-.saved-messages-info-panel.panel-closing,
-.private-chat-info-panel.panel-closing {
-    animation: panelSlideOut 0.28s var(--ease-out) forwards;
+.chat-area .group-info-panel.panel-closing,
+.chat-area .saved-messages-info-panel.panel-closing,
+.chat-area .private-chat-info-panel.panel-closing {
+    animation: panelSlideOut 0.28s var(--ease-out) forwards !important;
 }
 
 .group-page-header {

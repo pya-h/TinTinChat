@@ -1850,13 +1850,17 @@ function openSavedMessagesInfoPanel() {
 
 function closeSavedMessagesInfoPanel() {
     if (!savedMessagesInfoPanel || savedMessagesInfoPanel.hidden) return;
-    savedMessagesInfoPanel.classList.add("panel-closing");
-    savedMessagesInfoPanel.addEventListener("animationend", function handler() {
-        savedMessagesInfoPanel.removeEventListener("animationend", handler);
+    let done = false;
+    const finish = () => {
+        if (done) return;
+        done = true;
         savedMessagesInfoPanel.classList.remove("panel-closing");
         savedMessagesInfoPanel.hidden = true;
         chatAreaElem?.classList.remove("saved-panel-open");
-    }, { once: true });
+    };
+    savedMessagesInfoPanel.classList.add("panel-closing");
+    savedMessagesInfoPanel.addEventListener("animationend", finish, { once: true });
+    setTimeout(finish, 350);
 }
 
 function toggleSavedMessagesInfoPanel() {
@@ -1870,13 +1874,17 @@ function toggleSavedMessagesInfoPanel() {
 // ── Private Chat Info Panel ──────────────────────────────────
 function closePrivateChatInfoPanel() {
     if (!privateChatInfoPanel || privateChatInfoPanel.hidden) return;
-    privateChatInfoPanel.classList.add("panel-closing");
-    privateChatInfoPanel.addEventListener("animationend", function handler() {
-        privateChatInfoPanel.removeEventListener("animationend", handler);
+    let done = false;
+    const finish = () => {
+        if (done) return;
+        done = true;
         privateChatInfoPanel.classList.remove("panel-closing");
         privateChatInfoPanel.hidden = true;
         chatAreaElem?.classList.remove("private-panel-open");
-    }, { once: true });
+    };
+    privateChatInfoPanel.classList.add("panel-closing");
+    privateChatInfoPanel.addEventListener("animationend", finish, { once: true });
+    setTimeout(finish, 350);
 }
 
 async function openPrivateChatInfoPanel() {
@@ -3837,13 +3845,17 @@ function closeGroupInfoPanel() {
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
-    groupInfoPanel.classList.add("panel-closing");
-    groupInfoPanel.addEventListener("animationend", function handler() {
-        groupInfoPanel.removeEventListener("animationend", handler);
+    let done = false;
+    const finish = () => {
+        if (done) return;
+        done = true;
         groupInfoPanel.classList.remove("panel-closing");
         groupInfoPanel.hidden = true;
         chatAreaElem?.classList.remove("group-panel-open");
-    }, { once: true });
+    };
+    groupInfoPanel.classList.add("panel-closing");
+    groupInfoPanel.addEventListener("animationend", finish, { once: true });
+    setTimeout(finish, 350);
 }
 
 function openGroupInfoPanel() {
