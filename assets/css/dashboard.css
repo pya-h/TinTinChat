@@ -5089,6 +5089,35 @@ textarea,
     background: rgba(255, 255, 255, 0.14);
 }
 
+.message.is-voice-message .reply-quote,
+.message.is-image-message .reply-quote,
+.message.is-video-message .reply-quote,
+.message.is-file-message .reply-quote,
+.message.is-sticker-message .reply-quote {
+    background: color-mix(in srgb, var(--primary-color) 12%, var(--surface-color));
+    border-left-color: color-mix(in srgb, var(--primary-color) 60%, var(--secondary-color));
+    color: var(--text-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.message.is-voice-message .reply-quote-sender,
+.message.is-image-message .reply-quote-sender,
+.message.is-video-message .reply-quote-sender,
+.message.is-file-message .reply-quote-sender,
+.message.is-sticker-message .reply-quote-sender {
+    color: var(--primary-color);
+}
+
+.message.is-voice-message .reply-quote-text,
+.message.is-image-message .reply-quote-text,
+.message.is-video-message .reply-quote-text,
+.message.is-file-message .reply-quote-text,
+.message.is-sticker-message .reply-quote-text {
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
 .reply-quote-sender {
     font-size: 0.74rem;
     font-weight: 600;
