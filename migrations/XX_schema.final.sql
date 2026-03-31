@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS user_opinions (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_opinions_author (author_user_id),
   INDEX idx_opinions_target (target_user_id),
-  UNIQUE KEY uq_opinion_author_target (author_user_id, target_user_id),
+  INDEX idx_opinions_author_target (author_user_id, target_user_id),
   FOREIGN KEY (author_user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE
 );

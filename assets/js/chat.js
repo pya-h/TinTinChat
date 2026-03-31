@@ -1526,6 +1526,7 @@ async function checkAnnouncementUnread() {
 const opinionsOverlay = document.getElementById("opinionsOverlay");
 const opinionsBody = document.getElementById("opinionsBody");
 const opinionsCount = document.getElementById("opinionsCount");
+let opinionsPanelCache = null; // cached fetch result
 
 async function openOpinionsPanel() {
     if (!opinionsOverlay) return;
@@ -1533,7 +1534,8 @@ async function openOpinionsPanel() {
     requestAnimationFrame(() => opinionsOverlay.classList.add("visible"));
     try {
         const res = await window.ApiService.jsonOk("api/opinions/fetch.php");
-        renderOpinionsList(res.opinions || []);
+        opinionsPanelCache = res;
+        renderOpinionsUserList(res.grouped || []);
     } catch {
         if (opinionsBody) opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>Unable to load opinions.</div>';
     }
@@ -1549,32 +1551,99 @@ function closeOpinionsPanel() {
     }, 250);
 }
 
-function renderOpinionsList(opinions) {
+function renderOpinionsUserList(grouped) {
     if (!opinionsBody) return;
-    if (opinionsCount) opinionsCount.textContent = opinions.length ? `${opinions.length} opinion${opinions.length > 1 ? "s" : ""}` : "";
+    const totalOpinions = grouped.reduce((s, g) => s + g.count, 0);
+    if (opinionsCount) opinionsCount.textContent = totalOpinions ? `${grouped.length} user${grouped.length > 1 ? "s" : ""}, ${totalOpinions} note${totalOpinions > 1 ? "s" : ""}` : "";
     opinionsBody.innerHTML = "";
-    if (!opinions.length) {
+    // Remove back button if present
+    const existingBack = opinionsOverlay?.querySelector(".opinions-back-btn");
+    if (existingBack) existingBack.remove();
+
+    if (!grouped.length) {
         opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>No opinions written yet.<br>Open a chat details panel to add one.</div>';
         return;
     }
-    opinions.forEach((op, idx) => {
+    grouped.forEach((group, idx) => {
         const item = document.createElement("div");
-        item.className = "opinions-item";
+        item.className = "opinions-item opinions-user-item";
         item.style.animationDelay = `${idx * 0.04}s`;
-        const username = escapeHtml(op.target_username || "Unknown");
-        const date = op.updated_at || op.created_at || "";
-        const dateStr = date ? new Date(date).toLocaleDateString() : "";
-        const avatarUrl = "api/users/get_avatar.php?user_id=" + (op.target_user_id || 0) + "&size=64";
+        const username = escapeHtml(group.target_username || "Unknown");
+        const avatarUrl = "api/users/get_avatar.php?user_id=" + (group.target_user_id || 0) + "&size=64";
+        const preview = escapeHtml(String(group.latest_body || "").substring(0, 80));
         item.innerHTML = `
             <div class="opinions-item-avatar">
                 <img src="${avatarUrl}" alt="${username}" loading="lazy">
             </div>
             <div class="opinions-item-content">
                 <div class="opinions-item-username">${username}</div>
-                <div class="opinions-item-text">${escapeHtml(op.body || "")}</div>
+                <div class="opinions-item-text">${preview}${(group.latest_body || "").length > 80 ? "..." : ""}</div>
                 <div class="opinions-item-meta">
-                    <span>${dateStr}</span>
+                    <span>${group.count} note${group.count > 1 ? "s" : ""}</span>
                 </div>
+            </div>
+            <div class="opinions-item-chevron"><i class="fas fa-chevron-right"></i></div>
+        `;
+        item.addEventListener("click", () => {
+            openOpinionsForUser(Number(group.target_user_id), group.target_username);
+        });
+        opinionsBody.appendChild(item);
+    });
+}
+
+async function openOpinionsForUser(targetUserId, targetUsername) {
+    if (!opinionsBody) return;
+    opinionsBody.innerHTML = '<div class="opinions-loading"><i class="fas fa-circle-notch fa-spin"></i><span>Loading...</span></div>';
+
+    // Add back button to header
+    let backBtn = opinionsOverlay?.querySelector(".opinions-back-btn");
+    if (!backBtn) {
+        backBtn = document.createElement("button");
+        backBtn.type = "button";
+        backBtn.className = "opinions-back-btn";
+        backBtn.innerHTML = '<i class="fas fa-arrow-left"></i>';
+        backBtn.title = "Back to users";
+        const header = opinionsOverlay?.querySelector(".opinions-header");
+        if (header) header.prepend(backBtn);
+    }
+    backBtn.onclick = () => {
+        backBtn.remove();
+        if (opinionsPanelCache) {
+            renderOpinionsUserList(opinionsPanelCache.grouped || []);
+        } else {
+            openOpinionsPanel();
+        }
+    };
+
+    if (opinionsCount) opinionsCount.textContent = escapeHtml(targetUsername || "User");
+
+    try {
+        const res = await window.ApiService.jsonOk("api/opinions/fetch.php?target_user_id=" + targetUserId);
+        renderOpinionsDetailList(res.opinions || [], targetUserId, targetUsername);
+    } catch {
+        opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>Unable to load opinions.</div>';
+    }
+}
+
+function renderOpinionsDetailList(opinions, targetUserId, targetUsername) {
+    if (!opinionsBody) return;
+    opinionsBody.innerHTML = "";
+
+    if (!opinions.length) {
+        opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>No opinions about this user.</div>';
+        return;
+    }
+
+    opinions.forEach((op, idx) => {
+        const item = document.createElement("div");
+        item.className = "opinions-item opinions-detail-item";
+        item.style.animationDelay = `${idx * 0.04}s`;
+        const date = op.updated_at || op.created_at || "";
+        const dateStr = date ? new Date(date).toLocaleDateString() : "";
+        item.innerHTML = `
+            <div class="opinions-detail-body">
+                <div class="opinions-item-text">${escapeHtml(op.body || "")}</div>
+                <div class="opinions-item-meta"><span>${dateStr}</span></div>
             </div>
             <div class="opinions-item-actions">
                 <button type="button" class="opinions-item-action-btn edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
@@ -1584,7 +1653,7 @@ function renderOpinionsList(opinions) {
         item.querySelector(".edit-btn")?.addEventListener("click", async () => {
             const newText = await showPromptModal(
                 "Edit Opinion",
-                "Edit your opinion about " + (op.target_username || "this user") + ":",
+                "Edit your opinion about " + escapeHtml(targetUsername || "this user") + ":",
                 { defaultValue: op.body || "", maxLength: 500, placeholder: "Your opinion..." }
             );
             if (newText === null || !newText.trim()) return;
@@ -1592,15 +1661,15 @@ function renderOpinionsList(opinions) {
                 await window.ApiService.jsonOk("api/opinions/save.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                    body: JSON.stringify({ target_user_id: op.target_user_id, body: newText.trim() }),
+                    body: JSON.stringify({ target_user_id: targetUserId, opinion_id: Number(op.id), body: newText.trim() }),
                 });
-                openOpinionsPanel();
+                openOpinionsForUser(targetUserId, targetUsername);
             } catch (e) { showModal("Error", e?.message || "Failed to save opinion.", "error"); }
         });
         item.querySelector(".delete-btn")?.addEventListener("click", async () => {
             const confirmed = await showConfirmModal(
                 "Delete Opinion",
-                "Delete your opinion about " + (op.target_username || "this user") + "?",
+                "Delete this opinion?",
                 { type: "warning", confirmLabel: "Delete" }
             );
             if (!confirmed) return;
@@ -1608,15 +1677,20 @@ function renderOpinionsList(opinions) {
                 await window.ApiService.jsonOk("api/opinions/delete.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                    body: JSON.stringify({ target_user_id: op.target_user_id }),
+                    body: JSON.stringify({ opinion_id: Number(op.id) }),
                 });
-                openOpinionsPanel();
+                // Refresh — re-fetch to update cache too
+                opinionsPanelCache = null;
+                const remaining = await window.ApiService.jsonOk("api/opinions/fetch.php?target_user_id=" + targetUserId);
+                if (!remaining.opinions?.length) {
+                    // No opinions left for this user, go back to user list
+                    const backBtn = opinionsOverlay?.querySelector(".opinions-back-btn");
+                    if (backBtn) backBtn.remove();
+                    openOpinionsPanel();
+                } else {
+                    renderOpinionsDetailList(remaining.opinions, targetUserId, targetUsername);
+                }
             } catch { /* ignore */ }
-        });
-        item.querySelector(".opinions-item-avatar")?.addEventListener("click", async () => {
-            if (op.target_username) {
-                await openUserProfileModal({ userId: Number(op.target_user_id || 0), username: op.target_username });
-            }
         });
         opinionsBody.appendChild(item);
     });
@@ -1890,6 +1964,7 @@ function resetPrivateOpinionForm() {
     if (formWrap) formWrap.hidden = true;
     if (input) input.value = "";
     if (cc) cc.textContent = "0";
+    privateOpinionEditingId = 0;
 }
 
 async function openPrivateChatInfoPanel() {
@@ -2228,64 +2303,69 @@ function loadPrivateChatMusicMessages() {
 }
 
 let privateChatOpinionTargetUserId = 0;
+let privateOpinionEditingId = 0;
 
 async function loadPrivateChatOpinion() {
     const body = document.getElementById("privateOpinionBody");
     if (!body) return;
     const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
     privateChatOpinionTargetUserId = userId;
-    if (!userId) { body.innerHTML = '<div class="opinion-empty">No opinion written yet.</div>'; return; }
+    if (!userId) { body.innerHTML = '<div class="opinion-empty">No opinions yet.</div>'; return; }
     try {
         const res = await window.ApiService.jsonOk("api/opinions/fetch.php?target_user_id=" + userId);
-        renderPrivateOpinion(res.opinion);
+        renderPrivateOpinions(res.opinions || []);
     } catch {
-        body.innerHTML = '<div class="opinion-empty">No opinion written yet.</div>';
+        body.innerHTML = '<div class="opinion-empty">No opinions yet.</div>';
     }
 }
 
-function renderPrivateOpinion(opinion) {
+function renderPrivateOpinions(opinions) {
     const body = document.getElementById("privateOpinionBody");
     if (!body) return;
-    if (!opinion) {
-        body.innerHTML = '<div class="opinion-empty">No opinion written yet.</div>';
+    body.innerHTML = "";
+    if (!opinions.length) {
+        body.innerHTML = '<div class="opinion-empty">No opinions yet.</div>';
         return;
     }
-    const date = opinion.updated_at || opinion.created_at || "";
-    const dateStr = date ? new Date(date).toLocaleDateString() : "";
-    body.innerHTML = "";
-    const card = document.createElement("div");
-    card.className = "private-opinion-card";
-    card.innerHTML = `
-        <div class="opinion-text">${escapeHtml(opinion.body)}</div>
-        <div class="opinion-date">${dateStr}</div>
-        <div class="opinion-actions">
-            <button type="button" class="opinion-action-btn edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
-            <button type="button" class="opinion-action-btn delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>
-        </div>
-    `;
-    card.querySelector(".edit-btn")?.addEventListener("click", () => {
-        const formWrap = document.getElementById("privateOpinionFormWrap");
-        const input = document.getElementById("privateOpinionInput");
-        if (formWrap && input) {
-            input.value = opinion.body;
-            const cc = document.getElementById("privateOpinionCharCount");
-            if (cc) cc.textContent = String(input.value.length);
-            formWrap.hidden = false;
-        }
+    opinions.forEach((op) => {
+        const date = op.updated_at || op.created_at || "";
+        const dateStr = date ? new Date(date).toLocaleDateString() : "";
+        const card = document.createElement("div");
+        card.className = "private-opinion-card";
+        card.innerHTML = `
+            <div class="opinion-text">${escapeHtml(op.body)}</div>
+            <div class="opinion-date">${dateStr}</div>
+            <div class="opinion-actions">
+                <button type="button" class="opinion-action-btn edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
+                <button type="button" class="opinion-action-btn delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        `;
+        card.querySelector(".edit-btn")?.addEventListener("click", () => {
+            const formWrap = document.getElementById("privateOpinionFormWrap");
+            const input = document.getElementById("privateOpinionInput");
+            if (formWrap && input) {
+                input.value = op.body;
+                privateOpinionEditingId = Number(op.id);
+                const cc = document.getElementById("privateOpinionCharCount");
+                if (cc) cc.textContent = String(input.value.length);
+                formWrap.hidden = false;
+                input.focus();
+            }
+        });
+        card.querySelector(".delete-btn")?.addEventListener("click", async () => {
+            const confirmed = await showConfirmModal("Delete Opinion", "Delete this opinion?", { type: "warning", confirmLabel: "Delete" });
+            if (!confirmed) return;
+            try {
+                await window.ApiService.jsonOk("api/opinions/delete.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                    body: JSON.stringify({ opinion_id: Number(op.id) }),
+                });
+                loadPrivateChatOpinion();
+            } catch { /* ignore */ }
+        });
+        body.appendChild(card);
     });
-    card.querySelector(".delete-btn")?.addEventListener("click", async () => {
-        const confirmed = await showConfirmModal("Delete Opinion", "Delete your opinion about this user?", { type: "warning", confirmLabel: "Delete" });
-        if (!confirmed) return;
-        try {
-            await window.ApiService.jsonOk("api/opinions/delete.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                body: JSON.stringify({ target_user_id: privateChatOpinionTargetUserId }),
-            });
-            renderPrivateOpinion(null);
-        } catch { /* ignore */ }
-    });
-    body.appendChild(card);
 }
 
 function loadSavedMessagesStats() {
@@ -10628,6 +10708,11 @@ document.getElementById("privateOpinionAddBtn")?.addEventListener("click", () =>
     const formWrap = document.getElementById("privateOpinionFormWrap");
     const input = document.getElementById("privateOpinionInput");
     if (formWrap) {
+        // Always reset for a new opinion when clicking add
+        privateOpinionEditingId = 0;
+        if (input) input.value = "";
+        const cc = document.getElementById("privateOpinionCharCount");
+        if (cc) cc.textContent = "0";
         formWrap.hidden = !formWrap.hidden;
         if (!formWrap.hidden && input) input.focus();
     }
@@ -10640,8 +10725,7 @@ document.getElementById("privateOpinionInput")?.addEventListener("input", () => 
 });
 
 document.getElementById("privateOpinionCancelBtn")?.addEventListener("click", () => {
-    const formWrap = document.getElementById("privateOpinionFormWrap");
-    if (formWrap) formWrap.hidden = true;
+    resetPrivateOpinionForm();
 });
 
 document.getElementById("privateOpinionSaveBtn")?.addEventListener("click", async () => {
@@ -10649,14 +10733,15 @@ document.getElementById("privateOpinionSaveBtn")?.addEventListener("click", asyn
     const body = String(input?.value || "").trim();
     if (!body || !privateChatOpinionTargetUserId) return;
     try {
-        const res = await window.ApiService.jsonOk("api/opinions/save.php", {
+        const payload = { target_user_id: privateChatOpinionTargetUserId, body };
+        if (privateOpinionEditingId > 0) payload.opinion_id = privateOpinionEditingId;
+        await window.ApiService.jsonOk("api/opinions/save.php", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-            body: JSON.stringify({ target_user_id: privateChatOpinionTargetUserId, body }),
+            body: JSON.stringify(payload),
         });
-        renderPrivateOpinion(res.opinion);
-        const formWrap = document.getElementById("privateOpinionFormWrap");
-        if (formWrap) formWrap.hidden = true;
+        resetPrivateOpinionForm();
+        loadPrivateChatOpinion();
     } catch (error) {
         showModal("Opinion Error", error?.message || "Failed to save opinion.", "error");
     }

@@ -1103,10 +1103,6 @@ nav.navbar::after {
     transform: scale(1.08);
 }
 
-.private-opinion-body {
-    min-height: 1.5rem;
-}
-
 .private-opinion-card {
     padding: 0.6rem 0.75rem;
     border-radius: 10px;
@@ -9604,6 +9600,65 @@ textarea,
     color: #dc3545;
 }
 
+/* Opinions panel back button */
+.opinions-back-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--text-muted, #888);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: background 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+    margin-right: 0.25rem;
+}
+.opinions-back-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--text-color, #1a1a2e);
+}
+
+/* User list item chevron */
+.opinions-item-chevron {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted, #888);
+    font-size: 0.7rem;
+    opacity: 0.5;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.opinions-user-item {
+    cursor: pointer;
+}
+.opinions-user-item:hover .opinions-item-chevron {
+    opacity: 1;
+    transform: translateX(2px);
+}
+
+/* Detail opinion items (no avatar, just text) */
+.opinions-detail-item {
+    flex-direction: row;
+    align-items: flex-start;
+}
+.opinions-detail-body {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Multi-opinion list in profile details */
+.private-opinion-body {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
 /* Dark theme for opinions */
 [data-theme="dark"] .opinions-panel {
     background: var(--card-bg, #1e1e2e);
@@ -9619,10 +9674,12 @@ textarea,
 [data-theme="dark"] .opinions-item:hover {
     background: rgba(99, 102, 241, 0.08);
 }
-[data-theme="dark"] .opinions-close {
+[data-theme="dark"] .opinions-close,
+[data-theme="dark"] .opinions-back-btn {
     background: rgba(255, 255, 255, 0.06);
 }
-[data-theme="dark"] .opinions-close:hover {
+[data-theme="dark"] .opinions-close:hover,
+[data-theme="dark"] .opinions-back-btn:hover {
     background: rgba(255, 255, 255, 0.1);
 }
 
@@ -9641,10 +9698,12 @@ textarea,
     :root:not([data-theme="light"]) .opinions-item:hover {
         background: rgba(99, 102, 241, 0.08);
     }
-    :root:not([data-theme="light"]) .opinions-close {
+    :root:not([data-theme="light"]) .opinions-close,
+    :root:not([data-theme="light"]) .opinions-back-btn {
         background: rgba(255, 255, 255, 0.06);
     }
-    :root:not([data-theme="light"]) .opinions-close:hover {
+    :root:not([data-theme="light"]) .opinions-close:hover,
+    :root:not([data-theme="light"]) .opinions-back-btn:hover {
         background: rgba(255, 255, 255, 0.1);
     }
 }

@@ -317,16 +317,16 @@ $csrfToken = generateCsrfToken();
 
                     <div class="private-info-opinion">
                         <div class="private-opinion-header">
-                            <h6 class="mb-0"><i class="fas fa-pen-fancy me-1"></i>Your Opinion</h6>
-                            <button type="button" id="privateOpinionAddBtn" class="private-opinion-add-btn" title="Add or edit opinion">
+                            <h6 class="mb-0"><i class="fas fa-pen-fancy me-1"></i>Your Notes</h6>
+                            <button type="button" id="privateOpinionAddBtn" class="private-opinion-add-btn" title="Add a note">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
                         <div id="privateOpinionBody" class="private-opinion-body">
-                            <div class="opinion-empty">No opinion written yet.</div>
+                            <div class="opinion-empty">No opinions yet.</div>
                         </div>
                         <div id="privateOpinionFormWrap" class="private-opinion-form-wrap" hidden>
-                            <textarea id="privateOpinionInput" class="form-control form-control-sm" maxlength="500" rows="3" placeholder="What do you think about this person?"></textarea>
+                            <textarea id="privateOpinionInput" class="form-control form-control-sm" maxlength="500" rows="2" placeholder="Write a note about this person..."></textarea>
                             <div class="private-opinion-form-actions">
                                 <span class="private-opinion-char-count"><span id="privateOpinionCharCount">0</span>/500</span>
                                 <div class="d-flex gap-2">

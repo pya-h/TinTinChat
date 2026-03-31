@@ -9,13 +9,17 @@ $currentUserId = apiRequireAuth();
 apiRequireCsrf();
 
 $data = apiGetJsonBody();
-$targetUserId = (int) ($data['target_user_id'] ?? 0);
+$opinionId = (int) ($data['opinion_id'] ?? 0);
 
-if ($targetUserId <= 0) {
-    apiError('INVALID_TARGET', 'Invalid target user', 400);
+if ($opinionId <= 0) {
+    apiError('INVALID_ID', 'Invalid opinion ID', 400);
 }
 
-$stmt = $pdo->prepare('DELETE FROM user_opinions WHERE author_user_id = ? AND target_user_id = ?');
-$stmt->execute([$currentUserId, $targetUserId]);
+$stmt = $pdo->prepare('DELETE FROM user_opinions WHERE id = ? AND author_user_id = ?');
+$stmt->execute([$opinionId, $currentUserId]);
+
+if ($stmt->rowCount() === 0) {
+    apiError('NOT_FOUND', 'Opinion not found', 404);
+}
 
 apiSuccess(['message' => 'Opinion deleted']);
