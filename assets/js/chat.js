@@ -1747,7 +1747,8 @@ async function playPlaylistTrack(track, btnEl) {
         playlistAudio = new Audio(mediaResource.objectUrl);
         playlistCurrentBtn = btnEl;
 
-        playlistAudio.addEventListener("ended", () => {
+        playlistAudio.addEventListener("ended", function () {
+            if (this._stopped) return;
             btnEl.innerHTML = '<i class="fas fa-play"></i>';
             btnEl.classList.remove("playing");
             playlistCurrentBtn = null;
@@ -1755,7 +1756,8 @@ async function playPlaylistTrack(track, btnEl) {
             autoPlayNextTrack(track);
         });
 
-        playlistAudio.addEventListener("error", () => {
+        playlistAudio.addEventListener("error", function () {
+            if (this._stopped) return;
             btnEl.innerHTML = '<i class="fas fa-play"></i>';
             btnEl.classList.remove("playing");
             showModal("Playback Error", "Unable to play this track.", "error");
@@ -1952,8 +1954,8 @@ let privateMusicCurrentBtn = null;
 
 function stopPrivateMusicAudio() {
     if (privateMusicAudio) {
+        privateMusicAudio._stopped = true;
         privateMusicAudio.pause();
-        privateMusicAudio.src = "";
         privateMusicAudio = null;
     }
     if (privateMusicCurrentBtn) {
@@ -1967,8 +1969,8 @@ function stopAllAudio() {
     stopPrivateMusicAudio();
     // Stop playlist panel audio
     if (playlistAudio) {
+        playlistAudio._stopped = true;
         playlistAudio.pause();
-        playlistAudio.src = "";
         if (playlistCurrentBtn) {
             playlistCurrentBtn.innerHTML = '<i class="fas fa-play"></i>';
             playlistCurrentBtn.classList.remove("playing");
@@ -2274,7 +2276,8 @@ async function playSavedPanelTrack(idx) {
             if (nowPlayingProgressBar) nowPlayingProgressBar.style.width = `${pct}%`;
         });
 
-        savedPanelPlaylistAudio.addEventListener("ended", () => {
+        savedPanelPlaylistAudio.addEventListener("ended", function () {
+            if (this._stopped) return;
             updateNowPlayingUi(false);
             // Auto-play next
             if (idx < list.length - 1) {
@@ -2285,7 +2288,8 @@ async function playSavedPanelTrack(idx) {
             }
         });
 
-        savedPanelPlaylistAudio.addEventListener("error", () => {
+        savedPanelPlaylistAudio.addEventListener("error", function () {
+            if (this._stopped) return;
             showModal("Playback Error", "Unable to play this track.", "error");
             stopSavedPanelAudio();
             renderSavedPlaylistPanel();
@@ -2318,8 +2322,8 @@ async function playSavedPanelTrack(idx) {
 
 function stopSavedPanelAudio() {
     if (savedPanelPlaylistAudio) {
+        savedPanelPlaylistAudio._stopped = true;
         savedPanelPlaylistAudio.pause();
-        savedPanelPlaylistAudio.src = "";
         savedPanelPlaylistAudio = null;
     }
     savedPanelCurrentTrackIdx = -1;
