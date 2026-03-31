@@ -1724,24 +1724,8 @@ async function playPlaylistTrack(track, btnEl) {
         btnEl.classList.remove("playing");
         return;
     }
-    // Stop any existing playlist audio
-    if (playlistAudio) {
-        playlistAudio.pause();
-        playlistAudio.src = "";
-        if (playlistCurrentBtn) {
-            playlistCurrentBtn.innerHTML = '<i class="fas fa-play"></i>';
-            playlistCurrentBtn.classList.remove("playing");
-        }
-    }
-    // Also stop any in-chat audio
-    document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
-        const otherAudio = btn.closest(".message")?.querySelector("audio");
-        if (otherAudio && !otherAudio.paused) otherAudio.pause();
-        btn.classList.remove("playing");
-        btn.innerHTML = '<i class="fas fa-play"></i>';
-        btn.closest(".voice-player-container")?.classList.remove("is-playing");
-        btn.closest(".music-player-container")?.classList.remove("is-playing");
-    });
+    // Stop all other audio sources
+    stopAllAudio();
 
     btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
@@ -1978,6 +1962,35 @@ function stopPrivateMusicAudio() {
     }
 }
 
+function stopAllAudio() {
+    // Stop private music panel audio
+    stopPrivateMusicAudio();
+    // Stop playlist panel audio
+    if (playlistAudio) {
+        playlistAudio.pause();
+        playlistAudio.src = "";
+        if (playlistCurrentBtn) {
+            playlistCurrentBtn.innerHTML = '<i class="fas fa-play"></i>';
+            playlistCurrentBtn.classList.remove("playing");
+        }
+        playlistAudio = null;
+        playlistCurrentBtn = null;
+    }
+    // Stop saved panel audio
+    if (typeof stopSavedPanelAudio === "function") stopSavedPanelAudio();
+    // Stop all in-chat voice and music players
+    document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
+        const otherAudio = btn.closest(".message")?.querySelector("audio");
+        if (otherAudio && !otherAudio.paused) otherAudio.pause();
+        btn.classList.remove("playing");
+        btn.innerHTML = '<i class="fas fa-play"></i>';
+        btn.closest(".voice-player-container")?.classList.remove("is-playing");
+        btn.closest(".music-player-container")?.classList.remove("is-playing");
+    });
+    // Hide global now playing bar
+    hideGlobalNowPlaying();
+}
+
 function loadPrivateChatMusicMessages() {
     const body = document.getElementById("privateMusicBody");
     const countEl = document.getElementById("privateMusicCount");
@@ -2024,53 +2037,55 @@ function loadPrivateChatMusicMessages() {
                     return;
                 }
 
-                // Stop previous private music audio
-                stopPrivateMusicAudio();
-
-                // Stop any in-chat playing audio
-                document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
-                    const otherAudio = btn.closest(".message")?.querySelector("audio");
-                    if (otherAudio && !otherAudio.paused) otherAudio.pause();
-                    btn.classList.remove("playing");
-                    btn.innerHTML = '<i class="fas fa-play"></i>';
-                    btn.closest(".voice-player-container")?.classList.remove("is-playing");
-                    btn.closest(".music-player-container")?.classList.remove("is-playing");
-                });
+                // Stop all other audio sources
+                stopAllAudio();
 
                 const freshMeta = messageMetaById.get(msgId);
                 if (!freshMeta) return;
 
                 playBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
+                // Mark this button as the one loading so we can detect stale loads
+                privateMusicCurrentBtn = playBtn;
+
                 try {
                     const mediaResource = await getDecryptedMediaResource(freshMeta);
+
+                    // If user clicked another track while we were loading, abort
+                    if (privateMusicCurrentBtn !== playBtn) return;
+
                     if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     if (audioContext.state === "suspended") audioContext.resume();
 
                     const audio = new Audio(mediaResource.objectUrl);
                     privateMusicAudio = audio;
-                    privateMusicCurrentBtn = playBtn;
 
                     audio.addEventListener("ended", () => {
-                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
-                        privateMusicAudio = null;
-                        privateMusicCurrentBtn = null;
-                        hideGlobalNowPlaying();
+                        if (privateMusicAudio === audio) {
+                            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                            privateMusicAudio = null;
+                            privateMusicCurrentBtn = null;
+                            hideGlobalNowPlaying();
+                        }
                     });
 
                     audio.addEventListener("error", () => {
-                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
-                        privateMusicAudio = null;
-                        privateMusicCurrentBtn = null;
-                        hideGlobalNowPlaying();
+                        if (privateMusicAudio === audio) {
+                            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                            privateMusicAudio = null;
+                            privateMusicCurrentBtn = null;
+                            hideGlobalNowPlaying();
+                        }
                     });
 
                     await audio.play();
                     playBtn.innerHTML = '<i class="fas fa-pause"></i>';
                     showGlobalNowPlaying(audio, title, "music");
                 } catch {
-                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
-                    privateMusicCurrentBtn = null;
+                    if (privateMusicCurrentBtn === playBtn) {
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        privateMusicCurrentBtn = null;
+                    }
                 }
             });
         }
@@ -2224,8 +2239,8 @@ async function playSavedPanelTrack(idx) {
         return;
     }
 
-    // Stop current
-    stopSavedPanelAudio();
+    // Stop all other audio sources
+    stopAllAudio();
 
     savedPanelCurrentTrackIdx = idx;
     renderSavedPlaylistPanel();
@@ -2243,16 +2258,6 @@ async function playSavedPanelTrack(idx) {
 
         if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
         if (audioContext.state === "suspended") audioContext.resume();
-
-        // Stop any in-chat audio
-        document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
-            const otherAudio = btn.closest(".message")?.querySelector("audio");
-            if (otherAudio && !otherAudio.paused) otherAudio.pause();
-            btn.classList.remove("playing");
-            btn.innerHTML = '<i class="fas fa-play"></i>';
-            btn.closest(".voice-player-container")?.classList.remove("is-playing");
-            btn.closest(".music-player-container")?.classList.remove("is-playing");
-        });
 
         savedPanelPlaylistAudio = new Audio(mediaResource.objectUrl);
 
@@ -8783,18 +8788,8 @@ window.playVoiceMessage = async function (messageId) {
     }
 
     if (audio.paused) {
-        document.querySelectorAll(".voice-play-btn.playing").forEach((btn) => {
-            const otherContainer = btn.closest(".voice-player-container");
-            const otherAudio = otherContainer?.querySelector("audio");
-            if (otherAudio && !otherAudio.paused) {
-                otherAudio.pause();
-            }
-            btn.classList.remove("playing");
-            otherContainer?.classList.remove("is-playing");
-            const i = btn.querySelector("i");
-            i.classList.remove("fa-pause");
-            i.classList.add("fa-play");
-        });
+        // Stop all other audio sources
+        stopAllAudio();
 
         if (audioContext.state === "suspended") {
             audioContext.resume();
@@ -8936,15 +8931,8 @@ window.playMusicMessage = async function (messageId) {
     }
 
     if (audio.paused) {
-        // Pause any other playing audio (voice or music)
-        document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
-            const otherAudio = btn.closest(".message")?.querySelector("audio");
-            if (otherAudio && !otherAudio.paused) otherAudio.pause();
-            btn.classList.remove("playing");
-            btn.innerHTML = `<i class="fas fa-play"></i>`;
-            btn.closest(".voice-player-container")?.classList.remove("is-playing");
-            btn.closest(".music-player-container")?.classList.remove("is-playing");
-        });
+        // Stop all other audio sources
+        stopAllAudio();
 
         if (audioContext.state === "suspended") audioContext.resume();
         audio.play().catch(() => {
