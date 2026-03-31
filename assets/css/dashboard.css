@@ -5099,6 +5099,24 @@ textarea,
     color: var(--text-color);
     border-radius: 0.5rem;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+/* Connecting stem between reply quote and media content */
+.message.is-voice-message .reply-quote::after,
+.message.is-image-message .reply-quote::after,
+.message.is-video-message .reply-quote::after,
+.message.is-file-message .reply-quote::after,
+.message.is-sticker-message .reply-quote::after {
+    content: "";
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0.7rem;
+    width: 2px;
+    height: 0.5rem;
+    background: color-mix(in srgb, var(--primary-color) 40%, var(--secondary-color));
+    border-radius: 1px;
 }
 
 .message.is-voice-message .reply-quote-sender,
