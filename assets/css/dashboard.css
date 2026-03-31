@@ -5079,9 +5079,20 @@ textarea,
     border-left: 3px solid color-mix(in srgb, var(--secondary-color) 70%, var(--primary-color));
     background: color-mix(in srgb, var(--surface-color) 80%, transparent);
     border-radius: 0.5rem;
-    padding: 0.35rem 0.55rem;
+    padding: 0.4rem 0.6rem;
     margin-bottom: 0.35rem;
     cursor: pointer;
+    animation: mediaReplyQuoteIn 0.3s var(--ease-spring);
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.reply-quote:hover {
+    background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+.reply-quote:active {
+    transform: scale(0.985);
 }
 
 .message.sent .reply-quote {
@@ -5089,18 +5100,68 @@ textarea,
     background: rgba(255, 255, 255, 0.14);
 }
 
+.message.sent .reply-quote:hover {
+    background: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 1px 8px rgba(255, 255, 255, 0.1);
+}
+
+/* ── Multimedia reply quote (voice, image, video, file, sticker) ── */
 .message.is-voice-message .reply-quote,
 .message.is-image-message .reply-quote,
 .message.is-video-message .reply-quote,
 .message.is-file-message .reply-quote,
 .message.is-sticker-message .reply-quote {
-    background: color-mix(in srgb, var(--primary-color) 12%, var(--surface-color));
-    border-left-color: color-mix(in srgb, var(--primary-color) 60%, var(--secondary-color));
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--primary-color) 10%, var(--surface-color)) 0%,
+        color-mix(in srgb, var(--secondary-color) 8%, var(--surface-color)) 100%
+    );
+    border-left: 3px solid color-mix(in srgb, var(--primary-color) 65%, var(--secondary-color));
     color: var(--text-color);
     border-radius: 0.5rem;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 6px color-mix(in srgb, var(--primary-color) 10%, transparent);
     position: relative;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.55rem;
+    padding: 0.4rem 0.6rem;
+    width: fit-content;
+    max-width: 100%;
+    animation: mediaReplyQuoteIn 0.3s var(--ease-spring);
+    transition: var(--transition-fast);
+}
+
+/* Sent multimedia: right-align the reply quote */
+.message.sent.is-voice-message .reply-quote,
+.message.sent.is-image-message .reply-quote,
+.message.sent.is-video-message .reply-quote,
+.message.sent.is-file-message .reply-quote,
+.message.sent.is-sticker-message .reply-quote {
+    margin-left: auto;
+}
+
+.message.is-voice-message .reply-quote:hover,
+.message.is-image-message .reply-quote:hover,
+.message.is-video-message .reply-quote:hover,
+.message.is-file-message .reply-quote:hover,
+.message.is-sticker-message .reply-quote:hover {
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--primary-color) 18%, transparent);
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--primary-color) 15%, var(--surface-color)) 0%,
+        color-mix(in srgb, var(--secondary-color) 12%, var(--surface-color)) 100%
+    );
+}
+
+.message.is-voice-message .reply-quote:active,
+.message.is-image-message .reply-quote:active,
+.message.is-video-message .reply-quote:active,
+.message.is-file-message .reply-quote:active,
+.message.is-sticker-message .reply-quote:active {
+    transform: scale(0.985);
+}
+
+@keyframes mediaReplyQuoteIn {
+    from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* Connecting stem between reply quote and media content */
@@ -5111,12 +5172,23 @@ textarea,
 .message.is-sticker-message .reply-quote::after {
     content: "";
     position: absolute;
-    bottom: -0.5rem;
-    left: 0.7rem;
+    bottom: -0.55rem;
+    left: 0.85rem;
     width: 2px;
-    height: 0.5rem;
-    background: color-mix(in srgb, var(--primary-color) 40%, var(--secondary-color));
+    height: 0.55rem;
+    background: linear-gradient(to bottom, var(--primary-color), color-mix(in srgb, var(--secondary-color) 60%, transparent));
     border-radius: 1px;
+    animation: mediaReplyQuoteIn 0.3s var(--ease-spring);
+}
+
+/* Sent messages: move stem to the right side */
+.message.sent.is-voice-message .reply-quote::after,
+.message.sent.is-image-message .reply-quote::after,
+.message.sent.is-video-message .reply-quote::after,
+.message.sent.is-file-message .reply-quote::after,
+.message.sent.is-sticker-message .reply-quote::after {
+    left: auto;
+    right: 0.85rem;
 }
 
 .message.is-voice-message .reply-quote-sender,
@@ -5125,6 +5197,7 @@ textarea,
 .message.is-file-message .reply-quote-sender,
 .message.is-sticker-message .reply-quote-sender {
     color: var(--primary-color);
+    font-weight: 650;
 }
 
 .message.is-voice-message .reply-quote-text,
@@ -5133,7 +5206,7 @@ textarea,
 .message.is-file-message .reply-quote-text,
 .message.is-sticker-message .reply-quote-text {
     color: var(--text-color);
-    opacity: 0.8;
+    opacity: 0.75;
 }
 
 .reply-quote-sender {
