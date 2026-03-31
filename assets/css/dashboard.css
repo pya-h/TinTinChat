@@ -920,7 +920,7 @@ nav.navbar::after {
 .private-chat-info-panel {
     border-bottom: 1px solid var(--border-color);
     padding: 0.75rem 1rem;
-    background: color-mix(in srgb, var(--surface-color) 85%, var(--background-color));
+    background: var(--surface-color);
 }
 
 .chat-area.private-panel-open .chat-messages,
@@ -937,24 +937,28 @@ nav.navbar::after {
     flex-direction: column;
     flex: 1;
     border-bottom: 0;
-    padding: 0.5rem 0.9rem 0.9rem;
+    padding: 0.75rem 1rem 1rem;
     animation: panelSlideIn 0.5s var(--ease-spring);
     overflow-y: auto;
     overflow-x: hidden;
     min-width: 0;
     width: 100%;
     box-sizing: border-box;
+    gap: 0.15rem;
 }
 
 .private-info-header {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
+    gap: 0.65rem;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
 }
 
 .private-info-header h6 {
     font-weight: 700;
+    font-size: 0.95rem;
     color: var(--text-color);
 }
 
@@ -974,12 +978,13 @@ nav.navbar::after {
     flex-direction: column;
     align-items: center;
     gap: 0.3rem;
-    margin-bottom: 1rem;
-    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 1rem 0.75rem 0.85rem;
     border-radius: 16px;
     background: linear-gradient(135deg,
-        color-mix(in srgb, var(--primary-color) 8%, var(--surface-color)),
-        color-mix(in srgb, var(--secondary-color) 5%, var(--surface-color)));
+        color-mix(in srgb, var(--primary-color) 6%, var(--surface-color)),
+        color-mix(in srgb, var(--secondary-color) 4%, var(--surface-color)));
+    border: 1px solid color-mix(in srgb, var(--primary-color) 8%, var(--border-color));
 }
 
 .private-info-avatar-btn {
@@ -1038,20 +1043,27 @@ nav.navbar::after {
 }
 
 .private-info-stats {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
-/* ── Private Chat Music Section ── */
-.private-info-music {
-    margin-bottom: 1rem;
+/* ── Private Chat Section Cards ── */
+.private-info-music,
+.private-info-opinion {
+    margin-bottom: 0.75rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--primary-color) 3%, var(--surface-color));
+    border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
 }
 
 .private-music-header {
     margin-bottom: 0.5rem;
 }
 
-.private-music-header h6 {
+.private-music-header h6,
+.private-opinion-header h6 {
     font-weight: 700;
+    font-size: 0.82rem;
     color: var(--text-color);
 }
 
@@ -1064,31 +1076,21 @@ nav.navbar::after {
 }
 
 /* ── Private Chat Opinion Section ── */
-.private-info-opinion {
-    margin-bottom: 0.5rem;
-    overflow: hidden;
-}
-
 .private-opinion-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
-}
-
-.private-opinion-header h6 {
-    font-weight: 700;
-    color: var(--text-color);
+    margin-bottom: 0.4rem;
 }
 
 .private-opinion-add-btn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    border: 1.5px solid color-mix(in srgb, var(--primary-color) 40%, transparent);
-    background: color-mix(in srgb, var(--primary-color) 8%, var(--surface-color));
+    border: 1.5px solid color-mix(in srgb, var(--primary-color) 30%, transparent);
+    background: color-mix(in srgb, var(--primary-color) 6%, var(--surface-color));
     color: var(--primary-color);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1098,41 +1100,42 @@ nav.navbar::after {
 
 .private-opinion-add-btn:hover {
     background: color-mix(in srgb, var(--primary-color) 18%, var(--surface-color));
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 .private-opinion-body {
-    min-height: 2rem;
+    min-height: 1.5rem;
 }
 
 .private-opinion-card {
-    padding: 0.7rem 0.85rem;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--primary-color) 5%, var(--surface-color));
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--primary-color) 4%, var(--surface-color));
     border-left: 3px solid var(--primary-color);
     position: relative;
 }
 
 .private-opinion-card .opinion-text {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     color: var(--text-color);
     font-style: italic;
     line-height: 1.45;
     word-break: break-word;
+    padding-right: 2.5rem;
 }
 
 .private-opinion-card .opinion-date {
     font-size: 0.65rem;
     color: var(--subtle-text-color);
-    margin-top: 0.35rem;
+    margin-top: 0.3rem;
 }
 
 .private-opinion-card .opinion-actions {
     position: absolute;
-    top: 0.4rem;
-    right: 0.5rem;
+    top: 0.35rem;
+    right: 0.4rem;
     display: flex;
-    gap: 0.25rem;
+    gap: 0.2rem;
     opacity: 0;
     transition: opacity 0.15s ease;
 }
@@ -1148,7 +1151,7 @@ nav.navbar::after {
     border: none;
     background: transparent;
     color: var(--subtle-text-color);
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1167,25 +1170,35 @@ nav.navbar::after {
 }
 
 .opinion-empty {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     color: var(--subtle-text-color);
     font-style: italic;
-    padding: 0.35rem 0;
+    padding: 0.2rem 0;
 }
 
 .private-opinion-form-wrap {
-    margin-top: 0.5rem;
-    overflow: hidden;
+    margin-top: 0.45rem;
 }
 
 .private-opinion-form-wrap textarea.form-control {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     resize: none;
     border-radius: 10px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
     display: block;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+    background: var(--surface-color);
+    color: var(--text-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.private-opinion-form-wrap textarea.form-control:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--primary-color) 50%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 10%, transparent);
 }
 
 .private-opinion-form-actions {
@@ -1198,6 +1211,75 @@ nav.navbar::after {
 .private-opinion-char-count {
     font-size: 0.65rem;
     color: var(--subtle-text-color);
+}
+
+/* ── Private Chat Action Buttons ── */
+.private-info-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+}
+
+.private-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.private-action-btn i {
+    width: 1.2rem;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.private-action-btn:hover {
+    background: color-mix(in srgb, var(--border-color) 40%, transparent);
+}
+
+.private-action-btn.private-action-block {
+    color: var(--warning-color);
+}
+
+.private-action-btn.private-action-block:hover {
+    background: color-mix(in srgb, var(--warning-color) 8%, transparent);
+}
+
+.private-action-btn.private-action-unblock {
+    color: var(--accent-color);
+}
+
+.private-action-btn.private-action-unblock:hover {
+    background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+}
+
+.private-action-btn.private-action-delete {
+    color: var(--danger-color);
+}
+
+.private-action-btn.private-action-delete:hover {
+    background: color-mix(in srgb, var(--danger-color) 8%, transparent);
+}
+
+.private-action-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.private-action-btn:disabled:hover {
+    background: transparent;
 }
 
 /* ── Polished action buttons ── */

@@ -1911,11 +1911,143 @@ async function openPrivateChatInfoPanel() {
         const avatarBtn = document.getElementById("privateChatAvatarBtn");
         avatarBtn?.replaceWith(avatarBtn.cloneNode(true));
         document.getElementById("privateChatAvatarBtn")?.addEventListener("click", () => openAvatarViewer(profile));
+
+        setupPrivateChatActions(profile);
     } catch { /* ignore profile load error */ }
 
     loadPrivateChatStats();
     loadPrivateChatMusicMessages();
     loadPrivateChatOpinion();
+}
+
+function setupPrivateChatActions(profile) {
+    const blockBtn = document.getElementById("privateChatBlockBtn");
+    const deleteBtn = document.getElementById("privateChatDeleteBtn");
+    const isCurrentUser = Boolean(profile.is_current_user);
+    let isBlocked = Boolean(profile.is_blocked_by_me);
+
+    if (blockBtn) {
+        blockBtn.disabled = isCurrentUser;
+        blockBtn.querySelector("span").textContent = isBlocked ? "Unblock User" : "Block User";
+        blockBtn.querySelector("i").className = isBlocked ? "fas fa-user-check" : "fas fa-user-slash";
+        if (isBlocked) {
+            blockBtn.classList.remove("private-action-block");
+            blockBtn.classList.add("private-action-unblock");
+        } else {
+            blockBtn.classList.remove("private-action-unblock");
+            blockBtn.classList.add("private-action-block");
+        }
+        const freshBtn = blockBtn.cloneNode(true);
+        blockBtn.replaceWith(freshBtn);
+        if (!isCurrentUser) {
+            freshBtn.addEventListener("click", async () => {
+                const willBlock = !isBlocked;
+                const targetName = String(profile.username || "this user");
+                const confirmed = await showConfirmModal(
+                    willBlock ? "Block User" : "Unblock User",
+                    willBlock
+                        ? `Block ${targetName}? They will not be able to send messages to you.`
+                        : `Unblock ${targetName}?`,
+                    { type: "warning", confirmLabel: willBlock ? "Block" : "Unblock" }
+                );
+                if (!confirmed) return;
+
+                freshBtn.disabled = true;
+                freshBtn.querySelector("span").textContent = willBlock ? "Blocking..." : "Unblocking...";
+                try {
+                    const endpoint = willBlock ? "api/users/block.php" : "api/users/unblock.php";
+                    const res = await window.ApiService.jsonOk(endpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                        body: JSON.stringify({ target_user_id: Number(profile.user_id || 0) }),
+                    });
+                    isBlocked = Boolean(res?.is_blocked);
+                    profile.is_blocked_by_me = isBlocked;
+                    freshBtn.querySelector("span").textContent = isBlocked ? "Unblock User" : "Block User";
+                    freshBtn.querySelector("i").className = isBlocked ? "fas fa-user-check" : "fas fa-user-slash";
+                    if (isBlocked) {
+                        freshBtn.classList.remove("private-action-block");
+                        freshBtn.classList.add("private-action-unblock");
+                    } else {
+                        freshBtn.classList.remove("private-action-unblock");
+                        freshBtn.classList.add("private-action-block");
+                    }
+                    freshBtn.disabled = false;
+                    showModal(
+                        isBlocked ? "User Blocked" : "User Unblocked",
+                        isBlocked
+                            ? `${targetName} can no longer send messages to you.`
+                            : `${targetName} can send messages to you again.`,
+                        "success"
+                    );
+                } catch (error) {
+                    freshBtn.disabled = false;
+                    freshBtn.querySelector("span").textContent = isBlocked ? "Unblock User" : "Block User";
+                    showModal("Error", error?.message || "Unable to update block status.", "error");
+                }
+            });
+        }
+    }
+
+    if (deleteBtn) {
+        deleteBtn.disabled = isCurrentUser;
+        const freshDel = deleteBtn.cloneNode(true);
+        deleteBtn.replaceWith(freshDel);
+        if (!isCurrentUser) {
+            freshDel.addEventListener("click", async () => {
+                const targetName = String(profile.username || "this user");
+                const confirmed = await showConfirmModal(
+                    "Delete Chat",
+                    `Delete all direct messages between you and ${targetName}? This cannot be undone.`,
+                    { type: "error", confirmLabel: "Delete" }
+                );
+                if (!confirmed) return;
+
+                freshDel.disabled = true;
+                freshDel.querySelector("span").textContent = "Deleting...";
+                try {
+                    const response = await window.ApiService.jsonOk("api/chats/delete.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                        body: JSON.stringify({ target_username: String(profile.username || "") }),
+                    });
+                    const deletedMessages = Number(response?.messages_deleted || 0);
+                    const deletedFiles = Number(response?.files_deleted || 0);
+
+                    if (currentChatUser === String(profile.username || "")) {
+                        currentChatRecentMessages = null;
+                        lastRecentPollTime = "";
+                        messageOffset = 0;
+                        hasMoreMessages = true;
+                        hasLoadedMoreMessages = false;
+                        pendingSeenMessageIds.clear();
+                        messageMetaById.clear();
+                        clearDecryptedMediaCache();
+                        chatMessagesElem.innerHTML = "";
+                        let waitAttempts = 0;
+                        while (isLoadingMessages && waitAttempts < 12) {
+                            await new Promise((r) => setTimeout(r, 120));
+                            waitAttempts++;
+                        }
+                        if (!isLoadingMessages) {
+                            await loadMessages(currentChatUser, true, true);
+                        }
+                    }
+                    await loadChatList(true);
+                    closePrivateChatInfoPanel();
+                    showModal(
+                        "Chat Deleted",
+                        `Deleted ${deletedMessages} messages${deletedFiles > 0 ? ` and ${deletedFiles} files` : ""}.`,
+                        "success"
+                    );
+                } catch (error) {
+                    freshDel.disabled = false;
+                    freshDel.querySelector("span").textContent = "Delete Chat";
+                    showModal("Delete Chat Failed", error?.message || "Unable to delete chat history.", "error");
+                }
+            });
+        }
+    }
 }
 
 function togglePrivateChatInfoPanel() {

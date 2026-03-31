@@ -336,6 +336,17 @@ $csrfToken = generateCsrfToken();
                             </div>
                         </div>
                     </div>
+
+                    <div class="private-info-actions" id="privateChatActions">
+                        <button type="button" id="privateChatBlockBtn" class="private-action-btn private-action-block">
+                            <i class="fas fa-user-slash"></i>
+                            <span>Block User</span>
+                        </button>
+                        <button type="button" id="privateChatDeleteBtn" class="private-action-btn private-action-delete">
+                            <i class="fas fa-trash-alt"></i>
+                            <span>Delete Chat</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="selectModeBar" class="select-mode-bar" role="region" aria-label="Selected messages actions" hidden>
