@@ -21,6 +21,9 @@ $messageEncryptedForSender = trim((string) ($_POST['message_for_sender'] ?? ''))
 $forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numeric($_POST['forwarded_from_message_id'])
 	? (int) $_POST['forwarded_from_message_id']
 	: null;
+$replyToMessageId = isset($_POST['reply_to_message_id']) && is_numeric($_POST['reply_to_message_id'])
+	? (int) $_POST['reply_to_message_id']
+	: null;
 
 $voiceFile = apiRequireUploadedFile('voice_file');
 
@@ -54,6 +57,21 @@ $voiceMessagesDir = __DIR__ . '/../../../uploads/voice_messages';
 $uniqueFilename = uniqid('voice_enc_', true) . '.' . ENCRYPTED_VOICE_EXTENSION;
 $uploadPath = $voiceMessagesDir . '/' . $uniqueFilename;
 
+if ($replyToMessageId) {
+	if ($groupId > 0) {
+		$replyStmt = $pdo->prepare('SELECT id FROM messages WHERE id = ? AND group_id = ? LIMIT 1');
+		$replyStmt->execute([$replyToMessageId, $groupId]);
+	} else {
+		$replyStmt = $pdo->prepare(
+			'SELECT id FROM messages WHERE id = ? AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) LIMIT 1'
+		);
+		$replyStmt->execute([$replyToMessageId, $userId, $receiverId, $receiverId, $userId]);
+	}
+	if (!$replyStmt->fetch()) {
+		apiError('INVALID_REPLY_TARGET', 'Invalid reply target message', 400);
+	}
+}
+
 if (!move_uploaded_file($voiceFile['tmp_name'], $uploadPath)) {
 	apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
 	apiEnsureWritableDirectory($voiceMessagesDir, 'voice messages directory');
@@ -62,7 +80,7 @@ if (!move_uploaded_file($voiceFile['tmp_name'], $uploadPath)) {
 	}
 }
 
-$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, voice_file_path, file_size, forwarded_from_message_id, forwarded_by_user_id) VALUES (?, ?, ?, ?, ?, 'voice', ?, ?, ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, voice_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id) VALUES (?, ?, ?, ?, ?, 'voice', ?, ?, ?, ?, ?)");
 if (
 	!$stmt->execute([
 		$userId,
@@ -72,6 +90,7 @@ if (
 		$messageEncryptedForSender,
 		$uniqueFilename,
 		(int) $voiceFile['size'],
+		$replyToMessageId,
 		$forwardedFromMessageId,
 		$forwardedFromMessageId ? $userId : null,
 	])

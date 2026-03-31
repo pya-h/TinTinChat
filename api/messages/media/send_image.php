@@ -22,6 +22,9 @@ $message_for_sender = trim((string) ($_POST['message_for_sender'] ?? ''));
 $forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numeric($_POST['forwarded_from_message_id'])
 	? (int) $_POST['forwarded_from_message_id']
 	: null;
+$replyToMessageId = isset($_POST['reply_to_message_id']) && is_numeric($_POST['reply_to_message_id'])
+	? (int) $_POST['reply_to_message_id']
+	: null;
 $image_file = apiRequireUploadedFile('image_file');
 
 if ($message_for_recipient === '' || $message_for_sender === '') {
@@ -52,6 +55,21 @@ if ((int) $image_file['size'] > TTC_UPLOAD_IMAGE_MAX_BYTES + 64) {
 $unique_filename = uniqid('img_enc_', true) . '.' . ENCRYPTED_IMAGE_EXTENSION;
 $upload_path = $upload_dir . $unique_filename;
 
+if ($replyToMessageId) {
+	if ($groupId > 0) {
+		$replyStmt = $pdo->prepare('SELECT id FROM messages WHERE id = ? AND group_id = ? LIMIT 1');
+		$replyStmt->execute([$replyToMessageId, $groupId]);
+	} else {
+		$replyStmt = $pdo->prepare(
+			'SELECT id FROM messages WHERE id = ? AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) LIMIT 1'
+		);
+		$replyStmt->execute([$replyToMessageId, $sender_id, $receiver_id, $receiver_id, $sender_id]);
+	}
+	if (!$replyStmt->fetch()) {
+		apiError('INVALID_REPLY_TARGET', 'Invalid reply target message', 400);
+	}
+}
+
 if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
 	apiEnsureWritableDirectory($upload_dir, 'images directory');
 	if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
@@ -61,8 +79,8 @@ if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
 
 try {
 	$stmt = $pdo->prepare(
-		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size, forwarded_from_message_id, forwarded_by_user_id)
-		 VALUES (?, ?, ?, ?, ?, 'image', ?, ?, ?, ?)"
+		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id)
+		 VALUES (?, ?, ?, ?, ?, 'image', ?, ?, ?, ?, ?)"
 	);
 	if (
 		!$stmt->execute([
@@ -73,6 +91,7 @@ try {
 			$message_for_sender,
 			'uploads/images/' . $unique_filename,
 			(int) $image_file['size'],
+			$replyToMessageId,
 			$forwardedFromMessageId,
 			$forwardedFromMessageId ? $sender_id : null,
 		])

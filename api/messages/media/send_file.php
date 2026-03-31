@@ -39,6 +39,9 @@ $messageEncryptedForSender = trim((string) ($_POST['message_for_sender'] ?? ''))
 $forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numeric($_POST['forwarded_from_message_id'])
 	? (int) $_POST['forwarded_from_message_id']
 	: null;
+$replyToMessageId = isset($_POST['reply_to_message_id']) && is_numeric($_POST['reply_to_message_id'])
+	? (int) $_POST['reply_to_message_id']
+	: null;
 
 $file = apiRequireUploadedFile('file');
 
@@ -82,6 +85,21 @@ $filesDir = __DIR__ . '/../../../uploads/files';
 $uniqueFilename = uniqid('file_enc_', true) . '.bin';
 $uploadPath = $filesDir . '/' . $uniqueFilename;
 
+if ($replyToMessageId) {
+	if ($groupId > 0) {
+		$replyStmt = $pdo->prepare('SELECT id FROM messages WHERE id = ? AND group_id = ? LIMIT 1');
+		$replyStmt->execute([$replyToMessageId, $groupId]);
+	} else {
+		$replyStmt = $pdo->prepare(
+			'SELECT id FROM messages WHERE id = ? AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) LIMIT 1'
+		);
+		$replyStmt->execute([$replyToMessageId, $userId, $receiverId, $receiverId, $userId]);
+	}
+	if (!$replyStmt->fetch()) {
+		apiError('INVALID_REPLY_TARGET', 'Invalid reply target message', 400);
+	}
+}
+
 if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
 	apiEnsureWritableDirectory($uploadsDir, 'uploads directory');
 	apiEnsureWritableDirectory($filesDir, 'files directory');
@@ -90,7 +108,7 @@ if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
 	}
 }
 
-$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, any_file_path, file_size, forwarded_from_message_id, forwarded_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, any_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 if (
 	!$stmt->execute([
 		$userId,
@@ -101,6 +119,7 @@ if (
 		$messageType,
 		$uniqueFilename,
 		$file['size'],
+		$replyToMessageId,
 		$forwardedFromMessageId,
 		$forwardedFromMessageId ? $userId : null,
 	])

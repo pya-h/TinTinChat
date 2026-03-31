@@ -2904,6 +2904,7 @@ async function sendStickerMessage(stickerId) {
         return;
     }
 
+    const replyToId = currentReplyTarget?.messageId || null;
     try {
         const payload = new URLSearchParams();
         const groupId = parseGroupIdFromToken(currentChatUser);
@@ -2913,6 +2914,7 @@ async function sendStickerMessage(stickerId) {
             payload.set("target", String(currentChatUser));
         }
         payload.set("sticker_id", String(normalizedStickerId));
+        if (replyToId) payload.set("reply_to_message_id", String(replyToId));
 
         await window.ApiService.jsonOk("api/messages/stickers/send.php", {
             method: "POST",
@@ -2924,6 +2926,7 @@ async function sendStickerMessage(stickerId) {
         });
 
         closeStickerPicker();
+        clearReplyState();
         if (!isGroupToken(currentChatUser)) {
             addUserToChatList(currentChatUser);
             updateTypingStatus(false);
@@ -7991,6 +7994,31 @@ async function addMessageToChat(msg, prepend = false) {
 
     const isFilePurged = Boolean(msg.file_purged_at);
 
+    // Pre-compute reply quote HTML for all message types (text branch handles its own)
+    let replyHtml = "";
+    if (msg.reply_message_id && msg.message_type !== "text") {
+        let decryptedReplyText = "";
+        if (msg.reply_message_type === "text") {
+            try {
+                const isGroup = Number(msg.group_id || 0) > 0;
+                const replyPayload = isGroup
+                    ? msg.reply_message || msg.reply_message_for_sender
+                    : msg.reply_sender_id == CURRENT_USER_ID
+                      ? msg.reply_message_for_sender
+                      : msg.reply_message;
+                if (replyPayload) {
+                    if (isGroup) {
+                        const gk = await getGroupCryptoKey(Number(msg.group_id));
+                        decryptedReplyText = await decryptGroupMessage(String(replyPayload), gk);
+                    } else {
+                        decryptedReplyText = await decryptLongMessage(replyPayload);
+                    }
+                }
+            } catch (_) {}
+        }
+        replyHtml = buildReplyPreviewHtml(msg, decryptedReplyText);
+    }
+
     if (msg.message_type === "voice" && msg.voice_file_path) {
 
         div.classList.add("is-voice-message");
@@ -8000,7 +8028,7 @@ async function addMessageToChat(msg, prepend = false) {
 
         if (isFilePurged) {
             div.innerHTML = `
-              ${buildForwardedPreviewHtml(msg)}
+              ${buildForwardedPreviewHtml(msg)}${replyHtml}
               <div class="voice-player-container file-purged-container">
                 <button class="voice-play-btn" disabled style="opacity:0.4">
                   <i class="fas fa-play"></i>
@@ -8021,7 +8049,7 @@ async function addMessageToChat(msg, prepend = false) {
             `;
         } else {
             div.innerHTML = `
-              ${buildForwardedPreviewHtml(msg)}
+              ${buildForwardedPreviewHtml(msg)}${replyHtml}
               <div class="voice-player-container">
                 <button class="voice-play-btn" onclick="playVoiceMessage(${msg.id})">
                   <i class="fas fa-play"></i>
@@ -8050,7 +8078,7 @@ async function addMessageToChat(msg, prepend = false) {
         canCopyImage = !isFilePurged;
 
         if (isFilePurged) {
-            div.innerHTML = `${buildForwardedPreviewHtml(msg)}<div class="file-purged-media-placeholder">
+            div.innerHTML = `${buildForwardedPreviewHtml(msg)}${replyHtml}<div class="file-purged-media-placeholder">
                     <i class="fas fa-image file-purged-media-icon"></i>
                     <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
                 </div>${newDateTag(msg, {
@@ -8060,7 +8088,7 @@ async function addMessageToChat(msg, prepend = false) {
                     extraStyles: "color: var(--text-color); font-weight: 600;",
                 })}`;
         } else {
-            div.innerHTML = `${buildForwardedPreviewHtml(msg)}<a href="#" class="image-message-link" title="View full image">
+            div.innerHTML = `${buildForwardedPreviewHtml(msg)}${replyHtml}<a href="#" class="image-message-link" title="View full image">
                     <img src="" class="message-image" alt="Encrypted image" data-ready="0" style="display:none;">
                     <div class="image-message-loading" style="padding: 20px; text-align: center; color: #6c757d;">Decrypting image...</div>
                     </a>${newDateTag(msg, {
@@ -8080,7 +8108,7 @@ async function addMessageToChat(msg, prepend = false) {
 
         if (isFilePurged) {
             div.innerHTML = `
-                ${buildForwardedPreviewHtml(msg)}
+                ${buildForwardedPreviewHtml(msg)}${replyHtml}
                 <div class="file-purged-media-placeholder">
                     <i class="fas fa-video file-purged-media-icon"></i>
                     <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
@@ -8094,7 +8122,7 @@ async function addMessageToChat(msg, prepend = false) {
             `;
         } else {
             div.innerHTML = `
-                ${buildForwardedPreviewHtml(msg)}
+                ${buildForwardedPreviewHtml(msg)}${replyHtml}
                 <div class="video-message-container">
                     <video class="message-video" controls playsinline preload="metadata" style="display:none;"></video>
                     <div class="video-message-loading">Decrypting video...</div>
@@ -8128,7 +8156,7 @@ async function addMessageToChat(msg, prepend = false) {
                 div.classList.add("is-file-message", "is-music-message");
                 const musicTitle = safeFileName.replace(/\.[^.]+$/, "");
                 div.innerHTML = `
-                  ${buildForwardedPreviewHtml(msg)}
+                  ${buildForwardedPreviewHtml(msg)}${replyHtml}
                   <div class="music-player-container file-purged-container" data-file-msg-id="${msg.id}">
                     <button class="music-play-btn" disabled style="opacity:0.4" type="button">
                       <i class="fas fa-play"></i>
@@ -8148,7 +8176,7 @@ async function addMessageToChat(msg, prepend = false) {
             } else {
                 div.classList.add("is-file-message");
                 div.innerHTML = `
-                  ${buildForwardedPreviewHtml(msg)}
+                  ${buildForwardedPreviewHtml(msg)}${replyHtml}
                   <div class="file-message-container file-purged-container" data-file-msg-id="${msg.id}">
                     <div class="file-icon" style="opacity:0.4">
                       <i class="fas fa-file"></i>
@@ -8186,7 +8214,7 @@ async function addMessageToChat(msg, prepend = false) {
                 const ext = getFileExtension(fileName).toUpperCase();
 
                 div.innerHTML = `
-                  ${buildForwardedPreviewHtml(msg)}
+                  ${buildForwardedPreviewHtml(msg)}${replyHtml}
                   <div class="music-player-container" data-file-msg-id="${msg.id}">
                     <button class="music-play-btn" onclick="playMusicMessage(${msg.id})" type="button">
                       <i class="fas fa-play"></i>
@@ -8222,7 +8250,7 @@ async function addMessageToChat(msg, prepend = false) {
                 const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
 
                 div.innerHTML = `
-                  ${buildForwardedPreviewHtml(msg)}
+                  ${buildForwardedPreviewHtml(msg)}${replyHtml}
                   <div class="file-message-container" data-file-msg-id="${msg.id}" onclick="downloadAndOpenFile(${msg.id})" ${cacheTitle}>
                     <div class="file-icon">
                       <i class="fas fa-file"></i>
@@ -8265,7 +8293,7 @@ async function addMessageToChat(msg, prepend = false) {
             `;
         } else {
             div.innerHTML = `
-                ${buildForwardedPreviewHtml(msg)}
+                ${buildForwardedPreviewHtml(msg)}${replyHtml}
                 <button type="button" class="sticker-message-button" aria-label="Open sticker" title="Open sticker">
                     <img src="api/messages/stickers/get.php?id=${stickerId}" class="sticker-message-image" alt="Sticker" loading="lazy" decoding="async" />
                 </button>
@@ -8396,6 +8424,17 @@ async function addMessageToChat(msg, prepend = false) {
                 </div>
             </div>
         `;
+    }
+
+    // Wire up reply quote click handler for non-text messages
+    if (msg.message_type !== "text" && msg.reply_message_id) {
+        const replyQuote = div.querySelector(".reply-quote");
+        if (replyQuote) {
+            replyQuote.addEventListener("click", () => {
+                const targetId = replyQuote.getAttribute("data-reply-target-id");
+                if (targetId) void scrollToReplyTarget(targetId);
+            });
+        }
     }
 
     if (msg.message_type === "image" && msg.image_file_path && !isFilePurged) {
@@ -11170,6 +11209,7 @@ window.stopRecording = stopRecording;
 window.cancelRecording = cancelRecording;
 
 async function sendVoiceMessage(audioBlob) {
+    const replyToId = currentReplyTarget?.messageId || null;
     try {
         const sendingIndicator = document.createElement("div");
         sendingIndicator.className = "message sent sending-indicator";
@@ -11206,6 +11246,7 @@ async function sendVoiceMessage(audioBlob) {
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
+        if (replyToId) formData.append("reply_to_message_id", String(replyToId));
 
         await window.ApiService.jsonOk("api/messages/media/send_voice.php", {
             method: "POST",
@@ -11214,6 +11255,7 @@ async function sendVoiceMessage(audioBlob) {
         });
 
         sendingIndicator.remove();
+        clearReplyState();
 
         if (!isGroupToken(currentChatUser)) {
             addUserToChatList(currentChatUser);
@@ -11421,6 +11463,7 @@ videoCaptureOverlay?.addEventListener("click", (event) => {
 });
 
 async function sendImageMessage(imageFile) {
+    const replyToId = currentReplyTarget?.messageId || null;
     try {
         const sendingIndicator = document.createElement("div");
         sendingIndicator.className = "message sent sending-indicator";
@@ -11459,6 +11502,7 @@ async function sendImageMessage(imageFile) {
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
+        if (replyToId) formData.append("reply_to_message_id", String(replyToId));
 
         await window.ApiService.jsonOk("api/messages/media/send_image.php", {
             method: "POST",
@@ -11467,6 +11511,7 @@ async function sendImageMessage(imageFile) {
         });
 
         sendingIndicator.remove();
+        clearReplyState();
 
         if (!isGroupToken(currentChatUser)) {
             addUserToChatList(currentChatUser);
@@ -11518,6 +11563,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         return;
     }
 
+    const replyToId = currentReplyTarget?.messageId || null;
     try {
         const sendingIndicator = document.createElement("div");
         sendingIndicator.className = "message sent sending-indicator";
@@ -11555,6 +11601,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("message_type", asVideo ? "video" : "file");
         formData.append("file", mediaPayload.encryptedBlob, asVideo ? "video.enc" : "file.enc");
+        if (replyToId) formData.append("reply_to_message_id", String(replyToId));
 
         await window.ApiService.jsonOk("api/messages/media/send_file.php", {
             method: "POST",
@@ -11563,6 +11610,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         });
 
         sendingIndicator.remove();
+        clearReplyState();
 
         if (!isGroupToken(currentChatUser)) {
             addUserToChatList(currentChatUser);
