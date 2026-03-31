@@ -2294,6 +2294,7 @@ function loadPrivateChatMusicMessages() {
                     if (privateMusicCurrentBtn === playBtn) {
                         playBtn.innerHTML = '<i class="fas fa-play"></i>';
                         privateMusicCurrentBtn = null;
+                        privateMusicAudio = null;
                     }
                 }
             });
@@ -2381,6 +2382,7 @@ function loadGroupMusicMessages() {
                     if (privateMusicCurrentBtn === playBtn) {
                         playBtn.innerHTML = '<i class="fas fa-play"></i>';
                         privateMusicCurrentBtn = null;
+                        privateMusicAudio = null;
                     }
                 }
             });
@@ -2448,6 +2450,7 @@ function renderPrivateOpinions(opinions) {
                     headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
                     body: JSON.stringify({ opinion_id: Number(op.id) }),
                 });
+                opinionsPanelCache = null;
                 loadPrivateChatOpinion();
             } catch { /* ignore */ }
         });
@@ -10829,6 +10832,7 @@ document.getElementById("privateOpinionSaveBtn")?.addEventListener("click", asyn
             headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
             body: JSON.stringify(payload),
         });
+        opinionsPanelCache = null;
         resetPrivateOpinionForm();
         loadPrivateChatOpinion();
     } catch (error) {

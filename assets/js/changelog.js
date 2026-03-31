@@ -17,15 +17,22 @@
 (function initChangelog() {
     "use strict";
 
-    const CHANGELOG_LAST_UPDATED = "2026-03-28T00:00:00.000Z";
+    const CHANGELOG_LAST_UPDATED = "2026-03-31T00:00:00.000Z";
 
     const CHANGELOG_HTML = `
 <ul class="changelog-list">
     <li class="changelog-item changelog-highlight">
+        <span class="changelog-icon"><i class="fas fa-sticky-note"></i></span>
+        <div>
+            <strong>User Notes &amp; Profile Details</strong>
+            <p>Write multiple notes about any user from their profile details panel. View and manage all notes in the <em>Opinions</em> section. Block or delete a chat directly from the profile panel.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
         <span class="changelog-icon"><i class="fas fa-music"></i></span>
         <div>
             <strong>Music Messages &amp; Playlists</strong>
-            <p>Send and receive music files with a dedicated player. Your music messages are collected in a <em>Playlist</em> section for easy access.</p>
+            <p>Send and receive music files with a dedicated player. Your music messages are collected in a <em>Playlist</em> section for easy access &mdash; now in group chats too.</p>
         </div>
     </li>
     <li class="changelog-item">
