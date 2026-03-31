@@ -215,6 +215,15 @@ $csrfToken = generateCsrfToken();
                         <ul id="groupInfoMembers" class="mb-2" role="list" aria-label="Group members"></ul>
                     </div>
 
+                    <div class="group-info-music">
+                        <div class="group-music-header">
+                            <h6 class="mb-0"><i class="fas fa-music me-1"></i>Shared Music <span id="groupMusicCount" class="text-muted">(0)</span></h6>
+                        </div>
+                        <div class="group-music-body" id="groupMusicBody">
+                            <div class="playlist-empty"><i class="fas fa-music me-2"></i>No music shared yet.</div>
+                        </div>
+                    </div>
+
                     <div class="group-info-actions">
                         <div class="input-group input-group-sm">
                             <input type="text" id="groupJoinLinkInput" class="form-control" readonly aria-label="Group join link">

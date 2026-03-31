@@ -1048,7 +1048,8 @@ nav.navbar::after {
 
 /* ── Private Chat Section Cards ── */
 .private-info-music,
-.private-info-opinion {
+.private-info-opinion,
+.group-info-music {
     margin-bottom: 0.75rem;
     padding: 0.7rem 0.8rem;
     border-radius: 14px;
@@ -1056,18 +1057,21 @@ nav.navbar::after {
     border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
 }
 
-.private-music-header {
+.private-music-header,
+.group-music-header {
     margin-bottom: 0.5rem;
 }
 
 .private-music-header h6,
-.private-opinion-header h6 {
+.private-opinion-header h6,
+.group-music-header h6 {
     font-weight: 700;
     font-size: 0.82rem;
     color: var(--text-color);
 }
 
-.private-music-body {
+.private-music-body,
+.group-music-body {
     max-height: 200px;
     overflow-y: auto;
     display: flex;

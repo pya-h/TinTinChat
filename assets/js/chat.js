@@ -2302,6 +2302,93 @@ function loadPrivateChatMusicMessages() {
     });
 }
 
+function loadGroupMusicMessages() {
+    const body = document.getElementById("groupMusicBody");
+    const countEl = document.getElementById("groupMusicCount");
+    if (!body) return;
+    const musicEls = chatMessagesElem?.querySelectorAll(".message.is-music-message") || [];
+    if (countEl) countEl.textContent = `(${musicEls.length})`;
+    body.innerHTML = "";
+    if (!musicEls.length) {
+        body.innerHTML = '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No music shared yet.</div>';
+        return;
+    }
+    musicEls.forEach((msgEl) => {
+        const msgId = Number(msgEl.getAttribute("data-message-id") || 0);
+        const titleEl = msgEl.querySelector(".music-title");
+        const formatEl = msgEl.querySelector(".music-format");
+        const title = titleEl?.textContent || "Unknown";
+        const ext = formatEl?.textContent || "";
+        const isPurged = Boolean(msgEl.querySelector(".file-purged-badge"));
+        const isSent = msgEl.classList.contains("sent");
+
+        const item = document.createElement("div");
+        item.className = "saved-playlist-item" + (isPurged ? " playlist-item-purged" : "");
+        item.innerHTML = `
+            <button type="button" class="saved-pl-play" title="${isPurged ? "File expired" : "Play"}" ${isPurged ? "disabled" : ""}>
+                <i class="fas ${isPurged ? "fa-clock" : "fa-play"}"></i>
+            </button>
+            <div class="saved-pl-info">
+                <div class="saved-pl-title${isPurged ? " file-purged-title" : ""}">${escapeHtml(title)}</div>
+                <div class="saved-pl-meta">${isPurged ? '<span class="file-purged-badge" style="font-size:0.6rem;padding:1px 6px;"><i class="fas fa-clock"></i> Expired</span>' : `${escapeHtml(ext.toUpperCase())} · ${isSent ? "Sent" : "Received"}`}</div>
+            </div>
+        `;
+        if (!isPurged) {
+            const playBtn = item.querySelector(".saved-pl-play");
+            playBtn?.addEventListener("click", async () => {
+                if (privateMusicAudio && privateMusicCurrentBtn === playBtn) {
+                    if (privateMusicAudio.paused) {
+                        privateMusicAudio.play();
+                        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    } else {
+                        privateMusicAudio.pause();
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                    return;
+                }
+                stopAllAudio();
+                const freshMeta = messageMetaById.get(msgId);
+                if (!freshMeta) return;
+                playBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                privateMusicCurrentBtn = playBtn;
+                try {
+                    const mediaResource = await getDecryptedMediaResource(freshMeta);
+                    if (privateMusicCurrentBtn !== playBtn) return;
+                    if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioContext.state === "suspended") audioContext.resume();
+                    const audio = new Audio(mediaResource.objectUrl);
+                    privateMusicAudio = audio;
+                    audio.addEventListener("ended", () => {
+                        if (privateMusicAudio === audio) {
+                            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                            privateMusicAudio = null;
+                            privateMusicCurrentBtn = null;
+                            hideGlobalNowPlaying();
+                        }
+                    });
+                    audio.addEventListener("error", () => {
+                        if (privateMusicAudio === audio) {
+                            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                            privateMusicAudio = null;
+                            privateMusicCurrentBtn = null;
+                            hideGlobalNowPlaying();
+                        }
+                    });
+                    await audio.play();
+                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    showGlobalNowPlaying(audio, title, "music");
+                } catch {
+                    if (privateMusicCurrentBtn === playBtn) {
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        privateMusicCurrentBtn = null;
+                    }
+                }
+            });
+        }
+        body.appendChild(item);
+    });
+}
+
 let privateChatOpinionTargetUserId = 0;
 let privateOpinionEditingId = 0;
 
@@ -10202,6 +10289,8 @@ async function renderGroupInfoPanel(groupId) {
             "aria-label",
             `Group details for ${group.title || `Group ${groupId}`}`
         );
+
+        loadGroupMusicMessages();
     } catch (error) {
         showModal("Group Details", error.message || "Failed to load group details", "warning");
     }
