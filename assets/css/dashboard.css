@@ -5124,6 +5124,7 @@ textarea,
     margin-bottom: 0.55rem;
     padding: 0.4rem 0.6rem;
     width: fit-content;
+    min-width: min(14rem, 80%);
     max-width: 100%;
     animation: mediaReplyQuoteIn 0.3s var(--ease-spring);
     transition: var(--transition-fast);
@@ -6846,6 +6847,7 @@ textarea,
     box-shadow: none;
     border: none;
     white-space: normal;
+    width: fit-content;
 }
 
 .message.is-image-message:hover {
@@ -6879,6 +6881,7 @@ textarea,
 
 @media (max-width: 767.98px) {
     .message.is-image-message {
+        width: fit-content;
         max-width: 75%;
     }
 
@@ -7248,7 +7251,11 @@ textarea,
         padding: 0.1rem;
     }
 
-    .message.is-image-message,
+    .message.is-image-message {
+        width: fit-content;
+        max-width: 75%;
+    }
+
     .message.is-video-message {
         width: auto;
         max-width: 75%;
@@ -7326,7 +7333,11 @@ textarea,
         min-width: 1.92rem;
     }
 
-    .message.is-image-message,
+    .message.is-image-message {
+        width: fit-content;
+        max-width: 72%;
+    }
+
     .message.is-video-message {
         width: auto;
         max-width: 72%;
