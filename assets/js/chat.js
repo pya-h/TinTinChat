@@ -1437,6 +1437,11 @@ function isAnnouncementNew(announcementId) {
     return Number(announcementId) > lastReadAnnouncementId;
 }
 
+function hasPersianChar(str) {
+    const s = String(str || "").slice(0, 2);
+    return /[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(s);
+}
+
 function renderAnnouncementsPanel(list) {
     if (!announcementsBody) return;
     announcementsBody.innerHTML = "";
@@ -1457,10 +1462,12 @@ function renderAnnouncementsPanel(list) {
         item.style.animationDelay = `${i * 0.06}s`;
         const isNew = isAnnouncementNew(a.id);
         const authorInitial = (a.author || "?")[0].toUpperCase();
+        const titleDir = hasPersianChar(a.title) ? "rtl" : "ltr";
+        const bodyDir = hasPersianChar(a.body) ? "rtl" : "ltr";
         item.innerHTML = `
             ${isNew ? '<span class="announcements-new-badge">NEW</span>' : ''}
-            <div class="announcements-item-title">${ChatUtils.escapeHtml(String(a.title || ""))}</div>
-            <div class="announcements-item-body">${ChatUtils.escapeHtml(String(a.body || "")).replace(/\n/g, "<br>")}</div>
+            <div class="announcements-item-title" dir="${titleDir}">${ChatUtils.escapeHtml(String(a.title || ""))}</div>
+            <div class="announcements-item-body" dir="${bodyDir}">${ChatUtils.escapeHtml(String(a.body || "")).replace(/\n/g, "<br>")}</div>
             <div class="announcements-item-meta">
                 <span class="announcements-item-author"><span class="announcements-author-avatar">${ChatUtils.escapeHtml(authorInitial)}</span>${ChatUtils.escapeHtml(String(a.author || ""))}</span>
                 <span class="announcements-item-date"><i class="far fa-clock me-1"></i>${formatAnnouncementTime(a.created_at)}</span>
