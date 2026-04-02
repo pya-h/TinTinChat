@@ -530,6 +530,13 @@ $csrfToken = generateCsrfToken();
                             </label>
 
                             <label class="chat-ui-settings-item chat-ui-settings-item-check">
+                                <span>iOS performance mode</span>
+                                <span class="chat-ui-settings-control">
+                                    <input type="checkbox" id="settingIosLagFix">
+                                </span>
+                            </label>
+
+                            <label class="chat-ui-settings-item chat-ui-settings-item-check">
                                 <span>Notification sound</span>
                                 <span class="chat-ui-settings-control">
                                     <input type="checkbox" id="settingNotificationSound" checked>

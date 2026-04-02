@@ -7391,6 +7391,35 @@ textarea,
     }
 }
 
+:root.ios-lag-fix-enabled .chat-header,
+:root.ios-lag-fix-enabled .search-suggestions {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+:root.ios-lag-fix-enabled .chat-input,
+:root.ios-lag-fix-enabled .chat-input textarea,
+:root.ios-lag-fix-enabled .chat-input button,
+:root.ios-lag-fix-enabled #sendBtn i {
+    transition-duration: 0.01ms !important;
+}
+
+:root.ios-lag-fix-enabled .chat-input:focus-within button[type="submit"] {
+    animation: none !important;
+}
+
+:root.ios-lag-fix-enabled .chat-input button:hover,
+:root.ios-lag-fix-enabled .chat-input button[type="submit"]:hover,
+:root.ios-lag-fix-enabled .chat-input textarea:hover:not(:focus) {
+    transform: none !important;
+    box-shadow: inherit;
+}
+
+:root.ios-lag-fix-enabled #sendBtn i.icon-exit,
+:root.ios-lag-fix-enabled #sendBtn i.icon-enter {
+    animation: none !important;
+}
+
 .chat-list li:focus-visible,
 .chat-input button:focus-visible {
     outline: 3px solid var(--secondary-color);

@@ -58,6 +58,7 @@ const settingDensityMode = document.getElementById("settingDensityMode");
 const settingFontScale = document.getElementById("settingFontScale");
 const settingShowTimestamps = document.getElementById("settingShowTimestamps");
 const settingReduceMotion = document.getElementById("settingReduceMotion");
+const settingIosLagFix = document.getElementById("settingIosLagFix");
 const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
 const chatUiSettingsTabGeneral = document.getElementById("chatUiSettingsTabGeneral");
@@ -324,10 +325,24 @@ const appSettings = {
     fontScale: "md",
     showTimestamps: true,
     reduceMotion: false,
+    iosLagFix: false,
     browserNotificationsEnabled: false,
     sendByEnter: true,
     showSavedMessages: true,
 };
+
+function isLikelyIOSDevice() {
+    const ua = String(navigator.userAgent || "");
+    const platform = String(navigator.platform || "");
+    const maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+    const iOSLikeUa = /iPad|iPhone|iPod/i.test(ua);
+    const iPadOSDesktopUa = platform === "MacIntel" && maxTouchPoints > 1;
+    return iOSLikeUa || iPadOSDesktopUa;
+}
+
+function isIosLagFixEnabled() {
+    return Boolean(appSettings.iosLagFix) && isLikelyIOSDevice();
+}
 
 const selectedMessageIds = new Set();
 let isSelectModeActive = false;
@@ -1261,6 +1276,7 @@ function loadAppSettings() {
             : "md";
         appSettings.showTimestamps = parseStoredBoolean(parsed.showTimestamps, true);
         appSettings.reduceMotion = parseStoredBoolean(parsed.reduceMotion, false);
+        appSettings.iosLagFix = parseStoredBoolean(parsed.iosLagFix, false);
         appSettings.browserNotificationsEnabled = parseStoredBoolean(parsed.browserNotificationsEnabled, false);
         appSettings.sendByEnter = parseStoredBoolean(parsed.sendByEnter, true);
         appSettings.showSavedMessages = parseStoredBoolean(parsed.showSavedMessages, true);
@@ -1282,6 +1298,8 @@ function applyUiPreferenceClasses() {
     root.setAttribute("data-density", appSettings.densityMode);
     root.setAttribute("data-font-scale", appSettings.fontScale);
     root.classList.toggle("reduced-motion-enabled", Boolean(appSettings.reduceMotion));
+    root.classList.toggle("ios-lag-fix-enabled", isIosLagFixEnabled());
+    window.__TTC_IOS_LAG_FIX_ENABLED__ = isIosLagFixEnabled();
     chatMessagesElem?.classList.toggle(
         "hide-message-timestamps",
         !Boolean(appSettings.showTimestamps)
@@ -3529,6 +3547,9 @@ function applySettingsUi() {
     if (settingReduceMotion) {
         settingReduceMotion.checked = appSettings.reduceMotion;
     }
+    if (settingIosLagFix) {
+        settingIosLagFix.checked = appSettings.iosLagFix;
+    }
     if (settingNotificationSound) {
         settingNotificationSound.checked = appSettings.notificationSoundEnabled;
     }
@@ -3638,6 +3659,18 @@ function bindSettingsUiEvents() {
         appSettings.reduceMotion = Boolean(event.target.checked);
         persistAppSettings();
         applyUiPreferenceClasses();
+    });
+
+    settingIosLagFix?.addEventListener("change", (event) => {
+        appSettings.iosLagFix = Boolean(event.target.checked);
+        persistAppSettings();
+        applyUiPreferenceClasses();
+        setComposerStatus(
+            appSettings.iosLagFix
+                ? "iOS performance mode enabled"
+                : "iOS performance mode disabled",
+            "success"
+        );
     });
 
     if (settingNotificationSound) {
@@ -9808,6 +9841,7 @@ function renderSessionsList(sessions, container) {
 // Send button icon: file when empty, paper-plane when typing
 // Send button tap animation — uses Web Animations API to bypass CSS conflicts
 function playSendBtnTap(btn) {
+    if (isIosLagFixEnabled()) return;
     if (!btn || typeof btn.animate !== "function") return;
     btn.animate([
         { transform: "rotate(0deg) scale(1)",   offset: 0 },
@@ -9846,6 +9880,12 @@ function updateSendButtonIcon() {
         icon.classList.add(wantPlane ? "fa-paper-plane" : "fa-file");
         sendBtn.title = wantPlane ? "Send message" : "Send file";
     };
+
+    if (isIosLagFixEnabled()) {
+        icon.classList.remove("icon-exit", "icon-enter");
+        applyIcon();
+        return;
+    }
 
     if (isFirstCall) {
         icon.classList.remove("icon-exit", "icon-enter");

@@ -3,6 +3,36 @@
  * Adds smooth animations, interactions, and responsive behaviors
  */
 
+const UI_SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
+
+function isLikelyIOSDevice() {
+    const ua = String(navigator.userAgent || "");
+    const platform = String(navigator.platform || "");
+    const maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+    const iOSLikeUa = /iPad|iPhone|iPod/i.test(ua);
+    const iPadOSDesktopUa = platform === "MacIntel" && maxTouchPoints > 1;
+    return iOSLikeUa || iPadOSDesktopUa;
+}
+
+function isIosLagFixEnabled() {
+    if (!isLikelyIOSDevice()) {
+        return false;
+    }
+    if (typeof window.__TTC_IOS_LAG_FIX_ENABLED__ === "boolean") {
+        return window.__TTC_IOS_LAG_FIX_ENABLED__;
+    }
+    try {
+        const raw = localStorage.getItem(UI_SETTINGS_STORAGE_KEY);
+        if (!raw) {
+            return false;
+        }
+        const parsed = JSON.parse(raw);
+        return Boolean(parsed?.iosLagFix);
+    } catch (_) {
+        return false;
+    }
+}
+
 // Enhanced scroll behavior and animations
 class UIEnhancements {
     constructor() {
@@ -46,6 +76,9 @@ class UIEnhancements {
 
         buttons.forEach((button) => {
             button.addEventListener("click", (e) => {
+                if (isIosLagFixEnabled()) {
+                    return;
+                }
                 if (button.hasAttribute("disabled")) {
                     return;
                 }
@@ -159,6 +192,7 @@ class UIEnhancements {
             // and causes a visible "stuck" moment.
             if (button.closest(".chat-input")) {
                 button.addEventListener("click", () => {
+                    if (isIosLagFixEnabled()) return;
                     if (typeof button.animate !== "function") return;
                     button.animate([
                         { transform: "scale(1)",    offset: 0 },
@@ -186,6 +220,7 @@ class UIEnhancements {
         // Glow animation on header action buttons click — uses Web Animations API
         document.querySelectorAll(".chat-header-actions .btn").forEach((btn) => {
             btn.addEventListener("click", () => {
+                if (isIosLagFixEnabled()) return;
                 if (typeof btn.animate !== "function") return;
                 btn.animate([
                     { boxShadow: "0 0 0 0 rgba(37, 117, 252, 0.6)", offset: 0 },
@@ -250,6 +285,9 @@ class UIEnhancements {
                 const inputs = document.querySelectorAll("input, textarea");
                 inputs.forEach((input) => {
                     input.addEventListener("focus", () => {
+                        if (isIosLagFixEnabled()) {
+                            return;
+                        }
                         viewport.setAttribute(
                             "content",
                             "width=device-width, initial-scale=1, maximum-scale=1"
@@ -257,6 +295,9 @@ class UIEnhancements {
                     });
 
                     input.addEventListener("blur", () => {
+                        if (isIosLagFixEnabled()) {
+                            return;
+                        }
                         viewport.setAttribute(
                             "content",
                             "width=device-width, initial-scale=1"
