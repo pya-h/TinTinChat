@@ -301,6 +301,7 @@ let hasLoadedStickers = false;
 let snapToBottomRafId = 0;
 let snapToBottomTimerIds = [];
 let goToLatestRafId = 0;
+let viewportAnchorStabilizeRafId = 0;
 let retryLastSendAction = null;
 let activeSettingsTab = "general";
 let currentSelfUsername = String(CURRENT_USER || "");
@@ -7256,18 +7257,9 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             chatMessagesElem.innerHTML = "";
             messageOffset = 0;
             currentChatRecentMessages = data?.messages ?? [];
-        } else {
-            const existingLoadMore = document.getElementById("loadMoreBtn");
-            if (existingLoadMore) {
-                existingLoadMore.remove();
-            }
         }
         messageOffset += data.messages?.length ?? 0;
         hasMoreMessages = data.hasMore;
-
-        if (hasMoreMessages && !isInitialLoad) {
-            addLoadMoreButton();
-        }
 
         if (isInitialLoad) {
             isBatchRendering = true;
@@ -7288,25 +7280,41 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                 addGoToLatestButton();
             }
         } else {
-            // Preserve the user's viewport position while prepending older
-            // messages. We correct scrollTop after EACH message insertion so
-            // the browser never shows an intermediate wrong scroll position —
-            // even between async yields (decryption, etc.).
-            const savedScrollTop = chatMessagesElem.scrollTop;
-            let runningHeightDelta = 0;
+            const topVisibleAnchorBeforePrepend = captureViewportAnchor();
+            const scrollTopBeforePrepend = chatMessagesElem.scrollTop;
+            const scrollHeightBeforePrepend = chatMessagesElem.scrollHeight;
+            const previousInlineScrollBehavior = chatMessagesElem.style.scrollBehavior;
+            chatMessagesElem.style.scrollBehavior = "auto";
+            const loadMoreBtn = document.getElementById("loadMoreBtn");
+            const insertBeforeNode = loadMoreBtn ? loadMoreBtn.nextSibling : chatMessagesElem.firstChild;
+            const prependFragment = document.createDocumentFragment();
+            try {
+                isBatchRendering = true;
+                for (let i = data.messages.length - 1; i >= 0; i--) {
+                    const messageNode = await addMessageToChat(data.messages[i], true, { deferInsert: true });
+                    if (messageNode instanceof HTMLElement) {
+                        messageNode.style.animation = 'none';
+                        prependFragment.appendChild(messageNode);
+                    }
+                }
+                chatMessagesElem.insertBefore(prependFragment, insertBeforeNode || null);
+                isBatchRendering = false;
+                rebuildMessageDaySeparators();
+                if (hasMoreMessages) {
+                    addLoadMoreButton();
+                }
 
-            isBatchRendering = true;
-            for (let i = data.messages.length - 1; i >= 0; i--) {
-                const prevH = chatMessagesElem.scrollHeight;
-                await addMessageToChat(data.messages[i], true);
-                const addedH = chatMessagesElem.scrollHeight - prevH;
-                runningHeightDelta += addedH;
-                chatMessagesElem.scrollTop = savedScrollTop + runningHeightDelta;
+                if (topVisibleAnchorBeforePrepend?.id) {
+                    restoreViewportAnchor(topVisibleAnchorBeforePrepend);
+                    stabilizeViewportAnchor(topVisibleAnchorBeforePrepend, 28);
+                } else {
+                    const finalHeightDelta = chatMessagesElem.scrollHeight - scrollHeightBeforePrepend;
+                    chatMessagesElem.scrollTop = scrollTopBeforePrepend + finalHeightDelta;
+                }
+            } finally {
+                isBatchRendering = false;
+                chatMessagesElem.style.scrollBehavior = previousInlineScrollBehavior;
             }
-            isBatchRendering = false;
-            const viewportAnchor = captureViewportAnchor();
-            rebuildMessageDaySeparators();
-            restoreViewportAnchor(viewportAnchor);
 
             hasLoadedMoreMessages = true;
             updateGoToLatestButton();
@@ -7962,7 +7970,8 @@ function renderMessageReactions(messageElement, messageData, { flashEmoji = "" }
     messageElement.classList.add("message-has-reactions");
 }
 
-async function addMessageToChat(msg, prepend = false) {
+async function addMessageToChat(msg, prepend = false, options = {}) {
+    const deferInsert = Boolean(options?.deferInsert);
     const normalizedMessageId = Number(msg?.id || 0);
     if (normalizedMessageId > 0) {
         const existingMessageElement = chatMessagesElem.querySelector(
@@ -8005,7 +8014,7 @@ async function addMessageToChat(msg, prepend = false) {
                     }
                 } catch (_) { /* decryption failure — leave existing text */ }
             }
-            return;
+            return existingMessageElement;
         }
     }
 
@@ -8537,18 +8546,20 @@ async function addMessageToChat(msg, prepend = false) {
 
     renderMessageReactions(div, msg);
 
-    if (prepend) {
-        // Disable entrance animation for older (prepended) messages —
-        // they are historical content, not new arrivals.
-        div.style.animation = 'none';
-        const loadMoreBtn = document.getElementById("loadMoreBtn");
-        if (loadMoreBtn) {
-            chatMessagesElem.insertBefore(div, loadMoreBtn.nextSibling);
+    if (!deferInsert) {
+        if (prepend) {
+            // Disable entrance animation for older (prepended) messages —
+            // they are historical content, not new arrivals.
+            div.style.animation = 'none';
+            const loadMoreBtn = document.getElementById("loadMoreBtn");
+            if (loadMoreBtn) {
+                chatMessagesElem.insertBefore(div, loadMoreBtn.nextSibling);
+            } else {
+                chatMessagesElem.insertBefore(div, chatMessagesElem.firstChild);
+            }
         } else {
-            chatMessagesElem.insertBefore(div, chatMessagesElem.firstChild);
+            chatMessagesElem.appendChild(div);
         }
-    } else {
-        chatMessagesElem.appendChild(div);
     }
 
     if (!isBatchRendering) {
@@ -8562,6 +8573,8 @@ async function addMessageToChat(msg, prepend = false) {
             runConversationSearch();
         }
     }
+
+    return div;
 }
 
 window.loadMoreMessages = loadMoreMessages;
@@ -8623,6 +8636,54 @@ function restoreViewportAnchor(anchor) {
     const containerRect = chatMessagesElem.getBoundingClientRect();
     const currentOffsetTop = target.getBoundingClientRect().top - containerRect.top;
     chatMessagesElem.scrollTop += currentOffsetTop - Number(anchor.offsetTop || 0);
+}
+
+function stabilizeViewportAnchor(anchor, frameBudget = 24) {
+    if (!anchor || !chatMessagesElem || frameBudget <= 0) {
+        return;
+    }
+
+    if (viewportAnchorStabilizeRafId) {
+        cancelAnimationFrame(viewportAnchorStabilizeRafId);
+        viewportAnchorStabilizeRafId = 0;
+    }
+
+    let remainingFrames = Math.max(1, Number(frameBudget) || 1);
+    let stableFrames = 0;
+
+    const tick = () => {
+        if (!chatMessagesElem) {
+            viewportAnchorStabilizeRafId = 0;
+            return;
+        }
+
+        const target = chatMessagesElem.querySelector(`[data-message-id="${anchor.id}"]`);
+        if (!(target instanceof HTMLElement)) {
+            viewportAnchorStabilizeRafId = 0;
+            return;
+        }
+
+        const containerRect = chatMessagesElem.getBoundingClientRect();
+        const currentOffsetTop = target.getBoundingClientRect().top - containerRect.top;
+        const delta = currentOffsetTop - Number(anchor.offsetTop || 0);
+
+        if (Math.abs(delta) > 0.5) {
+            chatMessagesElem.scrollTop += delta;
+            stableFrames = 0;
+        } else {
+            stableFrames++;
+        }
+
+        remainingFrames--;
+        if (remainingFrames <= 0 || stableFrames >= 2) {
+            viewportAnchorStabilizeRafId = 0;
+            return;
+        }
+
+        viewportAnchorStabilizeRafId = requestAnimationFrame(tick);
+    };
+
+    viewportAnchorStabilizeRafId = requestAnimationFrame(tick);
 }
 
 function snapChatToBottom() {
