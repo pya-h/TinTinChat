@@ -167,8 +167,11 @@ try {
 	// Typing status is non-critical; silently ignore errors
 }
 
+// Keep the polling watermark on the same time source as message timestamps (DB)
+$serverTime = (string) ($pdo->query('SELECT NOW()')->fetchColumn() ?: date('Y-m-d H:i:s'));
+
 apiSuccess([
 	'messages' => $messages,
 	'typing' => $typingData,
-	'server_time' => date('Y-m-d H:i:s'),
+	'server_time' => $serverTime,
 ]);

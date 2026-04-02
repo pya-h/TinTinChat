@@ -26,7 +26,7 @@ const TTC_GROUP_JOIN_TOKEN_BYTES = 24;
 
 const TTC_CHAT_REFRESH_POLL_MS = 1000;
 const TTC_SEEN_STATUS_POLL_MS = 3000;
-const TTC_MESSAGE_EDIT_WINDOW_SECONDS = 120 * 60 * 60; //2h
+const TTC_MESSAGE_EDIT_WINDOW_SECONDS = 12 * 60 * 60; //12h
 
 // Reserved usernames (case-insensitive). Includes system names and the superuser alias.
 const TTC_USERNAME_BLACKLIST = [

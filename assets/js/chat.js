@@ -180,7 +180,7 @@ const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
 const TYPING_IDLE_TIMEOUT_MS = 3200;
 const TYPING_UPDATE_THROTTLE_MS = 3500;
-const MESSAGE_EDIT_WINDOW_MS = Number(appConstants.messageEditWindowMs) || 15 * 60 * 1000;
+const MESSAGE_EDIT_WINDOW_MS = Number(appConstants.messageEditWindowMs) || 12 * 60 * 60 * 1000;
 const REACTION_EMOJI_SET = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F525}", "\u{1F420}"];
 const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
     "php", "phtml", "php3", "php4", "php5", "phar",
@@ -7469,7 +7469,21 @@ async function loadCurrentChatsRecentMessages() {
             currentChatRecentMessages = newMessages;
             messageOffset += newMessages.length;
         }
-        for (const msg of data.messages) {
+
+        const editedMessages = data.messages.filter((msg) => Number(msg.id) <= offsetMsgId);
+
+        for (const msg of newMessages) {
+            await addMessageToChat(msg, false, true);
+        }
+
+        for (const msg of editedMessages) {
+            const editedMessageId = Number(msg?.id || 0);
+            if (editedMessageId <= 0) {
+                continue;
+            }
+            if (!getMessageElementById(editedMessageId)) {
+                continue;
+            }
             await addMessageToChat(msg, false, true);
         }
 
