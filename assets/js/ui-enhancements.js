@@ -33,25 +33,6 @@ class UIEnhancements {
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
             };
-
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (
-                        mutation.type === "childList" &&
-                        mutation.addedNodes.length > 0
-                    ) {
-                        const isNearBottom =
-                            chatMessages.scrollTop +
-                                chatMessages.clientHeight >=
-                            chatMessages.scrollHeight - 100;
-                        if (isNearBottom) {
-                            setTimeout(() => scrollToBottom(false), 100);
-                        }
-                    }
-                });
-            });
-
-            observer.observe(chatMessages, { childList: true });
         }
     }
 

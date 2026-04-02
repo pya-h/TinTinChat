@@ -308,6 +308,8 @@ let isRefreshLoopBusy = false;
 let isSeenLoopBusy = false;
 let pendingClipboardImageFile = null;
 let isChatInputFocused = false;
+let lastViewportHeight = window.innerHeight;
+let mobileResizeSnapTimerId = 0;
 /* Admin state moved to chat-admin.js */
 
 const chatUserIdsByUsername = new Map();
@@ -6904,24 +6906,37 @@ document.addEventListener("scroll", () => closeReactionPicker({ restoreFocus: fa
 window.addEventListener("resize", () => {
     closeReactionPicker({ restoreFocus: false });
     if (window.innerWidth <= 767.98) {
-        const heightDifference = initialViewportHeight - window.innerHeight;
+        const heightDifference = lastViewportHeight - window.innerHeight;
+        const shouldStickToBottomOnResize =
+            appSettings.autoScrollEnabled &&
+            !hasLoadedMoreMessages &&
+            (isChatInputFocused || isChatNearBottom(140));
         if (Math.abs(heightDifference) > 150) {
             const chatContainer = document.querySelector(".chat-container");
             if (chatContainer) {
                 chatContainer.style.height = `calc(100vh - 60px)`;
             }
 
-            setTimeout(() => {
-                if (chatMessagesElem) {
-                    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+            if (shouldStickToBottomOnResize) {
+                if (mobileResizeSnapTimerId) {
+                    clearTimeout(mobileResizeSnapTimerId);
+                    mobileResizeSnapTimerId = 0;
                 }
-            }, 300);
+                mobileResizeSnapTimerId = setTimeout(() => {
+                    if (chatMessagesElem) {
+                        chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+                    }
+                    mobileResizeSnapTimerId = 0;
+                }, 300);
+            }
         }
     }
+    lastViewportHeight = window.innerHeight;
 });
 
 window.addEventListener("load", () => {
     initialViewportHeight = window.innerHeight;
+    lastViewportHeight = window.innerHeight;
 });
 
 function addUserToChatList(username, options = {}) {
@@ -7289,7 +7304,9 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                 chatMessagesElem.scrollTop = savedScrollTop + runningHeightDelta;
             }
             isBatchRendering = false;
+            const viewportAnchor = captureViewportAnchor();
             rebuildMessageDaySeparators();
+            restoreViewportAnchor(viewportAnchor);
 
             hasLoadedMoreMessages = true;
             updateGoToLatestButton();
@@ -7598,7 +7615,9 @@ async function scrollToReplyTarget(targetId) {
             chatMessagesElem.scrollTop = savedScrollTop + runningHeightDelta;
         }
         isBatchRendering = false;
+        const viewportAnchor = captureViewportAnchor();
         rebuildMessageDaySeparators();
+        restoreViewportAnchor(viewportAnchor);
 
         messageOffset += data.messages.length;
         hasMoreMessages = data.hasMore;
@@ -8564,6 +8583,48 @@ function addGoToLatestButton() {
     chatMessagesElem.appendChild(goToLatestBtn);
 }
 
+function captureViewportAnchor() {
+    if (!chatMessagesElem) {
+        return null;
+    }
+
+    const containerRect = chatMessagesElem.getBoundingClientRect();
+    const messageElements = Array.from(chatMessagesElem.querySelectorAll(".message"));
+    const anchorElement = messageElements.find((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.bottom >= containerRect.top;
+    });
+
+    if (!anchorElement) {
+        return null;
+    }
+
+    const anchorId = Number(anchorElement.getAttribute("data-message-id") || 0);
+    if (!anchorId) {
+        return null;
+    }
+
+    return {
+        id: anchorId,
+        offsetTop: anchorElement.getBoundingClientRect().top - containerRect.top,
+    };
+}
+
+function restoreViewportAnchor(anchor) {
+    if (!anchor || !chatMessagesElem) {
+        return;
+    }
+
+    const target = chatMessagesElem.querySelector(`[data-message-id="${anchor.id}"]`);
+    if (!target) {
+        return;
+    }
+
+    const containerRect = chatMessagesElem.getBoundingClientRect();
+    const currentOffsetTop = target.getBoundingClientRect().top - containerRect.top;
+    chatMessagesElem.scrollTop += currentOffsetTop - Number(anchor.offsetTop || 0);
+}
+
 function snapChatToBottom() {
     chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
 }
@@ -8592,11 +8653,7 @@ function scheduleSnapToBottom() {
         snapChatToBottom();
     });
 
-    snapToBottomTimerIds = [
-        setTimeout(snapChatToBottom, 80),
-        setTimeout(snapChatToBottom, 220),
-        setTimeout(snapChatToBottom, 420),
-    ];
+    snapToBottomTimerIds = [setTimeout(snapChatToBottom, 120)];
 }
 
 function removeGoToLatestButton() {

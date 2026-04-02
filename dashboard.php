@@ -1579,23 +1579,73 @@ $csrfToken = generateCsrfToken();
             if (!navbarEl || !chatMessagesEl) return;
 
             let lastScrollTop = 0;
-            const SCROLL_THRESHOLD = 8; // minimum px delta to trigger hide/show
+            const SCROLL_THRESHOLD = 12; // minimum px delta to trigger hide/show
+            const TOGGLE_COOLDOWN_MS = 180;
+            const TOUCH_GRACE_MS = 140;
+            let navbarIsHidden = false;
+            let lastToggleAt = 0;
+            let isTouchScrollActive = false;
+            let touchGraceTimer = 0;
+
+            function setNavbarHidden(hidden) {
+                const shouldHide = Boolean(hidden);
+                if (navbarIsHidden === shouldHide) {
+                    return;
+                }
+                navbarIsHidden = shouldHide;
+                navbarEl.classList.toggle('navbar-hidden', shouldHide);
+            }
+
+            function keepTouchScrollActive() {
+                isTouchScrollActive = true;
+                if (touchGraceTimer) {
+                    clearTimeout(touchGraceTimer);
+                }
+                touchGraceTimer = setTimeout(function () {
+                    isTouchScrollActive = false;
+                    touchGraceTimer = 0;
+                }, TOUCH_GRACE_MS);
+            }
+
+            chatMessagesEl.addEventListener('touchstart', keepTouchScrollActive, { passive: true });
+            chatMessagesEl.addEventListener('touchmove', keepTouchScrollActive, { passive: true });
+            chatMessagesEl.addEventListener('touchend', keepTouchScrollActive, { passive: true });
+            chatMessagesEl.addEventListener('touchcancel', function () {
+                isTouchScrollActive = false;
+                if (touchGraceTimer) {
+                    clearTimeout(touchGraceTimer);
+                    touchGraceTimer = 0;
+                }
+            }, { passive: true });
 
             chatMessagesEl.addEventListener('scroll', function () {
                 if (!isMobileDrawerViewport() || !mobileChatSelected) {
                     // Ensure navbar is visible on desktop or when no chat selected
-                    navbarEl.classList.remove('navbar-hidden');
+                    setNavbarHidden(false);
                     return;
                 }
+
                 const st = chatMessagesEl.scrollTop;
+                if (!isTouchScrollActive) {
+                    lastScrollTop = Math.max(0, st);
+                    return;
+                }
+
                 const delta = st - lastScrollTop;
+                const now = Date.now();
+                if (Math.abs(delta) <= SCROLL_THRESHOLD || (now - lastToggleAt) < TOGGLE_COOLDOWN_MS) {
+                    lastScrollTop = Math.max(0, st);
+                    return;
+                }
 
                 if (delta < -SCROLL_THRESHOLD) {
                     // Scrolling up (toward older messages) → hide navbar for more space
-                    navbarEl.classList.add('navbar-hidden');
+                    setNavbarHidden(true);
+                    lastToggleAt = now;
                 } else if (delta > SCROLL_THRESHOLD) {
                     // Scrolling down (toward newer messages) → show navbar
-                    navbarEl.classList.remove('navbar-hidden');
+                    setNavbarHidden(false);
+                    lastToggleAt = now;
                 }
                 lastScrollTop = Math.max(0, st);
             }, { passive: true });
@@ -1607,7 +1657,7 @@ $csrfToken = generateCsrfToken();
             window.setMobileChatSelected = function (selected) {
                 origSetMobileChatSelected(selected);
                 if (!selected) {
-                    navbarEl.classList.remove('navbar-hidden');
+                    setNavbarHidden(false);
                 }
                 if (alertPanelBtn && isMobileDrawerViewport()) {
                     alertPanelBtn.style.display = selected ? 'none' : '';
@@ -1617,7 +1667,7 @@ $csrfToken = generateCsrfToken();
             // Show navbar & restore announcement btn when window resizes to desktop
             window.addEventListener('resize', function () {
                 if (!isMobileDrawerViewport()) {
-                    navbarEl.classList.remove('navbar-hidden');
+                    setNavbarHidden(false);
                     if (alertPanelBtn) alertPanelBtn.style.display = '';
                 } else if (alertPanelBtn && mobileChatSelected) {
                     alertPanelBtn.style.display = 'none';
