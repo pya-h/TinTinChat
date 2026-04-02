@@ -215,6 +215,18 @@ $csrfToken = generateCsrfToken();
                         <ul id="groupInfoMembers" class="mb-2" role="list" aria-label="Group members"></ul>
                     </div>
 
+                    <div class="group-info-stats" id="groupInfoStats">
+                        <div class="saved-stats-grid">
+                            <div class="saved-stat-item saved-stat-total"><span class="saved-stat-count" id="groupStatTotal">0</span><span class="saved-stat-label">Total</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="groupStatText">0</span><span class="saved-stat-label"><i class="fas fa-comment"></i> Text</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="groupStatVoice">0</span><span class="saved-stat-label"><i class="fas fa-microphone"></i> Voice</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="groupStatImage">0</span><span class="saved-stat-label"><i class="fas fa-image"></i> Image</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="groupStatVideo">0</span><span class="saved-stat-label"><i class="fas fa-video"></i> Video</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="groupStatFile">0</span><span class="saved-stat-label"><i class="fas fa-file"></i> File</span></div>
+                            <div class="saved-stat-item"><span class="saved-stat-count" id="groupStatSticker">0</span><span class="saved-stat-label"><i class="fas fa-smile"></i> Sticker</span></div>
+                        </div>
+                    </div>
+
                     <div class="group-info-music">
                         <div class="group-music-header">
                             <h6 class="mb-0"><i class="fas fa-music me-1"></i>Shared Music <span id="groupMusicCount" class="text-muted">(0)</span></h6>

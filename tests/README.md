@@ -141,6 +141,7 @@ tests/
     ideas_smoke.sh                  # Ideas CRUD + voting
     search_smoke.sh                 # User search API
     session_smoke.sh                # Session & CSRF validation
+    conversation_insights_smoke.sh  # Full-history stats/music endpoints + jump-loading contract
 ```
 
 ## How Tests Work
