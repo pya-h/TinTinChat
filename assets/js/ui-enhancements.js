@@ -295,9 +295,6 @@ class UIEnhancements {
                     });
 
                     input.addEventListener("blur", () => {
-                        if (isIosLagFixEnabled()) {
-                            return;
-                        }
                         viewport.setAttribute(
                             "content",
                             "width=device-width, initial-scale=1"

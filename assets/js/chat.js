@@ -3665,9 +3665,12 @@ function bindSettingsUiEvents() {
         appSettings.iosLagFix = Boolean(event.target.checked);
         persistAppSettings();
         applyUiPreferenceClasses();
+        const iosActive = isIosLagFixEnabled();
         setComposerStatus(
             appSettings.iosLagFix
-                ? "iOS performance mode enabled"
+                ? (iosActive
+                    ? "iOS performance mode enabled"
+                    : "iOS performance mode saved (active on iPhone/iPad only)")
                 : "iOS performance mode disabled",
             "success"
         );
@@ -7335,6 +7338,8 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                 rebuildMessageDaySeparators();
                 if (hasMoreMessages) {
                     addLoadMoreButton();
+                } else {
+                    document.getElementById("loadMoreBtn")?.remove();
                 }
 
                 if (topVisibleAnchorBeforePrepend?.id) {
