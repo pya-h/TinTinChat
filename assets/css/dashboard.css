@@ -1912,9 +1912,19 @@ nav.navbar::after {
     padding: 0 0.08rem;
 }
 
+.message.sent .chat-search-hit {
+    background: color-mix(in srgb, white 84%, transparent);
+    color: color-mix(in srgb, var(--primary-color) 88%, black 12%);
+}
+
 .chat-search-hit.is-active {
     background: color-mix(in srgb, var(--primary-color) 36%, transparent);
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 38%, transparent);
+}
+
+.message.sent .chat-search-hit.is-active {
+    background: color-mix(in srgb, white 92%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, white 68%, transparent);
 }
 
 .camera-capture-overlay {

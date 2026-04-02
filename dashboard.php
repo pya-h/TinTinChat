@@ -170,6 +170,9 @@ $csrfToken = generateCsrfToken();
                     <i class="fas fa-search" aria-hidden="true"></i>
                     <input type="text" id="conversationSearchInput" class="form-control" placeholder="Search this conversation" aria-label="Search inside current conversation">
                     <span id="conversationSearchCount" class="conversation-search-count" aria-live="polite">0 / 0</span>
+                    <button type="button" id="conversationSearchRun" class="btn btn-sm btn-outline-secondary" aria-label="Run message search">
+                        <i class="fas fa-search"></i>
+                    </button>
                     <button type="button" id="conversationSearchPrev" class="btn btn-sm btn-outline-secondary" aria-label="Previous result">
                         <i class="fas fa-chevron-up"></i>
                     </button>
@@ -545,6 +548,13 @@ $csrfToken = generateCsrfToken();
                                 <span>iOS performance mode</span>
                                 <span class="chat-ui-settings-control">
                                     <input type="checkbox" id="settingIosLagFix">
+                                </span>
+                            </label>
+
+                            <label class="chat-ui-settings-item chat-ui-settings-item-check">
+                                <span>Interactive message searching</span>
+                                <span class="chat-ui-settings-control">
+                                    <input type="checkbox" id="settingInteractiveMessageSearch">
                                 </span>
                             </label>
 

@@ -59,6 +59,7 @@ const settingFontScale = document.getElementById("settingFontScale");
 const settingShowTimestamps = document.getElementById("settingShowTimestamps");
 const settingReduceMotion = document.getElementById("settingReduceMotion");
 const settingIosLagFix = document.getElementById("settingIosLagFix");
+const settingInteractiveMessageSearch = document.getElementById("settingInteractiveMessageSearch");
 const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
 const chatUiSettingsTabGeneral = document.getElementById("chatUiSettingsTabGeneral");
@@ -137,6 +138,7 @@ const typingIndicatorElem = document.getElementById("typingIndicator");
 const conversationSearchBar = document.getElementById("conversationSearchBar");
 const conversationSearchInput = document.getElementById("conversationSearchInput");
 const conversationSearchCount = document.getElementById("conversationSearchCount");
+const conversationSearchRunBtn = document.getElementById("conversationSearchRun");
 const conversationSearchPrevBtn = document.getElementById("conversationSearchPrev");
 const conversationSearchNextBtn = document.getElementById("conversationSearchNext");
 const conversationSearchCloseBtn = document.getElementById("conversationSearchClose");
@@ -169,7 +171,6 @@ const IMAGE_UPLOAD_MAX_BYTES = Number(appConstants.uploadImageMaxBytes) || 20 * 
 const FILE_UPLOAD_MAX_BYTES = Number(appConstants.uploadFileMaxBytes) || 100 * 1024 * 1024;
 const AVATAR_UPLOAD_MAX_BYTES = Number(appConstants.uploadAvatarMaxBytes) || 5 * 1024 * 1024;
 const STICKER_UPLOAD_MAX_BYTES = Number(appConstants.uploadStickerMaxBytes) || 512 * 1024;
-const STICKER_CANVAS_SIZE = Number(appConstants.stickerCanvasSize) || 512;
 const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
 const DOUBLE_TAP_MS = 280;
@@ -326,6 +327,7 @@ const appSettings = {
     showTimestamps: true,
     reduceMotion: false,
     iosLagFix: false,
+    interactiveMessageSearch: false,
     browserNotificationsEnabled: false,
     sendByEnter: true,
     showSavedMessages: true,
@@ -405,6 +407,11 @@ const {
     formatMessageTimestamp,
     formatI18nText,
 } = chatUtils;
+
+function startsWithRtlScriptChars(text, maxChars = 2) {
+    const probe = String(text || "").trim().slice(0, Math.max(1, Number(maxChars) || 2));
+    return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(probe);
+}
 
 const notificationPlayer = window.ChatNotificationService?.createPlayer({
     customSoundPath: CUSTOM_SOUND_PATH,
@@ -1277,6 +1284,7 @@ function loadAppSettings() {
         appSettings.showTimestamps = parseStoredBoolean(parsed.showTimestamps, true);
         appSettings.reduceMotion = parseStoredBoolean(parsed.reduceMotion, false);
         appSettings.iosLagFix = parseStoredBoolean(parsed.iosLagFix, false);
+        appSettings.interactiveMessageSearch = parseStoredBoolean(parsed.interactiveMessageSearch, false);
         appSettings.browserNotificationsEnabled = parseStoredBoolean(parsed.browserNotificationsEnabled, false);
         appSettings.sendByEnter = parseStoredBoolean(parsed.sendByEnter, true);
         appSettings.showSavedMessages = parseStoredBoolean(parsed.showSavedMessages, true);
@@ -1459,8 +1467,7 @@ function isAnnouncementNew(announcementId) {
 }
 
 function hasPersianChar(str) {
-    const s = String(str || "").slice(0, 2);
-    return /[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(s);
+    return startsWithRtlScriptChars(str, 2);
 }
 
 function renderAnnouncementsPanel(list) {
@@ -1599,13 +1606,14 @@ function renderOpinionsUserList(grouped) {
         const username = escapeHtml(group.target_username || "Unknown");
         const avatarUrl = "api/users/get_avatar.php?user_id=" + (group.target_user_id || 0) + "&size=64";
         const preview = escapeHtml(String(group.latest_body || "").substring(0, 80));
+        const previewDir = startsWithRtlScriptChars(group.latest_body || "", 2) ? "rtl" : "ltr";
         item.innerHTML = `
             <div class="opinions-item-avatar">
                 <img src="${avatarUrl}" alt="${username}" loading="lazy">
             </div>
             <div class="opinions-item-content">
                 <div class="opinions-item-username">${username}</div>
-                <div class="opinions-item-text">${preview}${(group.latest_body || "").length > 80 ? "..." : ""}</div>
+                <div class="opinions-item-text" dir="${previewDir}">${preview}${(group.latest_body || "").length > 80 ? "..." : ""}</div>
                 <div class="opinions-item-meta">
                     <span>${group.count} note${group.count > 1 ? "s" : ""}</span>
                 </div>
@@ -1668,9 +1676,10 @@ function renderOpinionsDetailList(opinions, targetUserId, targetUsername) {
         item.style.animationDelay = `${idx * 0.04}s`;
         const date = op.updated_at || op.created_at || "";
         const dateStr = date ? new Date(date).toLocaleDateString() : "";
+        const bodyDir = startsWithRtlScriptChars(op.body || "", 2) ? "rtl" : "ltr";
         item.innerHTML = `
             <div class="opinions-detail-body">
-                <div class="opinions-item-text">${escapeHtml(op.body || "")}</div>
+                <div class="opinions-item-text" dir="${bodyDir}">${escapeHtml(op.body || "")}</div>
                 <div class="opinions-item-meta"><span>${dateStr}</span></div>
             </div>
             <div class="opinions-item-actions">
@@ -1731,7 +1740,30 @@ const PLAYLIST_STORAGE_KEY = "ttc_playlist";
 function getPlaylist() {
     try {
         const raw = localStorage.getItem(PLAYLIST_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+        const normalized = parsed
+            .map((item) => {
+                const msgId = Number(item?.msgId || 0);
+                if (!msgId) {
+                    return null;
+                }
+                return {
+                    msgId,
+                    chatTarget: String(item?.chatTarget || ""),
+                    title: String(item?.title || "Unknown"),
+                    ext: String(item?.ext || ""),
+                    addedAt: String(item?.addedAt || ""),
+                    meta: item?.meta && typeof item.meta === "object" ? item.meta : null,
+                };
+            })
+            .filter(Boolean);
+        if (normalized.length !== parsed.length) {
+            savePlaylist(normalized);
+        }
+        return normalized;
     } catch { return []; }
 }
 
@@ -1941,10 +1973,7 @@ function openSavedMessagesInfoPanel() {
     savedMessagesInfoPanel.hidden = false;
     chatAreaElem?.classList.add("saved-panel-open");
     void loadSavedMessagesStats();
-    loadSavedMessagesMusic(true);
-    if (savedNowPlaying) {
-        savedNowPlaying.hidden = true;
-    }
+    renderSavedPlaylistPanel();
     savedInfoBackBtn?.addEventListener("click", closeSavedMessagesInfoPanel);
 }
 
@@ -2322,10 +2351,6 @@ async function buildMusicTrackFromMessage(messageRow) {
 }
 
 async function playDetailsMusicTrack(playBtn, track) {
-    if (!playBtn || !track || !track.message) {
-        return;
-    }
-
     if (privateMusicAudio && privateMusicCurrentBtn === playBtn) {
         if (privateMusicAudio.paused) {
             privateMusicAudio.play();
@@ -2584,8 +2609,9 @@ function renderPrivateOpinions(opinions) {
         const dateStr = date ? new Date(date).toLocaleDateString() : "";
         const card = document.createElement("div");
         card.className = "private-opinion-card";
+        const bodyDir = startsWithRtlScriptChars(op.body || "", 2) ? "rtl" : "ltr";
         card.innerHTML = `
-            <div class="opinion-text">${escapeHtml(op.body)}</div>
+            <div class="opinion-text" dir="${bodyDir}">${escapeHtml(op.body)}</div>
             <div class="opinion-date">${dateStr}</div>
             <div class="opinion-actions">
                 <button type="button" class="opinion-action-btn edit-btn" title="Edit"><i class="fas fa-pen"></i></button>
@@ -2634,17 +2660,6 @@ async function loadSavedMessagesStats() {
             sticker: "savedStatSticker",
         });
     } catch (_) {}
-}
-
-function loadSavedMessagesMusic(reset = true) {
-    void loadDetailsMusicPanelPage({
-        panelKey: "saved",
-        bodyId: "savedPlaylistBody",
-        countId: "savedPlaylistCount",
-        chatTarget: currentChatUser || CURRENT_USER,
-        emptyHtml: '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet.</div>',
-        reset,
-    });
 }
 
 function renderSavedPlaylistPanel() {
@@ -3687,6 +3702,9 @@ function applySettingsUi() {
     if (settingIosLagFix) {
         settingIosLagFix.checked = appSettings.iosLagFix;
     }
+    if (settingInteractiveMessageSearch) {
+        settingInteractiveMessageSearch.checked = appSettings.interactiveMessageSearch;
+    }
     if (settingNotificationSound) {
         settingNotificationSound.checked = appSettings.notificationSoundEnabled;
     }
@@ -3811,6 +3829,18 @@ function bindSettingsUiEvents() {
                 : "iOS performance mode disabled",
             "success"
         );
+    });
+
+    settingInteractiveMessageSearch?.addEventListener("change", (event) => {
+        appSettings.interactiveMessageSearch = Boolean(event.target.checked);
+        persistAppSettings();
+        if (!appSettings.interactiveMessageSearch) {
+            cancelConversationSearch();
+            setComposerStatus("Interactive message search disabled", "success");
+        } else {
+            setComposerStatus("Interactive message search enabled", "success");
+            runConversationSearch(true);
+        }
     });
 
     if (settingNotificationSound) {
@@ -7951,6 +7981,11 @@ function resetConversationSearchHighlights() {
     }
 }
 
+function cancelConversationSearch() {
+    conversationSearchToken++;
+    resetConversationSearchHighlights();
+}
+
 function updateConversationSearchCounter() {
     if (!conversationSearchCount) {
         return;
@@ -7962,7 +7997,7 @@ function updateConversationSearchCounter() {
     conversationSearchCount.textContent = `${conversationSearchResultIndex + 1} / ${conversationSearchResults.length}`;
 }
 
-function focusConversationSearchResult(index) {
+function focusConversationSearchResult(index, { behavior = "smooth" } = {}) {
     if (!conversationSearchResults.length) {
         updateConversationSearchCounter();
         return;
@@ -7977,11 +8012,14 @@ function focusConversationSearchResult(index) {
 
     const activeNode = conversationSearchResults[conversationSearchResultIndex];
     activeNode.classList.add("is-active");
-    activeNode.scrollIntoView({ behavior: "smooth", block: "center" });
+    activeNode.scrollIntoView({ behavior, block: "center" });
     updateConversationSearchCounter();
 }
 
-function runConversationSearch() {
+function runConversationSearch(force = false) {
+    if (!force && !appSettings.interactiveMessageSearch) {
+        return;
+    }
     void runConversationSearchAsync();
 }
 
@@ -8045,7 +8083,7 @@ async function runConversationSearchAsync() {
     if (loadedOlderBatches > 0) {
         setComposerStatus("Found results including older messages", "success");
     }
-    focusConversationSearchResult(0);
+    focusConversationSearchResult(conversationSearchResults.length - 1, { behavior: "auto" });
 }
 
 async function navigateConversationSearch(direction = 1) {
@@ -8096,23 +8134,37 @@ function closeConversationSearchBar({ clearInput = true } = {}) {
         return;
     }
     conversationSearchBar.hidden = true;
-    resetConversationSearchHighlights();
+    cancelConversationSearch();
     if (clearInput && conversationSearchInput) {
         conversationSearchInput.value = "";
     }
 }
 
 function bindConversationSearchEvents() {
-    conversationSearchInput?.addEventListener("input", runConversationSearch);
+    conversationSearchInput?.addEventListener("input", () => {
+        if (appSettings.interactiveMessageSearch) {
+            runConversationSearch();
+            return;
+        }
+        cancelConversationSearch();
+    });
 
     conversationSearchInput?.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
             event.preventDefault();
-            void navigateConversationSearch(1);
+            if (appSettings.interactiveMessageSearch) {
+                void navigateConversationSearch(-1);
+            } else {
+                runConversationSearch(true);
+            }
         } else if (event.key === "Escape") {
             event.preventDefault();
             closeConversationSearchBar();
         }
+    });
+
+    conversationSearchRunBtn?.addEventListener("click", () => {
+        runConversationSearch(true);
     });
 
     conversationSearchPrevBtn?.addEventListener("click", () => {
