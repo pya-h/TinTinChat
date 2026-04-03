@@ -128,6 +128,7 @@ run_step "E2E: Block user" bash tests/e2e/block_user_smoke.sh "${BASE_URL}"
 run_step "E2E: Ideas/feedback" bash tests/e2e/ideas_smoke.sh "${BASE_URL}"
 run_step "E2E: User search" bash tests/e2e/search_smoke.sh "${BASE_URL}"
 run_step "E2E: Conversation insights" bash tests/e2e/conversation_insights_smoke.sh "${BASE_URL}"
+run_step "E2E: UI back sync" bash tests/e2e/ui_back_sync_smoke.sh
 
 # ── Summary ──────────────────────────────────────────────────
 ELAPSED=$(( $(date +%s) - START_TIME ))

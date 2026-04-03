@@ -333,6 +333,78 @@ const appSettings = {
     showSavedMessages: true,
 };
 
+const UI_BACK_LAYER_KEYS = {
+    avatarViewer: "avatar-viewer",
+    userProfile: "user-profile",
+    uiSettings: "ui-settings",
+    announcements: "announcements",
+    opinions: "opinions",
+    playlist: "playlist",
+    savedInfo: "saved-info",
+    privateInfo: "private-info",
+    groupInfo: "group-info",
+    createGroup: "create-group",
+    messageAction: "message-action",
+    imageModal: "image-modal",
+    addChat: "add-chat",
+};
+
+const uiBackLayerStack = [];
+let uiBackLayerCounter = 0;
+let isHandlingUiBackPopState = false;
+
+function pushUiBackLayer(key, closeHandler) {
+    if (!key || typeof closeHandler !== "function") {
+        return;
+    }
+    const topLayer = uiBackLayerStack[uiBackLayerStack.length - 1];
+    if (topLayer?.key === key) {
+        return;
+    }
+    const token = `ttc_ui_${Date.now()}_${++uiBackLayerCounter}`;
+    uiBackLayerStack.push({ key, token, closeHandler });
+    try {
+        const nextState = Object.assign({}, window.history.state || {}, { ttcUiBackToken: token });
+        window.history.pushState(nextState, document.title);
+    } catch (_) {}
+}
+
+function removeUiBackLayer(key) {
+    const layerIndex = uiBackLayerStack.findLastIndex((layer) => layer.key === key);
+    if (layerIndex < 0) {
+        return false;
+    }
+    uiBackLayerStack.splice(layerIndex, 1);
+    return true;
+}
+
+function requestUiLayerClose(key, closeNow) {
+    const topLayer = uiBackLayerStack[uiBackLayerStack.length - 1];
+    if (!isHandlingUiBackPopState && topLayer?.key === key) {
+        window.history.back();
+        return true;
+    }
+    removeUiBackLayer(key);
+    closeNow?.();
+    return false;
+}
+
+window.addEventListener("popstate", () => {
+    const topLayer = uiBackLayerStack[uiBackLayerStack.length - 1];
+    if (!topLayer) {
+        return;
+    }
+    isHandlingUiBackPopState = true;
+    uiBackLayerStack.pop();
+    try {
+        topLayer.closeHandler({ fromHistory: true });
+    } finally {
+        window.setTimeout(() => {
+            isHandlingUiBackPopState = false;
+        }, 0);
+    }
+});
+
 function isLikelyIOSDevice() {
     const ua = String(navigator.userAgent || "");
     const platform = String(navigator.platform || "");
@@ -491,10 +563,16 @@ async function fetchUserProfile({ userId = 0, username = "" } = {}) {
     return response.user;
 }
 
-function closeAvatarViewer() {
+function closeAvatarViewer({ fromHistory = false } = {}) {
     if (!avatarViewerOverlay) {
         return;
     }
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.avatarViewer, () => {
+        closeAvatarViewer({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.avatarViewer);
     avatarViewerOverlay.classList.remove("visible");
     avatarViewerOverlay.setAttribute("aria-hidden", "true");
     setTimeout(() => {
@@ -514,15 +592,24 @@ function openAvatarViewer(profile) {
 
     avatarViewerOverlay.hidden = false;
     avatarViewerOverlay.setAttribute("aria-hidden", "false");
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.avatarViewer, ({ fromHistory = false } = {}) => {
+        closeAvatarViewer({ fromHistory });
+    });
     requestAnimationFrame(() => {
         avatarViewerOverlay.classList.add("visible");
     });
 }
 
-function closeUserProfileModal() {
+function closeUserProfileModal({ fromHistory = false } = {}) {
     if (!userProfileModalOverlay) {
         return;
     }
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.userProfile, () => {
+        closeUserProfileModal({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.userProfile);
     userProfileModalOverlay.classList.remove("visible");
     userProfileModalOverlay.setAttribute("aria-hidden", "true");
     setTimeout(() => {
@@ -553,6 +640,9 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
     userProfileModalBody.innerHTML = '<div class="chat-inline-state chat-inline-state-info"><span class="chat-inline-state-text">Loading user info...</span></div>';
     userProfileModalOverlay.hidden = false;
     userProfileModalOverlay.setAttribute("aria-hidden", "false");
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.userProfile, ({ fromHistory = false } = {}) => {
+        closeUserProfileModal({ fromHistory });
+    });
     requestAnimationFrame(() => {
         userProfileModalOverlay.classList.add("visible");
     });
@@ -1399,6 +1489,9 @@ function openUiSettingsModal() {
         return;
     }
     chatUiSettingsOverlay.hidden = false;
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.uiSettings, ({ fromHistory = false } = {}) => {
+        closeUiSettingsModal({ restoreFocus: true, fromHistory });
+    });
     requestAnimationFrame(() => {
         chatUiSettingsOverlay.classList.add("visible");
         applySettingsTabUi(activeSettingsTab);
@@ -1418,10 +1511,16 @@ function openUiSettingsModal() {
     });
 }
 
-function closeUiSettingsModal({ restoreFocus = true } = {}) {
+function closeUiSettingsModal({ restoreFocus = true, fromHistory = false } = {}) {
     if (!chatUiSettingsOverlay) {
         return;
     }
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.uiSettings, () => {
+        closeUiSettingsModal({ restoreFocus, fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.uiSettings);
     chatUiSettingsOverlay.classList.remove("visible");
     setTimeout(() => {
         if (!chatUiSettingsOverlay.classList.contains("visible")) {
@@ -1508,6 +1607,9 @@ function renderAnnouncementsPanel(list) {
 async function openAnnouncementsPanel() {
     if (!announcementsOverlay) return;
     announcementsOverlay.hidden = false;
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.announcements, ({ fromHistory = false } = {}) => {
+        closeAnnouncementsPanel({ fromHistory });
+    });
     requestAnimationFrame(() => announcementsOverlay.classList.add("visible"));
     const list = await fetchAnnouncements();
     announcementsCachedList = list;
@@ -1529,8 +1631,14 @@ async function openAnnouncementsPanel() {
     }
 }
 
-function closeAnnouncementsPanel() {
+function closeAnnouncementsPanel({ fromHistory = false } = {}) {
     if (!announcementsOverlay) return;
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.announcements, () => {
+        closeAnnouncementsPanel({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.announcements);
     announcementsOverlay.classList.remove("visible");
     setTimeout(() => {
         if (!announcementsOverlay.classList.contains("visible")) {
@@ -1566,6 +1674,9 @@ let opinionsPanelCache = null; // cached fetch result
 async function openOpinionsPanel() {
     if (!opinionsOverlay) return;
     opinionsOverlay.hidden = false;
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.opinions, ({ fromHistory = false } = {}) => {
+        closeOpinionsPanel({ fromHistory });
+    });
     requestAnimationFrame(() => opinionsOverlay.classList.add("visible"));
     try {
         const res = await window.ApiService.jsonOk("api/opinions/fetch.php");
@@ -1576,8 +1687,14 @@ async function openOpinionsPanel() {
     }
 }
 
-function closeOpinionsPanel() {
+function closeOpinionsPanel({ fromHistory = false } = {}) {
     if (!opinionsOverlay) return;
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.opinions, () => {
+        closeOpinionsPanel({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.opinions);
     opinionsOverlay.classList.remove("visible");
     setTimeout(() => {
         if (!opinionsOverlay.classList.contains("visible")) {
@@ -1931,11 +2048,20 @@ function openPlaylistPanel() {
     if (!playlistOverlay) return;
     renderPlaylistPanel();
     playlistOverlay.hidden = false;
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.playlist, ({ fromHistory = false } = {}) => {
+        closePlaylistPanel({ fromHistory });
+    });
     requestAnimationFrame(() => playlistOverlay.classList.add("visible"));
 }
 
-function closePlaylistPanel() {
+function closePlaylistPanel({ fromHistory = false } = {}) {
     if (!playlistOverlay) return;
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.playlist, () => {
+        closePlaylistPanel({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.playlist);
     playlistOverlay.classList.remove("visible");
     setTimeout(() => {
         if (!playlistOverlay.classList.contains("visible")) {
@@ -1971,14 +2097,23 @@ function formatTimeShort(secs) {
 function openSavedMessagesInfoPanel() {
     if (!savedMessagesInfoPanel) return;
     savedMessagesInfoPanel.hidden = false;
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.savedInfo, ({ fromHistory = false } = {}) => {
+        closeSavedMessagesInfoPanel({ fromHistory });
+    });
     chatAreaElem?.classList.add("saved-panel-open");
     void loadSavedMessagesStats();
     renderSavedPlaylistPanel();
     savedInfoBackBtn?.addEventListener("click", closeSavedMessagesInfoPanel);
 }
 
-function closeSavedMessagesInfoPanel() {
+function closeSavedMessagesInfoPanel({ fromHistory = false } = {}) {
     if (!savedMessagesInfoPanel || savedMessagesInfoPanel.hidden) return;
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.savedInfo, () => {
+        closeSavedMessagesInfoPanel({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.savedInfo);
     let done = false;
     const finish = () => {
         if (done) return;
@@ -2001,8 +2136,14 @@ function toggleSavedMessagesInfoPanel() {
 }
 
 // ── Private Chat Info Panel ──────────────────────────────────
-function closePrivateChatInfoPanel() {
+function closePrivateChatInfoPanel({ fromHistory = false } = {}) {
     if (!privateChatInfoPanel || privateChatInfoPanel.hidden) return;
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.privateInfo, () => {
+        closePrivateChatInfoPanel({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.privateInfo);
     resetPrivateOpinionForm();
     let done = false;
     const finish = () => {
@@ -2031,6 +2172,9 @@ async function openPrivateChatInfoPanel() {
     if (!privateChatInfoPanel) return;
     resetPrivateOpinionForm();
     privateChatInfoPanel.hidden = false;
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.privateInfo, ({ fromHistory = false } = {}) => {
+        closePrivateChatInfoPanel({ fromHistory });
+    });
     chatAreaElem?.classList.add("private-panel-open");
 
     const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
@@ -4439,8 +4583,14 @@ function getCsrfHeaders() {
 // Expose for extracted modules (ideas.js, changelog.js)
 window.getCsrfHeaders = getCsrfHeaders;
 
-function closeGroupInfoPanel() {
+function closeGroupInfoPanel({ fromHistory = false } = {}) {
     if (!groupInfoPanel || groupInfoPanel.hidden) return;
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.groupInfo, () => {
+        closeGroupInfoPanel({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.groupInfo);
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
     }
@@ -4461,6 +4611,9 @@ function openGroupInfoPanel() {
     if (groupInfoPanel) {
         groupInfoPanel.hidden = false;
     }
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.groupInfo, ({ fromHistory = false } = {}) => {
+        closeGroupInfoPanel({ fromHistory });
+    });
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "true");
     }
@@ -4473,6 +4626,9 @@ function openCreateGroupModal() {
         return;
     }
     createGroupModalOverlay.hidden = false;
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.createGroup, ({ fromHistory = false } = {}) => {
+        closeCreateGroupModal({ fromHistory });
+    });
     if (createGroupForm) {
         createGroupForm.reset();
     }
@@ -4482,10 +4638,16 @@ function openCreateGroupModal() {
     }, 0);
 }
 
-function closeCreateGroupModal() {
+function closeCreateGroupModal({ fromHistory = false } = {}) {
     if (!createGroupModalOverlay) {
         return;
     }
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.createGroup, () => {
+        closeCreateGroupModal({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.createGroup);
     createGroupModalOverlay.hidden = true;
     if (createGroupForm) {
         createGroupForm.reset();
@@ -4758,16 +4920,25 @@ function openMessageActionModal(title, bodyNode) {
     }
     messageActionModalOverlay.setAttribute("aria-hidden", "false");
     messageActionModalOverlay.hidden = false;
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.messageAction, ({ fromHistory = false } = {}) => {
+        closeMessageActionModal({ fromHistory });
+    });
     requestAnimationFrame(() => {
         messageActionModalOverlay.classList.add("visible");
         focusFirstActionModalElement();
     });
 }
 
-function closeMessageActionModal() {
+function closeMessageActionModal({ fromHistory = false } = {}) {
     if (!messageActionModalOverlay) {
         return;
     }
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.messageAction, () => {
+        closeMessageActionModal({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.messageAction);
 
     const closedTitle = messageActionModalTitle?.textContent?.trim() || "message action";
 
@@ -9078,6 +9249,9 @@ function openImageModal(imageUrl) {
     imageModalDownload.download = `image_${Date.now()}.jpg`;
 
     imageModalOverlay.style.display = "flex";
+    pushUiBackLayer(UI_BACK_LAYER_KEYS.imageModal, ({ fromHistory = false } = {}) => {
+        closeImageModal({ fromHistory });
+    });
     setTimeout(() => {
         imageModalOverlay.classList.add("visible");
     }, 10);
@@ -9085,9 +9259,15 @@ function openImageModal(imageUrl) {
     document.body.style.overflow = "hidden";
 }
 
-function closeImageModal() {
+function closeImageModal({ fromHistory = false } = {}) {
     const imageModalOverlay = document.getElementById("imageModalOverlay");
     if (!imageModalOverlay) return;
+    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.imageModal, () => {
+        closeImageModal({ fromHistory: true });
+    })) {
+        return;
+    }
+    removeUiBackLayer(UI_BACK_LAYER_KEYS.imageModal);
 
     imageModalOverlay.classList.remove("visible");
 
@@ -11132,13 +11312,22 @@ createGroupBtn?.addEventListener("click", () => {
 
     function openAddChatModal() {
         addChatModalOverlay.hidden = false;
+        pushUiBackLayer(UI_BACK_LAYER_KEYS.addChat, ({ fromHistory = false } = {}) => {
+            closeAddChatModal({ fromHistory });
+        });
         addChatSearchInput.value = "";
         addChatResults.innerHTML = "";
         if (addChatEmpty) addChatEmpty.hidden = false;
         setTimeout(() => addChatSearchInput.focus(), 60);
     }
 
-    function closeAddChatModal() {
+    function closeAddChatModal({ fromHistory = false } = {}) {
+        if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.addChat, () => {
+            closeAddChatModal({ fromHistory: true });
+        })) {
+            return;
+        }
+        removeUiBackLayer(UI_BACK_LAYER_KEYS.addChat);
         addChatModalOverlay.hidden = true;
         addChatSearchInput.value = "";
         addChatResults.innerHTML = "";
