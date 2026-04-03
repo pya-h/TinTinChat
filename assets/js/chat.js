@@ -270,6 +270,7 @@ let globalNpType = ""; // "voice" or "music"
 let initialViewportHeight = window.innerHeight;
 let lastContextMenuMessageElement = null;
 let lastReactionPickerMessageElement = null;
+let reactionPickerRepositionRafId = 0;
 let lastFocusedElementBeforeActionModal = null;
 const pendingSeenMessageIds = new Set();
 const messageMetaById = new Map();
@@ -280,6 +281,7 @@ const typingInflightByTarget = new Set();
 let typingStopTimer = null;
 let imageSourceMenuHideTimer = null;
 let suppressNextContextMenuTapUntil = 0;
+let suppressReactionPickerAutoCloseUntil = 0;
 let contextMenuJustClosedAt = 0;
 let refreshMediaCacheLabelGlobal = () => {};
 let cameraStream = null;
@@ -4835,11 +4837,60 @@ function closeMessageContextMenu() {
 }
 
 function closeReactionPicker({ restoreFocus = true } = {}) {
+    if (reactionPickerRepositionRafId) {
+        cancelAnimationFrame(reactionPickerRepositionRafId);
+        reactionPickerRepositionRafId = 0;
+    }
     document.getElementById("messageReactionPicker")?.remove();
+    suppressReactionPickerAutoCloseUntil = 0;
     if (restoreFocus && lastReactionPickerMessageElement) {
         lastReactionPickerMessageElement.focus();
     }
     lastReactionPickerMessageElement = null;
+}
+
+function repositionReactionPickerForMessage(messageElement, pickerElement) {
+    if (!messageElement || !pickerElement) {
+        return;
+    }
+
+    if (!document.contains(messageElement)) {
+        closeReactionPicker({ restoreFocus: false });
+        return;
+    }
+
+    const messageRect = messageElement.getBoundingClientRect();
+    const pickerRect = pickerElement.getBoundingClientRect();
+    const gap = 8;
+    const showAbove = messageRect.top - pickerRect.height - gap >= 8;
+    const maxLeft = Math.max(8, window.innerWidth - pickerRect.width - 8);
+    const maxTop = Math.max(8, window.innerHeight - pickerRect.height - 8);
+
+    const top = Math.min(
+        maxTop,
+        Math.max(8, showAbove ? messageRect.top - pickerRect.height - gap : messageRect.bottom + gap)
+    );
+    const left = Math.min(
+        maxLeft,
+        Math.max(8, messageRect.left + messageRect.width / 2 - pickerRect.width / 2)
+    );
+
+    pickerElement.style.top = `${top}px`;
+    pickerElement.style.left = `${left}px`;
+}
+
+function scheduleReactionPickerReposition() {
+    if (reactionPickerRepositionRafId) {
+        return;
+    }
+    reactionPickerRepositionRafId = requestAnimationFrame(() => {
+        reactionPickerRepositionRafId = 0;
+        const picker = document.getElementById("messageReactionPicker");
+        if (!picker || !lastReactionPickerMessageElement) {
+            return;
+        }
+        repositionReactionPickerForMessage(lastReactionPickerMessageElement, picker);
+    });
 }
 
 function getActionModalFocusableElements() {
@@ -6330,26 +6381,9 @@ function openReactionPickerFromContext(messageElement, messageData = null) {
     picker.appendChild(content);
     document.body.appendChild(picker);
 
-    const messageRect = messageElement.getBoundingClientRect();
-    const pickerRect = picker.getBoundingClientRect();
-    const gap = 8;
-    const showAbove = messageRect.top - pickerRect.height - gap >= 8;
-    const maxLeft = Math.max(8, window.innerWidth - pickerRect.width - 8);
-    const maxTop = Math.max(8, window.innerHeight - pickerRect.height - 8);
-
-    const top = Math.min(
-        maxTop,
-        Math.max(8, showAbove ? messageRect.top - pickerRect.height - gap : messageRect.bottom + gap)
-    );
-    const left = Math.min(
-        maxLeft,
-        Math.max(8, messageRect.left + messageRect.width / 2 - pickerRect.width / 2)
-    );
-
-    picker.style.top = `${top}px`;
-    picker.style.left = `${left}px`;
-
     lastReactionPickerMessageElement = messageElement;
+    repositionReactionPickerForMessage(messageElement, picker);
+    suppressReactionPickerAutoCloseUntil = Date.now() + 450;
     picker.querySelector(".reaction-picker-item")?.focus();
 }
 
@@ -7153,6 +7187,9 @@ document.addEventListener(
             suppressNextContextMenuTapUntil = 0;
             return;
         }
+        if (Date.now() < suppressReactionPickerAutoCloseUntil) {
+            return;
+        }
     const menu = document.getElementById("messageContextMenu");
     if (!menu) {
         const picker = document.getElementById("messageReactionPicker");
@@ -7211,8 +7248,19 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
+document.addEventListener("scroll", () => {
+    if (document.getElementById("messageReactionPicker")) {
+        scheduleReactionPickerReposition();
+    }
+}, true);
+
+window.addEventListener("resize", () => {
+    if (document.getElementById("messageReactionPicker")) {
+        scheduleReactionPickerReposition();
+    }
+});
+
 document.addEventListener("scroll", closeMessageContextMenu, true);
-document.addEventListener("scroll", () => closeReactionPicker({ restoreFocus: false }), true);
 
 /* ── Message Horizon: clicks on empty space beside messages ── */
 (function () {
