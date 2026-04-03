@@ -8576,7 +8576,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                 <div class="file-purged-badge"><i class="fas fa-clock"></i> Expired</div>
               </div>
             ${newDateTag(msg, {
-                atLeft: msg.sender_id == CURRENT_USER_ID,
+                atLeft: msg.sender_id != CURRENT_USER_ID,
                 topSpace: 1,
                 fontSize: 8.5,
                 extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8597,7 +8597,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                 <div class="voice-duration-display">--:--</div>
               </div>
             ${newDateTag(msg, {
-                atLeft: msg.sender_id == CURRENT_USER_ID,
+                atLeft: msg.sender_id != CURRENT_USER_ID,
                 topSpace: 1,
                 fontSize: 8.5,
                 extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8617,7 +8617,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     <i class="fas fa-image file-purged-media-icon"></i>
                     <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
                 </div>${newDateTag(msg, {
-                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    atLeft: msg.sender_id != CURRENT_USER_ID,
                     topSpace: 1,
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8627,7 +8627,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     <img src="" class="message-image" alt="Encrypted image" data-ready="0" style="display:none;">
                     <div class="image-message-loading" style="padding: 20px; text-align: center; color: #6c757d;">Decrypting image...</div>
                     </a>${newDateTag(msg, {
-                        atLeft: msg.sender_id == CURRENT_USER_ID,
+                        atLeft: msg.sender_id != CURRENT_USER_ID,
                         topSpace: 1,
                         fontSize: 8.5,
                         extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8649,7 +8649,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
                 </div>
                 ${newDateTag(msg, {
-                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    atLeft: msg.sender_id != CURRENT_USER_ID,
                     topSpace: 1,
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8663,7 +8663,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     <div class="video-message-loading">Decrypting video...</div>
                 </div>
                 ${newDateTag(msg, {
-                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    atLeft: msg.sender_id != CURRENT_USER_ID,
                     topSpace: 1,
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8702,7 +8702,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     </div>
                   </div>
                   ${newDateTag(msg, {
-                      atLeft: msg.sender_id == CURRENT_USER_ID,
+                      atLeft: msg.sender_id != CURRENT_USER_ID,
                       topSpace: 1,
                       fontSize: 8.5,
                       extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8722,7 +8722,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     </div>
                   </div>
                   ${newDateTag(msg, {
-                      atLeft: msg.sender_id == CURRENT_USER_ID,
+                      atLeft: msg.sender_id != CURRENT_USER_ID,
                       topSpace: 1,
                       fontSize: 8.5,
                       extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8770,7 +8770,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     </button>
                   </div>
                   ${newDateTag(msg, {
-                      atLeft: msg.sender_id == CURRENT_USER_ID,
+                      atLeft: msg.sender_id != CURRENT_USER_ID,
                       topSpace: 1,
                       fontSize: 8.5,
                       extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8799,7 +8799,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     </div>
                   </div>
                   ${newDateTag(msg, {
-                      atLeft: msg.sender_id == CURRENT_USER_ID,
+                      atLeft: msg.sender_id != CURRENT_USER_ID,
                       topSpace: 1,
                       fontSize: 8.5,
                       extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8833,7 +8833,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     <img src="api/messages/stickers/get.php?id=${stickerId}" class="sticker-message-image" alt="Sticker" loading="lazy" decoding="async" />
                 </button>
                 ${newDateTag(msg, {
-                    atLeft: msg.sender_id == CURRENT_USER_ID,
+                    atLeft: msg.sender_id != CURRENT_USER_ID,
                     topSpace: 1,
                     fontSize: 8.5,
                     extraStyles: "color: var(--text-color); font-weight: 600;",
@@ -8901,7 +8901,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
         const outsideDateTag = isIncomingGroup
             ? ""
             : newDateTag(msg, {
-                  atLeft: isPersian,
+                atLeft: msg.sender_id != CURRENT_USER_ID,
                   strictMargins: true,
                   topSpace: 3,
               });
