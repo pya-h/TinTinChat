@@ -4,6 +4,7 @@ session_start();
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/api_helpers.php';
 require_once __DIR__ . '/../../includes/group_helpers.php';
+require_once __DIR__ . '/../../includes/reaction_helpers.php';
 
 apiRequireMethod('POST');
 $userId = apiRequireAuth();
@@ -12,14 +13,14 @@ session_write_close();
 
 $body = apiGetJsonBody();
 $messageId = isset($body['message_id']) ? (int) $body['message_id'] : 0;
-$reaction = trim((string) ($body['reaction'] ?? ''));
+$reactionInput = trim((string) ($body['reaction'] ?? ''));
+$reactionCode = ttcReactionCodeFromInput($reactionInput);
 
 if ($messageId <= 0) {
 	apiError('INVALID_MESSAGE_ID', 'Invalid message id', 400);
 }
 
-$allowedReactions = ["\u{1F44D}", "\u{2764}\u{FE0F}", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F525}", "\u{1F420}"];
-if ($reaction !== '' && !in_array($reaction, $allowedReactions, true)) {
+if ($reactionInput !== '' && $reactionCode === '') {
 	apiError('INVALID_REACTION', 'Unsupported reaction', 400);
 }
 
@@ -42,7 +43,7 @@ if ($groupId > 0) {
 	}
 }
 
-if ($reaction === '') {
+if ($reactionCode === '') {
 	$deleteStmt = $pdo->prepare('DELETE FROM message_reactions WHERE message_id = ? AND user_id = ?');
 	$deleteStmt->execute([$messageId, $userId]);
 } else {
@@ -51,7 +52,7 @@ if ($reaction === '') {
 		 VALUES (?, ?, ?)
 		 ON DUPLICATE KEY UPDATE reaction = VALUES(reaction), updated_at = CURRENT_TIMESTAMP'
 	);
-	$upsertStmt->execute([$messageId, $userId, $reaction]);
+	$upsertStmt->execute([$messageId, $userId, $reactionCode]);
 }
 
 $reactionStmt = $pdo->prepare(
@@ -64,7 +65,7 @@ $reactionRows = $reactionStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $summaryMap = [];
 foreach ($reactionRows as $row) {
-	$emoji = isset($row['reaction']) ? trim((string) $row['reaction']) : '';
+	$emoji = ttcReactionEmojiFromStorage((string) ($row['reaction'] ?? ''));
 	if ($emoji === '') {
 		continue;
 	}

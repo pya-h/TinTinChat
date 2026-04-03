@@ -370,7 +370,13 @@ function pushUiBackLayer(key, closeHandler) {
 }
 
 function removeUiBackLayer(key) {
-    const layerIndex = uiBackLayerStack.findLastIndex((layer) => layer.key === key);
+    let layerIndex = -1;
+    for (let index = uiBackLayerStack.length - 1; index >= 0; index--) {
+        if (uiBackLayerStack[index]?.key === key) {
+            layerIndex = index;
+            break;
+        }
+    }
     if (layerIndex < 0) {
         return false;
     }

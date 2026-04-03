@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/api_helpers.php';
 require_once __DIR__ . '/../../includes/group_helpers.php';
+require_once __DIR__ . '/../../includes/reaction_helpers.php';
 
 apiRequireMethod('GET');
 $userId = apiRequireAuth();
@@ -166,7 +167,7 @@ if (!empty($messages)) {
 		$reactionsByMessage = [];
 		foreach ($reactionRows as $reactionRow) {
 			$messageId = isset($reactionRow['message_id']) ? (int) $reactionRow['message_id'] : 0;
-			$emoji = isset($reactionRow['reaction']) ? trim((string) $reactionRow['reaction']) : '';
+			$emoji = ttcReactionEmojiFromStorage((string) ($reactionRow['reaction'] ?? ''));
 			if ($messageId <= 0 || $emoji === '') {
 				continue;
 			}
