@@ -10394,11 +10394,22 @@ function playSendBtnTap(btn) {
     if (isIosLagFixEnabled()) return;
     if (!btn || typeof btn.animate !== "function") return;
     btn.animate([
-        { transform: "rotate(0deg) scale(1)", offset: 0 },
-        { transform: "rotate(-10deg) scale(0.94)", offset: 0.22 },
-        { transform: "rotate(8deg) scale(1.03)", offset: 0.54 },
-        { transform: "rotate(0deg) scale(1)", offset: 1 },
-    ], { duration: 240, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", composite: "replace" });
+        { transform: "rotate(0deg)", offset: 0 },
+        { transform: "rotate(-15deg)", offset: 0.26 },
+        { transform: "rotate(15deg)", offset: 0.58 },
+        { transform: "rotate(0deg)", offset: 1 },
+    ], { duration: 220, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", composite: "replace" });
+}
+
+function playComposerButtonTap(btn) {
+    if (isIosLagFixEnabled()) return;
+    if (!btn || typeof btn.animate !== "function") return;
+    btn.animate([
+        { transform: "rotate(0deg)", offset: 0 },
+        { transform: "rotate(-15deg)", offset: 0.26 },
+        { transform: "rotate(15deg)", offset: 0.58 },
+        { transform: "rotate(0deg)", offset: 1 },
+    ], { duration: 220, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", composite: "replace" });
 }
 
 // Animates the swap with a vertical slide (old icon exits up, new enters from below)
@@ -11869,6 +11880,7 @@ setInterval(async () => {
 }, SEEN_STATUS_POLL_MS);
 
 voiceBtn.addEventListener("click", async () => {
+    playComposerButtonTap(voiceBtn);
     if (!ensureEditModeAllowsTextOnly("record voice message")) {
         return;
     }
@@ -12055,6 +12067,7 @@ async function sendVoiceMessage(audioBlob) {
 }
 
 imageUploadBtn.addEventListener("click", () => {
+    playComposerButtonTap(imageUploadBtn);
     if (!ensureEditModeAllowsTextOnly("send image or media")) {
         return;
     }
@@ -12070,6 +12083,7 @@ imageUploadBtn.addEventListener("click", () => {
 });
 
 stickerPickerBtn?.addEventListener("click", () => {
+    playComposerButtonTap(stickerPickerBtn);
     if (!ensureEditModeAllowsTextOnly("send sticker")) {
         return;
     }
