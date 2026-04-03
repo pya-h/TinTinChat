@@ -325,6 +325,7 @@ const appSettings = {
     mobileComposerExpanded: false,
     themeMode: "system",
     densityMode: "comfortable",
+    animationProfile: "calm",
     fontScale: "md",
     showTimestamps: true,
     reduceMotion: false,
@@ -1395,6 +1396,7 @@ function loadAppSettings() {
             ? parsed.themeMode
             : "system";
         appSettings.densityMode = parsed.densityMode === "compact" ? "compact" : "comfortable";
+        appSettings.animationProfile = parsed.animationProfile === "playful" ? "playful" : "calm";
         appSettings.fontScale = ["sm", "md", "lg", "xl"].includes(parsed.fontScale)
             ? parsed.fontScale
             : "md";
@@ -1421,6 +1423,7 @@ function applyUiPreferenceClasses() {
         root.setAttribute("data-theme", appSettings.themeMode);
     }
     root.setAttribute("data-density", appSettings.densityMode);
+    root.setAttribute("data-anim-profile", appSettings.animationProfile === "playful" ? "playful" : "calm");
     root.setAttribute("data-font-scale", appSettings.fontScale);
     root.classList.toggle("reduced-motion-enabled", Boolean(appSettings.reduceMotion));
     root.classList.toggle("ios-lag-fix-enabled", isIosLagFixEnabled());
@@ -1430,6 +1433,16 @@ function applyUiPreferenceClasses() {
         !Boolean(appSettings.showTimestamps)
     );
 }
+
+function setComposerAnimationProfile(profile = "calm") {
+    appSettings.animationProfile = profile === "playful" ? "playful" : "calm";
+    persistAppSettings();
+    applyUiPreferenceClasses();
+    return appSettings.animationProfile;
+}
+
+window.setComposerAnimationProfile = setComposerAnimationProfile;
+window.getComposerAnimationProfile = () => appSettings.animationProfile;
 
 function applySettingsTabUi(tabName = "general") {
     let normalizedTab = "general";
@@ -10012,7 +10025,6 @@ const sendTextMessage = async () => {
 
     const sendBtn = chatForm.querySelector('button[type="submit"]');
     sendBtn.disabled = true;
-    playSendBtnTap(sendBtn);
     setComposerStatus("");
 
     try {
@@ -10388,28 +10400,26 @@ function renderSessionsList(sessions, container) {
     });
 }
 
-// Send button icon: file when empty, paper-plane when typing
-// Send button tap animation — uses Web Animations API to bypass CSS conflicts
-function playSendBtnTap(btn) {
-    if (isIosLagFixEnabled()) return;
-    if (!btn || typeof btn.animate !== "function") return;
-    btn.animate([
-        { transform: "rotate(0deg)", offset: 0 },
-        { transform: "rotate(-15deg)", offset: 0.26 },
-        { transform: "rotate(15deg)", offset: 0.58 },
-        { transform: "rotate(0deg)", offset: 1 },
-    ], { duration: 220, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", composite: "replace" });
-}
-
-function playComposerButtonTap(btn) {
-    if (isIosLagFixEnabled()) return;
-    if (!btn || typeof btn.animate !== "function") return;
-    btn.animate([
-        { transform: "rotate(0deg)", offset: 0 },
-        { transform: "rotate(-15deg)", offset: 0.26 },
-        { transform: "rotate(15deg)", offset: 0.58 },
-        { transform: "rotate(0deg)", offset: 1 },
-    ], { duration: 220, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", composite: "replace" });
+function playComposerButtonTap(btn, { variant = "default" } = {}) {
+    if (!btn) return;
+    const iconEl = btn.querySelector("i");
+    const target = iconEl || btn;
+    target.classList.remove("composer-action-icon-shake");
+    target.classList.remove("composer-action-icon-soft");
+    target.classList.remove("composer-sticker-icon-cute");
+    void target.offsetWidth;
+    if (btn.id === "stickerPickerBtn") {
+        target.classList.add("composer-sticker-icon-cute");
+    } else if (variant === "soft") {
+        target.classList.add("composer-action-icon-soft");
+    } else {
+        target.classList.add("composer-action-icon-shake");
+    }
+    target.addEventListener("animationend", () => {
+        target.classList.remove("composer-action-icon-shake");
+        target.classList.remove("composer-action-icon-soft");
+        target.classList.remove("composer-sticker-icon-cute");
+    }, { once: true });
 }
 
 // Animates the swap with a vertical slide (old icon exits up, new enters from below)
@@ -10478,6 +10488,7 @@ chatForm.addEventListener("submit", async (e) => {
         if (!ensureEditModeAllowsTextOnly("attach file")) {
             return;
         }
+        playComposerButtonTap(sendBtn, { variant: "soft" });
         fileUploadInput.click();
         return;
     }
@@ -12099,7 +12110,6 @@ stickerPickerBtn?.addEventListener("click", () => {
 
     openStickerPicker();
 });
-
 stickerUploadBtn?.addEventListener("click", () => {
     stickerUploadInput?.click();
 });

@@ -70,11 +70,12 @@ class UIEnhancements {
         if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
             return;
         }
-        const buttons = document.querySelectorAll(
-            ".btn, .chat-input button, .chat-list li"
-        );
+        const buttons = document.querySelectorAll(".btn, .chat-list li");
 
         buttons.forEach((button) => {
+            if (button.closest && button.closest(".chat-input")) {
+                return;
+            }
             button.addEventListener("click", (e) => {
                 if (isIosLagFixEnabled()) {
                     return;
@@ -187,20 +188,7 @@ class UIEnhancements {
 
         const buttons = document.querySelectorAll("button");
         buttons.forEach((button) => {
-            // Chat-input buttons use Web Animations API instead — the
-            // btn-pressed CSS class conflicts with their hover/pulse transforms
-            // and causes a visible "stuck" moment.
             if (button.closest(".chat-input")) {
-                button.addEventListener("click", () => {
-                    if (isIosLagFixEnabled()) return;
-                    if (typeof button.animate !== "function") return;
-                    button.animate([
-                        { transform: "scale(1)",    offset: 0 },
-                        { transform: "scale(0.88)", offset: 0.25 },
-                        { transform: "scale(1.05)", offset: 0.6 },
-                        { transform: "scale(1)",    offset: 1 },
-                    ], { duration: 300, easing: "ease-out", composite: "replace" });
-                });
                 return;
             }
 

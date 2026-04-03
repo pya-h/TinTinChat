@@ -28,6 +28,65 @@
     --accent-color: #10b981;
     --warning-color: #f59e0b;
     --danger-color: #ef4444;
+    --composer-shake-duration: 310ms;
+    --composer-shake-ease: cubic-bezier(0.24, 0.72, 0.2, 1);
+    --composer-shake-angle-max: 20deg;
+    --composer-shake-angle-mid: 10deg;
+    --composer-shake-scale-high: 1.05;
+    --composer-shake-scale-mid: 1.035;
+    --composer-shake-scale-low: 1.02;
+    --composer-shake-soft-angle-max: 10deg;
+    --composer-shake-soft-angle-mid: 5deg;
+    --composer-shake-soft-scale-main: 1.03;
+    --composer-shake-soft-scale-low: 1.015;
+    --composer-shake-soft-glow-secondary: 36%;
+    --composer-shake-soft-glow-primary: 40%;
+    --composer-glow-secondary-high: 50%;
+    --composer-glow-secondary-mid: 42%;
+    --composer-glow-primary-high: 54%;
+    --composer-sticker-duration: 390ms;
+    --composer-sticker-ease: cubic-bezier(0.22, 0.82, 0.2, 1);
+    --composer-sticker-overshoot-rotate: 374deg;
+    --composer-sticker-overshoot-scale: 1.02;
+    --composer-sticker-scale-main: 1.06;
+    --composer-sticker-glow-settle: 44%;
+    --composer-hover-scale: 1.08;
+    --composer-send-hover-scale: 1.1;
+    --send-icon-slide-distance: 12px;
+    --send-icon-slide-scale: 0.74;
+    --send-icon-slide-out-duration: 0.26s;
+    --send-icon-slide-in-duration: 0.3s;
+    --send-icon-slide-out-ease: cubic-bezier(0.32, 0, 0.92, 1);
+    --send-icon-slide-in-ease: cubic-bezier(0, 0, 0.2, 1.2);
+}
+
+:root[data-anim-profile="playful"] {
+    --composer-shake-duration: 240ms;
+    --composer-shake-angle-max: 25deg;
+    --composer-shake-angle-mid: 12deg;
+    --composer-shake-scale-high: 1.07;
+    --composer-shake-scale-mid: 1.05;
+    --composer-shake-scale-low: 1.03;
+    --composer-shake-soft-angle-max: 14deg;
+    --composer-shake-soft-angle-mid: 7deg;
+    --composer-shake-soft-scale-main: 1.04;
+    --composer-shake-soft-scale-low: 1.02;
+    --composer-shake-soft-glow-secondary: 42%;
+    --composer-shake-soft-glow-primary: 46%;
+    --composer-glow-secondary-high: 58%;
+    --composer-glow-secondary-mid: 48%;
+    --composer-glow-primary-high: 62%;
+    --composer-sticker-duration: 320ms;
+    --composer-sticker-overshoot-rotate: 382deg;
+    --composer-sticker-scale-main: 1.08;
+    --composer-hover-scale: 1.1;
+    --composer-send-hover-scale: 1.12;
+    --send-icon-slide-distance: 14px;
+    --send-icon-slide-scale: 0.7;
+    --send-icon-slide-out-duration: 0.18s;
+    --send-icon-slide-in-duration: 0.22s;
+    --send-icon-slide-out-ease: cubic-bezier(0.4, 0, 1, 1);
+    --send-icon-slide-in-ease: cubic-bezier(0, 0, 0.2, 1.4);
 }
 
 :root[data-theme="dark"] {
@@ -5494,7 +5553,7 @@ textarea,
 
 .chat-input button:hover {
     color: white;
-    transform: scale(1.1);
+    transform: scale(var(--composer-hover-scale));
     box-shadow: var(--shadow-md);
 }
 
@@ -5514,8 +5573,95 @@ textarea,
 }
 
 .chat-input button[type="submit"]:hover {
-    transform: scale(1.12) rotate(2deg);
+    transform: scale(var(--composer-send-hover-scale));
     box-shadow: 0 6px 24px rgba(106, 17, 203, 0.4), 0 0 12px rgba(37, 117, 252, 0.15);
+}
+
+.chat-input button .composer-action-icon-shake {
+    transform-origin: 50% 58%;
+    animation: composerIconShakeGlow var(--composer-shake-duration) var(--composer-shake-ease);
+    will-change: transform, filter;
+}
+
+.chat-input button .composer-action-icon-soft {
+    transform-origin: 50% 58%;
+    animation: composerIconShakeSoft var(--composer-shake-duration) var(--composer-shake-ease);
+    will-change: transform, filter;
+}
+
+@keyframes composerIconShakeGlow {
+    0% {
+        transform: rotate(0deg) scale(1);
+        filter: drop-shadow(0 0 0 color-mix(in srgb, var(--secondary-color) 0%, transparent));
+    }
+    24% {
+        transform: rotate(calc(var(--composer-shake-angle-max) * -1)) scale(var(--composer-shake-scale-mid));
+        filter: drop-shadow(0 0 6px color-mix(in srgb, var(--secondary-color) var(--composer-glow-secondary-high), transparent));
+    }
+    52% {
+        transform: rotate(var(--composer-shake-angle-max)) scale(var(--composer-shake-scale-high));
+        filter: drop-shadow(0 0 8px color-mix(in srgb, var(--primary-color) var(--composer-glow-primary-high), transparent));
+    }
+    76% {
+        transform: rotate(calc(var(--composer-shake-angle-mid) * -1)) scale(var(--composer-shake-scale-low));
+        filter: drop-shadow(0 0 5px color-mix(in srgb, var(--secondary-color) var(--composer-glow-secondary-mid), transparent));
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+        filter: drop-shadow(0 0 0 color-mix(in srgb, var(--primary-color) 0%, transparent));
+    }
+}
+
+@keyframes composerIconShakeSoft {
+    0% {
+        transform: rotate(0deg) scale(1);
+        filter: drop-shadow(0 0 0 color-mix(in srgb, var(--secondary-color) 0%, transparent));
+    }
+    24% {
+        transform: rotate(calc(var(--composer-shake-soft-angle-max) * -1)) scale(var(--composer-shake-soft-scale-main));
+        filter: drop-shadow(0 0 5px color-mix(in srgb, var(--secondary-color) var(--composer-shake-soft-glow-secondary), transparent));
+    }
+    52% {
+        transform: rotate(var(--composer-shake-soft-angle-max)) scale(var(--composer-shake-soft-scale-main));
+        filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary-color) var(--composer-shake-soft-glow-primary), transparent));
+    }
+    76% {
+        transform: rotate(calc(var(--composer-shake-soft-angle-mid) * -1)) scale(var(--composer-shake-soft-scale-low));
+        filter: drop-shadow(0 0 4px color-mix(in srgb, var(--secondary-color) 36%, transparent));
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+        filter: drop-shadow(0 0 0 color-mix(in srgb, var(--primary-color) 0%, transparent));
+    }
+}
+
+.chat-input button .composer-sticker-icon-cute {
+    transform-origin: 50% 62%;
+    animation: composerStickerIconCute var(--composer-sticker-duration) var(--composer-sticker-ease);
+    will-change: transform, filter;
+}
+
+@keyframes composerStickerIconCute {
+    0% {
+        transform: rotate(0deg) scale(1);
+        filter: drop-shadow(0 0 0 color-mix(in srgb, var(--secondary-color) 0%, transparent));
+    }
+    35% {
+        transform: rotate(180deg) scale(var(--composer-sticker-scale-main));
+        filter: drop-shadow(0 0 6px color-mix(in srgb, var(--secondary-color) var(--composer-glow-secondary-high), transparent));
+    }
+    72% {
+        transform: rotate(360deg) scale(var(--composer-sticker-scale-main));
+        filter: drop-shadow(0 0 8px color-mix(in srgb, var(--primary-color) var(--composer-glow-primary-high), transparent));
+    }
+    84% {
+        transform: rotate(var(--composer-sticker-overshoot-rotate)) scale(var(--composer-sticker-overshoot-scale));
+        filter: drop-shadow(0 0 4px color-mix(in srgb, var(--secondary-color) var(--composer-sticker-glow-settle), transparent));
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
+        filter: drop-shadow(0 0 0 color-mix(in srgb, var(--primary-color) 0%, transparent));
+    }
 }
 
 .chat-input:focus-within button[type="submit"] {
@@ -7955,14 +8101,14 @@ textarea,
     }
     100% {
         opacity: 0;
-        transform: translateY(-14px) scale(0.7);
+        transform: translateY(calc(var(--send-icon-slide-distance) * -1)) scale(var(--send-icon-slide-scale));
     }
 }
 
 @keyframes iconSlideIn {
     0% {
         opacity: 0;
-        transform: translateY(14px) scale(0.7);
+        transform: translateY(var(--send-icon-slide-distance)) scale(var(--send-icon-slide-scale));
     }
     100% {
         opacity: 1;
@@ -7976,11 +8122,11 @@ textarea,
 }
 
 #sendBtn i.icon-exit {
-    animation: iconSlideOut 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+    animation: iconSlideOut var(--send-icon-slide-out-duration) var(--send-icon-slide-out-ease) forwards;
 }
 
 #sendBtn i.icon-enter {
-    animation: iconSlideIn 0.22s cubic-bezier(0, 0, 0.2, 1.4) forwards;
+    animation: iconSlideIn var(--send-icon-slide-in-duration) var(--send-icon-slide-in-ease) forwards;
 }
 
 #searchUser.suggestions-active {

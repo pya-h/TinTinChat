@@ -1,4 +1,4 @@
-const SW_VERSION = "ttc-pwa-v1";
+const SW_VERSION = "ttc-pwa-v2";
 const CACHE_APP_SHELL = `${SW_VERSION}-shell`;
 const CACHE_STATIC = `${SW_VERSION}-static`;
 const CACHE_API = `${SW_VERSION}-api`;
