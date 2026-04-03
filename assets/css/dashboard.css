@@ -2580,6 +2580,16 @@ nav.navbar::after {
     background: rgba(255, 255, 255, 0.26);
 }
 
+@media (hover: none), (pointer: coarse) {
+    .message-copy-btn,
+    .message:hover .message-copy-btn,
+    .message:focus-within .message-copy-btn {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+}
+
 .message-context-menu {
     position: fixed;
     z-index: 2500;
@@ -4168,7 +4178,7 @@ textarea,
 .message.sent.is-sticker-message .message-status-indicator {
     position: absolute;
     bottom: -0.34rem;
-    left: 0.4rem;
+    left: 0.72rem;
     right: auto;
     margin: 0;
     padding: 0.2rem 0.35rem;
@@ -4179,7 +4189,7 @@ textarea,
 :root:not([data-density="compact"]) .message.sent .message-status-indicator {
     position: absolute;
     bottom: -0.34rem;
-    left: 0.4rem;
+    left: 0.72rem;
     right: auto;
     float: none;
     clear: none;
@@ -4197,9 +4207,10 @@ textarea,
     right: auto !important;
     float: none !important;
     clear: none !important;
-    margin: 0 0 0 0.3rem;
+    margin: 0 0 0 0.18rem;
     padding: 0;
     border-radius: 0;
+    vertical-align: middle;
 }
 
 :root[data-density="compact"] .message.sent.is-text-message .message-status-indicator {
@@ -4829,14 +4840,14 @@ textarea,
 }
 
 :root:not([data-density="compact"]) .message.sent .message-meta-time {
-    right: 0.2rem;
+    right: 0.34rem;
     left: auto;
     text-align: right;
 }
 
 :root:not([data-density="compact"]) .message.received .message-meta-time,
 :root:not([data-density="compact"]) .group-incoming-message .group-message-meta-time {
-    left: 0.2rem;
+    left: 0.34rem;
     right: auto;
     text-align: left;
 }
@@ -4847,7 +4858,19 @@ textarea,
     bottom: auto !important;
     left: auto !important;
     right: auto !important;
+    float: none !important;
+    display: inline-block;
+    margin-top: 0.08rem !important;
+    line-height: 1;
     pointer-events: auto;
+}
+
+:root[data-density="compact"] .message.is-voice-message .message-meta-time,
+:root[data-density="compact"] .message.is-image-message .message-meta-time,
+:root[data-density="compact"] .message.is-video-message .message-meta-time,
+:root[data-density="compact"] .message.is-file-message .message-meta-time,
+:root[data-density="compact"] .message.is-sticker-message .message-meta-time {
+    margin-top: 0.03rem !important;
 }
 
 .chat-messages.hide-message-timestamps .message-meta-time,
@@ -6810,6 +6833,10 @@ textarea,
         left: 30%;
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
+    }
+
+    :root.replying-active .recording-indicator {
+        bottom: calc(10.2rem + env(safe-area-inset-bottom, 0px));
     }
 
     .chat-input button {

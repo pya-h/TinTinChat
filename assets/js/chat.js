@@ -430,6 +430,25 @@ const selectedMessageIds = new Set();
 let isSelectModeActive = false;
 let activeEditMessageId = 0;
 
+function syncComposerContextFlags() {
+    const root = document.documentElement;
+    if (!root) {
+        return;
+    }
+    root.classList.toggle("replying-active", Boolean(currentReplyTarget && !activeEditMessageId));
+    root.classList.toggle("edit-mode-active", Boolean(activeEditMessageId));
+}
+
+function ensureEditModeAllowsTextOnly(actionLabel = "send media") {
+    if (!activeEditMessageId) {
+        return true;
+    }
+    const message = "Edit mode only supports text updates. Save or cancel your edit first.";
+    setComposerStatus(message, "warning");
+    showModal("Edit Mode Active", `${message} (${actionLabel})`, "warning");
+    return false;
+}
+
 const CUSTOM_SOUND_PATH = "assets/sounds/notification.mp3";
 const chatUtils = window.ChatUtils || {
     parseStoredBoolean(value, fallback = true) {
@@ -3075,10 +3094,32 @@ function syncMobileComposerActions() {
         return;
     }
 
+    const isEditing = Boolean(activeEditMessageId);
+    imageUploadBtn.disabled = isEditing;
+    voiceBtn.disabled = isEditing;
+    if (stickerPickerBtn) {
+        stickerPickerBtn.disabled = isEditing;
+        stickerPickerBtn.setAttribute("aria-disabled", isEditing ? "true" : "false");
+    }
+
+    if (isEditing) {
+        appSettings.mobileComposerExpanded = false;
+        closeImageSourceMenu();
+        closeStickerPicker();
+    }
+
     if (!isMobileViewport()) {
         imageUploadBtn.style.display = "";
         voiceBtn.style.display = "";
         composerToolsToggleBtn.style.display = "none";
+        chatForm.classList.remove("mobile-tools-visible");
+        return;
+    }
+
+    if (isEditing) {
+        composerToolsToggleBtn.style.display = "none";
+        imageUploadBtn.style.display = "none";
+        voiceBtn.style.display = "none";
         chatForm.classList.remove("mobile-tools-visible");
         return;
     }
@@ -3226,6 +3267,9 @@ function openStickerPicker() {
 }
 
 async function sendStickerMessage(stickerId) {
+    if (!ensureEditModeAllowsTextOnly("send sticker")) {
+        return;
+    }
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
@@ -3272,6 +3316,9 @@ async function sendStickerMessage(stickerId) {
 }
 
 async function uploadSticker(file) {
+    if (!ensureEditModeAllowsTextOnly("upload sticker")) {
+        return;
+    }
     if (!file) {
         return;
     }
@@ -5059,6 +5106,7 @@ function clearReplyState() {
         replyPreviewElem.style.display = "none";
         replyPreviewElem.innerHTML = "";
     }
+    syncComposerContextFlags();
 }
 
 function setReplyState(messageElement) {
@@ -5091,6 +5139,7 @@ function setReplyState(messageElement) {
     replyPreviewElem.style.display = "flex";
     const closeBtn = replyPreviewElem.querySelector(".reply-preview-close");
     closeBtn?.addEventListener("click", clearReplyState);
+    syncComposerContextFlags();
 }
 
 function buildReplyPreviewHtml(msg, decryptedReplyText) {
@@ -6094,6 +6143,8 @@ function cancelEditMode({ restoreFocus = false } = {}) {
     chatInput.value = "";
     chatInput.style.height = "";
     setComposerStatus("", "neutral");
+    syncMobileComposerActions();
+    syncComposerContextFlags();
     if (restoreFocus) {
         chatInput.focus();
     }
@@ -6136,9 +6187,11 @@ function beginEditMode(messageElement) {
 
     chatInput.value = currentText;
     chatInput.focus();
-    chatInput.selectionStart = chatInput.value.length;
+    chatInput.selectionStart = 0;
     chatInput.selectionEnd = chatInput.value.length;
     setComposerStatus("Edit mode: press Enter to save, Esc to cancel.", "warning");
+    syncMobileComposerActions();
+    syncComposerContextFlags();
 }
 
 async function encryptEditedPayloadForCurrentChat(text) {
@@ -10047,10 +10100,15 @@ function createClipboardImageFile(blob) {
 }
 
 async function refreshClipboardImageCandidate() {
-    if (!(window.isSecureContext && navigator.clipboard?.read) || !currentChatUser) {
+    if (!currentChatUser) {
         pendingClipboardImageFile = null;
         setClipboardImageButtonVisibility(false);
         return null;
+    }
+
+    if (!(window.isSecureContext && navigator.clipboard?.read)) {
+        setClipboardImageButtonVisibility(Boolean(pendingClipboardImageFile));
+        return pendingClipboardImageFile;
     }
 
     try {
@@ -10086,6 +10144,9 @@ async function refreshClipboardImageCandidate() {
 }
 
 async function sendClipboardImage({ requireConfirm = true } = {}) {
+    if (!ensureEditModeAllowsTextOnly("send clipboard image")) {
+        return;
+    }
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
@@ -10110,26 +10171,29 @@ async function sendClipboardImage({ requireConfirm = true } = {}) {
     setClipboardImageButtonVisibility(false);
 }
 
-function extractPastedImageFile(pasteEvent) {
-    const clipboardData = pasteEvent?.clipboardData;
-    if (!clipboardData) {
+function extractClipboardImageFileFromDataTransfer(dataTransfer) {
+    if (!dataTransfer) {
         return null;
     }
 
-    const clipboardItems = Array.from(clipboardData.items || []);
+    const clipboardItems = Array.from(dataTransfer.items || []);
     const imageItem = clipboardItems.find((item) => String(item.type || "").startsWith("image/"));
     const imageBlob = imageItem?.getAsFile?.();
     if (imageBlob) {
         return createClipboardImageFile(imageBlob);
     }
 
-    const files = Array.from(clipboardData.files || []);
+    const files = Array.from(dataTransfer.files || []);
     const imageFile = files.find((file) => String(file.type || "").startsWith("image/"));
     if (imageFile) {
         return createClipboardImageFile(imageFile);
     }
 
     return null;
+}
+
+function extractPastedImageFile(pasteEvent) {
+    return extractClipboardImageFileFromDataTransfer(pasteEvent?.clipboardData || null);
 }
 
 const fileUploadInput = document.getElementById("fileUploadInput");
@@ -10140,6 +10204,9 @@ let longPressTimer = null;
 sendBtn.addEventListener("mousedown", (e) => {
     longPressTimer = setTimeout(() => {
         e.preventDefault();
+        if (!ensureEditModeAllowsTextOnly("attach file")) {
+            return;
+        }
         fileUploadInput.click();
         longPressTimer = null;
     }, MESSAGE_LONG_PRESS_MS);
@@ -10162,6 +10229,9 @@ sendBtn.addEventListener("mouseleave", () => {
 sendBtn.addEventListener("touchstart", (e) => {
     longPressTimer = setTimeout(() => {
         e.preventDefault();
+        if (!ensureEditModeAllowsTextOnly("attach file")) {
+            return;
+        }
         fileUploadInput.click();
         longPressTimer = null;
     }, MESSAGE_LONG_PRESS_MS);
@@ -10175,6 +10245,10 @@ sendBtn.addEventListener("touchend", () => {
 });
 
 fileUploadInput.addEventListener("change", (e) => {
+    if (!ensureEditModeAllowsTextOnly("send file")) {
+        e.target.value = null;
+        return;
+    }
     const file = e.target.files[0];
     if (file) {
         sendFileMessage(file);
@@ -10320,13 +10394,11 @@ function playSendBtnTap(btn) {
     if (isIosLagFixEnabled()) return;
     if (!btn || typeof btn.animate !== "function") return;
     btn.animate([
-        { transform: "rotate(0deg) scale(1)",   offset: 0 },
-        { transform: "rotate(-14deg) scale(0.9)", offset: 0.15 },
-        { transform: "rotate(12deg) scale(1.06)",  offset: 0.35 },
-        { transform: "rotate(-6deg)",              offset: 0.55 },
-        { transform: "rotate(3deg)",               offset: 0.75 },
-        { transform: "rotate(0deg) scale(1)",      offset: 1 },
-    ], { duration: 400, easing: "ease-out", composite: "replace" });
+        { transform: "rotate(0deg) scale(1)", offset: 0 },
+        { transform: "rotate(-10deg) scale(0.94)", offset: 0.22 },
+        { transform: "rotate(8deg) scale(1.03)", offset: 0.54 },
+        { transform: "rotate(0deg) scale(1)", offset: 1 },
+    ], { duration: 240, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", composite: "replace" });
 }
 
 // Animates the swap with a vertical slide (old icon exits up, new enters from below)
@@ -10392,6 +10464,9 @@ updateSendButtonIcon();
 chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!chatInput.value.trim()) {
+        if (!ensureEditModeAllowsTextOnly("attach file")) {
+            return;
+        }
         fileUploadInput.click();
         return;
     }
@@ -10428,9 +10503,32 @@ chatInput.addEventListener("keydown", async (e) => {
     }
 });
 
+chatInput.addEventListener("beforeinput", (event) => {
+    if (String(event?.inputType || "") !== "insertFromPaste") {
+        return;
+    }
+    const pastedImageFile = extractClipboardImageFileFromDataTransfer(event?.dataTransfer || null);
+    if (!pastedImageFile) {
+        return;
+    }
+    if (!ensureEditModeAllowsTextOnly("paste image")) {
+        event.preventDefault();
+        return;
+    }
+    event.preventDefault();
+    pendingClipboardImageFile = pastedImageFile;
+    setClipboardImageButtonVisibility(true);
+    setComposerStatus("Clipboard image ready. Tap Paste to send.", "info");
+});
+
 chatInput.addEventListener("paste", async (event) => {
     const pastedImageFile = extractPastedImageFile(event);
     if (!pastedImageFile) {
+        return;
+    }
+
+    if (!ensureEditModeAllowsTextOnly("paste image")) {
+        event.preventDefault();
         return;
     }
 
@@ -10457,6 +10555,11 @@ document.addEventListener("paste", async (event) => {
 
     const pastedImageFile = extractPastedImageFile(event);
     if (!pastedImageFile) {
+        return;
+    }
+
+    if (!ensureEditModeAllowsTextOnly("paste image")) {
+        event.preventDefault();
         return;
     }
 
@@ -10548,6 +10651,18 @@ chatInput.addEventListener("click", () => {
     }
 });
 
+chatInput.addEventListener("touchend", () => {
+    if (!pendingClipboardImageFile) {
+        void refreshClipboardImageCandidate();
+    }
+}, { passive: true });
+
+chatInput.addEventListener("pointerup", () => {
+    if (!pendingClipboardImageFile) {
+        void refreshClipboardImageCandidate();
+    }
+});
+
 chatInput.addEventListener("blur", () => {
     isChatInputFocused = false;
     setClipboardImageButtonVisibility(false);
@@ -10604,6 +10719,12 @@ pasteClipboardImageBtn?.addEventListener("click", async () => {
 
 window.addEventListener("focus", () => {
     if (isChatInputFocused) {
+        void refreshClipboardImageCandidate();
+    }
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && isChatInputFocused) {
         void refreshClipboardImageCandidate();
     }
 });
@@ -11748,6 +11869,9 @@ setInterval(async () => {
 }, SEEN_STATUS_POLL_MS);
 
 voiceBtn.addEventListener("click", async () => {
+    if (!ensureEditModeAllowsTextOnly("record voice message")) {
+        return;
+    }
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
@@ -11860,6 +11984,9 @@ window.stopRecording = stopRecording;
 window.cancelRecording = cancelRecording;
 
 async function sendVoiceMessage(audioBlob) {
+    if (!ensureEditModeAllowsTextOnly("send voice message")) {
+        return;
+    }
     const replyToId = currentReplyTarget?.messageId || null;
     try {
         const sendingIndicator = document.createElement("div");
@@ -11928,6 +12055,9 @@ async function sendVoiceMessage(audioBlob) {
 }
 
 imageUploadBtn.addEventListener("click", () => {
+    if (!ensureEditModeAllowsTextOnly("send image or media")) {
+        return;
+    }
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
@@ -11940,6 +12070,9 @@ imageUploadBtn.addEventListener("click", () => {
 });
 
 stickerPickerBtn?.addEventListener("click", () => {
+    if (!ensureEditModeAllowsTextOnly("send sticker")) {
+        return;
+    }
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
@@ -11958,6 +12091,10 @@ stickerUploadBtn?.addEventListener("click", () => {
 });
 
 stickerUploadInput?.addEventListener("change", async (event) => {
+    if (!ensureEditModeAllowsTextOnly("upload sticker")) {
+        event.target.value = "";
+        return;
+    }
     const selectedFile = event.target?.files?.[0];
     event.target.value = "";
     if (!selectedFile) {
@@ -11967,6 +12104,10 @@ stickerUploadInput?.addEventListener("change", async (event) => {
 });
 
 function handleSelectedImageFile(e) {
+    if (!ensureEditModeAllowsTextOnly("send image")) {
+        e.target.value = null;
+        return;
+    }
     const file = e.target.files?.[0];
     e.target.value = null;
     if (!file) {
@@ -11989,6 +12130,10 @@ function handleSelectedImageFile(e) {
 }
 
 function handleSelectedVideoFile(e) {
+    if (!ensureEditModeAllowsTextOnly("send video")) {
+        e.target.value = null;
+        return;
+    }
     const file = e.target.files?.[0];
     e.target.value = null;
     if (!file) {
@@ -12114,6 +12259,9 @@ videoCaptureOverlay?.addEventListener("click", (event) => {
 });
 
 async function sendImageMessage(imageFile) {
+    if (!ensureEditModeAllowsTextOnly("send image")) {
+        return;
+    }
     const replyToId = currentReplyTarget?.messageId || null;
     try {
         const sendingIndicator = document.createElement("div");
@@ -12186,6 +12334,9 @@ async function sendImageMessage(imageFile) {
 }
 
 async function sendFileMessage(file, { asVideo = false } = {}) {
+    if (!ensureEditModeAllowsTextOnly(asVideo ? "send video" : "send file")) {
+        return;
+    }
     if (!currentChatUser) {
         showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
         return;
