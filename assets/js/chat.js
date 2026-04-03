@@ -2497,7 +2497,7 @@ async function fetchConversationMusicChunk(chatTarget, offset = 0, limit = DETAI
     return window.ApiService.jsonOk(`api/messages/music_list.php?${params.toString()}`);
 }
 
-async function buildMusicTrackFromMessage(messageRow) {
+async function buildMusicTrackFromMessage(messageRow, chatTarget = "") {
     const msg = messageRow && typeof messageRow === "object" ? messageRow : null;
     if (!msg || Number(msg.id || 0) <= 0) {
         return null;
@@ -2528,10 +2528,243 @@ async function buildMusicTrackFromMessage(messageRow) {
         id: Number(msg.id),
         title,
         ext,
+        chatTarget: String(chatTarget || ""),
         senderLabel,
         isPurged: Boolean(msg.file_purged_at),
         message: msg,
     };
+}
+
+function closeDetailsMusicContextMenu({ restoreFocus = true } = {}) {
+    const existing = document.getElementById("detailsMusicContextMenu");
+    if (!existing) {
+        return;
+    }
+    const anchor = existing.__anchorElement || null;
+    existing.remove();
+    if (restoreFocus && anchor && typeof anchor.focus === "function") {
+        anchor.focus();
+    }
+}
+
+function normalizeMusicContextTrack(rawTrack) {
+    if (!rawTrack || typeof rawTrack !== "object") {
+        return null;
+    }
+    const messageId = Number(
+        rawTrack.id || rawTrack.msgId || rawTrack?.message?.id || rawTrack?.meta?.id || 0
+    );
+    if (messageId <= 0) {
+        return null;
+    }
+    const ext = String(rawTrack.ext || "").trim();
+    const messageMeta = rawTrack.message && typeof rawTrack.message === "object"
+        ? rawTrack.message
+        : (rawTrack.meta && typeof rawTrack.meta === "object"
+            ? Object.assign({ id: messageId }, rawTrack.meta)
+            : null);
+    return {
+        id: messageId,
+        title: String(rawTrack.title || "Unknown"),
+        ext,
+        chatTarget: String(rawTrack.chatTarget || currentChatUser || ""),
+        message: messageMeta,
+    };
+}
+
+function addMusicTrackToPlaylistFromContext(rawTrack) {
+    const track = normalizeMusicContextTrack(rawTrack);
+    if (!track) {
+        setComposerStatus("Track metadata unavailable.", "warning");
+        return;
+    }
+    if (track.message && typeof track.message === "object") {
+        messageMetaById.set(track.id, track.message);
+    }
+    addToPlaylist(track.id, track.chatTarget || currentChatUser, track.title, track.ext);
+}
+
+function removeMusicTrackFromPlaylistFromContext(rawTrack) {
+    const track = normalizeMusicContextTrack(rawTrack);
+    if (!track) {
+        setComposerStatus("Track metadata unavailable.", "warning");
+        return;
+    }
+
+    const list = getPlaylist();
+    const removeIdx = list.findIndex((entry) => Number(entry.msgId || 0) === track.id);
+    if (removeIdx < 0) {
+        setComposerStatus("Track is not in your playlist.", "info");
+        return;
+    }
+
+    removeFromPlaylist(track.id);
+    if (savedPanelCurrentTrackIdx === removeIdx) {
+        stopSavedPanelAudio();
+    } else if (savedPanelCurrentTrackIdx > removeIdx) {
+        savedPanelCurrentTrackIdx--;
+    }
+    renderSavedPlaylistPanel();
+}
+
+async function goToMusicTrackMessage(rawTrack) {
+    const track = normalizeMusicContextTrack(rawTrack);
+    if (!track) {
+        setComposerStatus("Track message not found.", "warning");
+        return;
+    }
+
+    if (track.chatTarget && track.chatTarget !== currentChatUser) {
+        await selectChatTarget(track.chatTarget);
+    }
+
+    let didRequestPanelClose = false;
+    try {
+        if (savedMessagesInfoPanel && !savedMessagesInfoPanel.hidden) {
+            didRequestPanelClose = true;
+        }
+        if (privateChatInfoPanel && !privateChatInfoPanel.hidden) {
+            didRequestPanelClose = true;
+        }
+        if (groupInfoPanel && !groupInfoPanel.hidden) {
+            didRequestPanelClose = true;
+        }
+        closeSavedMessagesInfoPanel();
+        closePrivateChatInfoPanel();
+        closeGroupInfoPanel();
+    } catch (_) {}
+
+    if (didRequestPanelClose) {
+        await new Promise((resolve) => setTimeout(resolve, 380));
+    }
+
+    await scrollToReplyTarget(track.id);
+}
+
+function openDetailsMusicContextMenu(rawTrack, { x = 0, y = 0, anchorElement = null, mode = "details" } = {}) {
+    const track = normalizeMusicContextTrack(rawTrack);
+    if (!track) {
+        return;
+    }
+
+    closeMessageContextMenu();
+    closeDetailsMusicContextMenu({ restoreFocus: false });
+
+    const menu = document.createElement("div");
+    menu.id = "detailsMusicContextMenu";
+    menu.className = "message-context-menu";
+    menu.setAttribute("role", "menu");
+    menu.__anchorElement = anchorElement || null;
+
+    const playlistBtn = document.createElement("button");
+    playlistBtn.type = "button";
+    playlistBtn.className = "message-context-menu-item";
+    if (mode === "playlist") {
+        playlistBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Remove from Playlist';
+        playlistBtn.addEventListener("click", () => {
+            removeMusicTrackFromPlaylistFromContext(track);
+            closeDetailsMusicContextMenu();
+        });
+    } else {
+        playlistBtn.innerHTML = '<i class="fas fa-list-ul me-2"></i>Add to Playlist';
+        playlistBtn.addEventListener("click", () => {
+            addMusicTrackToPlaylistFromContext(track);
+            closeDetailsMusicContextMenu();
+        });
+    }
+    menu.appendChild(playlistBtn);
+
+    const goBtn = document.createElement("button");
+    goBtn.type = "button";
+    goBtn.className = "message-context-menu-item";
+    goBtn.innerHTML = '<i class="fas fa-location-arrow me-2"></i>Go to Message';
+    goBtn.addEventListener("click", async () => {
+        closeDetailsMusicContextMenu({ restoreFocus: false });
+        await goToMusicTrackMessage(track);
+    });
+    menu.appendChild(goBtn);
+
+    document.body.appendChild(menu);
+
+    const menuRect = menu.getBoundingClientRect();
+    const maxLeft = Math.max(8, window.innerWidth - menuRect.width - 8);
+    const maxTop = Math.max(8, window.innerHeight - menuRect.height - 8);
+    menu.style.left = `${Math.min(Math.max(8, x), maxLeft)}px`;
+    menu.style.top = `${Math.min(Math.max(8, y), maxTop)}px`;
+
+    playlistBtn.focus();
+}
+
+function bindMusicItemContextMenu(item, rawTrack, options = {}) {
+    if (!item || !rawTrack) {
+        return;
+    }
+
+    const mode = options.mode === "playlist" ? "playlist" : "details";
+
+    const isBlockedTarget = (target) => {
+        return Boolean(target?.closest?.(".saved-pl-play, .saved-pl-remove"));
+    };
+
+    item.addEventListener("contextmenu", (event) => {
+        if (isBlockedTarget(event.target)) {
+            return;
+        }
+        event.preventDefault();
+        openDetailsMusicContextMenu(rawTrack, {
+            x: Number(event.clientX || 0),
+            y: Number(event.clientY || 0),
+            anchorElement: item,
+            mode,
+        });
+    });
+
+    let touchLongPressTimer = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    item.addEventListener("touchstart", (event) => {
+        if (event.touches.length !== 1 || isBlockedTarget(event.target)) {
+            return;
+        }
+        const touch = event.touches[0];
+        touchStartX = Number(touch.clientX || 0);
+        touchStartY = Number(touch.clientY || 0);
+        touchLongPressTimer = window.setTimeout(() => {
+            touchLongPressTimer = 0;
+            openDetailsMusicContextMenu(rawTrack, {
+                x: touchStartX,
+                y: touchStartY,
+                anchorElement: item,
+                mode,
+            });
+            suppressNextContextMenuTapUntil = Date.now() + 400;
+        }, MESSAGE_LONG_PRESS_MS);
+    }, { passive: true });
+
+    item.addEventListener("touchmove", (event) => {
+        if (!touchLongPressTimer) {
+            return;
+        }
+        const touch = event.touches[0];
+        const deltaX = Math.abs(Number(touch?.clientX || 0) - touchStartX);
+        const deltaY = Math.abs(Number(touch?.clientY || 0) - touchStartY);
+        if (deltaX > 10 || deltaY > 10) {
+            clearTimeout(touchLongPressTimer);
+            touchLongPressTimer = 0;
+        }
+    }, { passive: true });
+
+    const clearLongPress = () => {
+        if (!touchLongPressTimer) {
+            return;
+        }
+        clearTimeout(touchLongPressTimer);
+        touchLongPressTimer = 0;
+    };
+
+    item.addEventListener("touchend", clearLongPress, { passive: true });
+    item.addEventListener("touchcancel", clearLongPress, { passive: true });
 }
 
 async function playDetailsMusicTrack(playBtn, track) {
@@ -2600,6 +2833,7 @@ function renderDetailsMusicItems(body, tracks) {
     tracks.forEach((track) => {
         const item = document.createElement("div");
         item.className = "saved-playlist-item" + (track.isPurged ? " playlist-item-purged" : "");
+        item.tabIndex = 0;
         item.innerHTML = `
             <button type="button" class="saved-pl-play" title="${track.isPurged ? "File expired" : "Play"}" ${track.isPurged ? "disabled" : ""}>
                 <i class="fas ${track.isPurged ? "fa-clock" : "fa-play"}"></i>
@@ -2615,6 +2849,7 @@ function renderDetailsMusicItems(body, tracks) {
                 await playDetailsMusicTrack(playBtn, track);
             });
         }
+        bindMusicItemContextMenu(item, track);
         body.appendChild(item);
     });
 }
@@ -2699,7 +2934,7 @@ async function loadDetailsMusicPanelPage({ panelKey, bodyId, countId, chatTarget
                 continue;
             }
             messageMetaById.set(Number(candidate.id), candidate);
-            const track = await buildMusicTrackFromMessage(candidate);
+            const track = await buildMusicTrackFromMessage(candidate, targetToken);
             if (!track) {
                 continue;
             }
@@ -2861,6 +3096,7 @@ function renderSavedPlaylistPanel() {
         const isPurged = Boolean((freshMeta && freshMeta.file_purged_at) || track.meta?.file_purged_at);
         item.className = "saved-playlist-item" + (idx === savedPanelCurrentTrackIdx ? " active" : "") + (isPurged ? " playlist-item-purged" : "");
         item.setAttribute("data-playlist-idx", String(idx));
+        item.tabIndex = 0;
         item.innerHTML = `
             <button type="button" class="saved-pl-play" title="${isPurged ? "File expired" : "Play"}" ${isPurged ? "disabled" : ""}>
                 <i class="fas ${isPurged ? "fa-clock" : (idx === savedPanelCurrentTrackIdx && savedPanelPlaylistAudio && !savedPanelPlaylistAudio.paused ? "fa-pause" : "fa-play")}"></i>
@@ -2885,6 +3121,15 @@ function renderSavedPlaylistPanel() {
             }
             renderSavedPlaylistPanel();
         });
+        bindMusicItemContextMenu(item, {
+            id: Number(track.msgId || track.meta?.id || 0),
+            msgId: Number(track.msgId || 0),
+            title: String(track.title || "Unknown"),
+            ext: String(track.ext || ""),
+            chatTarget: String(track.chatTarget || currentChatUser || ""),
+            message: freshMeta || track.meta || null,
+            meta: track.meta || null,
+        }, { mode: "playlist" });
         savedPlaylistBody.appendChild(item);
     });
 }
@@ -7256,14 +7501,18 @@ document.addEventListener(
         if (Date.now() < suppressReactionPickerAutoCloseUntil) {
             return;
         }
+    const detailsMenu = document.getElementById("detailsMusicContextMenu");
     const menu = document.getElementById("messageContextMenu");
     if (!menu) {
         const picker = document.getElementById("messageReactionPicker");
-        if (!picker) {
+        if (!picker && !detailsMenu) {
             return;
         }
         if (!event.target.closest("#messageReactionPicker")) {
             closeReactionPicker({ restoreFocus: false });
+        }
+        if (!event.target.closest("#detailsMusicContextMenu")) {
+            closeDetailsMusicContextMenu({ restoreFocus: false });
         }
         return;
     }
@@ -7275,11 +7524,20 @@ document.addEventListener(
     if (picker && !event.target.closest("#messageReactionPicker")) {
         closeReactionPicker({ restoreFocus: false });
     }
+    if (detailsMenu && !event.target.closest("#detailsMusicContextMenu")) {
+        closeDetailsMusicContextMenu({ restoreFocus: false });
+    }
     },
     true
 );
 
 document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.getElementById("detailsMusicContextMenu")) {
+        event.preventDefault();
+        closeDetailsMusicContextMenu();
+        return;
+    }
+
     if (event.key === "Escape" && document.getElementById("messageReactionPicker")) {
         event.preventDefault();
         closeReactionPicker();
@@ -7318,11 +7576,17 @@ document.addEventListener("scroll", () => {
     if (document.getElementById("messageReactionPicker")) {
         scheduleReactionPickerReposition();
     }
+    if (document.getElementById("detailsMusicContextMenu")) {
+        closeDetailsMusicContextMenu({ restoreFocus: false });
+    }
 }, true);
 
 window.addEventListener("resize", () => {
     if (document.getElementById("messageReactionPicker")) {
         scheduleReactionPickerReposition();
+    }
+    if (document.getElementById("detailsMusicContextMenu")) {
+        closeDetailsMusicContextMenu({ restoreFocus: false });
     }
 });
 
@@ -8090,72 +8354,108 @@ function scrollToMessageAndHighlight(targetElement) {
 }
 
 async function scrollToReplyTarget(targetId) {
+    const normalizedTargetId = Number(targetId || 0);
+    if (!normalizedTargetId) {
+        setComposerStatus("Original message is no longer available.", "warning");
+        return;
+    }
+
     // 1. Check if already in DOM
-    let targetMessage = chatMessagesElem.querySelector(`[data-message-id="${targetId}"]`);
+    let targetMessage = chatMessagesElem.querySelector(`[data-message-id="${normalizedTargetId}"]`);
     if (targetMessage) {
         scrollToMessageAndHighlight(targetMessage);
         return;
     }
 
-    // 2. Not loaded — fetch all messages from current offset to target in one request
-    if (!currentChatUser || !hasMoreMessages) {
+    // 2. Not loaded — try targeted fetch and then incremental loading fallback
+    if (!currentChatUser) {
         setComposerStatus("Original message is no longer available.", "warning");
         return;
     }
 
     setComposerStatus("Loading messages...", "success");
     try {
+        const centerTargetMessage = async (targetElement) => {
+            if (!(targetElement instanceof HTMLElement) || !chatMessagesElem) {
+                return;
+            }
+            const containerRect = chatMessagesElem.getBoundingClientRect();
+            const targetRect = targetElement.getBoundingClientRect();
+            const idealTop = containerRect.top + (chatMessagesElem.clientHeight / 2) - (targetRect.height / 2);
+            const delta = targetRect.top - idealTop;
+            if (Math.abs(delta) > 0.5) {
+                chatMessagesElem.scrollTop += delta;
+            }
+            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        };
+
         const query = buildChatQueryParams(currentChatUser, {
-            offset: messageOffset,
-            target_id: targetId,
+            offset: 0,
+            target_id: normalizedTargetId,
         });
         const data = await window.ApiService.json(`api/messages/fetch.php?${query.toString()}`);
 
-        if (!data.messages?.length) {
+        if (Array.isArray(data?.messages) && data.messages.length) {
+            const existingLoadMore = document.getElementById("loadMoreBtn");
+            if (existingLoadMore) existingLoadMore.remove();
+
+            const viewportAnchor = captureViewportAnchor();
+            let addedCount = 0;
+
+            isBatchRendering = true;
+            for (let i = data.messages.length - 1; i >= 0; i--) {
+                const incoming = data.messages[i];
+                const incomingId = Number(incoming?.id || 0);
+                if (incomingId > 0 && chatMessagesElem.querySelector(`.message[data-message-id="${incomingId}"]`)) {
+                    messageMetaById.set(incomingId, incoming);
+                    continue;
+                }
+                await addMessageToChat(incoming, true);
+                addedCount++;
+            }
+            isBatchRendering = false;
+
+            rebuildMessageDaySeparators();
+            restoreViewportAnchor(viewportAnchor);
+
+            if (addedCount > 0) {
+                messageOffset += addedCount;
+            }
+            hasMoreMessages = Boolean(data?.hasMore) || hasMoreMessages;
+            if (hasMoreMessages) addLoadMoreButton();
+            updateGoToLatestButton();
+        }
+
+        // Now find the target — wait for layout to settle, then scroll once + highlight
+        targetMessage = chatMessagesElem.querySelector(`[data-message-id="${normalizedTargetId}"]`);
+        let safety = 0;
+        while (!targetMessage && safety < 180) {
+            safety++;
+            const beforeOffset = Number(messageOffset || 0);
+            const beforeHasMore = Boolean(hasMoreMessages);
+            await loadMessages(currentChatUser, false, false);
+            targetMessage = chatMessagesElem.querySelector(`[data-message-id="${normalizedTargetId}"]`);
+            if (targetMessage) {
+                break;
+            }
+            if (!beforeHasMore && Number(messageOffset || 0) === beforeOffset) {
+                break;
+            }
+            if (!hasMoreMessages && Number(messageOffset || 0) === beforeOffset) {
+                break;
+            }
+        }
+
+        if (!targetMessage) {
             setComposerStatus("Could not find the original message.", "warning");
             return;
         }
 
-        // Remove existing "Load More" button before prepending
-        const existingLoadMore = document.getElementById("loadMoreBtn");
-        if (existingLoadMore) existingLoadMore.remove();
-
-        // Prepend all messages at once, preserving scroll position
-        const savedScrollTop = chatMessagesElem.scrollTop;
-        let runningHeightDelta = 0;
-
-        isBatchRendering = true;
-        for (let i = data.messages.length - 1; i >= 0; i--) {
-            const prevH = chatMessagesElem.scrollHeight;
-            await addMessageToChat(data.messages[i], true);
-            const addedH = chatMessagesElem.scrollHeight - prevH;
-            runningHeightDelta += addedH;
-            chatMessagesElem.scrollTop = savedScrollTop + runningHeightDelta;
-        }
-        isBatchRendering = false;
-        const viewportAnchor = captureViewportAnchor();
-        rebuildMessageDaySeparators();
-        restoreViewportAnchor(viewportAnchor);
-
-        messageOffset += data.messages.length;
-        hasMoreMessages = data.hasMore;
-        if (hasMoreMessages) addLoadMoreButton();
-        updateGoToLatestButton();
-
-        // Now find the target — wait for layout to settle, then scroll once + highlight
-        targetMessage = chatMessagesElem.querySelector(`[data-message-id="${targetId}"]`);
-        if (targetMessage) {
-            setComposerStatus("");
-            // Give the DOM a moment to finish rendering all prepended messages
-            await new Promise((r) => setTimeout(r, 300));
-            // Single instant jump to position the message in view
-            targetMessage.scrollIntoView({ behavior: "auto", block: "center" });
-            // Wait one more frame for the scroll to take effect, then highlight
-            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-            targetElement_playHighlight(targetMessage);
-        } else {
-            setComposerStatus("Could not find the original message.", "warning");
-        }
+        setComposerStatus("");
+        await new Promise((r) => setTimeout(r, 220));
+        await centerTargetMessage(targetMessage);
+        await centerTargetMessage(targetMessage);
+        targetElement_playHighlight(targetMessage);
     } catch {
         setComposerStatus("Failed to load messages.", "error");
     }
