@@ -4687,10 +4687,12 @@ function bindSettingsUiEvents() {
 
     chatInput?.addEventListener("focus", () => {
         closeStickerPicker();
-        if (isMobileViewport()) {
+        if (isMobileViewport() && appSettings.mobileComposerExpanded) {
             appSettings.mobileComposerExpanded = false;
-            persistAppSettings();
-            syncMobileComposerActions();
+            queueMicrotask(() => {
+                persistAppSettings();
+                syncMobileComposerActions();
+            });
         }
     });
 
@@ -10930,9 +10932,11 @@ document.addEventListener("keydown", async (event) => {
 });
 
 chatInput.addEventListener("input", () => {
-    // Auto-grow textarea to fit content
-    chatInput.style.height = "auto";
-    chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + "px";
+    // Auto-grow textarea to fit content (skip in iOS perf mode)
+    if (!isIosLagFixEnabled()) {
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + "px";
+    }
 
     chatInput.dir = isTextPersian(chatInput.value) ? "rtl" : "ltr";
     updateSendButtonIcon();
@@ -10964,22 +10968,11 @@ chatInput.addEventListener("input", () => {
 chatInput.addEventListener("focus", () => {
     isChatInputFocused = true;
     setClipboardImageButtonVisibility(Boolean(pendingClipboardImageFile));
-    void refreshClipboardImageCandidate();
+    // Defer clipboard read so it doesn't block keyboard on iOS
+    setTimeout(() => { void refreshClipboardImageCandidate(); }, 800);
 });
 
 chatInput.addEventListener("click", () => {
-    if (!pendingClipboardImageFile) {
-        void refreshClipboardImageCandidate();
-    }
-});
-
-chatInput.addEventListener("touchend", () => {
-    if (!pendingClipboardImageFile) {
-        void refreshClipboardImageCandidate();
-    }
-}, { passive: true });
-
-chatInput.addEventListener("pointerup", () => {
     if (!pendingClipboardImageFile) {
         void refreshClipboardImageCandidate();
     }
@@ -10990,46 +10983,6 @@ chatInput.addEventListener("blur", () => {
     setClipboardImageButtonVisibility(false);
 });
 
-// Long-press magnify: expand textarea for easier editing on mobile
-(function () {
-    let magnifyTimer = null;
-    let isMagnified = false;
-
-    function magnifyInput() {
-        if (isMagnified) return;
-        isMagnified = true;
-        chatInput.classList.add("chat-input-magnified");
-        chatInput.style.maxHeight = "300px";
-        chatInput.style.height = "auto";
-        chatInput.style.height = Math.min(chatInput.scrollHeight, 300) + "px";
-    }
-
-    function shrinkInput() {
-        if (!isMagnified) return;
-        isMagnified = false;
-        chatInput.classList.remove("chat-input-magnified");
-        chatInput.style.maxHeight = "";
-        chatInput.style.height = "auto";
-        chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + "px";
-    }
-
-    chatInput.addEventListener("touchstart", () => {
-        magnifyTimer = setTimeout(magnifyInput, 600);
-    }, { passive: true });
-
-    chatInput.addEventListener("touchend", () => {
-        if (magnifyTimer) { clearTimeout(magnifyTimer); magnifyTimer = null; }
-    });
-
-    chatInput.addEventListener("touchmove", () => {
-        if (magnifyTimer) { clearTimeout(magnifyTimer); magnifyTimer = null; }
-    }, { passive: true });
-
-    // Shrink back when user finishes editing and unfocuses
-    chatInput.addEventListener("blur", () => {
-        setTimeout(shrinkInput, 200);
-    });
-})();
 
 pasteClipboardImageBtn?.addEventListener("mousedown", (event) => {
     event.preventDefault();

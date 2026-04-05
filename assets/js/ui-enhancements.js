@@ -177,6 +177,9 @@ class UIEnhancements {
     setupEnhancedInteractions() {
         const inputs = document.querySelectorAll("input, textarea");
         inputs.forEach((input) => {
+            if (input.closest(".chat-input")) {
+                return;
+            }
             input.addEventListener("focus", () => {
                 input.parentElement.classList.add("focused");
             });
@@ -270,25 +273,10 @@ class UIEnhancements {
 
             const viewport = document.querySelector("meta[name=viewport]");
             if (viewport) {
-                const inputs = document.querySelectorAll("input, textarea");
-                inputs.forEach((input) => {
-                    input.addEventListener("focus", () => {
-                        if (isIosLagFixEnabled()) {
-                            return;
-                        }
-                        viewport.setAttribute(
-                            "content",
-                            "width=device-width, initial-scale=1, maximum-scale=1"
-                        );
-                    });
-
-                    input.addEventListener("blur", () => {
-                        viewport.setAttribute(
-                            "content",
-                            "width=device-width, initial-scale=1"
-                        );
-                    });
-                });
+                viewport.setAttribute(
+                    "content",
+                    "width=device-width, initial-scale=1, maximum-scale=1"
+                );
             }
         }
     }

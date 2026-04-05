@@ -5488,7 +5488,7 @@ textarea,
     padding: 0.9rem 1.4rem;
     font-size: 1rem;
     resize: none;
-    transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out), background-color 0.3s var(--ease-out), transform 0.2s var(--ease-out);
+    transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out), background-color 0.3s var(--ease-out);
     height: 50px;
     background-color: var(--background-color);
     color: var(--text-color);
@@ -5505,6 +5505,7 @@ textarea,
 .chat-input textarea:hover:not(:focus) {
     border-color: color-mix(in srgb, var(--secondary-color) 50%, var(--border-color));
     transform: translateY(-1px);
+    transition: border-color 0.3s var(--ease-out), transform 0.2s var(--ease-out);
 }
 
 .chat-input textarea:disabled {
@@ -5666,6 +5667,7 @@ textarea,
 
 .chat-input:focus-within button[type="submit"] {
     animation: submitPulse 2s ease-in-out infinite;
+    animation-delay: 0.4s;
 }
 
 @keyframes submitPulse {
@@ -7700,6 +7702,24 @@ textarea,
     animation: none !important;
 }
 
+:root.ios-lag-fix-enabled .chat-input::before {
+    transition: none !important;
+    opacity: 0 !important;
+}
+
+:root.ios-lag-fix-enabled .chat-input textarea:focus {
+    box-shadow: none !important;
+    transition: none !important;
+}
+
+:root.ios-lag-fix-enabled .chat-input textarea {
+    transition: none !important;
+}
+
+:root.ios-lag-fix-enabled .chat-input button::before {
+    transition: none !important;
+}
+
 .chat-list li:focus-visible,
 .chat-input button:focus-visible {
     outline: 3px solid var(--secondary-color);
@@ -7833,13 +7853,6 @@ textarea,
 #chatInput::-webkit-scrollbar {
     display: none;
 }
-#chatInput.chat-input-magnified {
-    font-size: 1.1rem;
-    line-height: 1.6;
-    padding: 1rem 1.2rem;
-    transition: max-height 0.25s ease, font-size 0.2s ease, padding 0.2s ease;
-}
-
 .chat-list li .avatar {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
