@@ -1037,6 +1037,9 @@ async function getDecryptedMediaMetadata(msg) {
 }
 
 async function encryptMediaForMessage(fileOrBlob, metadata, context = {}) {
+    // Read file data immediately to prevent Android content:// URI expiry
+    const sourceBuffer = await fileOrBlob.arrayBuffer();
+
     const mediaKey = await generateAesGcmKey();
     const encryptedMetadata = await encryptMediaMetadata(metadata, mediaKey);
     const isGroupMessage = Boolean(context.groupId);
@@ -1069,8 +1072,6 @@ async function encryptMediaForMessage(fileOrBlob, metadata, context = {}) {
             1
         );
     }
-
-    const sourceBuffer = await fileOrBlob.arrayBuffer();
     const encryptedBytes = await encryptBinaryWithAesKey(sourceBuffer, mediaKey);
     const encryptedBlob = new Blob([encryptedBytes], { type: "application/octet-stream" });
 
@@ -12157,7 +12158,24 @@ voiceBtn.addEventListener("click", async () => {
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
             });
-            mediaRecorder = new MediaRecorder(stream);
+            const preferredMimeTypes = [
+                "audio/webm;codecs=opus",
+                "audio/webm",
+                "audio/mp4",
+                "audio/ogg;codecs=opus",
+                "audio/ogg",
+            ];
+            let selectedMimeType = "";
+            for (const mime of preferredMimeTypes) {
+                if (typeof MediaRecorder.isTypeSupported === "function" && MediaRecorder.isTypeSupported(mime)) {
+                    selectedMimeType = mime;
+                    break;
+                }
+            }
+
+            const recorderOptions = selectedMimeType ? { mimeType: selectedMimeType } : {};
+            mediaRecorder = new MediaRecorder(stream, recorderOptions);
+            const actualMimeType = mediaRecorder.mimeType || selectedMimeType || "audio/webm";
             audioChunks = [];
             recordingStartTime = Date.now();
             shouldSendRecording = true;
@@ -12171,8 +12189,9 @@ voiceBtn.addEventListener("click", async () => {
                 resetRecordingState();
 
                 if (shouldSendRecording && audioChunks.length > 0) {
+                    const blobMimeType = actualMimeType.split(";")[0] || "audio/webm";
                     const audioBlob = new Blob(audioChunks, {
-                        type: "audio/webm",
+                        type: blobMimeType,
                     });
                     await sendVoiceMessage(audioBlob);
                 }
@@ -12281,11 +12300,14 @@ async function sendVoiceMessage(audioBlob) {
         }, 100);
 
         const groupId = parseGroupIdFromToken(currentChatUser);
+        const voiceMimeType = String(audioBlob?.type || "audio/webm");
+        const voiceExtMap = { "audio/mp4": "m4a", "audio/ogg": "ogg", "audio/webm": "webm" };
+        const voiceExt = voiceExtMap[voiceMimeType] || "webm";
         const mediaPayload = await encryptMediaForMessage(
             audioBlob,
             {
-                file_name: "voice_message.webm",
-                mime_type: String(audioBlob?.type || "audio/webm"),
+                file_name: `voice_message.${voiceExt}`,
+                mime_type: voiceMimeType,
                 file_size: Number(audioBlob?.size || 0),
             },
             groupId > 0 ? { groupId } : { targetUsername: currentChatUser }
@@ -12299,7 +12321,7 @@ async function sendVoiceMessage(audioBlob) {
         }
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
-        formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
+        formData.append("voice_file", mediaPayload.encryptedBlob, `voice_message.enc`);
         if (replyToId) formData.append("reply_to_message_id", String(replyToId));
 
         await window.ApiService.jsonOk("api/messages/media/send_voice.php", {
