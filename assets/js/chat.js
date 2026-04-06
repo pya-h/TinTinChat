@@ -319,6 +319,107 @@ let mobileResizeSnapTimerId = 0;
 
 const chatUserIdsByUsername = new Map();
 
+// ── Background upload tracker with progress ──
+const backgroundUploads = new Map();
+let bgUploadIdCounter = 0;
+
+function createBgUploadIndicator() {
+    let container = document.getElementById("bgUploadIndicator");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "bgUploadIndicator";
+        container.className = "bg-upload-indicator";
+        container.hidden = true;
+        document.body.appendChild(container);
+    }
+    return container;
+}
+
+function updateBgUploadIndicator() {
+    const container = createBgUploadIndicator();
+    if (backgroundUploads.size === 0) {
+        container.hidden = true;
+        return;
+    }
+    const entries = [...backgroundUploads.values()];
+    const count = entries.length;
+    const label = count > 1 ? count + " files" : entries[0].label;
+    // Aggregate progress: average across all active uploads
+    let totalPct = 0;
+    for (const entry of entries) totalPct += (entry.progress || 0);
+    const avgPct = Math.round(totalPct / count);
+    const pctText = avgPct > 0 && avgPct < 100 ? ` ${avgPct}%` : "";
+    container.innerHTML =
+        `<div class="bg-upload-content">` +
+            `<span class="bg-upload-label">Sending ${label}…${pctText}</span>` +
+            `<div class="bg-upload-bar"><div class="bg-upload-bar-fill" style="width:${avgPct}%"></div></div>` +
+        `</div>`;
+    container.hidden = false;
+}
+
+function registerBackgroundUpload(label) {
+    const id = ++bgUploadIdCounter;
+    backgroundUploads.set(id, { label, progress: 0 });
+    updateBgUploadIndicator();
+    return id;
+}
+
+function updateBackgroundUploadProgress(id, percent) {
+    const entry = backgroundUploads.get(id);
+    if (entry) {
+        entry.progress = Math.min(100, Math.max(0, percent));
+        updateBgUploadIndicator();
+    }
+}
+
+function completeBackgroundUpload(id) {
+    backgroundUploads.delete(id);
+    updateBgUploadIndicator();
+}
+
+/**
+ * Upload FormData via XHR with progress tracking.
+ * Returns a Promise that resolves with the parsed JSON response.
+ */
+function uploadWithProgress(url, formData, headers, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        if (headers) {
+            for (const [key, value] of Object.entries(headers)) {
+                xhr.setRequestHeader(key, value);
+            }
+        }
+        xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable && onProgress) {
+                onProgress(Math.round((e.loaded / e.total) * 100));
+            }
+        });
+        xhr.addEventListener("load", () => {
+            let payload = null;
+            try {
+                payload = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+            } catch (_) {
+                reject(new Error("Invalid server response"));
+                return;
+            }
+            if (xhr.status < 200 || xhr.status >= 300) {
+                const msg = window.ApiService.extractErrorMessage(payload, `Request failed (${xhr.status})`);
+                reject(new Error(msg));
+                return;
+            }
+            if (payload && payload.status === "error") {
+                reject(new Error(window.ApiService.extractErrorMessage(payload)));
+                return;
+            }
+            resolve(payload);
+        });
+        xhr.addEventListener("error", () => reject(new Error("Network error")));
+        xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
+        xhr.send(formData);
+    });
+}
+
 const appSettings = {
     notificationSoundEnabled: true,
     autoScrollEnabled: true,
@@ -5923,29 +6024,26 @@ async function forwardMediaToDestination(messageMeta, mediaType, destination, so
     formData.append("message_for_sender", mediaPayload.messageForSender);
     if (sourceMessageId) formData.append("forwarded_from_message_id", String(sourceMessageId));
 
-    if (mediaType === "voice") {
-        formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
-        await window.ApiService.jsonOk("api/messages/media/send_voice.php", {
-            method: "POST", headers: getCsrfHeaders(), body: formData,
-        });
-    } else if (mediaType === "image") {
-        formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
-        await window.ApiService.jsonOk("api/messages/media/send_image.php", {
-            method: "POST", headers: getCsrfHeaders(), body: formData,
-        });
-    } else if (mediaType === "video") {
-        formData.append("message_type", "video");
-        formData.append("file", mediaPayload.encryptedBlob, "video.enc");
-        await window.ApiService.jsonOk("api/messages/media/send_file.php", {
-            method: "POST", headers: getCsrfHeaders(), body: formData,
-        });
-    } else {
-        // file (including music)
-        formData.append("message_type", "file");
-        formData.append("file", mediaPayload.encryptedBlob, "file.enc");
-        await window.ApiService.jsonOk("api/messages/media/send_file.php", {
-            method: "POST", headers: getCsrfHeaders(), body: formData,
-        });
+    const fwdBgId = registerBackgroundUpload("forwarded " + mediaType);
+    try {
+        const fwdProgress = (pct) => updateBackgroundUploadProgress(fwdBgId, pct);
+        if (mediaType === "voice") {
+            formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
+            await uploadWithProgress("api/messages/media/send_voice.php", formData, getCsrfHeaders(), fwdProgress);
+        } else if (mediaType === "image") {
+            formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
+            await uploadWithProgress("api/messages/media/send_image.php", formData, getCsrfHeaders(), fwdProgress);
+        } else if (mediaType === "video") {
+            formData.append("message_type", "video");
+            formData.append("file", mediaPayload.encryptedBlob, "video.enc");
+            await uploadWithProgress("api/messages/media/send_file.php", formData, getCsrfHeaders(), fwdProgress);
+        } else {
+            formData.append("message_type", "file");
+            formData.append("file", mediaPayload.encryptedBlob, "file.enc");
+            await uploadWithProgress("api/messages/media/send_file.php", formData, getCsrfHeaders(), fwdProgress);
+        }
+    } finally {
+        completeBackgroundUpload(fwdBgId);
     }
 }
 
@@ -12288,24 +12386,14 @@ async function sendVoiceMessage(audioBlob) {
     if (!ensureEditModeAllowsTextOnly("send voice message")) {
         return;
     }
+    // Capture context before any async work
+    const capturedTarget = currentChatUser;
     const replyToId = currentReplyTarget?.messageId || null;
+    const groupId = parseGroupIdFromToken(capturedTarget);
+    clearReplyState();
+
+    const bgId = registerBackgroundUpload("voice message");
     try {
-        const sendingIndicator = document.createElement("div");
-        sendingIndicator.className = "message sent sending-indicator";
-        sendingIndicator.innerHTML = `
-      <div class="voice-message-sending">
-        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-        <span>Sending voice message...</span>
-      </div>
-    `;
-        chatMessagesElem.appendChild(sendingIndicator);
-        chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-
-        setTimeout(() => {
-            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-        }, 100);
-
-        const groupId = parseGroupIdFromToken(currentChatUser);
         const voiceMimeType = String(audioBlob?.type || "audio/webm");
         const voiceExtMap = { "audio/mp4": "m4a", "audio/ogg": "ogg", "audio/webm": "webm" };
         const voiceExt = voiceExtMap[voiceMimeType] || "webm";
@@ -12316,45 +12404,47 @@ async function sendVoiceMessage(audioBlob) {
                 mime_type: voiceMimeType,
                 file_size: Number(audioBlob?.size || 0),
             },
-            groupId > 0 ? { groupId } : { targetUsername: currentChatUser }
+            groupId > 0 ? { groupId } : { targetUsername: capturedTarget }
         );
 
         const formData = new FormData();
         if (groupId > 0) {
             formData.append("group_id", String(groupId));
         } else {
-            formData.append("target", currentChatUser);
+            formData.append("target", capturedTarget);
         }
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("voice_file", mediaPayload.encryptedBlob, `voice_message.enc`);
         if (replyToId) formData.append("reply_to_message_id", String(replyToId));
 
-        await window.ApiService.jsonOk("api/messages/media/send_voice.php", {
-            method: "POST",
-            headers: getCsrfHeaders(),
-            body: formData,
-        });
+        await uploadWithProgress(
+            "api/messages/media/send_voice.php",
+            formData,
+            getCsrfHeaders(),
+            (pct) => updateBackgroundUploadProgress(bgId, pct)
+        );
 
-        sendingIndicator.remove();
-        clearReplyState();
-
-        if (!isGroupToken(currentChatUser)) {
-            addUserToChatList(currentChatUser);
-            updateTypingStatus(false);
+        if (!isGroupToken(capturedTarget)) {
+            addUserToChatList(capturedTarget);
         }
-        loadCurrentChatsRecentMessages();
-        setComposerStatus("");
+        // Refresh messages only if user is still viewing the same chat
+        if (currentChatUser === capturedTarget) {
+            loadCurrentChatsRecentMessages();
+            setComposerStatus("");
+        }
     } catch (err) {
-        setComposerStatus("Voice message failed. Try again.", "error");
+        // Show error only if user is still on the same chat
+        if (currentChatUser === capturedTarget) {
+            setComposerStatus("Voice message failed. Try again.", "error");
+        }
         showModal(
             I18N_TEXT.voiceSendErrorTitle,
             formatI18nText(I18N_TEXT.voiceSendErrorBody, { error: err.message || "Unknown" }),
             "error"
         );
-
-        const sendingIndicator = document.querySelector(".sending-indicator");
-        if (sendingIndicator) sendingIndicator.remove();
+    } finally {
+        completeBackgroundUpload(bgId);
     }
 }
 
@@ -12567,26 +12657,14 @@ async function sendImageMessage(imageFile) {
     if (!ensureEditModeAllowsTextOnly("send image")) {
         return;
     }
+    // Capture context before any async work
+    const capturedTarget = currentChatUser;
     const replyToId = currentReplyTarget?.messageId || null;
+    const groupId = parseGroupIdFromToken(capturedTarget);
+    clearReplyState();
+
+    const bgId = registerBackgroundUpload("image");
     try {
-        const sendingIndicator = document.createElement("div");
-        sendingIndicator.className = "message sent sending-indicator";
-        sendingIndicator.innerHTML = `
-      <div class="image-message-sending">
-        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-        <span>Sending image...</span>
-      </div>
-    `;
-        chatMessagesElem.appendChild(sendingIndicator);
-        chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-
-        setTimeout(() => {
-            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-        }, 100);
-
-        imageUploadBtn.disabled = true;
-
-        const groupId = parseGroupIdFromToken(currentChatUser);
         const mediaPayload = await encryptMediaForMessage(
             imageFile,
             {
@@ -12594,47 +12672,45 @@ async function sendImageMessage(imageFile) {
                 mime_type: String(imageFile?.type || "image/jpeg"),
                 file_size: Number(imageFile?.size || 0),
             },
-            groupId > 0 ? { groupId } : { targetUsername: currentChatUser }
+            groupId > 0 ? { groupId } : { targetUsername: capturedTarget }
         );
 
         const formData = new FormData();
         if (groupId > 0) {
             formData.append("group_id", String(groupId));
         } else {
-            formData.append("target", currentChatUser);
+            formData.append("target", capturedTarget);
         }
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
         if (replyToId) formData.append("reply_to_message_id", String(replyToId));
 
-        await window.ApiService.jsonOk("api/messages/media/send_image.php", {
-            method: "POST",
-            headers: getCsrfHeaders(),
-            body: formData,
-        });
+        await uploadWithProgress(
+            "api/messages/media/send_image.php",
+            formData,
+            getCsrfHeaders(),
+            (pct) => updateBackgroundUploadProgress(bgId, pct)
+        );
 
-        sendingIndicator.remove();
-        clearReplyState();
-
-        if (!isGroupToken(currentChatUser)) {
-            addUserToChatList(currentChatUser);
-            updateTypingStatus(false);
+        if (!isGroupToken(capturedTarget)) {
+            addUserToChatList(capturedTarget);
         }
-        loadCurrentChatsRecentMessages();
-        setComposerStatus("");
+        if (currentChatUser === capturedTarget) {
+            loadCurrentChatsRecentMessages();
+            setComposerStatus("");
+        }
     } catch (err) {
-        setComposerStatus("Image upload failed. Try again.", "error");
+        if (currentChatUser === capturedTarget) {
+            setComposerStatus("Image upload failed. Try again.", "error");
+        }
         showModal(
             I18N_TEXT.imageSendErrorTitle,
             formatI18nText(I18N_TEXT.imageSendErrorBody, { error: err.message || "Unknown" }),
             "error"
         );
-
-        const sendingIndicator = document.querySelector(".sending-indicator");
-        if (sendingIndicator) sendingIndicator.remove();
     } finally {
-        imageUploadBtn.disabled = false;
+        completeBackgroundUpload(bgId);
     }
 }
 
@@ -12670,24 +12746,15 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         return;
     }
 
+    // Capture context before any async work
+    const capturedTarget = currentChatUser;
     const replyToId = currentReplyTarget?.messageId || null;
+    const groupId = parseGroupIdFromToken(capturedTarget);
+    clearReplyState();
+
+    const uploadLabel = asVideo ? "video" : "file";
+    const bgId = registerBackgroundUpload(uploadLabel);
     try {
-        const sendingIndicator = document.createElement("div");
-        sendingIndicator.className = "message sent sending-indicator";
-        sendingIndicator.innerHTML = `
-      <div class="file-message-sending">
-        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                <span>${asVideo ? "Sending video..." : "Sending file..."}</span>
-      </div>
-    `;
-        chatMessagesElem.appendChild(sendingIndicator);
-        chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-
-        setTimeout(() => {
-            chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-        }, 100);
-
-        const groupId = parseGroupIdFromToken(currentChatUser);
         const mediaPayload = await encryptMediaForMessage(
             file,
             {
@@ -12695,14 +12762,14 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
                 mime_type: String(file?.type || "application/octet-stream"),
                 file_size: Number(file?.size || 0),
             },
-            groupId > 0 ? { groupId } : { targetUsername: currentChatUser }
+            groupId > 0 ? { groupId } : { targetUsername: capturedTarget }
         );
 
         const formData = new FormData();
         if (groupId > 0) {
             formData.append("group_id", String(groupId));
         } else {
-            formData.append("target", currentChatUser);
+            formData.append("target", capturedTarget);
         }
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
@@ -12710,27 +12777,27 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         formData.append("file", mediaPayload.encryptedBlob, asVideo ? "video.enc" : "file.enc");
         if (replyToId) formData.append("reply_to_message_id", String(replyToId));
 
-        await window.ApiService.jsonOk("api/messages/media/send_file.php", {
-            method: "POST",
-            headers: getCsrfHeaders(),
-            body: formData,
-        });
+        await uploadWithProgress(
+            "api/messages/media/send_file.php",
+            formData,
+            getCsrfHeaders(),
+            (pct) => updateBackgroundUploadProgress(bgId, pct)
+        );
 
-        sendingIndicator.remove();
-        clearReplyState();
-
-        if (!isGroupToken(currentChatUser)) {
-            addUserToChatList(currentChatUser);
-            updateTypingStatus(false);
+        if (!isGroupToken(capturedTarget)) {
+            addUserToChatList(capturedTarget);
         }
-        loadCurrentChatsRecentMessages();
-        setComposerStatus("");
+        if (currentChatUser === capturedTarget) {
+            loadCurrentChatsRecentMessages();
+            setComposerStatus("");
+        }
     } catch (err) {
-        setComposerStatus(asVideo ? "Video upload failed. Try again." : "File upload failed. Try again.", "error");
+        if (currentChatUser === capturedTarget) {
+            setComposerStatus(asVideo ? "Video upload failed. Try again." : "File upload failed. Try again.", "error");
+        }
         showModal(asVideo ? "Video Send Error" : "File Send Error", (asVideo ? "Video" : "File") + " send error: " + err.message, "error");
-
-        const sendingIndicator = document.querySelector(".sending-indicator");
-        if (sendingIndicator) sendingIndicator.remove();
+    } finally {
+        completeBackgroundUpload(bgId);
     }
 }
 
