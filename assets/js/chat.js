@@ -319,9 +319,12 @@ let mobileResizeSnapTimerId = 0;
 
 const chatUserIdsByUsername = new Map();
 
-// ── Background upload tracker with progress ──
+// ── Background upload tracker with progress + concurrency limit ──
+const MAX_CONCURRENT_UPLOADS = 2;
 const backgroundUploads = new Map();
 let bgUploadIdCounter = 0;
+const uploadQueue = []; // { resolve, label }
+let activeUploadCount = 0;
 
 function createBgUploadIndicator() {
     let container = document.getElementById("bgUploadIndicator");
@@ -343,15 +346,18 @@ function updateBgUploadIndicator() {
     }
     const entries = [...backgroundUploads.values()];
     const count = entries.length;
+    const activeEntries = entries.filter((e) => !e.queued);
+    const queuedCount = entries.length - activeEntries.length;
     const label = count > 1 ? count + " files" : entries[0].label;
-    // Aggregate progress: average across all active uploads
+    // Aggregate progress: average across all uploads (queued ones count as 0%)
     let totalPct = 0;
     for (const entry of entries) totalPct += (entry.progress || 0);
     const avgPct = Math.round(totalPct / count);
     const pctText = avgPct > 0 && avgPct < 100 ? ` ${avgPct}%` : "";
+    const queueText = queuedCount > 0 ? ` <span class="bg-upload-queued">(${queuedCount} queued)</span>` : "";
     container.innerHTML =
         `<div class="bg-upload-content">` +
-            `<span class="bg-upload-label">Sending ${label}…${pctText}</span>` +
+            `<span class="bg-upload-label">Sending ${label}…${pctText}${queueText}</span>` +
             `<div class="bg-upload-bar"><div class="bg-upload-bar-fill" style="width:${avgPct}%"></div></div>` +
         `</div>`;
     container.hidden = false;
@@ -359,9 +365,37 @@ function updateBgUploadIndicator() {
 
 function registerBackgroundUpload(label) {
     const id = ++bgUploadIdCounter;
-    backgroundUploads.set(id, { label, progress: 0 });
+    backgroundUploads.set(id, { label, progress: 0, queued: true });
     updateBgUploadIndicator();
     return id;
+}
+
+/**
+ * Wait until a concurrency slot is available. Call before starting the actual upload.
+ */
+function acquireUploadSlot(bgId) {
+    const entry = backgroundUploads.get(bgId);
+    if (activeUploadCount < MAX_CONCURRENT_UPLOADS) {
+        activeUploadCount++;
+        if (entry) entry.queued = false;
+        updateBgUploadIndicator();
+        return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+        uploadQueue.push({ resolve, bgId });
+    });
+}
+
+function releaseUploadSlot() {
+    activeUploadCount = Math.max(0, activeUploadCount - 1);
+    if (uploadQueue.length > 0 && activeUploadCount < MAX_CONCURRENT_UPLOADS) {
+        const next = uploadQueue.shift();
+        activeUploadCount++;
+        const entry = backgroundUploads.get(next.bgId);
+        if (entry) entry.queued = false;
+        updateBgUploadIndicator();
+        next.resolve();
+    }
 }
 
 function updateBackgroundUploadProgress(id, percent) {
@@ -374,6 +408,7 @@ function updateBackgroundUploadProgress(id, percent) {
 
 function completeBackgroundUpload(id) {
     backgroundUploads.delete(id);
+    releaseUploadSlot();
     updateBgUploadIndicator();
 }
 
@@ -6025,6 +6060,7 @@ async function forwardMediaToDestination(messageMeta, mediaType, destination, so
     if (sourceMessageId) formData.append("forwarded_from_message_id", String(sourceMessageId));
 
     const fwdBgId = registerBackgroundUpload("forwarded " + mediaType);
+    await acquireUploadSlot(fwdBgId);
     try {
         const fwdProgress = (pct) => updateBackgroundUploadProgress(fwdBgId, pct);
         if (mediaType === "voice") {
@@ -12393,6 +12429,7 @@ async function sendVoiceMessage(audioBlob) {
     clearReplyState();
 
     const bgId = registerBackgroundUpload("voice message");
+    await acquireUploadSlot(bgId);
     try {
         const voiceMimeType = String(audioBlob?.type || "audio/webm");
         const voiceExtMap = { "audio/mp4": "m4a", "audio/ogg": "ogg", "audio/webm": "webm" };
@@ -12664,6 +12701,7 @@ async function sendImageMessage(imageFile) {
     clearReplyState();
 
     const bgId = registerBackgroundUpload("image");
+    await acquireUploadSlot(bgId);
     try {
         const mediaPayload = await encryptMediaForMessage(
             imageFile,
@@ -12754,6 +12792,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
 
     const uploadLabel = asVideo ? "video" : "file";
     const bgId = registerBackgroundUpload(uploadLabel);
+    await acquireUploadSlot(bgId);
     try {
         const mediaPayload = await encryptMediaForMessage(
             file,
