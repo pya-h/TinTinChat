@@ -12156,7 +12156,13 @@ voiceBtn.addEventListener("click", async () => {
     if (!isRecording) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    sampleRate: 48000,
+                    channelCount: 1,
+                },
             });
             const preferredMimeTypes = [
                 "audio/webm;codecs=opus",
@@ -12173,7 +12179,7 @@ voiceBtn.addEventListener("click", async () => {
                 }
             }
 
-            const recorderOptions = selectedMimeType ? { mimeType: selectedMimeType } : {};
+            const recorderOptions = selectedMimeType ? { mimeType: selectedMimeType, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 64000 };
             mediaRecorder = new MediaRecorder(stream, recorderOptions);
             const actualMimeType = mediaRecorder.mimeType || selectedMimeType || "audio/webm";
             audioChunks = [];
