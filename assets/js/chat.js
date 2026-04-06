@@ -1173,7 +1173,9 @@ async function getDecryptedMediaMetadata(msg) {
 }
 
 async function encryptMediaForMessage(fileOrBlob, metadata, context = {}) {
-    // Read file data immediately to prevent Android content:// URI expiry
+    // Read file data first — callers should already pass standalone blobs (bytes
+    // already in memory), but this serves as defense-in-depth in case a raw File
+    // with a content:// URI somehow gets through.
     const sourceBuffer = await fileOrBlob.arrayBuffer();
 
     const mediaKey = await generateAesGcmKey();
@@ -10693,16 +10695,32 @@ sendBtn.addEventListener("touchend", () => {
     }
 });
 
-fileUploadInput.addEventListener("change", (e) => {
+fileUploadInput.addEventListener("change", async (e) => {
     if (!ensureEditModeAllowsTextOnly("send file")) {
         e.target.value = null;
         return;
     }
     const file = e.target.files[0];
-    if (file) {
-        sendFileMessage(file);
+    if (!file) {
+        e.target.value = null;
+        return;
     }
+
+    // Read bytes NOW while the content:// URI grant is still active.
+    let buffer;
+    try {
+        buffer = await file.arrayBuffer();
+    } catch (_readErr) {
+        e.target.value = null;
+        showModal("File Send Error", "Unable to read the selected file. Please try again.", "error");
+        return;
+    }
+    const fileName = file.name;
+    const fileType = file.type;
     e.target.value = null;
+
+    const standaloneFile = new File([buffer], fileName, { type: fileType });
+    sendFileMessage(standaloneFile);
 });
 
 // ── Bio settings loader ──────────────────────────────────────
@@ -12528,62 +12546,108 @@ stickerUploadInput?.addEventListener("change", async (event) => {
         return;
     }
     const selectedFile = event.target?.files?.[0];
-    event.target.value = "";
     if (!selectedFile) {
+        event.target.value = "";
         return;
     }
-    await uploadSticker(selectedFile);
+
+    // Read bytes NOW while the content:// URI grant is still active.
+    let buffer;
+    try {
+        buffer = await selectedFile.arrayBuffer();
+    } catch (_readErr) {
+        event.target.value = "";
+        showModal("Sticker Upload Error", "Unable to read the selected file. Please try again.", "error");
+        return;
+    }
+    const fileName = selectedFile.name;
+    const fileType = selectedFile.type;
+    event.target.value = "";
+
+    const standaloneFile = new File([buffer], fileName, { type: fileType });
+    await uploadSticker(standaloneFile);
 });
 
-function handleSelectedImageFile(e) {
+async function handleSelectedImageFile(e) {
     if (!ensureEditModeAllowsTextOnly("send image")) {
         e.target.value = null;
         return;
     }
     const file = e.target.files?.[0];
-    e.target.value = null;
     if (!file) {
+        e.target.value = null;
         return;
     }
 
-    if (file) {
-        if (!file.type.startsWith("image/")) {
-            showModal(I18N_TEXT.invalidFileTypeTitle, I18N_TEXT.invalidFileTypeImageBody, "warning");
-            return;
-        }
-
-        if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
-            showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.imageTooLargeBody, "warning");
-            return;
-        }
-
-        sendImageMessage(file);
+    if (!file.type.startsWith("image/")) {
+        e.target.value = null;
+        showModal(I18N_TEXT.invalidFileTypeTitle, I18N_TEXT.invalidFileTypeImageBody, "warning");
+        return;
     }
+
+    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+        e.target.value = null;
+        showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.imageTooLargeBody, "warning");
+        return;
+    }
+
+    // Read bytes NOW while the content:// URI grant is still active (Android revokes
+    // it as soon as the input is cleared, causing "permission denied" on later reads).
+    let buffer;
+    try {
+        buffer = await file.arrayBuffer();
+    } catch (_readErr) {
+        e.target.value = null;
+        showModal(I18N_TEXT.imageSendErrorTitle, "Unable to read the selected file. Please try again.", "error");
+        return;
+    }
+    const fileName = file.name;
+    const fileType = file.type;
+    e.target.value = null;
+
+    const standaloneFile = new File([buffer], fileName, { type: fileType });
+    sendImageMessage(standaloneFile);
 }
 
-function handleSelectedVideoFile(e) {
+async function handleSelectedVideoFile(e) {
     if (!ensureEditModeAllowsTextOnly("send video")) {
         e.target.value = null;
         return;
     }
     const file = e.target.files?.[0];
-    e.target.value = null;
     if (!file) {
+        e.target.value = null;
         return;
     }
 
     const mimeType = String(file.type || "").toLowerCase();
     if (!mimeType.startsWith("video/")) {
+        e.target.value = null;
         showModal(I18N_TEXT.invalidFileTypeTitle, "Please select a video file.", "warning");
         return;
     }
 
     if (file.size > FILE_UPLOAD_MAX_BYTES) {
+        e.target.value = null;
         showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.fileTooLargeBody, "warning");
         return;
     }
 
-    void sendFileMessage(file, { asVideo: true });
+    // Read bytes NOW while the content:// URI grant is still active.
+    let buffer;
+    try {
+        buffer = await file.arrayBuffer();
+    } catch (_readErr) {
+        e.target.value = null;
+        showModal("Video Send Error", "Unable to read the selected file. Please try again.", "error");
+        return;
+    }
+    const fileName = file.name;
+    const fileType = file.type;
+    e.target.value = null;
+
+    const standaloneFile = new File([buffer], fileName, { type: fileType });
+    void sendFileMessage(standaloneFile, { asVideo: true });
 }
 
 imageSourceGalleryBtn?.addEventListener("click", () => {
