@@ -12428,6 +12428,7 @@ setInterval(async () => {
         // the chat-list cadence so background tabs remain lightweight.
         pollBgCounter = (pollBgCounter + 1) % chatListInterval;
         if (pollBgCounter === 0) {
+            isRefreshLoopBusy = true;
             try {
                 await Promise.all([
                     loadChatList(),
@@ -12435,7 +12436,10 @@ setInterval(async () => {
                         appSettings.browserNotificationsEnabled &&
                         forceFetchCurrentChatMessages(),
                 ]);
-            } catch (_) {}
+            } catch (_) {
+            } finally {
+                isRefreshLoopBusy = false;
+            }
         }
         return;
     }

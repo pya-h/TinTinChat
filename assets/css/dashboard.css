@@ -3380,12 +3380,11 @@ textarea,
 }
 
 .chat-ui-settings-item input[type="checkbox"]:disabled {
-    opacity: 0.4;
     cursor: not-allowed;
 }
 
 .chat-ui-settings-item-check:has(input[type="checkbox"]:disabled) {
-    opacity: 0.5;
+    opacity: 0.45;
     pointer-events: none;
 }
 
