@@ -128,7 +128,7 @@ function _closeConfirmOverlay(result) {
     if (_confirmResolve) { const r = _confirmResolve; _confirmResolve = null; r(result); }
 }
 
-function showConfirmModal(title, message, { type = "warning", confirmLabel = "Yes", cancelLabel = "Cancel" } = {}) {
+function showConfirmModal(title, message, { type = "warning", confirmLabel = "Yes", cancelLabel = "Cancel", bodyHtml = "" } = {}) {
     return new Promise((resolve) => {
         if (_confirmResolve) _closeConfirmOverlay(false);
         _confirmResolve = resolve;
@@ -139,7 +139,10 @@ function showConfirmModal(title, message, { type = "warning", confirmLabel = "Ye
         const cancelBtn = document.getElementById("confirmModalCancelBtn");
         const promptWrap = document.getElementById("confirmModalPromptWrap");
         if (titleEl) titleEl.textContent = title;
-        if (msgEl) msgEl.textContent = message;
+        if (msgEl) {
+            if (bodyHtml) { msgEl.innerHTML = bodyHtml; }
+            else { msgEl.textContent = message; }
+        }
         if (iconEl) { iconEl.parentElement.className = "modal-icon " + type; iconEl.className = "fas " + getIconClass(type); }
         if (confirmBtn) confirmBtn.textContent = confirmLabel;
         if (cancelBtn) cancelBtn.textContent = cancelLabel;

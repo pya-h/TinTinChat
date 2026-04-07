@@ -510,6 +510,7 @@ const UI_BACK_LAYER_KEYS = {
     messageAction: "message-action",
     imageModal: "image-modal",
     addChat: "add-chat",
+    mobileDrawer: "mobile-drawer",
 };
 
 const uiBackLayerStack = [];
@@ -4647,25 +4648,83 @@ function bindSettingsUiEvents() {
         const clearCookiesBtn = document.getElementById("clearCookiesBtn");
         if (clearCookiesBtn) {
             clearCookiesBtn.addEventListener("click", async () => {
-                const confirmed = await showConfirmModal("Clear Storage", "Clear all cookies and storage? You will be logged out and get the latest version.", { type: "warning", confirmLabel: "Clear" });
+                const confirmed = await showConfirmModal(
+                    "Clear Data & Logout",
+                    "",
+                    {
+                        type: "warning",
+                        confirmLabel: "Clear & Logout",
+                        bodyHtml:
+                            '<span style="display:block;margin-bottom:0.75rem">Cookies and session will be cleared. You will be logged out.</span>' +
+                            '<label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.15rem;cursor:pointer;font-weight:500">' +
+                                '<input type="checkbox" id="confirmClearSiteData" checked> Site data' +
+                            '</label>' +
+                            '<small style="display:block;margin:0 0 0.6rem 1.5rem;opacity:0.7">IndexedDB, caches, service workers. Enable to get the latest version of the app after login.</small>' +
+                            '<label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.15rem;cursor:pointer;font-weight:500">' +
+                                '<input type="checkbox" id="confirmClearUserCustoms"> User customizations' +
+                            '</label>' +
+                            '<small style="display:block;margin:0 0 0 1.5rem;opacity:0.7">Also remove saved preferences (theme, font size, etc.).</small>',
+                    }
+                );
                 if (!confirmed) return;
+
+                const clearSiteData = Boolean(document.getElementById("confirmClearSiteData")?.checked);
+                const clearCustomizations = Boolean(document.getElementById("confirmClearUserCustoms")?.checked);
+
                 clearCookiesBtn.disabled = true;
-                clearCookiesBtn.textContent = "Clearing…";
+                clearCookiesBtn.textContent = "Clearing\u2026";
                 try {
-                    // Clear cookies
+                    // 1. Always: clear cookies
                     document.cookie.split(";").forEach(function(c) {
                         document.cookie = c.replace(/^\s+/, "").replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
                     });
-                    // Clear localStorage and sessionStorage
-                    localStorage.clear();
+
+                    // 2. Always: clear sessionStorage
                     sessionStorage.clear();
-                    setComposerStatus("Cookies and storage cleared", "success");
+
+                    // 3. Conditionally: clear site data (IndexedDB, Cache API, service workers)
+                    if (clearSiteData) {
+                        try {
+                            if (window.indexedDB?.databases) {
+                                const dbs = await window.indexedDB.databases();
+                                for (const db of dbs) {
+                                    if (db.name) window.indexedDB.deleteDatabase(db.name);
+                                }
+                            }
+                        } catch (_) {}
+                        try {
+                            if (window.caches) {
+                                const names = await window.caches.keys();
+                                for (const name of names) await window.caches.delete(name);
+                            }
+                        } catch (_) {}
+                        try {
+                            if (navigator.serviceWorker) {
+                                const regs = await navigator.serviceWorker.getRegistrations();
+                                for (const reg of regs) await reg.unregister();
+                            }
+                        } catch (_) {}
+                    }
+
+                    // 4. localStorage: backup settings if customizations should be preserved
+                    if (clearCustomizations) {
+                        localStorage.clear();
+                    } else {
+                        const settingsBackup = localStorage.getItem(SETTINGS_STORAGE_KEY);
+                        localStorage.clear();
+                        if (settingsBackup) {
+                            try {
+                                localStorage.setItem(SETTINGS_STORAGE_KEY, settingsBackup);
+                            } catch (_) {}
+                        }
+                    }
+
+                    setComposerStatus("Data cleared, logging out\u2026", "success");
                 } catch (_) {
-                    setComposerStatus("Failed to clear cookies/storage", "error");
+                    setComposerStatus("Failed to clear data", "error");
                 }
                 clearCookiesBtn.disabled = false;
                 clearCookiesBtn.textContent = "Clear";
-                // Reload page to ensure logout and fresh version
                 setTimeout(() => { window.location.reload(); }, 800);
             });
         }
@@ -8433,6 +8492,10 @@ function forceFetchCurrentChatMessages() {
     return loadCurrentChatsRecentMessages();
 }
 window.forceFetchCurrentChatMessages = forceFetchCurrentChatMessages;
+window.__ttcPushUiBackLayer = pushUiBackLayer;
+window.__ttcRemoveUiBackLayer = removeUiBackLayer;
+window.__ttcRequestUiLayerClose = requestUiLayerClose;
+window.__ttcUiBackLayerKeys = UI_BACK_LAYER_KEYS;
 
 function generateWaveformBars() {
     const bars = [];
@@ -10744,7 +10807,7 @@ fileUploadInput.addEventListener("change", async (e) => {
     e.target.value = null;
 
     const standaloneFile = new File([buffer], fileName, { type: fileType });
-    sendFileMessage(standaloneFile);
+    void sendFileMessage(standaloneFile);
 });
 
 // ── Bio settings loader ──────────────────────────────────────
@@ -12630,7 +12693,7 @@ async function handleSelectedImageFile(e) {
     e.target.value = null;
 
     const standaloneFile = new File([buffer], fileName, { type: fileType });
-    sendImageMessage(standaloneFile);
+    void sendImageMessage(standaloneFile);
 }
 
 async function handleSelectedVideoFile(e) {

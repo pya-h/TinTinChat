@@ -27,6 +27,21 @@
             demo: "hold send button \u2192 file picker",
         },
         {
+            icon: "fa-microphone",
+            title: "Voice Messages",
+            desc: "Tap the microphone button to record a voice message. Tap again to send, or cancel to discard. Voice messages include an interactive waveform for playback.",
+        },
+        {
+            icon: "fa-camera",
+            title: "Photo & Video Capture",
+            desc: "From the \"+\" media menu, choose \"Camera\" to take a photo or \"Record video\" to capture video directly from your device. You can also select existing photos and videos from your gallery.",
+        },
+        {
+            icon: "fa-share",
+            title: "Forward Messages",
+            desc: "Forward any message to another chat. Use the action menu on a single message, or enter Select mode to forward multiple messages at once.",
+        },
+        {
             icon: "fa-check-double",
             title: "Select Multiple Messages",
             desc: "In the message action menu, choose \"Select\" to enter multi-select mode. You can then copy, forward, or delete multiple messages at once.",
@@ -50,6 +65,22 @@
             icon: "fa-edit",
             title: "Edit Messages",
             desc: "You can edit your own text messages within the allowed time window. Swipe left or use the action menu to enter edit mode.",
+        },
+        {
+            icon: "fa-bookmark",
+            title: "Saved Messages",
+            desc: "Send messages to yourself using the \"Saved Messages\" chat at the top of your chat list. Great for notes, bookmarks, and file storage.",
+        },
+        {
+            icon: "fa-music",
+            title: "Music & Playlist",
+            desc: "Audio files sent in chat are detected as music with an inline player. You can add tracks to a playlist from the message action menu for continuous playback.",
+        },
+        {
+            icon: "fa-bars",
+            title: "Mobile Chat List",
+            desc: "On mobile, pull down the chat-list handle at the top to expand the full chat list. Pull up or press Back to collapse it.",
+            demo: "pull down \u2192 expand &nbsp;&bull;&nbsp; back \u2192 collapse",
         },
         {
             icon: "fa-lock",

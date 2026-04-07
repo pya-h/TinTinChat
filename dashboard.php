@@ -604,8 +604,8 @@ $csrfToken = generateCsrfToken();
                             </div>
                                 <div class="chat-ui-settings-item chat-ui-settings-item-action">
                                     <span>
-                                        <span>Cookies & Storage</span>
-                                        <small class="chat-ui-settings-hint">Clears cookies, localStorage, sessionStorage. You will be logged out and get the latest version.</small>
+                                        <span>Clear Data &amp; Logout</span>
+                                        <small class="chat-ui-settings-hint">Clears cookies and session. You will be logged out.</small>
                                     </span>
                                     <span class="chat-ui-settings-control">
                                         <button type="button" id="clearCookiesBtn" class="btn btn-sm btn-polished btn-polished-danger">Clear</button>
@@ -1190,7 +1190,7 @@ $csrfToken = generateCsrfToken();
             mobileChatListBackdrop.style.transition = '';
         }
 
-        function applyMobileDrawerState(open, animate = true) {
+        function applyMobileDrawerState(open, animate = true, { fromHistory = false } = {}) {
             if (!sidebarElement) return;
 
             drawerCancelPendingCleanup();
@@ -1204,10 +1204,30 @@ $csrfToken = generateCsrfToken();
                 hideBackdrop();
                 setCompactChatListVisible(true);
                 sidebarElement.style.display = '';
+                window.__ttcRemoveUiBackLayer?.("mobile-drawer");
                 return;
             }
 
             const shouldOpen = Boolean(open);
+
+            // Back-layer history integration
+            if (shouldOpen) {
+                window.__ttcPushUiBackLayer?.("mobile-drawer", function () {
+                    applyMobileDrawerState(false, true, { fromHistory: true });
+                });
+            } else if (!fromHistory) {
+                // Closing from UI action (backdrop click, escape, etc.) — pop history entry
+                const keys = window.__ttcUiBackLayerKeys;
+                if (keys && window.__ttcRequestUiLayerClose?.("mobile-drawer", function () {
+                    applyMobileDrawerState(false, true, { fromHistory: true });
+                })) {
+                    return; // history.back() will trigger the close via popstate
+                }
+            } else {
+                // Closing from popstate — just remove the layer record
+                window.__ttcRemoveUiBackLayer?.("mobile-drawer");
+            }
+
             isMobileDrawerOpen = shouldOpen;
             sidebarElement.classList.remove('mobile-chatlist-drawer-closing');
 
@@ -1419,6 +1439,18 @@ $csrfToken = generateCsrfToken();
 
             isMobileDrawerOpen = (target === 'expanded');
             mobileChatListPullHandle?.setAttribute('aria-expanded', isMobileDrawerOpen ? 'true' : 'false');
+
+            // Sync back-layer for drag gesture results
+            if (isMobileDrawerOpen) {
+                window.__ttcPushUiBackLayer?.("mobile-drawer", function () {
+                    applyMobileDrawerState(false, true, { fromHistory: true });
+                });
+            } else if (window.__ttcRemoveUiBackLayer?.("mobile-drawer")) {
+                // Layer was present — pop the matching history.pushState entry so the
+                // user's next Back press isn't silently consumed by a phantom entry.
+                // The popstate handler will find an empty/mismatched stack and return.
+                try { window.history.back(); } catch (_) {}
+            }
 
             const spring = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
             sidebarElement.style.transition = spring;
