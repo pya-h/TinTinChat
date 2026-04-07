@@ -4656,13 +4656,14 @@ textarea,
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    min-width: 180px;
-    max-width: 260px;
+    min-width: 200px;
+    max-width: 300px;
     padding: 0.5rem 0.85rem;
     border-radius: 14px;
-    background: var(--card-bg);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
-    gap: 0.35rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+    gap: 0.3rem;
 }
 
 .bg-upload-label {
@@ -4673,16 +4674,23 @@ textarea,
     text-align: center;
 }
 
+.bg-upload-detail {
+    font-size: 0.68rem;
+    color: var(--subtle-text-color);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
 .bg-upload-bar {
-    height: 4px;
-    border-radius: 2px;
-    background: var(--border-color);
+    height: 5px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--text-color) 15%, transparent);
     overflow: hidden;
 }
 
 .bg-upload-bar-fill {
     height: 100%;
-    border-radius: 2px;
+    border-radius: 3px;
     background: var(--accent-color);
     transition: width 0.25s ease-out;
 }

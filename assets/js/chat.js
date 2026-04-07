@@ -338,6 +338,12 @@ function createBgUploadIndicator() {
     return container;
 }
 
+function formatUploadSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
 function updateBgUploadIndicator() {
     const container = createBgUploadIndicator();
     if (backgroundUploads.size === 0) {
@@ -351,13 +357,27 @@ function updateBgUploadIndicator() {
     const label = count > 1 ? count + " files" : entries[0].label;
     // Aggregate progress: average across all uploads (queued ones count as 0%)
     let totalPct = 0;
-    for (const entry of entries) totalPct += (entry.progress || 0);
+    let totalLoaded = 0;
+    let totalSize = 0;
+    let hasByteInfo = false;
+    for (const entry of entries) {
+        totalPct += (entry.progress || 0);
+        if (entry.total > 0) {
+            totalLoaded += (entry.loaded || 0);
+            totalSize += entry.total;
+            hasByteInfo = true;
+        }
+    }
     const avgPct = Math.round(totalPct / count);
     const pctText = avgPct > 0 && avgPct < 100 ? ` ${avgPct}%` : "";
     const queueText = queuedCount > 0 ? ` <span class="bg-upload-queued">(${queuedCount} queued)</span>` : "";
+    const detailText = hasByteInfo
+        ? `<span class="bg-upload-detail">${formatUploadSize(totalLoaded)} / ${formatUploadSize(totalSize)}</span>`
+        : "";
     container.innerHTML =
         `<div class="bg-upload-content">` +
             `<span class="bg-upload-label">Sending ${label}…${pctText}${queueText}</span>` +
+            detailText +
             `<div class="bg-upload-bar"><div class="bg-upload-bar-fill" style="width:${avgPct}%"></div></div>` +
         `</div>`;
     container.hidden = false;
@@ -398,10 +418,14 @@ function releaseUploadSlot() {
     }
 }
 
-function updateBackgroundUploadProgress(id, percent) {
+function updateBackgroundUploadProgress(id, percent, loaded, total) {
     const entry = backgroundUploads.get(id);
     if (entry) {
         entry.progress = Math.min(100, Math.max(0, percent));
+        if (loaded !== undefined && total !== undefined) {
+            entry.loaded = loaded;
+            entry.total = total;
+        }
         updateBgUploadIndicator();
     }
 }
@@ -427,7 +451,7 @@ function uploadWithProgress(url, formData, headers, onProgress) {
         }
         xhr.upload.addEventListener("progress", (e) => {
             if (e.lengthComputable && onProgress) {
-                onProgress(Math.round((e.loaded / e.total) * 100));
+                onProgress(Math.round((e.loaded / e.total) * 100), e.loaded, e.total);
             }
         });
         xhr.addEventListener("load", () => {
@@ -6064,7 +6088,7 @@ async function forwardMediaToDestination(messageMeta, mediaType, destination, so
     const fwdBgId = registerBackgroundUpload("forwarded " + mediaType);
     await acquireUploadSlot(fwdBgId);
     try {
-        const fwdProgress = (pct) => updateBackgroundUploadProgress(fwdBgId, pct);
+        const fwdProgress = (pct, loaded, total) => updateBackgroundUploadProgress(fwdBgId, pct, loaded, total);
         if (mediaType === "voice") {
             formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
             await uploadWithProgress("api/messages/media/send_voice.php", formData, getCsrfHeaders(), fwdProgress);
@@ -12477,7 +12501,7 @@ async function sendVoiceMessage(audioBlob) {
             "api/messages/media/send_voice.php",
             formData,
             getCsrfHeaders(),
-            (pct) => updateBackgroundUploadProgress(bgId, pct)
+            (pct, loaded, total) => updateBackgroundUploadProgress(bgId, pct, loaded, total)
         );
 
         if (!isGroupToken(capturedTarget)) {
@@ -12792,7 +12816,7 @@ async function sendImageMessage(imageFile) {
             "api/messages/media/send_image.php",
             formData,
             getCsrfHeaders(),
-            (pct) => updateBackgroundUploadProgress(bgId, pct)
+            (pct, loaded, total) => updateBackgroundUploadProgress(bgId, pct, loaded, total)
         );
 
         if (!isGroupToken(capturedTarget)) {
@@ -12884,7 +12908,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
             "api/messages/media/send_file.php",
             formData,
             getCsrfHeaders(),
-            (pct) => updateBackgroundUploadProgress(bgId, pct)
+            (pct, loaded, total) => updateBackgroundUploadProgress(bgId, pct, loaded, total)
         );
 
         if (!isGroupToken(capturedTarget)) {
