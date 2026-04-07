@@ -59,6 +59,7 @@ const settingFontScale = document.getElementById("settingFontScale");
 const settingShowTimestamps = document.getElementById("settingShowTimestamps");
 const settingReduceMotion = document.getElementById("settingReduceMotion");
 const settingIosLagFix = document.getElementById("settingIosLagFix");
+const settingClassicDesign = document.getElementById("settingClassicDesign");
 const settingInteractiveMessageSearch = document.getElementById("settingInteractiveMessageSearch");
 const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
@@ -178,7 +179,6 @@ const LONG_PRESS_MOVE_CANCEL_PX = 12;
 const SETTINGS_STORAGE_KEY = "tintinchat.settings.v1";
 const MOBILE_BREAKPOINT_WIDTH = 767.98;
 const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
-const SEEN_STATUS_POLL_MS = Number(appConstants.seenStatusPollMs) || 3000;
 const TYPING_IDLE_TIMEOUT_MS = 3200;
 const TYPING_UPDATE_THROTTLE_MS = 3500;
 const MESSAGE_EDIT_WINDOW_MS = Number(appConstants.messageEditWindowMs) || 12 * 60 * 60 * 1000;
@@ -310,7 +310,6 @@ let retryLastSendAction = null;
 let activeSettingsTab = "general";
 let currentSelfUsername = String(CURRENT_USER || "");
 let isRefreshLoopBusy = false;
-let isSeenLoopBusy = false;
 let pendingClipboardImageFile = null;
 let isChatInputFocused = false;
 let lastViewportHeight = window.innerHeight;
@@ -490,6 +489,7 @@ const appSettings = {
     showTimestamps: true,
     reduceMotion: false,
     iosLagFix: false,
+    classicDesign: false,
     interactiveMessageSearch: false,
     browserNotificationsEnabled: false,
     sendByEnter: true,
@@ -585,7 +585,7 @@ function isLikelyIOSDevice() {
 }
 
 function isIosLagFixEnabled() {
-    return Boolean(appSettings.iosLagFix) && isLikelyIOSDevice();
+    return Boolean(appSettings.iosLagFix);
 }
 
 const selectedMessageIds = new Set();
@@ -1591,11 +1591,45 @@ function applyUiPreferenceClasses() {
     root.setAttribute("data-font-scale", appSettings.fontScale);
     root.classList.toggle("reduced-motion-enabled", Boolean(appSettings.reduceMotion));
     root.classList.toggle("ios-lag-fix-enabled", isIosLagFixEnabled());
+    root.classList.toggle("classic-design-enabled", Boolean(appSettings.classicDesign) && isIosLagFixEnabled());
     window.__TTC_IOS_LAG_FIX_ENABLED__ = isIosLagFixEnabled();
     chatMessagesElem?.classList.toggle(
         "hide-message-timestamps",
         !Boolean(appSettings.showTimestamps)
     );
+}
+
+/**
+ * Synchronise the disabled/checked state of Classic Design and Reduce Motion
+ * checkboxes based on the current Performance mode and Classic Design values.
+ *
+ *  Normal mode → Classic Design: OFF + locked;  Reduce Motion: unlocked
+ *  Perf mode   → Classic Design: unlocked;      Reduce Motion: unlocked
+ *  Classic ON  → Reduce Motion: forced ON + locked
+ */
+function syncPerfModeOptionStates() {
+    const perfOn = isIosLagFixEnabled();
+    const classicOn = perfOn && appSettings.classicDesign;
+
+    // Classic Design: only changeable when performance mode is on
+    if (settingClassicDesign) {
+        settingClassicDesign.disabled = !perfOn;
+        if (!perfOn) {
+            appSettings.classicDesign = false;
+            settingClassicDesign.checked = false;
+        } else {
+            settingClassicDesign.checked = appSettings.classicDesign;
+        }
+    }
+
+    // Reduce Motion: locked ON when classic design is active
+    if (settingReduceMotion) {
+        settingReduceMotion.disabled = classicOn;
+        if (classicOn) {
+            appSettings.reduceMotion = true;
+        }
+        settingReduceMotion.checked = appSettings.reduceMotion;
+    }
 }
 
 function setComposerAnimationProfile(profile = "calm") {
@@ -4323,6 +4357,10 @@ function applySettingsUi() {
     if (settingIosLagFix) {
         settingIosLagFix.checked = appSettings.iosLagFix;
     }
+    if (settingClassicDesign) {
+        settingClassicDesign.checked = appSettings.classicDesign;
+    }
+    syncPerfModeOptionStates();
     if (settingInteractiveMessageSearch) {
         settingInteractiveMessageSearch.checked = appSettings.interactiveMessageSearch;
     }
@@ -4439,15 +4477,37 @@ function bindSettingsUiEvents() {
 
     settingIosLagFix?.addEventListener("change", (event) => {
         appSettings.iosLagFix = Boolean(event.target.checked);
+        if (!appSettings.iosLagFix && appSettings.classicDesign) {
+            // Turning off performance mode resets classic design
+            appSettings.classicDesign = false;
+        }
         persistAppSettings();
         applyUiPreferenceClasses();
-        const iosActive = isIosLagFixEnabled();
+        syncPerfModeOptionStates();
         setComposerStatus(
             appSettings.iosLagFix
-                ? (iosActive
-                    ? "iOS performance mode enabled"
-                    : "iOS performance mode saved (active on iPhone/iPad only)")
-                : "iOS performance mode disabled",
+                ? "Performance mode enabled"
+                : "Performance mode disabled",
+            "success"
+        );
+    });
+
+    settingClassicDesign?.addEventListener("change", (event) => {
+        appSettings.classicDesign = Boolean(event.target.checked);
+        if (appSettings.classicDesign) {
+            // Classic design forces reduce motion ON
+            appSettings.reduceMotion = true;
+        } else {
+            // Disabling classic design also turns reduce motion OFF
+            appSettings.reduceMotion = false;
+        }
+        persistAppSettings();
+        applyUiPreferenceClasses();
+        syncPerfModeOptionStates();
+        setComposerStatus(
+            appSettings.classicDesign
+                ? "Classic design enabled"
+                : "Classic design disabled",
             "success"
         );
     });
@@ -5102,10 +5162,6 @@ document.addEventListener("DOMContentLoaded", () => {
     bindCreateGroupModalEvents();
     notificationPlayer.preloadCustom();
     checkAnnouncementUnread();
-    // Re-check for new announcements every 60 s so online users get notified
-    setInterval(() => {
-        if (!document.hidden && navigator.onLine) checkAnnouncementUnread();
-    }, 60_000);
 });
 
 function getCsrfHeaders() {
@@ -8641,7 +8697,6 @@ async function scrollToReplyTarget(targetId) {
             }
             isBatchRendering = false;
 
-            rebuildMessageDaySeparators();
             restoreViewportAnchor(viewportAnchor);
 
             if (addedCount > 0) {
@@ -9655,7 +9710,6 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
     }
 
     if (!isBatchRendering) {
-        rebuildMessageDaySeparators();
         if (
             !isLoadingMessages &&
             conversationSearchBar &&
@@ -12334,54 +12388,69 @@ lastRecentPollTime = "";
     }
 });
 
-let chatListTriggerTime = 0;
+// ── Unified main polling loop ──────────────────────────────────
+// Single 1-second base interval; per-job counters fire at their own cadence.
+// Normal mode:       messages 2s, seen 3s, chat list 10s
+// Performance mode:  messages 3s, seen 5s, chat list 30s
+let pollMsgCounter = 0;
+let pollSeenCounter = 0;
+let pollChatListCounter = 0;
+let pollBgCounter = 0;
+let prevDayString = new Date().toDateString();
 
 setInterval(async () => {
-    if (isRefreshLoopBusy) {
-        return;
+    if (isRefreshLoopBusy || !navigator.onLine) return;
+
+    const perfMode = isIosLagFixEnabled();
+    const msgInterval = perfMode ? 3 : 2;
+    const seenInterval = perfMode ? 5 : 3;
+    const chatListInterval = perfMode ? 30 : 10;
+
+    // Day-boundary separator check (normal mode only)
+    if (!perfMode) {
+        const nowDay = new Date().toDateString();
+        if (nowDay !== prevDayString) {
+            prevDayString = nowDay;
+            rebuildMessageDaySeparators();
+        }
     }
-    if (!navigator.onLine) {
-        return;
-    }
+
+    const doMessages = (pollMsgCounter === 0);
+    const doSeen = (pollSeenCounter === 0);
+    const doChatList = (pollChatListCounter === 0);
+
+    pollMsgCounter = (pollMsgCounter + 1) % msgInterval;
+    pollSeenCounter = (pollSeenCounter + 1) % seenInterval;
+    pollChatListCounter = (pollChatListCounter + 1) % chatListInterval;
+
     if (document.hidden) {
-        if (chatListTriggerTime % 5 === 0) {
+        // Background: only fetch chat list (+ messages for notifications) at
+        // the chat-list cadence so background tabs remain lightweight.
+        pollBgCounter = (pollBgCounter + 1) % chatListInterval;
+        if (pollBgCounter === 0) {
             try {
                 await Promise.all([
                     loadChatList(),
-                    // Fetch messages in background for browser notifications
                     currentChatUser?.length &&
                         appSettings.browserNotificationsEnabled &&
                         forceFetchCurrentChatMessages(),
                 ]);
-            } catch (error) {}
+            } catch (_) {}
         }
-        chatListTriggerTime = ++chatListTriggerTime % 30;
         return;
     }
 
     isRefreshLoopBusy = true;
     try {
-        await Promise.all([
-            currentChatUser?.length && forceFetchCurrentChatMessages(),
-            !(chatListTriggerTime % 10) && loadChatList(),
-        ]);
-        chatListTriggerTime = ++chatListTriggerTime % 10;
+        const tasks = [];
+        if (doMessages && currentChatUser?.length) tasks.push(forceFetchCurrentChatMessages());
+        if (doChatList) tasks.push(loadChatList());
+        if (doSeen) tasks.push(refreshPendingSeenStates());
+        if (tasks.length) await Promise.all(tasks);
     } finally {
         isRefreshLoopBusy = false;
     }
 }, CHAT_REFRESH_POLL_MS);
-
-setInterval(async () => {
-    if (isSeenLoopBusy || document.hidden) {
-        return;
-    }
-    isSeenLoopBusy = true;
-    try {
-        await refreshPendingSeenStates();
-    } finally {
-        isSeenLoopBusy = false;
-    }
-}, SEEN_STATUS_POLL_MS);
 
 voiceBtn.addEventListener("click", async () => {
     playComposerButtonTap(voiceBtn);

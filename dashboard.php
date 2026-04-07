@@ -545,9 +545,22 @@ $csrfToken = generateCsrfToken();
                             </label>
 
                             <label class="chat-ui-settings-item chat-ui-settings-item-check">
-                                <span>iOS performance mode</span>
+                                <span>
+                                    <span>Performance mode</span>
+                                    <small class="chat-ui-settings-hint">Reduces animations and polling frequency. Recommended for iOS devices.</small>
+                                </span>
                                 <span class="chat-ui-settings-control">
                                     <input type="checkbox" id="settingIosLagFix">
+                                </span>
+                            </label>
+
+                            <label class="chat-ui-settings-item chat-ui-settings-item-check">
+                                <span>
+                                    <span>Classic design</span>
+                                    <small class="chat-ui-settings-hint">Removes visual effects for maximum performance. Requires Performance mode.</small>
+                                </span>
+                                <span class="chat-ui-settings-control">
+                                    <input type="checkbox" id="settingClassicDesign" disabled>
                                 </span>
                             </label>
 

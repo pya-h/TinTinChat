@@ -3379,6 +3379,16 @@ textarea,
     box-shadow: 0 0 0 0.16rem color-mix(in srgb, var(--secondary-color) 30%, transparent);
 }
 
+.chat-ui-settings-item input[type="checkbox"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.chat-ui-settings-item-check:has(input[type="checkbox"]:disabled) {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 .chat-ui-settings-item-action {
     cursor: default;
 }
@@ -5731,13 +5741,7 @@ textarea,
 }
 
 .chat-input:focus-within button[type="submit"] {
-    animation: submitPulse 2s ease-in-out infinite;
-    animation-delay: 0.4s;
-}
-
-@keyframes submitPulse {
-    0%, 100% { box-shadow: 0 2px 12px rgba(106, 17, 203, 0.3); }
-    50% { box-shadow: 0 2px 18px rgba(106, 17, 203, 0.45), 0 0 8px rgba(37, 117, 252, 0.2); }
+    box-shadow: 0 2px 12px rgba(106, 17, 203, 0.3);
 }
 
 #pasteClipboardImageBtn {
@@ -7751,10 +7755,6 @@ textarea,
     transition-duration: 0.01ms !important;
 }
 
-:root.ios-lag-fix-enabled .chat-input:focus-within button[type="submit"] {
-    animation: none !important;
-}
-
 :root.ios-lag-fix-enabled .chat-input button:hover,
 :root.ios-lag-fix-enabled .chat-input button[type="submit"]:hover,
 :root.ios-lag-fix-enabled .chat-input textarea:hover:not(:focus) {
@@ -7783,6 +7783,14 @@ textarea,
 
 :root.ios-lag-fix-enabled .chat-input button::before {
     transition: none !important;
+}
+
+/* ── Classic Design mode: strip all backdrop-filter / blur effects ── */
+:root.classic-design-enabled *,
+:root.classic-design-enabled *::before,
+:root.classic-design-enabled *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 .chat-list li:focus-visible,
