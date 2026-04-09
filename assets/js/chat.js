@@ -2088,47 +2088,54 @@ function renderOpinionsDetailList(opinions, targetUserId, targetUsername) {
     });
 }
 
-/* ── Playlist ── */
+/* ── Playlist (server-backed) ── */
 
-const PLAYLIST_STORAGE_KEY = "ttc_playlist";
+let playlistCache = null;
+
+function normalizeApiPlaylistItem(item) {
+    const msgId = Number(item?.message_id || 0);
+    if (!msgId) return null;
+    return {
+        msgId,
+        chatTarget: String(item?.chat_target || ""),
+        title: String(item?.title || "Unknown"),
+        ext: String(item?.ext || ""),
+        addedAt: String(item?.added_at || ""),
+        meta: {
+            id: msgId,
+            file_path: item?.file_path || "",
+            message: item?.message || "",
+            message_for_sender: item?.message_for_sender || "",
+            sender_id: Number(item?.sender_id || 0),
+            group_id: Number(item?.group_id || 0),
+            message_type: item?.message_type || "file",
+            file_purged_at: item?.file_purged_at || null,
+        },
+    };
+}
+
+async function fetchPlaylist() {
+    try {
+        const res = await window.ApiService.jsonOk("api/playlist/list.php");
+        const items = (res?.items || []).map(normalizeApiPlaylistItem).filter(Boolean);
+        playlistCache = items;
+        // Populate messageMetaById for decryption/playback
+        for (const t of items) {
+            if (t.meta) messageMetaById.set(t.msgId, t.meta);
+        }
+        return items;
+    } catch {
+        return playlistCache || [];
+    }
+}
 
 function getPlaylist() {
-    try {
-        const raw = localStorage.getItem(PLAYLIST_STORAGE_KEY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-        const normalized = parsed
-            .map((item) => {
-                const msgId = Number(item?.msgId || 0);
-                if (!msgId) {
-                    return null;
-                }
-                return {
-                    msgId,
-                    chatTarget: String(item?.chatTarget || ""),
-                    title: String(item?.title || "Unknown"),
-                    ext: String(item?.ext || ""),
-                    addedAt: String(item?.addedAt || ""),
-                    meta: item?.meta && typeof item.meta === "object" ? item.meta : null,
-                };
-            })
-            .filter(Boolean);
-        if (normalized.length !== parsed.length) {
-            savePlaylist(normalized);
-        }
-        return normalized;
-    } catch { return []; }
+    return playlistCache || [];
 }
 
-function savePlaylist(list) {
-    localStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify(list));
-}
-
-function addToPlaylist(msgId, chatTarget, title, ext) {
+async function addToPlaylist(msgId) {
     const list = getPlaylist();
-    if (list.some((t) => t.msgId === msgId)) {
+    if (list.some((t) => t.msgId === Number(msgId))) {
         setComposerStatus("Already in playlist", "warning");
         return;
     }
@@ -2136,34 +2143,30 @@ function addToPlaylist(msgId, chatTarget, title, ext) {
         setComposerStatus("Playlist full (200 tracks max)", "warning");
         return;
     }
-    const meta = messageMetaById.get(Number(msgId));
-    if (!meta) {
-        setComposerStatus("Unable to save track metadata", "error");
-        return;
+    try {
+        await window.ApiService.jsonOk("api/playlist/add.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+            body: JSON.stringify({ message_id: Number(msgId) }),
+        });
+        await fetchPlaylist();
+        setComposerStatus("Added to playlist", "success");
+    } catch (error) {
+        setComposerStatus(error?.message || "Failed to add to playlist", "error");
     }
-    // Store minimal meta needed for decryption + playback
-    const entry = {
-        msgId, chatTarget, title, ext,
-        addedAt: new Date().toISOString(),
-        meta: {
-            id: meta.id,
-            file_path: meta.file_path,
-            media_meta: meta.media_meta,
-            message: meta.message,
-            message_for_sender: meta.message_for_sender,
-            sender_id: meta.sender_id,
-            group_id: meta.group_id || 0,
-            message_type: meta.message_type,
-        },
-    };
-    list.push(entry);
-    savePlaylist(list);
-    setComposerStatus("Added to playlist", "success");
 }
 
-function removeFromPlaylist(msgId) {
-    const list = getPlaylist().filter((t) => t.msgId !== msgId);
-    savePlaylist(list);
+async function removeFromPlaylist(msgId) {
+    try {
+        await window.ApiService.jsonOk("api/playlist/remove.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+            body: JSON.stringify({ message_id: Number(msgId) }),
+        });
+        if (playlistCache) {
+            playlistCache = playlistCache.filter((t) => t.msgId !== Number(msgId));
+        }
+    } catch { /* best-effort */ }
 }
 
 function renderPlaylistPanel() {
@@ -2194,8 +2197,8 @@ function renderPlaylistPanel() {
             await playPlaylistTrack(track, playEl);
         });
         const removeEl = item.querySelector(".playlist-item-remove");
-        removeEl?.addEventListener("click", () => {
-            removeFromPlaylist(track.msgId);
+        removeEl?.addEventListener("click", async () => {
+            await removeFromPlaylist(track.msgId);
             renderPlaylistPanel();
         });
         playlistBody.appendChild(item);
@@ -2282,8 +2285,9 @@ function autoPlayNextTrack(currentTrack) {
     }
 }
 
-function openPlaylistPanel() {
+async function openPlaylistPanel() {
     if (!playlistOverlay) return;
+    await fetchPlaylist();
     renderPlaylistPanel();
     playlistOverlay.hidden = false;
     pushUiBackLayer(UI_BACK_LAYER_KEYS.playlist, ({ fromHistory = false } = {}) => {
@@ -2340,7 +2344,7 @@ function openSavedMessagesInfoPanel() {
     });
     chatAreaElem?.classList.add("saved-panel-open");
     void loadSavedMessagesStats();
-    renderSavedPlaylistPanel();
+    fetchPlaylist().then(() => renderSavedPlaylistPanel());
     savedInfoBackBtn?.addEventListener("click", closeSavedMessagesInfoPanel);
 }
 
@@ -2770,7 +2774,7 @@ function normalizeMusicContextTrack(rawTrack) {
     };
 }
 
-function addMusicTrackToPlaylistFromContext(rawTrack) {
+async function addMusicTrackToPlaylistFromContext(rawTrack) {
     const track = normalizeMusicContextTrack(rawTrack);
     if (!track) {
         setComposerStatus("Track metadata unavailable.", "warning");
@@ -2779,10 +2783,10 @@ function addMusicTrackToPlaylistFromContext(rawTrack) {
     if (track.message && typeof track.message === "object") {
         messageMetaById.set(track.id, track.message);
     }
-    addToPlaylist(track.id, track.chatTarget || currentChatUser, track.title, track.ext);
+    await addToPlaylist(track.id);
 }
 
-function removeMusicTrackFromPlaylistFromContext(rawTrack) {
+async function removeMusicTrackFromPlaylistFromContext(rawTrack) {
     const track = normalizeMusicContextTrack(rawTrack);
     if (!track) {
         setComposerStatus("Track metadata unavailable.", "warning");
@@ -2796,7 +2800,7 @@ function removeMusicTrackFromPlaylistFromContext(rawTrack) {
         return;
     }
 
-    removeFromPlaylist(track.id);
+    await removeFromPlaylist(track.id);
     if (savedPanelCurrentTrackIdx === removeIdx) {
         stopSavedPanelAudio();
     } else if (savedPanelCurrentTrackIdx > removeIdx) {
@@ -3310,8 +3314,8 @@ function renderSavedPlaylistPanel() {
         if (!isPurged) {
             item.querySelector(".saved-pl-play")?.addEventListener("click", () => playSavedPanelTrack(idx));
         }
-        item.querySelector(".saved-pl-remove")?.addEventListener("click", () => {
-            removeFromPlaylist(track.msgId);
+        item.querySelector(".saved-pl-remove")?.addEventListener("click", async () => {
+            await removeFromPlaylist(track.msgId);
             if (savedPanelCurrentTrackIdx === idx) {
                 stopSavedPanelAudio();
             } else if (savedPanelCurrentTrackIdx > idx) {
@@ -7023,10 +7027,9 @@ async function deleteMessageFromContext(messageElement) {
         pendingSeenMessageIds.delete(messageId);
         messageMetaById.delete(messageId);
         void removeMediaFromCache(messageId);
-        // Clean up playlist if this message was a playlist track
-        const playlist = getPlaylist();
-        if (playlist.some((t) => Number(t.msgId) === messageId)) {
-            removeFromPlaylist(messageId);
+        // Update local playlist cache (DB CASCADE removes the row server-side)
+        if (playlistCache) {
+            playlistCache = playlistCache.filter((t) => Number(t.msgId) !== messageId);
         }
     } catch (error) {
         showModal("Delete Failed", error.message || "Unable to delete message.", "error");
@@ -7207,15 +7210,11 @@ function addMessageActionHandlers(
             addPlaylistBtn.type = "button";
             addPlaylistBtn.className = "message-context-menu-item";
             addPlaylistBtn.innerHTML = '<i class="fas fa-list-ul me-2"></i>Add to Playlist';
-            addPlaylistBtn.addEventListener("click", () => {
+            addPlaylistBtn.addEventListener("click", async () => {
                 closeMessageContextMenu();
                 const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
                 if (!msgId) return;
-                const titleEl = messageElement.querySelector(".music-title");
-                const title = titleEl?.textContent || "Unknown";
-                const formatEl = messageElement.querySelector(".music-format");
-                const ext = formatEl?.textContent || "";
-                addToPlaylist(msgId, currentChatUser, title, ext);
+                await addToPlaylist(msgId);
             });
             appendMenuAction(addPlaylistBtn);
         }
@@ -12390,9 +12389,9 @@ lastRecentPollTime = "";
 
 // ── Unified main polling loop ──────────────────────────────────
 // Single 1-second base interval; per-job counters fire at their own cadence.
-// Normal mode:       messages 2s, seen 3s, chat list 10s
-// Performance mode:  messages 3s, seen 5s, chat list 30s
-let pollMsgCounter = 0;
+// Normal mode:       messages 1s, seen 3s, chat list 10s
+// Performance mode:  messages 1.7s, seen 5s, chat list 30s
+let lastMsgPollTime = 0;
 let pollSeenCounter = 0;
 let pollChatListCounter = 0;
 let pollBgCounter = 0;
@@ -12402,7 +12401,7 @@ setInterval(async () => {
     if (isRefreshLoopBusy || !navigator.onLine) return;
 
     const perfMode = isIosLagFixEnabled();
-    const msgInterval = perfMode ? 3 : 2;
+    const msgIntervalMs = perfMode ? 1700 : 1000;
     const seenInterval = perfMode ? 5 : 3;
     const chatListInterval = perfMode ? 30 : 10;
 
@@ -12415,11 +12414,12 @@ setInterval(async () => {
         }
     }
 
-    const doMessages = (pollMsgCounter === 0);
+    const now = Date.now();
+    const doMessages = (now - lastMsgPollTime >= msgIntervalMs);
     const doSeen = (pollSeenCounter === 0);
     const doChatList = (pollChatListCounter === 0);
 
-    pollMsgCounter = (pollMsgCounter + 1) % msgInterval;
+    if (doMessages) lastMsgPollTime = now;
     pollSeenCounter = (pollSeenCounter + 1) % seenInterval;
     pollChatListCounter = (pollChatListCounter + 1) % chatListInterval;
 
