@@ -11,9 +11,21 @@ session_write_close();
 
 $body = apiGetJsonBody();
 $messageId = (int) ($body['message_id'] ?? 0);
+$title = trim((string) ($body['title'] ?? ''));
+$ext = trim((string) ($body['ext'] ?? ''));
 
 if ($messageId <= 0) {
     apiError('INVALID_MESSAGE_ID', 'Invalid message ID', 400);
+}
+
+if ($title === '') {
+    $title = 'Unknown';
+}
+if (mb_strlen($title) > 255) {
+    $title = mb_substr($title, 0, 255);
+}
+if (strlen($ext) > 16) {
+    $ext = substr($ext, 0, 16);
 }
 
 // Verify message exists and is a file type
@@ -61,9 +73,9 @@ if ((int) $countStmt->fetchColumn() >= 200) {
 
 // Insert (ignore duplicate)
 $insStmt = $pdo->prepare(
-    'INSERT IGNORE INTO playlist_tracks (user_id, message_id) VALUES (?, ?)'
+    'INSERT IGNORE INTO playlist_tracks (user_id, message_id, title, ext) VALUES (?, ?, ?, ?)'
 );
-$insStmt->execute([$userId, $messageId]);
+$insStmt->execute([$userId, $messageId, $title, $ext]);
 
 if ($insStmt->rowCount() === 0) {
     apiError('ALREADY_IN_PLAYLIST', 'Already in playlist', 409);

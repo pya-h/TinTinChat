@@ -11,6 +11,8 @@ session_write_close();
 $stmt = $pdo->prepare(
     "SELECT
         pt.message_id,
+        pt.title,
+        pt.ext,
         pt.added_at,
         m.sender_id,
         m.receiver_id,
@@ -66,23 +68,19 @@ foreach ($rows as $row) {
         $chatTarget = $row['sender_username'] ?? '';
     }
 
-    // Derive title and ext from any_file_path
-    $filePath = $row['any_file_path'] ?? '';
-    $baseName = pathinfo($filePath, PATHINFO_FILENAME);
-    $ext = strtoupper(pathinfo($filePath, PATHINFO_EXTENSION));
-
     $items[] = [
         'message_id'         => (int) $row['message_id'],
         'chat_target'        => $chatTarget,
-        'title'              => $baseName ?: 'Unknown',
-        'ext'                => $ext,
+        'title'              => $row['title'] ?: 'Unknown',
+        'ext'                => $row['ext'] ?: '',
         'added_at'           => $row['added_at'],
         'sender_id'          => $senderId,
+        'receiver_id'        => $receiverId,
         'group_id'           => $groupId,
         'message'            => $row['message'],
         'message_for_sender' => $row['message_for_sender'],
         'message_type'       => $row['message_type'],
-        'file_path'          => $filePath,
+        'file_path'          => $row['any_file_path'] ?? '',
         'file_purged_at'     => $row['file_purged_at'],
         'file_size'          => $row['file_size'] !== null ? (int) $row['file_size'] : null,
     ];

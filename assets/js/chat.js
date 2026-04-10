@@ -2107,6 +2107,7 @@ function normalizeApiPlaylistItem(item) {
             message: item?.message || "",
             message_for_sender: item?.message_for_sender || "",
             sender_id: Number(item?.sender_id || 0),
+            receiver_id: Number(item?.receiver_id || 0),
             group_id: Number(item?.group_id || 0),
             message_type: item?.message_type || "file",
             file_purged_at: item?.file_purged_at || null,
@@ -2133,7 +2134,7 @@ function getPlaylist() {
     return playlistCache || [];
 }
 
-async function addToPlaylist(msgId) {
+async function addToPlaylist(msgId, title, ext) {
     const list = getPlaylist();
     if (list.some((t) => t.msgId === Number(msgId))) {
         setComposerStatus("Already in playlist", "warning");
@@ -2147,7 +2148,7 @@ async function addToPlaylist(msgId) {
         await window.ApiService.jsonOk("api/playlist/add.php", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-            body: JSON.stringify({ message_id: Number(msgId) }),
+            body: JSON.stringify({ message_id: Number(msgId), title: String(title || ""), ext: String(ext || "") }),
         });
         await fetchPlaylist();
         setComposerStatus("Added to playlist", "success");
@@ -2783,7 +2784,7 @@ async function addMusicTrackToPlaylistFromContext(rawTrack) {
     if (track.message && typeof track.message === "object") {
         messageMetaById.set(track.id, track.message);
     }
-    await addToPlaylist(track.id);
+    await addToPlaylist(track.id, track.title, track.ext);
 }
 
 async function removeMusicTrackFromPlaylistFromContext(rawTrack) {
@@ -7214,7 +7215,11 @@ function addMessageActionHandlers(
                 closeMessageContextMenu();
                 const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
                 if (!msgId) return;
-                await addToPlaylist(msgId);
+                const titleEl = messageElement.querySelector(".music-title");
+                const title = titleEl?.textContent || "Unknown";
+                const formatEl = messageElement.querySelector(".music-format");
+                const ext = formatEl?.textContent || "";
+                await addToPlaylist(msgId, title, ext);
             });
             appendMenuAction(addPlaylistBtn);
         }

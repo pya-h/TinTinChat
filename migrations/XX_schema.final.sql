@@ -226,6 +226,8 @@ CREATE TABLE IF NOT EXISTS user_opinions (
 CREATE TABLE IF NOT EXISTS playlist_tracks (
   user_id    INT NOT NULL,
   message_id INT NOT NULL,
+  title      VARCHAR(255) NOT NULL DEFAULT 'Unknown',
+  ext        VARCHAR(16)  NOT NULL DEFAULT '',
   added_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id, message_id),
   KEY idx_playlist_user_added (user_id, added_at),
