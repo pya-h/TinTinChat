@@ -374,6 +374,7 @@
     align-items: center;
     justify-content: center;
     cursor: default;
+    touch-action: none;
 }
 
 .image-modal-content img {
@@ -385,6 +386,38 @@
     border-radius: 8px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     pointer-events: none;
+    transform-origin: center center;
+    transition: transform 0.18s ease;
+}
+
+.image-modal-zoom-controls {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 10001;
+}
+
+.image-modal-zoom-btn {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.image-modal-zoom-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.08);
 }
 
 .image-modal-close {
@@ -468,6 +501,10 @@
         right: 1rem;
         padding: 0.75rem 1rem;
         font-size: 0.9rem;
+    }
+
+    .image-modal-zoom-controls {
+        display: none;
     }
 
     .image-modal-content img {

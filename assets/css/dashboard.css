@@ -5050,12 +5050,12 @@ textarea,
 .message-edited-marker {
     display: inline-flex;
     margin-left: 0.3rem;
-    width: 0.92rem;
-    height: 0.92rem;
+    width: 1.02rem;
+    height: 1.02rem;
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    font-size: 0.56rem;
+    font-size: 0.62rem;
     opacity: 0.86;
     color: currentColor;
     background: color-mix(in srgb, currentColor 15%, transparent);

@@ -47,6 +47,14 @@
     <button type="button" class="image-modal-close" onclick="closeImageModal()">
         <i class="fas fa-times"></i>
     </button>
+    <div class="image-modal-zoom-controls" aria-label="Image zoom controls">
+        <button type="button" id="imageModalZoomOut" class="image-modal-zoom-btn" title="Zoom out" aria-label="Zoom out">
+            <i class="fas fa-search-minus"></i>
+        </button>
+        <button type="button" id="imageModalZoomIn" class="image-modal-zoom-btn" title="Zoom in" aria-label="Zoom in">
+            <i class="fas fa-search-plus"></i>
+        </button>
+    </div>
     <div class="image-modal-content">
         <img id="imageModalImage" src="" alt="Full size image" />
     </div>
