@@ -6783,15 +6783,11 @@ async function saveEditedMessage() {
         if (msgEl) {
             const textSpan = msgEl.querySelector(".message-text-content");
             if (textSpan) {
-                textSpan.textContent = editedText;
+                textSpan.innerHTML = buildMessageTextHtmlWithLinks(editedText);
             }
-            if (!msgEl.querySelector(".message-edited-marker")) {
-                const marker = document.createElement("span");
-                marker.className = "message-edited-marker";
-                marker.title = "Edited";
-                marker.textContent = "edited";
-                textSpan?.after(marker);
-            }
+            const editedAt = new Date().toISOString();
+            msgEl.setAttribute("data-edited-at", editedAt);
+            ensureEditedMarkerPlacement(msgEl, editedAt);
         }
         cancelEditMode();
         setComposerStatus("Message edited", "success");
@@ -6805,6 +6801,30 @@ async function saveEditedMessage() {
 
 function getMessageElementById(messageId) {
     return chatMessagesElem.querySelector(`.message[data-message-id="${messageId}"]`);
+}
+
+function ensureEditedMarkerPlacement(messageElement, editedAt = "") {
+    if (!messageElement) {
+        return;
+    }
+    const messageMetaTimes = messageElement.querySelectorAll(".message-meta-time");
+    if (!messageMetaTimes.length) {
+        return;
+    }
+
+    messageMetaTimes.forEach((timeEl) => {
+        const currentMarker = timeEl.querySelector(".message-edited-marker");
+        if (currentMarker) {
+            currentMarker.remove();
+        }
+        timeEl.insertAdjacentHTML("beforeend", buildEditedMarkerHtml(editedAt));
+    });
+
+    messageElement.querySelectorAll(".message-edited-marker").forEach((markerEl) => {
+        if (!markerEl.closest(".message-meta-time")) {
+            markerEl.remove();
+        }
+    });
 }
 
 function getReactionHostElement(messageElement) {
@@ -8748,13 +8768,68 @@ async function scrollToReplyTarget(targetId) {
 
 function newDateTag(
     msg,
-    { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "" }
+    { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "", editedAt = "" }
 ) {
     const timeLabel = formatMessageTimeLabel(msg.created_at);
     const margins = strictMargins ? `mt-${topSpace}` : `mt-0 mt-lg-${topSpace} mt-md-${topSpace}`;
+    const editedMarker = editedAt ? buildEditedMarkerHtml(editedAt) : "";
     return `<span class="message-meta-time mx-2 ${margins}" style="font-size: ${fontSize}px; float: ${
         atLeft ? "left" : "right"
-    };${extraStyles}">${escapeHtml(timeLabel)}</span>`;
+    };${extraStyles}">${escapeHtml(timeLabel)}${editedMarker}</span>`;
+}
+
+function buildEditedMarkerHtml(editedAt = "") {
+    const title = editedAt ? `Edited at ${formatMessageTimestamp(editedAt)}` : "Edited";
+    return `<span class="message-edited-marker" title="${escapeHtml(title)}" aria-label="Edited"><i class="fas fa-pen" aria-hidden="true"></i></span>`;
+}
+
+function buildMessageTextHtmlWithLinks(text) {
+    const rawText = String(text || "");
+    if (!rawText.length) {
+        return "";
+    }
+
+    const urlRegex = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+    let html = "";
+    let lastIndex = 0;
+
+    const splitTrailingPunctuation = (url) => {
+        let value = String(url || "").trim();
+        const trailingMatch = value.match(/[),.!?;:]+$/);
+        const trailing = trailingMatch ? trailingMatch[0] : "";
+        if (trailing) {
+            value = value.slice(0, -trailing.length);
+        }
+        return { core: value, trailing };
+    };
+
+    let match;
+    while ((match = urlRegex.exec(rawText)) !== null) {
+        const fullMatch = String(match[0] || "");
+        const start = Number(match.index || 0);
+        const end = start + fullMatch.length;
+
+        if (start > lastIndex) {
+            html += escapeHtml(rawText.slice(lastIndex, start));
+        }
+
+        const { core, trailing } = splitTrailingPunctuation(fullMatch);
+        if (!core.length) {
+            html += escapeHtml(fullMatch);
+            lastIndex = end;
+            continue;
+        }
+
+        const href = core.toLowerCase().startsWith("www.") ? `https://${core}` : core;
+        html += `<a class="message-text-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(core)}</a>${escapeHtml(trailing)}`;
+        lastIndex = end;
+    }
+
+    if (lastIndex < rawText.length) {
+        html += escapeHtml(rawText.slice(lastIndex));
+    }
+
+    return html;
 }
 
 function formatMessageTimeLabel(createdAt) {
@@ -8846,7 +8921,7 @@ function resetConversationSearchHighlights() {
     textNodes.forEach((node) => {
         const originalText = node.getAttribute("data-original-text");
         if (originalText !== null) {
-            node.textContent = originalText;
+            node.innerHTML = buildMessageTextHtmlWithLinks(originalText);
             node.removeAttribute("data-original-text");
         }
     });
@@ -9154,15 +9229,10 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     }
                     const textSpan = existingMessageElement.querySelector(".message-text-content");
                     if (textSpan) {
-                        textSpan.textContent = newText;
+                        textSpan.innerHTML = buildMessageTextHtmlWithLinks(newText);
                     }
-                    if (!existingMessageElement.querySelector(".message-edited-marker")) {
-                        const marker = document.createElement("span");
-                        marker.className = "message-edited-marker";
-                        marker.title = "Edited";
-                        marker.textContent = "edited";
-                        textSpan?.after(marker);
-                    }
+                    existingMessageElement.setAttribute("data-edited-at", msg.edited_at || "");
+                    ensureEditedMarkerPlacement(existingMessageElement, msg.edited_at || "");
                 } catch (_) { /* decryption failure — leave existing text */ }
             }
             return existingMessageElement;
@@ -9541,20 +9611,18 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
             decryptedText = isGroupMessage ? String(msg.message || "") : "[Unsupported message]";
         }
         const isPersian = isTextPersian(decryptedText.trim());
-        const safeText = escapeHtml(decryptedText);
+        const safeText = buildMessageTextHtmlWithLinks(decryptedText);
         const isIncomingGroup = isGroupMessage && msg.sender_id != CURRENT_USER_ID;
         const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
-        const groupDateTag = `<span class="message-meta-time group-message-meta-time">${escapeHtml(formatMessageTimeLabel(msg.created_at))}</span>`;
-        const editedMarker = msg.edited_at
-            ? '<span class="message-edited-marker" title="Edited">edited</span>'
-            : "";
-        const messageBodyContent = `${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${editedMarker}${isIncomingGroup ? groupDateTag : ""}`;
+        const groupDateTag = `<span class="message-meta-time group-message-meta-time">${escapeHtml(formatMessageTimeLabel(msg.created_at))}${msg.edited_at ? buildEditedMarkerHtml(msg.edited_at) : ""}</span>`;
+        const messageBodyContent = `${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${isIncomingGroup ? groupDateTag : ""}`;
         const outsideDateTag = isIncomingGroup
             ? ""
             : newDateTag(msg, {
                 atLeft: msg.sender_id != CURRENT_USER_ID,
                   strictMargins: true,
                   topSpace: 3,
+                  editedAt: msg.edited_at || "",
               });
         div.classList.add("is-text-message");
         if (isIncomingGroup) {
@@ -10273,6 +10341,26 @@ window.playVoiceMessage = async function (messageId) {
     const durationDisplay = messageDiv.querySelector(".voice-duration-display");
     const voiceContainer = messageDiv.querySelector(".voice-player-container");
 
+    const updateVoicePlaybackUi = function () {
+        if (!durationDisplay || !audio) return;
+        const hasDuration = isFinite(audio.duration) && audio.duration > 0;
+        const currentSeconds = Math.max(0, Math.round(audio.currentTime || 0));
+        const displaySeconds = audio.ended && hasDuration
+            ? Math.round(audio.duration)
+            : currentSeconds;
+        const minutes = Math.floor(displaySeconds / 60);
+        const seconds = displaySeconds % 60;
+        durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+        if (hasDuration) {
+            const progress = Math.max(0, Math.min(1, audio.currentTime / audio.duration));
+            const waveformBarsEl = messageDiv.querySelector(".waveform-bars");
+            if (waveformBarsEl) {
+                updateVoiceSeekBars(waveformBarsEl, progress);
+            }
+        }
+    };
+
     let audio = messageDiv.querySelector("audio");
     if (!audio) {
         if (!audioContext) {
@@ -10315,44 +10403,36 @@ window.playVoiceMessage = async function (messageId) {
                     audio.currentTime = pendingRatio * audio.duration;
                     delete messageDiv.dataset.pendingVoiceSeekRatio;
                 }
-                const duration = Math.round(audio.duration);
-                const minutes = Math.floor(duration / 60);
-                const seconds = duration % 60;
-                durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+                updateVoicePlaybackUi();
             } else {
                 durationDisplay.textContent = "??:??";
             }
         });
 
-        audio.addEventListener("timeupdate", function () {
+        audio.addEventListener("durationchange", function () {
             if (isFinite(audio.duration)) {
-                const current = Math.round(audio.currentTime);
-                const minutes = Math.floor(current / 60);
-                const seconds = current % 60;
-                durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-
-                const progress = audio.currentTime / audio.duration;
-                const waveformBars = messageDiv.querySelectorAll(".waveform-bar");
-                const playedBarsCount = Math.floor(progress * waveformBars.length);
-
-                waveformBars.forEach((bar, index) => {
-                    if (index < playedBarsCount) {
-                        bar.classList.add("played");
-                    } else {
-                        bar.classList.remove("played");
-                    }
-                });
+                updateVoicePlaybackUi();
             }
+        });
+
+        audio.addEventListener("timeupdate", function () {
+            updateVoicePlaybackUi();
+        });
+
+        audio.addEventListener("play", function () {
+            updateVoicePlaybackUi();
         });
 
         audio.addEventListener("ended", function () {
             playBtn.innerHTML = `<i class="fas fa-play"></i>`;
             playBtn.classList.remove("playing");
             voiceContainer?.classList.remove("is-playing");
+            updateVoicePlaybackUi();
 
-            messageDiv
-                .querySelectorAll(".waveform-bar")
-                .forEach((bar) => bar.classList.add("played"));
+            const waveformBarsEl = messageDiv.querySelector(".waveform-bars");
+            if (waveformBarsEl) {
+                updateVoiceSeekBars(waveformBarsEl, 1);
+            }
         });
 
         audio.addEventListener("error", function (e) {
@@ -10424,13 +10504,15 @@ window.playVoiceMessage = async function (messageId) {
             audioContext.resume();
         }
 
-        audio.play().catch(function (error) {
+        audio.play().then(function () {
+            draw();
+            updateVoicePlaybackUi();
+        }).catch(function (error) {
             showModal(I18N_TEXT.playbackErrorTitle, I18N_TEXT.playbackErrorBody, "error");
         });
         playBtn.classList.add("playing");
         voiceContainer?.classList.add("is-playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
-        draw();
         // Show global now-playing bar
         const voiceCaption = (messageMeta.sender_username || "Voice") + " · " + formatMessageTimeLabel(messageMeta.created_at);
         showGlobalNowPlaying(audio, voiceCaption, "voice");

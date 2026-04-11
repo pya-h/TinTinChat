@@ -2596,6 +2596,25 @@ nav.navbar::after {
     display: inline;
 }
 
+.message-text-content .message-text-link {
+    color: color-mix(in srgb, var(--secondary-color) 78%, var(--primary-color));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    word-break: break-word;
+}
+
+.message-text-content .message-text-link:hover {
+    color: color-mix(in srgb, var(--secondary-color) 92%, var(--primary-color));
+}
+
+.message.sent .message-text-content .message-text-link {
+    color: rgba(255, 255, 255, 0.96);
+}
+
+.message.sent .message-text-content .message-text-link:hover {
+    color: #ffffff;
+}
+
 .message-copy-btn {
     border: 1px solid var(--border-color);
     background: var(--surface-color);
@@ -5030,10 +5049,21 @@ textarea,
 
 .message-edited-marker {
     display: inline-flex;
-    margin-left: 0.4rem;
-    font-size: 0.68rem;
-    opacity: 0.82;
-    text-transform: lowercase;
+    margin-left: 0.3rem;
+    width: 0.92rem;
+    height: 0.92rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 0.56rem;
+    opacity: 0.86;
+    color: currentColor;
+    background: color-mix(in srgb, currentColor 15%, transparent);
+    vertical-align: middle;
+}
+
+.message-edited-marker i {
+    line-height: 1;
 }
 
 :root[data-density="compact"] .message {
