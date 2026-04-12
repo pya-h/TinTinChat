@@ -6,10 +6,13 @@
  *   chatMessagesElem, conversationSearchBar, conversationSearchInput,
  *   conversationSearchCount, conversationSearchRunBtn, conversationSearchPrevBtn,
  *   conversationSearchNextBtn, conversationSearchCloseBtn,
- *   conversationSearchToken, conversationSearchResults, conversationSearchResultIndex,
  *   buildMessageTextHtmlWithLinks, escapeHtml, appSettings,
  *   hasMoreMessages, currentChatUser, loadMessages, setComposerStatus
  */
+
+let conversationSearchToken = 0;
+let conversationSearchResults = [];
+let conversationSearchResultIndex = -1;
 
 function resetConversationSearchHighlights() {
     const textNodes = chatMessagesElem.querySelectorAll(
