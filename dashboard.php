@@ -1780,6 +1780,11 @@ $csrfToken = generateCsrfToken();
     <script src="assets/js/chat-sticker-utils.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-sticker-utils.js')); ?>"></script>
     <script src="assets/js/chat-media-cache.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-media-cache.js')); ?>"></script>
     <script src="assets/js/chat.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat.js')); ?>"></script>
+    <script src="assets/js/chat-announcements.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-announcements.js')); ?>"></script>
+    <script src="assets/js/chat-opinions.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-opinions.js')); ?>"></script>
+    <script src="assets/js/chat-conversation-search.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-conversation-search.js')); ?>"></script>
+    <script src="assets/js/chat-image-modal.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-image-modal.js')); ?>"></script>
+    <script src="assets/js/chat-audio-players.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-audio-players.js')); ?>"></script>
     <script src="assets/js/chat-admin.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-admin.js')); ?>"></script>
     <script src="assets/js/ideas.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/ideas.js')); ?>"></script>
     <script src="assets/js/guide.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/guide.js')); ?>"></script>
