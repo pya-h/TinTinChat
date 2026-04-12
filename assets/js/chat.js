@@ -7,17 +7,25 @@ const stickerPickerMenu = document.getElementById("stickerPickerMenu");
 const stickerPickerGrid = document.getElementById("stickerPickerGrid");
 const stickerPickerState = document.getElementById("stickerPickerState");
 const stickerPickerProgress = document.getElementById("stickerPickerProgress");
-const stickerPickerProgressFill = document.getElementById("stickerPickerProgressFill");
+const stickerPickerProgressFill = document.getElementById(
+    "stickerPickerProgressFill",
+);
 const stickerUploadBtn = document.getElementById("stickerUploadBtn");
 const stickerUploadInput = document.getElementById("stickerUploadInput");
-const stickerBgChoiceOverlay = document.getElementById("stickerBgChoiceOverlay");
+const stickerBgChoiceOverlay = document.getElementById(
+    "stickerBgChoiceOverlay",
+);
 const stickerBgChoiceClose = document.getElementById("stickerBgChoiceClose");
-const stickerBgChoiceLoading = document.getElementById("stickerBgChoiceLoading");
+const stickerBgChoiceLoading = document.getElementById(
+    "stickerBgChoiceLoading",
+);
 const stickerBgChoiceGrid = document.getElementById("stickerBgChoiceGrid");
 const stickerBgKeepBtn = document.getElementById("stickerBgKeepBtn");
 const stickerBgRemoveBtn = document.getElementById("stickerBgRemoveBtn");
 const stickerBgKeepPreview = document.getElementById("stickerBgKeepPreview");
-const stickerBgRemovePreview = document.getElementById("stickerBgRemovePreview");
+const stickerBgRemovePreview = document.getElementById(
+    "stickerBgRemovePreview",
+);
 const replyPreviewElem = document.getElementById("replyPreview");
 const composerStatusElem = document.getElementById("composerStatus");
 const chatWithElem = document.getElementById("chatWith");
@@ -31,8 +39,12 @@ const imageSourceMenu = document.getElementById("imageSourceMenu");
 const imageSourceMenuHint = document.getElementById("imageSourceMenuHint");
 const imageSourceGalleryBtn = document.getElementById("imageSourceGalleryBtn");
 const imageSourceCameraBtn = document.getElementById("imageSourceCameraBtn");
-const imageSourceSelectVideoBtn = document.getElementById("imageSourceSelectVideoBtn");
-const imageSourceRecordVideoBtn = document.getElementById("imageSourceRecordVideoBtn");
+const imageSourceSelectVideoBtn = document.getElementById(
+    "imageSourceSelectVideoBtn",
+);
+const imageSourceRecordVideoBtn = document.getElementById(
+    "imageSourceRecordVideoBtn",
+);
 const cameraCaptureOverlay = document.getElementById("cameraCaptureOverlay");
 const cameraCaptureVideo = document.getElementById("cameraCaptureVideo");
 const cameraCaptureCanvas = document.getElementById("cameraCaptureCanvas");
@@ -48,10 +60,14 @@ const videoCaptureCloseBtn = document.getElementById("videoCaptureClose");
 const videoCaptureTimer = document.getElementById("videoCaptureTimer");
 const composerToolsToggleBtn = document.getElementById("composerToolsToggle");
 const settingsButton = document.getElementById("chatSettingsBtn");
-const quickConversationSearchBtn = document.getElementById("quickConversationSearchBtn");
+const quickConversationSearchBtn = document.getElementById(
+    "quickConversationSearchBtn",
+);
 const settingsPanel = document.getElementById("chatSettingsPanel");
 const openUiSettingsBtn = document.getElementById("openUiSettingsBtn");
-const settingNotificationSound = document.getElementById("settingNotificationSound");
+const settingNotificationSound = document.getElementById(
+    "settingNotificationSound",
+);
 const settingAutoScroll = document.getElementById("settingAutoScroll");
 const settingThemeMode = document.getElementById("settingThemeMode");
 const settingDensityMode = document.getElementById("settingDensityMode");
@@ -60,23 +76,51 @@ const settingShowTimestamps = document.getElementById("settingShowTimestamps");
 const settingReduceMotion = document.getElementById("settingReduceMotion");
 const settingIosLagFix = document.getElementById("settingIosLagFix");
 const settingClassicDesign = document.getElementById("settingClassicDesign");
-const settingInteractiveMessageSearch = document.getElementById("settingInteractiveMessageSearch");
+const settingInteractiveMessageSearch = document.getElementById(
+    "settingInteractiveMessageSearch",
+);
 const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
-const chatUiSettingsTabGeneral = document.getElementById("chatUiSettingsTabGeneral");
-const chatUiSettingsTabAccount = document.getElementById("chatUiSettingsTabAccount");
-const chatUiSettingsTabSessions = document.getElementById("chatUiSettingsTabSessions");
-const chatUiSettingsTabIdeas = document.getElementById("chatUiSettingsTabIdeas");
-const chatUiSettingsTabAdmin = document.getElementById("chatUiSettingsTabAdmin");
-const chatUiSettingsPanelGeneral = document.getElementById("chatUiSettingsPanelGeneral");
-const chatUiSettingsPanelAccount = document.getElementById("chatUiSettingsPanelAccount");
-const chatUiSettingsPanelSessions = document.getElementById("chatUiSettingsPanelSessions");
-const chatUiSettingsPanelIdeas = document.getElementById("chatUiSettingsPanelIdeas");
-const chatUiSettingsPanelAdmin = document.getElementById("chatUiSettingsPanelAdmin");
-const settingBrowserNotifications = document.getElementById("settingBrowserNotifications");
+const chatUiSettingsTabGeneral = document.getElementById(
+    "chatUiSettingsTabGeneral",
+);
+const chatUiSettingsTabAccount = document.getElementById(
+    "chatUiSettingsTabAccount",
+);
+const chatUiSettingsTabSessions = document.getElementById(
+    "chatUiSettingsTabSessions",
+);
+const chatUiSettingsTabIdeas = document.getElementById(
+    "chatUiSettingsTabIdeas",
+);
+const chatUiSettingsTabAdmin = document.getElementById(
+    "chatUiSettingsTabAdmin",
+);
+const chatUiSettingsPanelGeneral = document.getElementById(
+    "chatUiSettingsPanelGeneral",
+);
+const chatUiSettingsPanelAccount = document.getElementById(
+    "chatUiSettingsPanelAccount",
+);
+const chatUiSettingsPanelSessions = document.getElementById(
+    "chatUiSettingsPanelSessions",
+);
+const chatUiSettingsPanelIdeas = document.getElementById(
+    "chatUiSettingsPanelIdeas",
+);
+const chatUiSettingsPanelAdmin = document.getElementById(
+    "chatUiSettingsPanelAdmin",
+);
+const settingBrowserNotifications = document.getElementById(
+    "settingBrowserNotifications",
+);
 const settingSendByEnter = document.getElementById("settingSendByEnter");
-const settingShowSavedMessages = document.getElementById("settingShowSavedMessages");
-const settingsGroupKeyHealthBtn = document.getElementById("settingsGroupKeyHealthBtn");
+const settingShowSavedMessages = document.getElementById(
+    "settingShowSavedMessages",
+);
+const settingsGroupKeyHealthBtn = document.getElementById(
+    "settingsGroupKeyHealthBtn",
+);
 const savedMessagesInfoBtn = document.getElementById("savedMessagesInfoBtn");
 const playlistOverlay = document.getElementById("playlistOverlay");
 const playlistBody = document.getElementById("playlistBody");
@@ -87,21 +131,33 @@ const announcementsOverlay = document.getElementById("announcementsOverlay");
 const announcementsBody = document.getElementById("announcementsBody");
 const announcementsCloseBtn = document.getElementById("announcementsCloseBtn");
 /* Admin DOM elements moved to chat-admin.js */
-const openConversationSearchBtn = document.getElementById("openConversationSearchBtn");
+const openConversationSearchBtn = document.getElementById(
+    "openConversationSearchBtn",
+);
 const openAvatarUploadBtn = document.getElementById("openAvatarUploadBtn");
-const settingsAvatarUploadBtn = document.getElementById("settingsAvatarUploadBtn");
+const settingsAvatarUploadBtn = document.getElementById(
+    "settingsAvatarUploadBtn",
+);
 const settingsAvatarPreview = document.getElementById("settingsAvatarPreview");
 const avatarUploadInput = document.getElementById("avatarUploadInput");
 const settingsUsernameForm = document.getElementById("settingsUsernameForm");
-const settingsCurrentUsername = document.getElementById("settingsCurrentUsername");
+const settingsCurrentUsername = document.getElementById(
+    "settingsCurrentUsername",
+);
 const settingsUsernameInput = document.getElementById("settingsUsernameInput");
 const settingsBioForm = document.getElementById("settingsBioForm");
 const settingsBioInput = document.getElementById("settingsBioInput");
 const settingsBioCharCount = document.getElementById("settingsBioCharCount");
 const settingsPasswordForm = document.getElementById("settingsPasswordForm");
-const settingsCurrentPasswordInput = document.getElementById("settingsCurrentPasswordInput");
-const settingsNewPasswordInput = document.getElementById("settingsNewPasswordInput");
-const settingsConfirmPasswordInput = document.getElementById("settingsConfirmPasswordInput");
+const settingsCurrentPasswordInput = document.getElementById(
+    "settingsCurrentPasswordInput",
+);
+const settingsNewPasswordInput = document.getElementById(
+    "settingsNewPasswordInput",
+);
+const settingsConfirmPasswordInput = document.getElementById(
+    "settingsConfirmPasswordInput",
+);
 /* Blocked users DOM elements moved to chat-admin.js */
 const loggedInUsernameElem = document.getElementById("loggedInUsername");
 const logoutForm = document.getElementById("logoutForm");
@@ -111,16 +167,30 @@ const selectModeCancelBtn = document.getElementById("selectModeCancelBtn");
 const selectModeCopyBtn = document.getElementById("selectModeCopyBtn");
 const selectModeForwardBtn = document.getElementById("selectModeForwardBtn");
 const selectModeDeleteBtn = document.getElementById("selectModeDeleteBtn");
-const pasteClipboardImageBtn = document.getElementById("pasteClipboardImageBtn");
-const messageActionModalOverlay = document.getElementById("messageActionModalOverlay");
-const messageActionModalTitle = document.getElementById("messageActionModalTitle");
-const messageActionModalBody = document.getElementById("messageActionModalBody");
-const messageActionModalClose = document.getElementById("messageActionModalClose");
-const messageActionModalAnnouncer = document.getElementById("messageActionModalAnnouncer");
+const pasteClipboardImageBtn = document.getElementById(
+    "pasteClipboardImageBtn",
+);
+const messageActionModalOverlay = document.getElementById(
+    "messageActionModalOverlay",
+);
+const messageActionModalTitle = document.getElementById(
+    "messageActionModalTitle",
+);
+const messageActionModalBody = document.getElementById(
+    "messageActionModalBody",
+);
+const messageActionModalClose = document.getElementById(
+    "messageActionModalClose",
+);
+const messageActionModalAnnouncer = document.getElementById(
+    "messageActionModalAnnouncer",
+);
 const createGroupBtn = document.getElementById("createGroupBtn");
 const groupKeyHealthBtn = document.getElementById("groupKeyHealthBtn");
 const privateChatInfoPanel = document.getElementById("privateChatInfoPanel");
-const privateChatInfoBackBtn = document.getElementById("privateChatInfoBackBtn");
+const privateChatInfoBackBtn = document.getElementById(
+    "privateChatInfoBackBtn",
+);
 const groupInfoBtn = document.getElementById("groupInfoBtn");
 const groupInfoBackBtn = document.getElementById("groupInfoBackBtn");
 const groupInfoPanel = document.getElementById("groupInfoPanel");
@@ -131,32 +201,52 @@ const groupInfoMembers = document.getElementById("groupInfoMembers");
 const groupAddMemberBtn = document.getElementById("groupAddMemberBtn");
 const groupJoinLinkInput = document.getElementById("groupJoinLinkInput");
 const groupCopyJoinLinkBtn = document.getElementById("groupCopyJoinLinkBtn");
-const groupRotateJoinLinkBtn = document.getElementById("groupRotateJoinLinkBtn");
+const groupRotateJoinLinkBtn = document.getElementById(
+    "groupRotateJoinLinkBtn",
+);
 const groupTransferOwnerBtn = document.getElementById("groupTransferOwnerBtn");
 const groupLeaveBtn = document.getElementById("groupLeaveBtn");
 const chatAreaElem = document.querySelector(".chat-area");
 const typingIndicatorElem = document.getElementById("typingIndicator");
 const conversationSearchBar = document.getElementById("conversationSearchBar");
-const conversationSearchInput = document.getElementById("conversationSearchInput");
-const conversationSearchCount = document.getElementById("conversationSearchCount");
-const conversationSearchRunBtn = document.getElementById("conversationSearchRun");
-const conversationSearchPrevBtn = document.getElementById("conversationSearchPrev");
-const conversationSearchNextBtn = document.getElementById("conversationSearchNext");
-const conversationSearchCloseBtn = document.getElementById("conversationSearchClose");
+const conversationSearchInput = document.getElementById(
+    "conversationSearchInput",
+);
+const conversationSearchCount = document.getElementById(
+    "conversationSearchCount",
+);
+const conversationSearchRunBtn = document.getElementById(
+    "conversationSearchRun",
+);
+const conversationSearchPrevBtn = document.getElementById(
+    "conversationSearchPrev",
+);
+const conversationSearchNextBtn = document.getElementById(
+    "conversationSearchNext",
+);
+const conversationSearchCloseBtn = document.getElementById(
+    "conversationSearchClose",
+);
 const addChatBtn = document.getElementById("addChatBtn");
 const addChatModalOverlay = document.getElementById("addChatModalOverlay");
 const addChatModalClose = document.getElementById("addChatModalClose");
 const addChatSearchInput = document.getElementById("addChatSearchInput");
 const addChatResults = document.getElementById("addChatResults");
 const addChatEmpty = document.getElementById("addChatEmpty");
-const createGroupModalOverlay = document.getElementById("createGroupModalOverlay");
+const createGroupModalOverlay = document.getElementById(
+    "createGroupModalOverlay",
+);
 const createGroupModalClose = document.getElementById("createGroupModalClose");
 const createGroupForm = document.getElementById("createGroupForm");
 const createGroupTitleInput = document.getElementById("createGroupTitleInput");
-const createGroupDetailsInput = document.getElementById("createGroupDetailsInput");
+const createGroupDetailsInput = document.getElementById(
+    "createGroupDetailsInput",
+);
 const createGroupSubmitBtn = document.getElementById("createGroupSubmitBtn");
 const userInfoBtn = document.getElementById("userInfoBtn");
-const userProfileModalOverlay = document.getElementById("userProfileModalOverlay");
+const userProfileModalOverlay = document.getElementById(
+    "userProfileModalOverlay",
+);
 const userProfileModalClose = document.getElementById("userProfileModalClose");
 const userProfileModalBody = document.getElementById("userProfileModalBody");
 const avatarViewerOverlay = document.getElementById("avatarViewerOverlay");
@@ -168,10 +258,14 @@ const appConstants = window.APP_CONSTANTS || {};
 
 const searchSuggestions = document.getElementById("searchSuggestions");
 const searchLoading = document.getElementById("searchLoading");
-const IMAGE_UPLOAD_MAX_BYTES = Number(appConstants.uploadImageMaxBytes) || 20 * 1024 * 1024;
-const FILE_UPLOAD_MAX_BYTES = Number(appConstants.uploadFileMaxBytes) || 100 * 1024 * 1024;
-const AVATAR_UPLOAD_MAX_BYTES = Number(appConstants.uploadAvatarMaxBytes) || 5 * 1024 * 1024;
-const STICKER_UPLOAD_MAX_BYTES = Number(appConstants.uploadStickerMaxBytes) || 512 * 1024;
+const IMAGE_UPLOAD_MAX_BYTES =
+    Number(appConstants.uploadImageMaxBytes) || 20 * 1024 * 1024;
+const FILE_UPLOAD_MAX_BYTES =
+    Number(appConstants.uploadFileMaxBytes) || 100 * 1024 * 1024;
+const AVATAR_UPLOAD_MAX_BYTES =
+    Number(appConstants.uploadAvatarMaxBytes) || 5 * 1024 * 1024;
+const STICKER_UPLOAD_MAX_BYTES =
+    Number(appConstants.uploadStickerMaxBytes) || 512 * 1024;
 const SEARCH_MIN_QUERY_LENGTH = Number(appConstants.usernameMinLength) || 3;
 const MESSAGE_LONG_PRESS_MS = 500;
 const DOUBLE_TAP_MS = 280;
@@ -181,13 +275,37 @@ const MOBILE_BREAKPOINT_WIDTH = 767.98;
 const CHAT_REFRESH_POLL_MS = Number(appConstants.chatRefreshPollMs) || 1000;
 const TYPING_IDLE_TIMEOUT_MS = 3200;
 const TYPING_UPDATE_THROTTLE_MS = 3500;
-const MESSAGE_EDIT_WINDOW_MS = Number(appConstants.messageEditWindowMs) || 12 * 60 * 60 * 1000;
-const REACTION_EMOJI_SET = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F525}", "\u{1F420}"];
+const MESSAGE_EDIT_WINDOW_MS =
+    Number(appConstants.messageEditWindowMs) || 12 * 60 * 60 * 1000;
+const REACTION_EMOJI_SET = [
+    "\u{1F44D}",
+    "\u2764\uFE0F",
+    "\u{1F602}",
+    "\u{1F62E}",
+    "\u{1F622}",
+    "\u{1F525}",
+    "\u{1F420}",
+];
 const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
-    "php", "phtml", "php3", "php4", "php5", "phar",
-    "exe", "msi", "bat", "cmd", "com", "scr",
-    "sh", "bash", "zsh", "ps1",
-    "js", "mjs", "cjs",
+    "php",
+    "phtml",
+    "php3",
+    "php4",
+    "php5",
+    "phar",
+    "exe",
+    "msi",
+    "bat",
+    "cmd",
+    "com",
+    "scr",
+    "sh",
+    "bash",
+    "zsh",
+    "ps1",
+    "js",
+    "mjs",
+    "cjs",
 ]);
 const I18N_TEXT = {
     modalOpened: "Opened {title} dialog.",
@@ -204,7 +322,8 @@ const I18N_TEXT = {
     forwardFailedInvalidTarget: "Invalid forward target.",
     forwardedTitle: "Forwarded",
     forwardedBody: "Message forwarded to {destination}.",
-    forwardTargetEmpty: "No chats available yet. Start a chat first, then try forwarding.",
+    forwardTargetEmpty:
+        "No chats available yet. Start a chat first, then try forwarding.",
     noChatSelectedTitle: "No Chat Selected",
     noChatSelectedBody: "Select a user to chat with first",
     sendErrorTitle: "Send Error",
@@ -360,24 +479,27 @@ function updateBgUploadIndicator() {
     let totalSize = 0;
     let hasByteInfo = false;
     for (const entry of entries) {
-        totalPct += (entry.progress || 0);
+        totalPct += entry.progress || 0;
         if (entry.total > 0) {
-            totalLoaded += (entry.loaded || 0);
+            totalLoaded += entry.loaded || 0;
             totalSize += entry.total;
             hasByteInfo = true;
         }
     }
     const avgPct = Math.round(totalPct / count);
     const pctText = avgPct > 0 && avgPct < 100 ? ` ${avgPct}%` : "";
-    const queueText = queuedCount > 0 ? ` <span class="bg-upload-queued">(${queuedCount} queued)</span>` : "";
+    const queueText =
+        queuedCount > 0
+            ? ` <span class="bg-upload-queued">(${queuedCount} queued)</span>`
+            : "";
     const detailText = hasByteInfo
         ? `<span class="bg-upload-detail">${formatUploadSize(totalLoaded)} / ${formatUploadSize(totalSize)}</span>`
         : "";
     container.innerHTML =
         `<div class="bg-upload-content">` +
-            `<span class="bg-upload-label">Sending ${label}…${pctText}${queueText}</span>` +
-            detailText +
-            `<div class="bg-upload-bar"><div class="bg-upload-bar-fill" style="width:${avgPct}%"></div></div>` +
+        `<span class="bg-upload-label">Sending ${label}…${pctText}${queueText}</span>` +
+        detailText +
+        `<div class="bg-upload-bar"><div class="bg-upload-bar-fill" style="width:${avgPct}%"></div></div>` +
         `</div>`;
     container.hidden = false;
 }
@@ -450,30 +572,43 @@ function uploadWithProgress(url, formData, headers, onProgress) {
         }
         xhr.upload.addEventListener("progress", (e) => {
             if (e.lengthComputable && onProgress) {
-                onProgress(Math.round((e.loaded / e.total) * 100), e.loaded, e.total);
+                onProgress(
+                    Math.round((e.loaded / e.total) * 100),
+                    e.loaded,
+                    e.total,
+                );
             }
         });
         xhr.addEventListener("load", () => {
             let payload = null;
             try {
-                payload = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                payload = xhr.responseText
+                    ? JSON.parse(xhr.responseText)
+                    : null;
             } catch (_) {
                 reject(new Error("Invalid server response"));
                 return;
             }
             if (xhr.status < 200 || xhr.status >= 300) {
-                const msg = window.ApiService.extractErrorMessage(payload, `Request failed (${xhr.status})`);
+                const msg = window.ApiService.extractErrorMessage(
+                    payload,
+                    `Request failed (${xhr.status})`,
+                );
                 reject(new Error(msg));
                 return;
             }
             if (payload && payload.status === "error") {
-                reject(new Error(window.ApiService.extractErrorMessage(payload)));
+                reject(
+                    new Error(window.ApiService.extractErrorMessage(payload)),
+                );
                 return;
             }
             resolve(payload);
         });
         xhr.addEventListener("error", () => reject(new Error("Network error")));
-        xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
+        xhr.addEventListener("abort", () =>
+            reject(new Error("Upload cancelled")),
+        );
         xhr.send(formData);
     });
 }
@@ -528,7 +663,9 @@ function pushUiBackLayer(key, closeHandler) {
     const token = `ttc_ui_${Date.now()}_${++uiBackLayerCounter}`;
     uiBackLayerStack.push({ key, token, closeHandler });
     try {
-        const nextState = Object.assign({}, window.history.state || {}, { ttcUiBackToken: token });
+        const nextState = Object.assign({}, window.history.state || {}, {
+            ttcUiBackToken: token,
+        });
         window.history.pushState(nextState, document.title);
     } catch (_) {}
 }
@@ -597,7 +734,10 @@ function syncComposerContextFlags() {
     if (!root) {
         return;
     }
-    root.classList.toggle("replying-active", Boolean(currentReplyTarget && !activeEditMessageId));
+    root.classList.toggle(
+        "replying-active",
+        Boolean(currentReplyTarget && !activeEditMessageId),
+    );
     root.classList.toggle("edit-mode-active", Boolean(activeEditMessageId));
 }
 
@@ -605,7 +745,8 @@ function ensureEditModeAllowsTextOnly(actionLabel = "send media") {
     if (!activeEditMessageId) {
         return true;
     }
-    const message = "Edit mode only supports text updates. Save or cancel your edit first.";
+    const message =
+        "Edit mode only supports text updates. Save or cancel your edit first.";
     setComposerStatus(message, "warning");
     showModal("Edit Mode Active", `${message} (${actionLabel})`, "warning");
     return false;
@@ -628,7 +769,9 @@ const chatUtils = window.ChatUtils || {
         return fallback;
     },
     isTextPersian(text) {
-        return /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(text);
+        return /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF]/.test(
+            text,
+        );
     },
     escapeHtml(text) {
         const div = document.createElement("div");
@@ -670,8 +813,12 @@ const {
 } = chatUtils;
 
 function startsWithRtlScriptChars(text, maxChars = 2) {
-    const probe = String(text || "").trim().slice(0, Math.max(1, Number(maxChars) || 2));
-    return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(probe);
+    const probe = String(text || "")
+        .trim()
+        .slice(0, Math.max(1, Number(maxChars) || 2));
+    return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+        probe,
+    );
 }
 
 const notificationPlayer = window.ChatNotificationService?.createPlayer({
@@ -703,17 +850,26 @@ function buildAvatarUrl({ userId = 0, username = "", size = 96 } = {}) {
 }
 window.buildAvatarUrl = buildAvatarUrl;
 
-function buildAvatarImageHtml({ userId = 0, username = "", className = "avatar-image", size = 96 } = {}) {
+function buildAvatarImageHtml({
+    userId = 0,
+    username = "",
+    className = "avatar-image",
+    size = 96,
+} = {}) {
     const encodedUsername = encodeURIComponent(String(username || ""));
     const sourceUrl = buildAvatarUrl({ userId, username, size });
     return `<img class="${className}" src="${sourceUrl}" alt="Avatar" loading="lazy" decoding="async" data-avatar-source="1" data-avatar-user-id="${Number(userId) || 0}" data-avatar-username-uri="${encodedUsername}">`;
 }
 
 function refreshVisibleAvatars() {
-    const avatarImages = document.querySelectorAll("img[data-avatar-source='1']");
+    const avatarImages = document.querySelectorAll(
+        "img[data-avatar-source='1']",
+    );
     avatarImages.forEach((img) => {
         const userId = Number(img.getAttribute("data-avatar-user-id") || 0);
-        const usernameUri = String(img.getAttribute("data-avatar-username-uri") || "");
+        const usernameUri = String(
+            img.getAttribute("data-avatar-username-uri") || "",
+        );
         const username = usernameUri ? decodeURIComponent(usernameUri) : "";
         const size = Number(img.getAttribute("width") || 96) || 96;
         img.src = buildAvatarUrl({ userId, username, size });
@@ -745,7 +901,9 @@ async function fetchUserProfile({ userId = 0, username = "" } = {}) {
         throw new Error("Missing user reference");
     }
 
-    const response = await window.ApiService.json(`api/users/get_profile.php?${params.toString()}`);
+    const response = await window.ApiService.json(
+        `api/users/get_profile.php?${params.toString()}`,
+    );
     if (!response?.user) {
         throw new Error("User profile data is unavailable");
     }
@@ -756,9 +914,12 @@ function closeAvatarViewer({ fromHistory = false } = {}) {
     if (!avatarViewerOverlay) {
         return;
     }
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.avatarViewer, () => {
-        closeAvatarViewer({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.avatarViewer, () => {
+            closeAvatarViewer({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.avatarViewer);
@@ -772,7 +933,12 @@ function closeAvatarViewer({ fromHistory = false } = {}) {
 }
 
 function openAvatarViewer(profile) {
-    if (!avatarViewerOverlay || !avatarViewerImage || !avatarViewerTitle || !profile) {
+    if (
+        !avatarViewerOverlay ||
+        !avatarViewerImage ||
+        !avatarViewerTitle ||
+        !profile
+    ) {
         return;
     }
     avatarViewerImage.src = String(profile.avatar_url || "");
@@ -781,9 +947,12 @@ function openAvatarViewer(profile) {
 
     avatarViewerOverlay.hidden = false;
     avatarViewerOverlay.setAttribute("aria-hidden", "false");
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.avatarViewer, ({ fromHistory = false } = {}) => {
-        closeAvatarViewer({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.avatarViewer,
+        ({ fromHistory = false } = {}) => {
+            closeAvatarViewer({ fromHistory });
+        },
+    );
     requestAnimationFrame(() => {
         avatarViewerOverlay.classList.add("visible");
     });
@@ -793,9 +962,12 @@ function closeUserProfileModal({ fromHistory = false } = {}) {
     if (!userProfileModalOverlay) {
         return;
     }
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.userProfile, () => {
-        closeUserProfileModal({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.userProfile, () => {
+            closeUserProfileModal({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.userProfile);
@@ -825,13 +997,19 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
     }
 
     lastFocusedElementBeforeUserProfileModal =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    userProfileModalBody.innerHTML = '<div class="chat-inline-state chat-inline-state-info"><span class="chat-inline-state-text">Loading user info...</span></div>';
+        document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+    userProfileModalBody.innerHTML =
+        '<div class="chat-inline-state chat-inline-state-info"><span class="chat-inline-state-text">Loading user info...</span></div>';
     userProfileModalOverlay.hidden = false;
     userProfileModalOverlay.setAttribute("aria-hidden", "false");
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.userProfile, ({ fromHistory = false } = {}) => {
-        closeUserProfileModal({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.userProfile,
+        ({ fromHistory = false } = {}) => {
+            closeUserProfileModal({ fromHistory });
+        },
+    );
     requestAnimationFrame(() => {
         userProfileModalOverlay.classList.add("visible");
     });
@@ -845,7 +1023,9 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
 
         const safeUsername = escapeHtml(String(profile.username || "Unknown"));
         const safeIdent = escapeHtml(String(profile.public_ident || "-"));
-        const memberSince = escapeHtml(formatMemberSinceLabel(profile.member_since));
+        const memberSince = escapeHtml(
+            formatMemberSinceLabel(profile.member_since),
+        );
         const avatarUrl = String(profile.avatar_url || "");
         const isCurrentUser = Boolean(profile.is_current_user);
         const isBlockedByMe = Boolean(profile.is_blocked_by_me);
@@ -881,13 +1061,25 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
         userProfileModalBody.appendChild(card);
 
         const avatarButton = card.querySelector(".user-profile-avatar-btn");
-        const showAvatarButton = card.querySelector('[data-user-profile-action="show-avatar"]');
-        const sendMessageButton = card.querySelector('[data-user-profile-action="send-message"]');
-        const deleteChatButton = card.querySelector('[data-user-profile-action="delete-chat"]');
-        const toggleBlockButton = card.querySelector('[data-user-profile-action="toggle-block"]');
+        const showAvatarButton = card.querySelector(
+            '[data-user-profile-action="show-avatar"]',
+        );
+        const sendMessageButton = card.querySelector(
+            '[data-user-profile-action="send-message"]',
+        );
+        const deleteChatButton = card.querySelector(
+            '[data-user-profile-action="delete-chat"]',
+        );
+        const toggleBlockButton = card.querySelector(
+            '[data-user-profile-action="toggle-block"]',
+        );
 
-        avatarButton?.addEventListener("click", () => openAvatarViewer(profile));
-        showAvatarButton?.addEventListener("click", () => openAvatarViewer(profile));
+        avatarButton?.addEventListener("click", () =>
+            openAvatarViewer(profile),
+        );
+        showAvatarButton?.addEventListener("click", () =>
+            openAvatarViewer(profile),
+        );
         sendMessageButton?.addEventListener("click", async () => {
             if (isCurrentUser) {
                 return;
@@ -906,7 +1098,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
             const confirmed = await showConfirmModal(
                 "Delete Chat",
                 `Delete all direct messages between you and ${String(profile.username || "this user")}? This cannot be undone.`,
-                { type: "error", confirmLabel: "Delete" }
+                { type: "error", confirmLabel: "Delete" },
             );
             if (!confirmed) {
                 return;
@@ -914,27 +1106,31 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
 
             const originalLabel = deleteChatButton.innerHTML;
             deleteChatButton.disabled = true;
-            deleteChatButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+            deleteChatButton.innerHTML =
+                '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
             setComposerStatus("Deleting chat history...", "warning");
 
             try {
-                const response = await window.ApiService.jsonOk("api/chats/delete.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        ...getCsrfHeaders(),
+                const response = await window.ApiService.jsonOk(
+                    "api/chats/delete.php",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...getCsrfHeaders(),
+                        },
+                        body: JSON.stringify({
+                            target_username: String(profile.username || ""),
+                        }),
                     },
-                    body: JSON.stringify({
-                        target_username: String(profile.username || ""),
-                    }),
-                });
+                );
 
                 const deletedMessages = Number(response?.messages_deleted || 0);
                 const deletedFiles = Number(response?.files_deleted || 0);
 
                 if (currentChatUser === String(profile.username || "")) {
                     currentChatRecentMessages = null;
-lastRecentPollTime = "";
+                    lastRecentPollTime = "";
                     messageOffset = 0;
                     hasMoreMessages = true;
                     hasLoadedMoreMessages = false;
@@ -945,7 +1141,9 @@ lastRecentPollTime = "";
 
                     let waitAttempts = 0;
                     while (isLoadingMessages && waitAttempts < 12) {
-                        await new Promise((resolve) => setTimeout(resolve, 120));
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, 120),
+                        );
                         waitAttempts += 1;
                     }
 
@@ -953,9 +1151,12 @@ lastRecentPollTime = "";
                         await loadMessages(currentChatUser, true, true);
                     } else {
                         setTimeout(async () => {
-                            if (currentChatUser === String(profile.username || "")) {
+                            if (
+                                currentChatUser ===
+                                String(profile.username || "")
+                            ) {
                                 currentChatRecentMessages = null;
-lastRecentPollTime = "";
+                                lastRecentPollTime = "";
                                 messageOffset = 0;
                                 hasMoreMessages = true;
                                 hasLoadedMoreMessages = false;
@@ -970,13 +1171,17 @@ lastRecentPollTime = "";
                 showModal(
                     "Chat Deleted",
                     `Deleted ${deletedMessages} messages${deletedFiles > 0 ? ` and ${deletedFiles} files` : ""}.`,
-                    "success"
+                    "success",
                 );
                 setComposerStatus("Chat history deleted", "success");
             } catch (error) {
                 deleteChatButton.disabled = false;
                 deleteChatButton.innerHTML = originalLabel;
-                showModal("Delete Chat Failed", error?.message || "Unable to delete chat history.", "error");
+                showModal(
+                    "Delete Chat Failed",
+                    error?.message || "Unable to delete chat history.",
+                    "error",
+                );
                 setComposerStatus("Unable to delete chat history", "error");
             }
         });
@@ -993,7 +1198,10 @@ lastRecentPollTime = "";
                 willBlock
                     ? `Block ${targetUsername}? They will not be able to send messages to you.`
                     : `Unblock ${targetUsername}?`,
-                { type: "warning", confirmLabel: willBlock ? "Block" : "Unblock" }
+                {
+                    type: "warning",
+                    confirmLabel: willBlock ? "Block" : "Unblock",
+                },
             );
             if (!confirmed) {
                 return;
@@ -1004,7 +1212,9 @@ lastRecentPollTime = "";
             toggleBlockButton.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i>${willBlock ? "Blocking..." : "Unblocking..."}`;
 
             try {
-                const endpoint = willBlock ? "api/users/block.php" : "api/users/unblock.php";
+                const endpoint = willBlock
+                    ? "api/users/block.php"
+                    : "api/users/unblock.php";
                 const response = await window.ApiService.jsonOk(endpoint, {
                     method: "POST",
                     headers: {
@@ -1020,11 +1230,13 @@ lastRecentPollTime = "";
                 toggleBlockButton.innerHTML = `<i class="fas fa-user-slash me-1"></i>${profile.is_blocked_by_me ? "Unblock User" : "Block User"}`;
                 toggleBlockButton.disabled = false;
                 showModal(
-                    profile.is_blocked_by_me ? "User Blocked" : "User Unblocked",
+                    profile.is_blocked_by_me
+                        ? "User Blocked"
+                        : "User Unblocked",
                     profile.is_blocked_by_me
                         ? `${targetUsername} can no longer send messages to you.`
                         : `${targetUsername} can send messages to you again.`,
-                    "success"
+                    "success",
                 );
             } catch (error) {
                 toggleBlockButton.innerHTML = originalLabel;
@@ -1032,7 +1244,7 @@ lastRecentPollTime = "";
                 showModal(
                     willBlock ? "Block Failed" : "Unblock Failed",
                     error?.message || "Unable to update block status.",
-                    "error"
+                    "error",
                 );
             }
         });
@@ -1078,7 +1290,17 @@ function getFileExtension(fileName) {
 }
 
 const AUDIO_FILE_EXTENSIONS = new Set([
-    "mp3", "wav", "ogg", "flac", "aac", "m4a", "wma", "opus", "webm", "aiff", "alac",
+    "mp3",
+    "wav",
+    "ogg",
+    "flac",
+    "aac",
+    "m4a",
+    "wma",
+    "opus",
+    "webm",
+    "aiff",
+    "alac",
 ]);
 
 function isAudioFileName(fileName) {
@@ -1125,7 +1347,10 @@ async function getDecryptedMediaResource(msg) {
             const resource = {
                 blob: cached.blob,
                 objectUrl,
-                metadata: { mime_type: cached.mimeType, file_name: cached.fileName },
+                metadata: {
+                    mime_type: cached.mimeType,
+                    file_name: cached.fileName,
+                },
             };
             decryptedMediaCacheByMessageId.set(messageId, resource);
             return resource;
@@ -1139,7 +1364,9 @@ async function getDecryptedMediaResource(msg) {
     const envelope = parseMediaEnvelopePayload(envelopePayload);
     if (Number(msg?.group_id || 0) > 0) {
         const groupId = Number(msg.group_id || 0);
-        const currentKeyVersion = Number(groupKeyVersionCache.get(groupId) || 1);
+        const currentKeyVersion = Number(
+            groupKeyVersionCache.get(groupId) || 1,
+        );
         if (Number(envelope.kv || 1) !== currentKeyVersion) {
             await getGroupCryptoKey(groupId, true);
         }
@@ -1147,7 +1374,10 @@ async function getDecryptedMediaResource(msg) {
     const mediaKey = await resolveMediaAesKey(msg, envelope.k);
     const metadata = await decryptMediaMetadata(envelope.m, mediaKey);
 
-    const endpoint = getMediaEndpointForType(String(msg.message_type || "file"), messageId);
+    const endpoint = getMediaEndpointForType(
+        String(msg.message_type || "file"),
+        messageId,
+    );
     const response = await fetch(endpoint);
     if (!response.ok) {
         if (response.status === 404) {
@@ -1157,24 +1387,34 @@ async function getDecryptedMediaResource(msg) {
     }
 
     const encryptedBytes = new Uint8Array(await response.arrayBuffer());
-    const decryptedBytes = await decryptBinaryWithAesKey(encryptedBytes, mediaKey);
+    const decryptedBytes = await decryptBinaryWithAesKey(
+        encryptedBytes,
+        mediaKey,
+    );
     const mimeType =
         String(metadata?.mime_type || metadata?.mime || "").trim() ||
         "application/octet-stream";
     const fileName = sanitizeAttachmentFileName(
         String(metadata?.file_name || metadata?.name || "").trim(),
-        `attachment_${messageId}`
+        `attachment_${messageId}`,
     );
 
     const blob = new Blob([decryptedBytes], { type: mimeType });
     const objectUrl = URL.createObjectURL(blob);
-    const resource = { blob, objectUrl, metadata: { ...metadata, mime_type: mimeType, file_name: fileName } };
+    const resource = {
+        blob,
+        objectUrl,
+        metadata: { ...metadata, mime_type: mimeType, file_name: fileName },
+    };
 
     // 4. Store in volatile cache
     decryptedMediaCacheByMessageId.set(messageId, resource);
 
     // 5. Persist to IDB (fire-and-forget, never block render)
-    void saveMediaToCache(messageId, blob, { mime_type: mimeType, file_name: fileName });
+    void saveMediaToCache(messageId, blob, {
+        mime_type: mimeType,
+        file_name: fileName,
+    });
 
     return resource;
 }
@@ -1188,7 +1428,9 @@ async function getDecryptedMediaMetadata(msg) {
     const envelope = parseMediaEnvelopePayload(envelopePayload);
     if (Number(msg?.group_id || 0) > 0) {
         const groupId = Number(msg.group_id || 0);
-        const currentKeyVersion = Number(groupKeyVersionCache.get(groupId) || 1);
+        const currentKeyVersion = Number(
+            groupKeyVersionCache.get(groupId) || 1,
+        );
         if (Number(envelope.kv || 1) !== currentKeyVersion) {
             await getGroupCryptoKey(groupId, true);
         }
@@ -1211,32 +1453,47 @@ async function encryptMediaForMessage(fileOrBlob, metadata, context = {}) {
     let senderEnvelopePayload = "";
     if (isGroupMessage) {
         const groupKey = await getGroupCryptoKey(Number(context.groupId));
-        const keyVersion = Number(groupKeyVersionCache.get(Number(context.groupId)) || 1);
+        const keyVersion = Number(
+            groupKeyVersionCache.get(Number(context.groupId)) || 1,
+        );
         const wrappedForGroup = await wrapMediaKeyForGroup(mediaKey, groupKey);
         recipientEnvelopePayload = buildMediaEnvelopePayload(
             wrappedForGroup,
             encryptedMetadata,
-            keyVersion
+            keyVersion,
         );
         senderEnvelopePayload = recipientEnvelopePayload;
     } else {
-        const recipientPublicKey = await getPublicKey(String(context.targetUsername || ""));
+        const recipientPublicKey = await getPublicKey(
+            String(context.targetUsername || ""),
+        );
         const senderPublicKey = await getPublicKey(CURRENT_USER);
-        const wrappedForRecipient = await wrapMediaKeyForPublicKey(mediaKey, recipientPublicKey);
-        const wrappedForSender = await wrapMediaKeyForPublicKey(mediaKey, senderPublicKey);
+        const wrappedForRecipient = await wrapMediaKeyForPublicKey(
+            mediaKey,
+            recipientPublicKey,
+        );
+        const wrappedForSender = await wrapMediaKeyForPublicKey(
+            mediaKey,
+            senderPublicKey,
+        );
         recipientEnvelopePayload = buildMediaEnvelopePayload(
             wrappedForRecipient,
             encryptedMetadata,
-            1
+            1,
         );
         senderEnvelopePayload = buildMediaEnvelopePayload(
             wrappedForSender,
             encryptedMetadata,
-            1
+            1,
         );
     }
-    const encryptedBytes = await encryptBinaryWithAesKey(sourceBuffer, mediaKey);
-    const encryptedBlob = new Blob([encryptedBytes], { type: "application/octet-stream" });
+    const encryptedBytes = await encryptBinaryWithAesKey(
+        sourceBuffer,
+        mediaKey,
+    );
+    const encryptedBlob = new Blob([encryptedBytes], {
+        type: "application/octet-stream",
+    });
 
     return {
         encryptedBlob,
@@ -1262,15 +1519,20 @@ async function hydrateImageMessageElement(messageElement, msg) {
         if (loadingElem) {
             loadingElem.style.display = "none";
         }
-        if (shouldStickToBottom && appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
+        if (
+            shouldStickToBottom &&
+            appSettings.autoScrollEnabled &&
+            !hasLoadedMoreMessages
+        ) {
             scheduleSnapToBottom();
         }
     } catch (error) {
         imageElem.style.display = "none";
         if (loadingElem) {
-            loadingElem.textContent = error?.message === "FILE_UNAVAILABLE"
-                ? "File no longer available"
-                : "Unable to decrypt image";
+            loadingElem.textContent =
+                error?.message === "FILE_UNAVAILABLE"
+                    ? "File no longer available"
+                    : "Unable to decrypt image";
         }
     }
 }
@@ -1291,15 +1553,20 @@ async function hydrateVideoMessageElement(messageElement, msg) {
         if (loadingElem) {
             loadingElem.style.display = "none";
         }
-        if (shouldStickToBottom && appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
+        if (
+            shouldStickToBottom &&
+            appSettings.autoScrollEnabled &&
+            !hasLoadedMoreMessages
+        ) {
             scheduleSnapToBottom();
         }
     } catch (error) {
         videoElem.style.display = "none";
         if (loadingElem) {
-            loadingElem.textContent = error?.message === "FILE_UNAVAILABLE"
-                ? "File no longer available"
-                : "Unable to decrypt video";
+            loadingElem.textContent =
+                error?.message === "FILE_UNAVAILABLE"
+                    ? "File no longer available"
+                    : "Unable to decrypt video";
         }
     }
 }
@@ -1485,8 +1752,8 @@ async function updateTypingStatus(isTyping, chatTargetOverride = null) {
         });
         typingStateByTarget.set(chatTarget, desiredState);
         typingLastSentAtByTarget.set(chatTarget, now);
-    } catch (error) {}
-    finally {
+    } catch (error) {
+    } finally {
         typingInflightByTarget.delete(chatTarget);
     }
 }
@@ -1498,7 +1765,9 @@ function applyTypingData(typing) {
     }
     if (isGroupToken(currentChatUser)) {
         const typers = Array.isArray(typing.typers)
-            ? typing.typers.map((item) => String(item || "").trim()).filter(Boolean)
+            ? typing.typers
+                  .map((item) => String(item || "").trim())
+                  .filter(Boolean)
             : [];
         if (!typers.length) {
             setTypingIndicator("");
@@ -1507,10 +1776,14 @@ function applyTypingData(typing) {
         } else if (typers.length === 2) {
             setTypingIndicator(`${typers[0]} and ${typers[1]} are typing...`);
         } else {
-            setTypingIndicator(`${typers[0]} and ${typers.length - 1} others are typing...`);
+            setTypingIndicator(
+                `${typers[0]} and ${typers.length - 1} others are typing...`,
+            );
         }
     } else {
-        setTypingIndicator(typing.is_typing ? `${currentChatUser} is typing...` : "");
+        setTypingIndicator(
+            typing.is_typing ? `${currentChatUser} is typing...` : "",
+        );
     }
 }
 
@@ -1523,15 +1796,18 @@ async function refreshTypingIndicator() {
         let data;
         if (isGroupToken(currentChatUser)) {
             const groupId = parseGroupIdFromToken(currentChatUser);
-            if (!groupId) { setTypingIndicator(""); return; }
+            if (!groupId) {
+                setTypingIndicator("");
+                return;
+            }
             data = await window.ApiService.json(
                 `api/typing/fetch.php?group_id=${encodeURIComponent(groupId)}`,
-                { cache: "no-store" }
+                { cache: "no-store" },
             );
         } else {
             data = await window.ApiService.json(
                 `api/typing/fetch.php?with=${encodeURIComponent(currentChatUser)}`,
-                { cache: "no-store" }
+                { cache: "no-store" },
             );
         }
         applyTypingData(data);
@@ -1549,28 +1825,52 @@ function loadAppSettings() {
         const parsed = JSON.parse(raw);
         appSettings.notificationSoundEnabled = parseStoredBoolean(
             parsed.notificationSoundEnabled,
-            true
+            true,
         );
-        appSettings.autoScrollEnabled = parseStoredBoolean(parsed.autoScrollEnabled, true);
+        appSettings.autoScrollEnabled = parseStoredBoolean(
+            parsed.autoScrollEnabled,
+            true,
+        );
         appSettings.mobileComposerExpanded = parseStoredBoolean(
             parsed.mobileComposerExpanded,
-            false
+            false,
         );
-        appSettings.themeMode = ["system", "light", "dark"].includes(parsed.themeMode)
+        appSettings.themeMode = ["system", "light", "dark"].includes(
+            parsed.themeMode,
+        )
             ? parsed.themeMode
             : "system";
-        appSettings.densityMode = parsed.densityMode === "compact" ? "compact" : "comfortable";
-        appSettings.animationProfile = parsed.animationProfile === "playful" ? "playful" : "calm";
-        appSettings.fontScale = ["sm", "md", "lg", "xl"].includes(parsed.fontScale)
+        appSettings.densityMode =
+            parsed.densityMode === "compact" ? "compact" : "comfortable";
+        appSettings.animationProfile =
+            parsed.animationProfile === "playful" ? "playful" : "calm";
+        appSettings.fontScale = ["sm", "md", "lg", "xl"].includes(
+            parsed.fontScale,
+        )
             ? parsed.fontScale
             : "md";
-        appSettings.showTimestamps = parseStoredBoolean(parsed.showTimestamps, true);
-        appSettings.reduceMotion = parseStoredBoolean(parsed.reduceMotion, false);
+        appSettings.showTimestamps = parseStoredBoolean(
+            parsed.showTimestamps,
+            true,
+        );
+        appSettings.reduceMotion = parseStoredBoolean(
+            parsed.reduceMotion,
+            false,
+        );
         appSettings.iosLagFix = parseStoredBoolean(parsed.iosLagFix, false);
-        appSettings.interactiveMessageSearch = parseStoredBoolean(parsed.interactiveMessageSearch, false);
-        appSettings.browserNotificationsEnabled = parseStoredBoolean(parsed.browserNotificationsEnabled, false);
+        appSettings.interactiveMessageSearch = parseStoredBoolean(
+            parsed.interactiveMessageSearch,
+            false,
+        );
+        appSettings.browserNotificationsEnabled = parseStoredBoolean(
+            parsed.browserNotificationsEnabled,
+            false,
+        );
         appSettings.sendByEnter = parseStoredBoolean(parsed.sendByEnter, true);
-        appSettings.showSavedMessages = parseStoredBoolean(parsed.showSavedMessages, true);
+        appSettings.showSavedMessages = parseStoredBoolean(
+            parsed.showSavedMessages,
+            true,
+        );
     } catch (error) {}
 }
 
@@ -1587,15 +1887,24 @@ function applyUiPreferenceClasses() {
         root.setAttribute("data-theme", appSettings.themeMode);
     }
     root.setAttribute("data-density", appSettings.densityMode);
-    root.setAttribute("data-anim-profile", appSettings.animationProfile === "playful" ? "playful" : "calm");
+    root.setAttribute(
+        "data-anim-profile",
+        appSettings.animationProfile === "playful" ? "playful" : "calm",
+    );
     root.setAttribute("data-font-scale", appSettings.fontScale);
-    root.classList.toggle("reduced-motion-enabled", Boolean(appSettings.reduceMotion));
+    root.classList.toggle(
+        "reduced-motion-enabled",
+        Boolean(appSettings.reduceMotion),
+    );
     root.classList.toggle("ios-lag-fix-enabled", isIosLagFixEnabled());
-    root.classList.toggle("classic-design-enabled", Boolean(appSettings.classicDesign) && isIosLagFixEnabled());
+    root.classList.toggle(
+        "classic-design-enabled",
+        Boolean(appSettings.classicDesign) && isIosLagFixEnabled(),
+    );
     window.__TTC_IOS_LAG_FIX_ENABLED__ = isIosLagFixEnabled();
     chatMessagesElem?.classList.toggle(
         "hide-message-timestamps",
-        !Boolean(appSettings.showTimestamps)
+        !Boolean(appSettings.showTimestamps),
     );
 }
 
@@ -1646,11 +1955,23 @@ function applySettingsTabUi(tabName = "general") {
     let normalizedTab = "general";
     if (tabName === "account") {
         normalizedTab = "account";
-    } else if (tabName === "sessions" && chatUiSettingsTabSessions && chatUiSettingsPanelSessions) {
+    } else if (
+        tabName === "sessions" &&
+        chatUiSettingsTabSessions &&
+        chatUiSettingsPanelSessions
+    ) {
         normalizedTab = "sessions";
-    } else if (tabName === "ideas" && chatUiSettingsTabIdeas && chatUiSettingsPanelIdeas) {
+    } else if (
+        tabName === "ideas" &&
+        chatUiSettingsTabIdeas &&
+        chatUiSettingsPanelIdeas
+    ) {
         normalizedTab = "ideas";
-    } else if (tabName === "admin" && chatUiSettingsTabAdmin && chatUiSettingsPanelAdmin) {
+    } else if (
+        tabName === "admin" &&
+        chatUiSettingsTabAdmin &&
+        chatUiSettingsPanelAdmin
+    ) {
         normalizedTab = "admin";
     }
 
@@ -1662,31 +1983,46 @@ function applySettingsTabUi(tabName = "general") {
     activeSettingsTab = normalizedTab;
 
     chatUiSettingsTabGeneral?.classList.toggle("is-active", isGeneral);
-    chatUiSettingsTabGeneral?.setAttribute("aria-selected", isGeneral ? "true" : "false");
+    chatUiSettingsTabGeneral?.setAttribute(
+        "aria-selected",
+        isGeneral ? "true" : "false",
+    );
     if (chatUiSettingsPanelGeneral) {
         chatUiSettingsPanelGeneral.hidden = !isGeneral;
     }
 
     chatUiSettingsTabAccount?.classList.toggle("is-active", isAccount);
-    chatUiSettingsTabAccount?.setAttribute("aria-selected", isAccount ? "true" : "false");
+    chatUiSettingsTabAccount?.setAttribute(
+        "aria-selected",
+        isAccount ? "true" : "false",
+    );
     if (chatUiSettingsPanelAccount) {
         chatUiSettingsPanelAccount.hidden = !isAccount;
     }
 
     chatUiSettingsTabSessions?.classList.toggle("is-active", isSessions);
-    chatUiSettingsTabSessions?.setAttribute("aria-selected", isSessions ? "true" : "false");
+    chatUiSettingsTabSessions?.setAttribute(
+        "aria-selected",
+        isSessions ? "true" : "false",
+    );
     if (chatUiSettingsPanelSessions) {
         chatUiSettingsPanelSessions.hidden = !isSessions;
     }
 
     chatUiSettingsTabIdeas?.classList.toggle("is-active", isIdeas);
-    chatUiSettingsTabIdeas?.setAttribute("aria-selected", isIdeas ? "true" : "false");
+    chatUiSettingsTabIdeas?.setAttribute(
+        "aria-selected",
+        isIdeas ? "true" : "false",
+    );
     if (chatUiSettingsPanelIdeas) {
         chatUiSettingsPanelIdeas.hidden = !isIdeas;
     }
 
     chatUiSettingsTabAdmin?.classList.toggle("is-active", isAdmin);
-    chatUiSettingsTabAdmin?.setAttribute("aria-selected", isAdmin ? "true" : "false");
+    chatUiSettingsTabAdmin?.setAttribute(
+        "aria-selected",
+        isAdmin ? "true" : "false",
+    );
     if (chatUiSettingsPanelAdmin) {
         chatUiSettingsPanelAdmin.hidden = !isAdmin;
     }
@@ -1727,9 +2063,12 @@ function openUiSettingsModal() {
         return;
     }
     chatUiSettingsOverlay.hidden = false;
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.uiSettings, ({ fromHistory = false } = {}) => {
-        closeUiSettingsModal({ restoreFocus: true, fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.uiSettings,
+        ({ fromHistory = false } = {}) => {
+            closeUiSettingsModal({ restoreFocus: true, fromHistory });
+        },
+    );
     requestAnimationFrame(() => {
         chatUiSettingsOverlay.classList.add("visible");
         applySettingsTabUi(activeSettingsTab);
@@ -1749,13 +2088,19 @@ function openUiSettingsModal() {
     });
 }
 
-function closeUiSettingsModal({ restoreFocus = true, fromHistory = false } = {}) {
+function closeUiSettingsModal({
+    restoreFocus = true,
+    fromHistory = false,
+} = {}) {
     if (!chatUiSettingsOverlay) {
         return;
     }
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.uiSettings, () => {
-        closeUiSettingsModal({ restoreFocus, fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.uiSettings, () => {
+            closeUiSettingsModal({ restoreFocus, fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.uiSettings);
@@ -1773,14 +2118,22 @@ function closeUiSettingsModal({ restoreFocus = true, fromHistory = false } = {})
 /* ── Announcements Panel ── */
 
 let announcementsCachedList = null;
-let lastReadAnnouncementId = (typeof LAST_READ_ANNOUNCEMENT_ID !== "undefined")
-    ? Number(LAST_READ_ANNOUNCEMENT_ID) || 0 : 0;
+let lastReadAnnouncementId =
+    typeof LAST_READ_ANNOUNCEMENT_ID !== "undefined"
+        ? Number(LAST_READ_ANNOUNCEMENT_ID) || 0
+        : 0;
 
 async function fetchAnnouncements() {
     try {
-        const response = await window.ApiService.jsonOk("api/admin/announcements/fetch.php");
-        return Array.isArray(response?.announcements) ? response.announcements : [];
-    } catch { return []; }
+        const response = await window.ApiService.jsonOk(
+            "api/admin/announcements/fetch.php",
+        );
+        return Array.isArray(response?.announcements)
+            ? response.announcements
+            : [];
+    } catch {
+        return [];
+    }
 }
 
 function formatAnnouncementTime(dateStr) {
@@ -1796,7 +2149,11 @@ function formatAnnouncementTime(dateStr) {
     const diffDay = Math.floor(diffHr / 24);
     if (diffDay < 7) return `${diffDay}d ago`;
     if (diffDay < 30) return `${Math.floor(diffDay / 7)}w ago`;
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
+    return date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+    });
 }
 
 function isAnnouncementNew(announcementId) {
@@ -1830,7 +2187,7 @@ function renderAnnouncementsPanel(list) {
         const titleDir = hasPersianChar(a.title) ? "rtl" : "ltr";
         const bodyDir = hasPersianChar(a.body) ? "rtl" : "ltr";
         item.innerHTML = `
-            ${isNew ? '<span class="announcements-new-badge">NEW</span>' : ''}
+            ${isNew ? '<span class="announcements-new-badge">NEW</span>' : ""}
             <div class="announcements-item-title" dir="${titleDir}">${ChatUtils.escapeHtml(String(a.title || ""))}</div>
             <div class="announcements-item-body" dir="${bodyDir}">${ChatUtils.escapeHtml(String(a.body || "")).replace(/\n/g, "<br>")}</div>
             <div class="announcements-item-meta">
@@ -1845,9 +2202,12 @@ function renderAnnouncementsPanel(list) {
 async function openAnnouncementsPanel() {
     if (!announcementsOverlay) return;
     announcementsOverlay.hidden = false;
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.announcements, ({ fromHistory = false } = {}) => {
-        closeAnnouncementsPanel({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.announcements,
+        ({ fromHistory = false } = {}) => {
+            closeAnnouncementsPanel({ fromHistory });
+        },
+    );
     requestAnimationFrame(() => announcementsOverlay.classList.add("visible"));
     const list = await fetchAnnouncements();
     announcementsCachedList = list;
@@ -1856,14 +2216,22 @@ async function openAnnouncementsPanel() {
     const latestId = list.length ? Number(list[0].id) || 0 : 0;
     if (latestId > 0) {
         try {
-            await window.ApiService.jsonOk("api/users/dismiss_announcements.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                body: JSON.stringify({ last_announcement_id: latestId }),
-            });
+            await window.ApiService.jsonOk(
+                "api/users/dismiss_announcements.php",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({ last_announcement_id: latestId }),
+                },
+            );
             lastReadAnnouncementId = latestId;
             setAnnouncementUnreadState(false);
-        } catch { /* best-effort — keep current unread state */ }
+        } catch {
+            /* best-effort — keep current unread state */
+        }
     } else {
         setAnnouncementUnreadState(false);
     }
@@ -1871,9 +2239,12 @@ async function openAnnouncementsPanel() {
 
 function closeAnnouncementsPanel({ fromHistory = false } = {}) {
     if (!announcementsOverlay) return;
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.announcements, () => {
-        closeAnnouncementsPanel({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.announcements, () => {
+            closeAnnouncementsPanel({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.announcements);
@@ -1897,7 +2268,10 @@ function setAnnouncementUnreadState(hasUnread) {
 async function checkAnnouncementUnread() {
     const list = await fetchAnnouncements();
     announcementsCachedList = list;
-    if (!list.length) { setAnnouncementUnreadState(false); return; }
+    if (!list.length) {
+        setAnnouncementUnreadState(false);
+        return;
+    }
     const latestId = Number(list[0].id) || 0;
     setAnnouncementUnreadState(latestId > lastReadAnnouncementId);
 }
@@ -1912,24 +2286,32 @@ let opinionsPanelCache = null; // cached fetch result
 async function openOpinionsPanel() {
     if (!opinionsOverlay) return;
     opinionsOverlay.hidden = false;
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.opinions, ({ fromHistory = false } = {}) => {
-        closeOpinionsPanel({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.opinions,
+        ({ fromHistory = false } = {}) => {
+            closeOpinionsPanel({ fromHistory });
+        },
+    );
     requestAnimationFrame(() => opinionsOverlay.classList.add("visible"));
     try {
         const res = await window.ApiService.jsonOk("api/opinions/fetch.php");
         opinionsPanelCache = res;
         renderOpinionsUserList(res.grouped || []);
     } catch {
-        if (opinionsBody) opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>Unable to load opinions.</div>';
+        if (opinionsBody)
+            opinionsBody.innerHTML =
+                '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>Unable to load opinions.</div>';
     }
 }
 
 function closeOpinionsPanel({ fromHistory = false } = {}) {
     if (!opinionsOverlay) return;
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.opinions, () => {
-        closeOpinionsPanel({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.opinions, () => {
+            closeOpinionsPanel({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.opinions);
@@ -1944,14 +2326,18 @@ function closeOpinionsPanel({ fromHistory = false } = {}) {
 function renderOpinionsUserList(grouped) {
     if (!opinionsBody) return;
     const totalOpinions = grouped.reduce((s, g) => s + g.count, 0);
-    if (opinionsCount) opinionsCount.textContent = totalOpinions ? `${grouped.length} user${grouped.length > 1 ? "s" : ""}, ${totalOpinions} note${totalOpinions > 1 ? "s" : ""}` : "";
+    if (opinionsCount)
+        opinionsCount.textContent = totalOpinions
+            ? `${grouped.length} user${grouped.length > 1 ? "s" : ""}, ${totalOpinions} note${totalOpinions > 1 ? "s" : ""}`
+            : "";
     opinionsBody.innerHTML = "";
     // Remove back button if present
     const existingBack = opinionsOverlay?.querySelector(".opinions-back-btn");
     if (existingBack) existingBack.remove();
 
     if (!grouped.length) {
-        opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>No opinions written yet.<br>Open a chat details panel to add one.</div>';
+        opinionsBody.innerHTML =
+            '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>No opinions written yet.<br>Open a chat details panel to add one.</div>';
         return;
     }
     grouped.forEach((group, idx) => {
@@ -1959,9 +2345,16 @@ function renderOpinionsUserList(grouped) {
         item.className = "opinions-item opinions-user-item";
         item.style.animationDelay = `${idx * 0.04}s`;
         const username = escapeHtml(group.target_username || "Unknown");
-        const avatarUrl = "api/users/get_avatar.php?user_id=" + (group.target_user_id || 0) + "&size=64";
-        const preview = escapeHtml(String(group.latest_body || "").substring(0, 80));
-        const previewDir = startsWithRtlScriptChars(group.latest_body || "", 2) ? "rtl" : "ltr";
+        const avatarUrl =
+            "api/users/get_avatar.php?user_id=" +
+            (group.target_user_id || 0) +
+            "&size=64";
+        const preview = escapeHtml(
+            String(group.latest_body || "").substring(0, 80),
+        );
+        const previewDir = startsWithRtlScriptChars(group.latest_body || "", 2)
+            ? "rtl"
+            : "ltr";
         item.innerHTML = `
             <div class="opinions-item-avatar">
                 <img src="${avatarUrl}" alt="${username}" loading="lazy">
@@ -1976,7 +2369,10 @@ function renderOpinionsUserList(grouped) {
             <div class="opinions-item-chevron"><i class="fas fa-chevron-right"></i></div>
         `;
         item.addEventListener("click", () => {
-            openOpinionsForUser(Number(group.target_user_id), group.target_username);
+            openOpinionsForUser(
+                Number(group.target_user_id),
+                group.target_username,
+            );
         });
         opinionsBody.appendChild(item);
     });
@@ -1984,7 +2380,8 @@ function renderOpinionsUserList(grouped) {
 
 async function openOpinionsForUser(targetUserId, targetUsername) {
     if (!opinionsBody) return;
-    opinionsBody.innerHTML = '<div class="opinions-loading"><i class="fas fa-circle-notch fa-spin"></i><span>Loading...</span></div>';
+    opinionsBody.innerHTML =
+        '<div class="opinions-loading"><i class="fas fa-circle-notch fa-spin"></i><span>Loading...</span></div>';
 
     // Add back button to header
     let backBtn = opinionsOverlay?.querySelector(".opinions-back-btn");
@@ -2006,13 +2403,21 @@ async function openOpinionsForUser(targetUserId, targetUsername) {
         }
     };
 
-    if (opinionsCount) opinionsCount.textContent = escapeHtml(targetUsername || "User");
+    if (opinionsCount)
+        opinionsCount.textContent = escapeHtml(targetUsername || "User");
 
     try {
-        const res = await window.ApiService.jsonOk("api/opinions/fetch.php?target_user_id=" + targetUserId);
-        renderOpinionsDetailList(res.opinions || [], targetUserId, targetUsername);
+        const res = await window.ApiService.jsonOk(
+            "api/opinions/fetch.php?target_user_id=" + targetUserId,
+        );
+        renderOpinionsDetailList(
+            res.opinions || [],
+            targetUserId,
+            targetUsername,
+        );
     } catch {
-        opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>Unable to load opinions.</div>';
+        opinionsBody.innerHTML =
+            '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>Unable to load opinions.</div>';
     }
 }
 
@@ -2021,7 +2426,8 @@ function renderOpinionsDetailList(opinions, targetUserId, targetUsername) {
     opinionsBody.innerHTML = "";
 
     if (!opinions.length) {
-        opinionsBody.innerHTML = '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>No opinions about this user.</div>';
+        opinionsBody.innerHTML =
+            '<div class="opinions-empty"><i class="fas fa-pen-fancy"></i>No opinions about this user.</div>';
         return;
     }
 
@@ -2031,7 +2437,9 @@ function renderOpinionsDetailList(opinions, targetUserId, targetUsername) {
         item.style.animationDelay = `${idx * 0.04}s`;
         const date = op.updated_at || op.created_at || "";
         const dateStr = date ? new Date(date).toLocaleDateString() : "";
-        const bodyDir = startsWithRtlScriptChars(op.body || "", 2) ? "rtl" : "ltr";
+        const bodyDir = startsWithRtlScriptChars(op.body || "", 2)
+            ? "rtl"
+            : "ltr";
         item.innerHTML = `
             <div class="opinions-detail-body">
                 <div class="opinions-item-text" dir="${bodyDir}">${escapeHtml(op.body || "")}</div>
@@ -2045,45 +2453,81 @@ function renderOpinionsDetailList(opinions, targetUserId, targetUsername) {
         item.querySelector(".edit-btn")?.addEventListener("click", async () => {
             const newText = await showPromptModal(
                 "Edit Opinion",
-                "Edit your opinion about " + escapeHtml(targetUsername || "this user") + ":",
-                { defaultValue: op.body || "", maxLength: 500, placeholder: "Your opinion..." }
+                "Edit your opinion about " +
+                    escapeHtml(targetUsername || "this user") +
+                    ":",
+                {
+                    defaultValue: op.body || "",
+                    maxLength: 500,
+                    placeholder: "Your opinion...",
+                },
             );
             if (newText === null || !newText.trim()) return;
             try {
                 await window.ApiService.jsonOk("api/opinions/save.php", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                    body: JSON.stringify({ target_user_id: targetUserId, opinion_id: Number(op.id), body: newText.trim() }),
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({
+                        target_user_id: targetUserId,
+                        opinion_id: Number(op.id),
+                        body: newText.trim(),
+                    }),
                 });
                 openOpinionsForUser(targetUserId, targetUsername);
-            } catch (e) { showModal("Error", e?.message || "Failed to save opinion.", "error"); }
+            } catch (e) {
+                showModal(
+                    "Error",
+                    e?.message || "Failed to save opinion.",
+                    "error",
+                );
+            }
         });
-        item.querySelector(".delete-btn")?.addEventListener("click", async () => {
-            const confirmed = await showConfirmModal(
-                "Delete Opinion",
-                "Delete this opinion?",
-                { type: "warning", confirmLabel: "Delete" }
-            );
-            if (!confirmed) return;
-            try {
-                await window.ApiService.jsonOk("api/opinions/delete.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                    body: JSON.stringify({ opinion_id: Number(op.id) }),
-                });
-                // Refresh — re-fetch to update cache too
-                opinionsPanelCache = null;
-                const remaining = await window.ApiService.jsonOk("api/opinions/fetch.php?target_user_id=" + targetUserId);
-                if (!remaining.opinions?.length) {
-                    // No opinions left for this user, go back to user list
-                    const backBtn = opinionsOverlay?.querySelector(".opinions-back-btn");
-                    if (backBtn) backBtn.remove();
-                    openOpinionsPanel();
-                } else {
-                    renderOpinionsDetailList(remaining.opinions, targetUserId, targetUsername);
+        item.querySelector(".delete-btn")?.addEventListener(
+            "click",
+            async () => {
+                const confirmed = await showConfirmModal(
+                    "Delete Opinion",
+                    "Delete this opinion?",
+                    { type: "warning", confirmLabel: "Delete" },
+                );
+                if (!confirmed) return;
+                try {
+                    await window.ApiService.jsonOk("api/opinions/delete.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...getCsrfHeaders(),
+                        },
+                        body: JSON.stringify({ opinion_id: Number(op.id) }),
+                    });
+                    // Refresh — re-fetch to update cache too
+                    opinionsPanelCache = null;
+                    const remaining = await window.ApiService.jsonOk(
+                        "api/opinions/fetch.php?target_user_id=" + targetUserId,
+                    );
+                    if (!remaining.opinions?.length) {
+                        // No opinions left for this user, go back to user list
+                        const backBtn =
+                            opinionsOverlay?.querySelector(
+                                ".opinions-back-btn",
+                            );
+                        if (backBtn) backBtn.remove();
+                        openOpinionsPanel();
+                    } else {
+                        renderOpinionsDetailList(
+                            remaining.opinions,
+                            targetUserId,
+                            targetUsername,
+                        );
+                    }
+                } catch {
+                    /* ignore */
                 }
-            } catch { /* ignore */ }
-        });
+            },
+        );
         opinionsBody.appendChild(item);
     });
 }
@@ -2118,7 +2562,9 @@ function normalizeApiPlaylistItem(item) {
 async function fetchPlaylist() {
     try {
         const res = await window.ApiService.jsonOk("api/playlist/list.php");
-        const items = (res?.items || []).map(normalizeApiPlaylistItem).filter(Boolean);
+        const items = (res?.items || [])
+            .map(normalizeApiPlaylistItem)
+            .filter(Boolean);
         playlistCache = items;
         // Populate messageMetaById for decryption/playback
         for (const t of items) {
@@ -2147,13 +2593,23 @@ async function addToPlaylist(msgId, title, ext) {
     try {
         await window.ApiService.jsonOk("api/playlist/add.php", {
             method: "POST",
-            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-            body: JSON.stringify({ message_id: Number(msgId), title: String(title || ""), ext: String(ext || "") }),
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
+            body: JSON.stringify({
+                message_id: Number(msgId),
+                title: String(title || ""),
+                ext: String(ext || ""),
+            }),
         });
         await fetchPlaylist();
         setComposerStatus("Added to playlist", "success");
     } catch (error) {
-        setComposerStatus(error?.message || "Failed to add to playlist", "error");
+        setComposerStatus(
+            error?.message || "Failed to add to playlist",
+            "error",
+        );
     }
 }
 
@@ -2161,13 +2617,20 @@ async function removeFromPlaylist(msgId) {
     try {
         await window.ApiService.jsonOk("api/playlist/remove.php", {
             method: "POST",
-            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
             body: JSON.stringify({ message_id: Number(msgId) }),
         });
         if (playlistCache) {
-            playlistCache = playlistCache.filter((t) => t.msgId !== Number(msgId));
+            playlistCache = playlistCache.filter(
+                (t) => t.msgId !== Number(msgId),
+            );
         }
-    } catch { /* best-effort */ }
+    } catch {
+        /* best-effort */
+    }
 }
 
 function renderPlaylistPanel() {
@@ -2175,7 +2638,8 @@ function renderPlaylistPanel() {
     const list = getPlaylist();
     playlistBody.innerHTML = "";
     if (!list.length) {
-        playlistBody.innerHTML = '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet. Add music from context menu.</div>';
+        playlistBody.innerHTML =
+            '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet. Add music from context menu.</div>';
         return;
     }
     list.forEach((track, idx) => {
@@ -2211,7 +2675,11 @@ let playlistCurrentBtn = null;
 
 async function playPlaylistTrack(track, btnEl) {
     // If same track is playing, toggle pause
-    if (playlistAudio && playlistCurrentBtn === btnEl && !playlistAudio.paused) {
+    if (
+        playlistAudio &&
+        playlistCurrentBtn === btnEl &&
+        !playlistAudio.paused
+    ) {
         playlistAudio.pause();
         btnEl.innerHTML = '<i class="fas fa-play"></i>';
         btnEl.classList.remove("playing");
@@ -2223,17 +2691,25 @@ async function playPlaylistTrack(track, btnEl) {
     btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     try {
-        if (!track.meta) throw new Error("Track metadata missing — re-add from chat");
+        if (!track.meta)
+            throw new Error("Track metadata missing — re-add from chat");
 
-        const freshMeta = messageMetaById.get(Number(track.meta?.id || track.msgId || 0));
-        if ((freshMeta && freshMeta.file_purged_at) || track.meta.file_purged_at) {
+        const freshMeta = messageMetaById.get(
+            Number(track.meta?.id || track.msgId || 0),
+        );
+        if (
+            (freshMeta && freshMeta.file_purged_at) ||
+            track.meta.file_purged_at
+        ) {
             throw new Error("FILE_UNAVAILABLE");
         }
 
         const mediaResource = await getDecryptedMediaResource(track.meta);
 
         if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContext = new (
+                window.AudioContext || window.webkitAudioContext
+            )();
         }
         if (audioContext.state === "suspended") audioContext.resume();
 
@@ -2259,14 +2735,25 @@ async function playPlaylistTrack(track, btnEl) {
         await playlistAudio.play();
         btnEl.innerHTML = '<i class="fas fa-pause"></i>';
         btnEl.classList.add("playing");
-        showGlobalNowPlaying(playlistAudio, track.title || "Playlist track", "music");
+        showGlobalNowPlaying(
+            playlistAudio,
+            track.title || "Playlist track",
+            "music",
+        );
     } catch (error) {
         btnEl.innerHTML = '<i class="fas fa-play"></i>';
         if (error?.message === "FILE_UNAVAILABLE") {
-            setComposerStatus(`"${track.title || "Track"}" — file expired, skipping...`, "warning");
+            setComposerStatus(
+                `"${track.title || "Track"}" — file expired, skipping...`,
+                "warning",
+            );
             autoPlayNextTrack(track);
         } else {
-            showModal("Playback Error", error?.message || "Unable to play track.", "error");
+            showModal(
+                "Playback Error",
+                error?.message || "Unable to play track.",
+                "error",
+            );
         }
     }
 }
@@ -2291,17 +2778,23 @@ async function openPlaylistPanel() {
     await fetchPlaylist();
     renderPlaylistPanel();
     playlistOverlay.hidden = false;
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.playlist, ({ fromHistory = false } = {}) => {
-        closePlaylistPanel({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.playlist,
+        ({ fromHistory = false } = {}) => {
+            closePlaylistPanel({ fromHistory });
+        },
+    );
     requestAnimationFrame(() => playlistOverlay.classList.add("visible"));
 }
 
 function closePlaylistPanel({ fromHistory = false } = {}) {
     if (!playlistOverlay) return;
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.playlist, () => {
-        closePlaylistPanel({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.playlist, () => {
+            closePlaylistPanel({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.playlist);
@@ -2314,7 +2807,9 @@ function closePlaylistPanel({ fromHistory = false } = {}) {
 }
 
 /* ── Saved Messages Info Panel ── */
-const savedMessagesInfoPanel = document.getElementById("savedMessagesInfoPanel");
+const savedMessagesInfoPanel = document.getElementById(
+    "savedMessagesInfoPanel",
+);
 const savedInfoBackBtn = document.getElementById("savedInfoBackBtn");
 const savedPlaylistBody = document.getElementById("savedPlaylistBody");
 const savedNowPlaying = document.getElementById("savedNowPlaying");
@@ -2322,7 +2817,9 @@ const nowPlayingTitle = document.getElementById("nowPlayingTitle");
 const nowPlayingToggle = document.getElementById("nowPlayingToggle");
 const nowPlayingPrev = document.getElementById("nowPlayingPrev");
 const nowPlayingNext = document.getElementById("nowPlayingNext");
-const nowPlayingProgressWrap = document.getElementById("nowPlayingProgressWrap");
+const nowPlayingProgressWrap = document.getElementById(
+    "nowPlayingProgressWrap",
+);
 const nowPlayingProgressBar = document.getElementById("nowPlayingProgressBar");
 const nowPlayingCurrent = document.getElementById("nowPlayingCurrent");
 const nowPlayingDuration = document.getElementById("nowPlayingDuration");
@@ -2340,9 +2837,12 @@ function formatTimeShort(secs) {
 function openSavedMessagesInfoPanel() {
     if (!savedMessagesInfoPanel) return;
     savedMessagesInfoPanel.hidden = false;
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.savedInfo, ({ fromHistory = false } = {}) => {
-        closeSavedMessagesInfoPanel({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.savedInfo,
+        ({ fromHistory = false } = {}) => {
+            closeSavedMessagesInfoPanel({ fromHistory });
+        },
+    );
     chatAreaElem?.classList.add("saved-panel-open");
     void loadSavedMessagesStats();
     fetchPlaylist().then(() => renderSavedPlaylistPanel());
@@ -2351,9 +2851,12 @@ function openSavedMessagesInfoPanel() {
 
 function closeSavedMessagesInfoPanel({ fromHistory = false } = {}) {
     if (!savedMessagesInfoPanel || savedMessagesInfoPanel.hidden) return;
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.savedInfo, () => {
-        closeSavedMessagesInfoPanel({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.savedInfo, () => {
+            closeSavedMessagesInfoPanel({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.savedInfo);
@@ -2366,7 +2869,9 @@ function closeSavedMessagesInfoPanel({ fromHistory = false } = {}) {
         chatAreaElem?.classList.remove("saved-panel-open");
     };
     savedMessagesInfoPanel.classList.add("panel-closing");
-    savedMessagesInfoPanel.addEventListener("animationend", finish, { once: true });
+    savedMessagesInfoPanel.addEventListener("animationend", finish, {
+        once: true,
+    });
     setTimeout(finish, 350);
 }
 
@@ -2381,9 +2886,12 @@ function toggleSavedMessagesInfoPanel() {
 // ── Private Chat Info Panel ──────────────────────────────────
 function closePrivateChatInfoPanel({ fromHistory = false } = {}) {
     if (!privateChatInfoPanel || privateChatInfoPanel.hidden) return;
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.privateInfo, () => {
-        closePrivateChatInfoPanel({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.privateInfo, () => {
+            closePrivateChatInfoPanel({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.privateInfo);
@@ -2397,7 +2905,9 @@ function closePrivateChatInfoPanel({ fromHistory = false } = {}) {
         chatAreaElem?.classList.remove("private-panel-open");
     };
     privateChatInfoPanel.classList.add("panel-closing");
-    privateChatInfoPanel.addEventListener("animationend", finish, { once: true });
+    privateChatInfoPanel.addEventListener("animationend", finish, {
+        once: true,
+    });
     setTimeout(finish, 350);
 }
 
@@ -2415,27 +2925,44 @@ async function openPrivateChatInfoPanel() {
     if (!privateChatInfoPanel) return;
     resetPrivateOpinionForm();
     privateChatInfoPanel.hidden = false;
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.privateInfo, ({ fromHistory = false } = {}) => {
-        closePrivateChatInfoPanel({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.privateInfo,
+        ({ fromHistory = false } = {}) => {
+            closePrivateChatInfoPanel({ fromHistory });
+        },
+    );
     chatAreaElem?.classList.add("private-panel-open");
 
     const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
     try {
-        const profile = await fetchUserProfile({ userId, username: currentChatUser });
+        const profile = await fetchUserProfile({
+            userId,
+            username: currentChatUser,
+        });
         const el = (id) => document.getElementById(id);
-        el("privateChatAvatarImg") && (el("privateChatAvatarImg").src = profile.avatar_url || "");
-        el("privateChatUsername") && (el("privateChatUsername").textContent = profile.username || "");
-        el("privateChatIdent") && (el("privateChatIdent").textContent = profile.public_ident || "");
-        el("privateChatBio") && (el("privateChatBio").textContent = profile.bio || "");
-        el("privateChatSince") && (el("privateChatSince").textContent = profile.member_since ? "Member since " + formatMemberSinceLabel(profile.member_since) : "");
+        el("privateChatAvatarImg") &&
+            (el("privateChatAvatarImg").src = profile.avatar_url || "");
+        el("privateChatUsername") &&
+            (el("privateChatUsername").textContent = profile.username || "");
+        el("privateChatIdent") &&
+            (el("privateChatIdent").textContent = profile.public_ident || "");
+        el("privateChatBio") &&
+            (el("privateChatBio").textContent = profile.bio || "");
+        el("privateChatSince") &&
+            (el("privateChatSince").textContent = profile.member_since
+                ? "Member since " + formatMemberSinceLabel(profile.member_since)
+                : "");
 
         const avatarBtn = document.getElementById("privateChatAvatarBtn");
         avatarBtn?.replaceWith(avatarBtn.cloneNode(true));
-        document.getElementById("privateChatAvatarBtn")?.addEventListener("click", () => openAvatarViewer(profile));
+        document
+            .getElementById("privateChatAvatarBtn")
+            ?.addEventListener("click", () => openAvatarViewer(profile));
 
         setupPrivateChatActions(profile);
-    } catch { /* ignore profile load error */ }
+    } catch {
+        /* ignore profile load error */
+    }
 
     void loadPrivateChatStats();
     loadPrivateChatMusicMessages(true);
@@ -2450,8 +2977,12 @@ function setupPrivateChatActions(profile) {
 
     if (blockBtn) {
         blockBtn.disabled = isCurrentUser;
-        blockBtn.querySelector("span").textContent = isBlocked ? "Unblock User" : "Block User";
-        blockBtn.querySelector("i").className = isBlocked ? "fas fa-user-check" : "fas fa-user-slash";
+        blockBtn.querySelector("span").textContent = isBlocked
+            ? "Unblock User"
+            : "Block User";
+        blockBtn.querySelector("i").className = isBlocked
+            ? "fas fa-user-check"
+            : "fas fa-user-slash";
         if (isBlocked) {
             blockBtn.classList.remove("private-action-block");
             blockBtn.classList.add("private-action-unblock");
@@ -2470,23 +3001,39 @@ function setupPrivateChatActions(profile) {
                     willBlock
                         ? `Block ${targetName}? They will not be able to send messages to you.`
                         : `Unblock ${targetName}?`,
-                    { type: "warning", confirmLabel: willBlock ? "Block" : "Unblock" }
+                    {
+                        type: "warning",
+                        confirmLabel: willBlock ? "Block" : "Unblock",
+                    },
                 );
                 if (!confirmed) return;
 
                 freshBtn.disabled = true;
-                freshBtn.querySelector("span").textContent = willBlock ? "Blocking..." : "Unblocking...";
+                freshBtn.querySelector("span").textContent = willBlock
+                    ? "Blocking..."
+                    : "Unblocking...";
                 try {
-                    const endpoint = willBlock ? "api/users/block.php" : "api/users/unblock.php";
+                    const endpoint = willBlock
+                        ? "api/users/block.php"
+                        : "api/users/unblock.php";
                     const res = await window.ApiService.jsonOk(endpoint, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                        body: JSON.stringify({ target_user_id: Number(profile.user_id || 0) }),
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...getCsrfHeaders(),
+                        },
+                        body: JSON.stringify({
+                            target_user_id: Number(profile.user_id || 0),
+                        }),
                     });
                     isBlocked = Boolean(res?.is_blocked);
                     profile.is_blocked_by_me = isBlocked;
-                    freshBtn.querySelector("span").textContent = isBlocked ? "Unblock User" : "Block User";
-                    freshBtn.querySelector("i").className = isBlocked ? "fas fa-user-check" : "fas fa-user-slash";
+                    freshBtn.querySelector("span").textContent = isBlocked
+                        ? "Unblock User"
+                        : "Block User";
+                    freshBtn.querySelector("i").className = isBlocked
+                        ? "fas fa-user-check"
+                        : "fas fa-user-slash";
                     if (isBlocked) {
                         freshBtn.classList.remove("private-action-block");
                         freshBtn.classList.add("private-action-unblock");
@@ -2500,12 +3047,18 @@ function setupPrivateChatActions(profile) {
                         isBlocked
                             ? `${targetName} can no longer send messages to you.`
                             : `${targetName} can send messages to you again.`,
-                        "success"
+                        "success",
                     );
                 } catch (error) {
                     freshBtn.disabled = false;
-                    freshBtn.querySelector("span").textContent = isBlocked ? "Unblock User" : "Block User";
-                    showModal("Error", error?.message || "Unable to update block status.", "error");
+                    freshBtn.querySelector("span").textContent = isBlocked
+                        ? "Unblock User"
+                        : "Block User";
+                    showModal(
+                        "Error",
+                        error?.message || "Unable to update block status.",
+                        "error",
+                    );
                 }
             });
         }
@@ -2521,19 +3074,29 @@ function setupPrivateChatActions(profile) {
                 const confirmed = await showConfirmModal(
                     "Delete Chat",
                     `Delete all direct messages between you and ${targetName}? This cannot be undone.`,
-                    { type: "error", confirmLabel: "Delete" }
+                    { type: "error", confirmLabel: "Delete" },
                 );
                 if (!confirmed) return;
 
                 freshDel.disabled = true;
                 freshDel.querySelector("span").textContent = "Deleting...";
                 try {
-                    const response = await window.ApiService.jsonOk("api/chats/delete.php", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                        body: JSON.stringify({ target_username: String(profile.username || "") }),
-                    });
-                    const deletedMessages = Number(response?.messages_deleted || 0);
+                    const response = await window.ApiService.jsonOk(
+                        "api/chats/delete.php",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                ...getCsrfHeaders(),
+                            },
+                            body: JSON.stringify({
+                                target_username: String(profile.username || ""),
+                            }),
+                        },
+                    );
+                    const deletedMessages = Number(
+                        response?.messages_deleted || 0,
+                    );
                     const deletedFiles = Number(response?.files_deleted || 0);
 
                     if (currentChatUser === String(profile.username || "")) {
@@ -2560,12 +3123,16 @@ function setupPrivateChatActions(profile) {
                     showModal(
                         "Chat Deleted",
                         `Deleted ${deletedMessages} messages${deletedFiles > 0 ? ` and ${deletedFiles} files` : ""}.`,
-                        "success"
+                        "success",
                     );
                 } catch (error) {
                     freshDel.disabled = false;
                     freshDel.querySelector("span").textContent = "Delete Chat";
-                    showModal("Delete Chat Failed", error?.message || "Unable to delete chat history.", "error");
+                    showModal(
+                        "Delete Chat Failed",
+                        error?.message || "Unable to delete chat history.",
+                        "error",
+                    );
                 }
             });
         }
@@ -2615,7 +3182,9 @@ function setStatsUiByIdMap(stats, ids) {
 
 async function fetchConversationStats(chatTarget) {
     const params = buildChatTargetQueryParams(chatTarget);
-    const data = await window.ApiService.jsonOk(`api/messages/stats.php?${params.toString()}`);
+    const data = await window.ApiService.jsonOk(
+        `api/messages/stats.php?${params.toString()}`,
+    );
     return data?.stats || {};
 }
 
@@ -2681,27 +3250,43 @@ function stopAllAudio() {
     // Stop saved panel audio
     if (typeof stopSavedPanelAudio === "function") stopSavedPanelAudio();
     // Stop all in-chat voice and music players
-    document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
-        const otherAudio = btn.closest(".message")?.querySelector("audio");
-        if (otherAudio && !otherAudio.paused) otherAudio.pause();
-        btn.classList.remove("playing");
-        btn.innerHTML = '<i class="fas fa-play"></i>';
-        btn.closest(".voice-player-container")?.classList.remove("is-playing");
-        btn.closest(".music-player-container")?.classList.remove("is-playing");
-    });
+    document
+        .querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing")
+        .forEach((btn) => {
+            const otherAudio = btn.closest(".message")?.querySelector("audio");
+            if (otherAudio && !otherAudio.paused) otherAudio.pause();
+            btn.classList.remove("playing");
+            btn.innerHTML = '<i class="fas fa-play"></i>';
+            btn.closest(".voice-player-container")?.classList.remove(
+                "is-playing",
+            );
+            btn.closest(".music-player-container")?.classList.remove(
+                "is-playing",
+            );
+        });
     // Hide global now playing bar
     hideGlobalNowPlaying();
 }
 
-async function fetchConversationMusicChunk(chatTarget, offset = 0, limit = DETAILS_MUSIC_SCAN_BATCH_SIZE) {
+async function fetchConversationMusicChunk(
+    chatTarget,
+    offset = 0,
+    limit = DETAILS_MUSIC_SCAN_BATCH_SIZE,
+) {
     const params = buildChatTargetQueryParams(chatTarget);
     params.set("offset", String(Math.max(0, Number(offset) || 0)));
-    params.set("limit", String(Math.max(1, Number(limit) || DETAILS_MUSIC_SCAN_BATCH_SIZE)));
-    return window.ApiService.jsonOk(`api/messages/music_list.php?${params.toString()}`);
+    params.set(
+        "limit",
+        String(Math.max(1, Number(limit) || DETAILS_MUSIC_SCAN_BATCH_SIZE)),
+    );
+    return window.ApiService.jsonOk(
+        `api/messages/music_list.php?${params.toString()}`,
+    );
 }
 
 async function buildMusicTrackFromMessage(messageRow, chatTarget = "") {
-    const msg = messageRow && typeof messageRow === "object" ? messageRow : null;
+    const msg =
+        messageRow && typeof messageRow === "object" ? messageRow : null;
     if (!msg || Number(msg.id || 0) <= 0) {
         return null;
     }
@@ -2715,7 +3300,7 @@ async function buildMusicTrackFromMessage(messageRow, chatTarget = "") {
 
     const fileName = sanitizeAttachmentFileName(
         String(metadata?.file_name || metadata?.name || "").trim(),
-        `audio_${msg.id}`
+        `audio_${msg.id}`,
     );
     if (!isAudioFileName(fileName)) {
         return null;
@@ -2723,9 +3308,12 @@ async function buildMusicTrackFromMessage(messageRow, chatTarget = "") {
 
     const ext = getFileExtension(fileName).toUpperCase();
     const title = fileName.replace(/\.[^.]+$/, "") || fileName;
-    const senderLabel = Number(msg.sender_id || 0) === Number(CURRENT_USER_ID)
-        ? "Sent"
-        : (msg.sender_username ? `From ${String(msg.sender_username)}` : "Received");
+    const senderLabel =
+        Number(msg.sender_id || 0) === Number(CURRENT_USER_ID)
+            ? "Sent"
+            : msg.sender_username
+              ? `From ${String(msg.sender_username)}`
+              : "Received";
 
     return {
         id: Number(msg.id),
@@ -2755,17 +3343,22 @@ function normalizeMusicContextTrack(rawTrack) {
         return null;
     }
     const messageId = Number(
-        rawTrack.id || rawTrack.msgId || rawTrack?.message?.id || rawTrack?.meta?.id || 0
+        rawTrack.id ||
+            rawTrack.msgId ||
+            rawTrack?.message?.id ||
+            rawTrack?.meta?.id ||
+            0,
     );
     if (messageId <= 0) {
         return null;
     }
     const ext = String(rawTrack.ext || "").trim();
-    const messageMeta = rawTrack.message && typeof rawTrack.message === "object"
-        ? rawTrack.message
-        : (rawTrack.meta && typeof rawTrack.meta === "object"
-            ? Object.assign({ id: messageId }, rawTrack.meta)
-            : null);
+    const messageMeta =
+        rawTrack.message && typeof rawTrack.message === "object"
+            ? rawTrack.message
+            : rawTrack.meta && typeof rawTrack.meta === "object"
+              ? Object.assign({ id: messageId }, rawTrack.meta)
+              : null;
     return {
         id: messageId,
         title: String(rawTrack.title || "Unknown"),
@@ -2795,7 +3388,9 @@ async function removeMusicTrackFromPlaylistFromContext(rawTrack) {
     }
 
     const list = getPlaylist();
-    const removeIdx = list.findIndex((entry) => Number(entry.msgId || 0) === track.id);
+    const removeIdx = list.findIndex(
+        (entry) => Number(entry.msgId || 0) === track.id,
+    );
     if (removeIdx < 0) {
         setComposerStatus("Track is not in your playlist.", "info");
         return;
@@ -2844,7 +3439,10 @@ async function goToMusicTrackMessage(rawTrack) {
     await scrollToReplyTarget(track.id);
 }
 
-function openDetailsMusicContextMenu(rawTrack, { x = 0, y = 0, anchorElement = null, mode = "details" } = {}) {
+function openDetailsMusicContextMenu(
+    rawTrack,
+    { x = 0, y = 0, anchorElement = null, mode = "details" } = {},
+) {
     const track = normalizeMusicContextTrack(rawTrack);
     if (!track) {
         return;
@@ -2863,13 +3461,15 @@ function openDetailsMusicContextMenu(rawTrack, { x = 0, y = 0, anchorElement = n
     playlistBtn.type = "button";
     playlistBtn.className = "message-context-menu-item";
     if (mode === "playlist") {
-        playlistBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Remove from Playlist';
+        playlistBtn.innerHTML =
+            '<i class="fas fa-trash-alt me-2"></i>Remove from Playlist';
         playlistBtn.addEventListener("click", () => {
             removeMusicTrackFromPlaylistFromContext(track);
             closeDetailsMusicContextMenu();
         });
     } else {
-        playlistBtn.innerHTML = '<i class="fas fa-list-ul me-2"></i>Add to Playlist';
+        playlistBtn.innerHTML =
+            '<i class="fas fa-list-ul me-2"></i>Add to Playlist';
         playlistBtn.addEventListener("click", () => {
             addMusicTrackToPlaylistFromContext(track);
             closeDetailsMusicContextMenu();
@@ -2926,37 +3526,45 @@ function bindMusicItemContextMenu(item, rawTrack, options = {}) {
     let touchStartX = 0;
     let touchStartY = 0;
 
-    item.addEventListener("touchstart", (event) => {
-        if (event.touches.length !== 1 || isBlockedTarget(event.target)) {
-            return;
-        }
-        const touch = event.touches[0];
-        touchStartX = Number(touch.clientX || 0);
-        touchStartY = Number(touch.clientY || 0);
-        touchLongPressTimer = window.setTimeout(() => {
-            touchLongPressTimer = 0;
-            openDetailsMusicContextMenu(rawTrack, {
-                x: touchStartX,
-                y: touchStartY,
-                anchorElement: item,
-                mode,
-            });
-            suppressNextContextMenuTapUntil = Date.now() + 400;
-        }, MESSAGE_LONG_PRESS_MS);
-    }, { passive: true });
+    item.addEventListener(
+        "touchstart",
+        (event) => {
+            if (event.touches.length !== 1 || isBlockedTarget(event.target)) {
+                return;
+            }
+            const touch = event.touches[0];
+            touchStartX = Number(touch.clientX || 0);
+            touchStartY = Number(touch.clientY || 0);
+            touchLongPressTimer = window.setTimeout(() => {
+                touchLongPressTimer = 0;
+                openDetailsMusicContextMenu(rawTrack, {
+                    x: touchStartX,
+                    y: touchStartY,
+                    anchorElement: item,
+                    mode,
+                });
+                suppressNextContextMenuTapUntil = Date.now() + 400;
+            }, MESSAGE_LONG_PRESS_MS);
+        },
+        { passive: true },
+    );
 
-    item.addEventListener("touchmove", (event) => {
-        if (!touchLongPressTimer) {
-            return;
-        }
-        const touch = event.touches[0];
-        const deltaX = Math.abs(Number(touch?.clientX || 0) - touchStartX);
-        const deltaY = Math.abs(Number(touch?.clientY || 0) - touchStartY);
-        if (deltaX > 10 || deltaY > 10) {
-            clearTimeout(touchLongPressTimer);
-            touchLongPressTimer = 0;
-        }
-    }, { passive: true });
+    item.addEventListener(
+        "touchmove",
+        (event) => {
+            if (!touchLongPressTimer) {
+                return;
+            }
+            const touch = event.touches[0];
+            const deltaX = Math.abs(Number(touch?.clientX || 0) - touchStartX);
+            const deltaY = Math.abs(Number(touch?.clientY || 0) - touchStartY);
+            if (deltaX > 10 || deltaY > 10) {
+                clearTimeout(touchLongPressTimer);
+                touchLongPressTimer = 0;
+            }
+        },
+        { passive: true },
+    );
 
     const clearLongPress = () => {
         if (!touchLongPressTimer) {
@@ -2993,7 +3601,9 @@ async function playDetailsMusicTrack(playBtn, track) {
         }
 
         if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContext = new (
+                window.AudioContext || window.webkitAudioContext
+            )();
         }
         if (audioContext.state === "suspended") {
             audioContext.resume();
@@ -3035,7 +3645,9 @@ async function playDetailsMusicTrack(playBtn, track) {
 function renderDetailsMusicItems(body, tracks) {
     tracks.forEach((track) => {
         const item = document.createElement("div");
-        item.className = "saved-playlist-item" + (track.isPurged ? " playlist-item-purged" : "");
+        item.className =
+            "saved-playlist-item" +
+            (track.isPurged ? " playlist-item-purged" : "");
         item.tabIndex = 0;
         item.innerHTML = `
             <button type="button" class="saved-pl-play" title="${track.isPurged ? "File expired" : "Play"}" ${track.isPurged ? "disabled" : ""}>
@@ -3074,7 +3686,14 @@ function renderMusicShowMoreButton(body, onClick) {
     body.appendChild(wrap);
 }
 
-async function loadDetailsMusicPanelPage({ panelKey, bodyId, countId, chatTarget, emptyHtml, reset = false }) {
+async function loadDetailsMusicPanelPage({
+    panelKey,
+    bodyId,
+    countId,
+    chatTarget,
+    emptyHtml,
+    reset = false,
+}) {
     const body = document.getElementById(bodyId);
     const countEl = document.getElementById(countId);
     if (!body || !chatTarget) {
@@ -3083,7 +3702,8 @@ async function loadDetailsMusicPanelPage({ panelKey, bodyId, countId, chatTarget
 
     const targetToken = String(chatTarget);
     let state = detailsMusicPanelState.get(panelKey);
-    const shouldResetState = reset || !state || state.targetToken !== targetToken;
+    const shouldResetState =
+        reset || !state || state.targetToken !== targetToken;
     if (shouldResetState) {
         state = {
             targetToken,
@@ -3094,7 +3714,8 @@ async function loadDetailsMusicPanelPage({ panelKey, bodyId, countId, chatTarget
             loading: false,
         };
         detailsMusicPanelState.set(panelKey, state);
-        body.innerHTML = '<div class="playlist-empty"><i class="fas fa-circle-notch fa-spin me-2"></i>Loading music...</div>';
+        body.innerHTML =
+            '<div class="playlist-empty"><i class="fas fa-circle-notch fa-spin me-2"></i>Loading music...</div>';
     }
 
     if (state.loading) {
@@ -3114,12 +3735,14 @@ async function loadDetailsMusicPanelPage({ panelKey, bodyId, countId, chatTarget
                 const response = await fetchConversationMusicChunk(
                     targetToken,
                     state.nextOffset,
-                    DETAILS_MUSIC_SCAN_BATCH_SIZE
+                    DETAILS_MUSIC_SCAN_BATCH_SIZE,
                 );
-                const items = Array.isArray(response?.items) ? response.items : [];
+                const items = Array.isArray(response?.items)
+                    ? response.items
+                    : [];
                 state.nextOffset = Math.max(
                     state.nextOffset,
-                    Number(response?.nextOffset || state.nextOffset)
+                    Number(response?.nextOffset || state.nextOffset),
                 );
                 state.hasMore = Boolean(response?.hasMore);
                 if (!items.length && !state.hasMore) {
@@ -3137,7 +3760,10 @@ async function loadDetailsMusicPanelPage({ panelKey, bodyId, countId, chatTarget
                 continue;
             }
             messageMetaById.set(Number(candidate.id), candidate);
-            const track = await buildMusicTrackFromMessage(candidate, targetToken);
+            const track = await buildMusicTrackFromMessage(
+                candidate,
+                targetToken,
+            );
             if (!track) {
                 continue;
             }
@@ -3185,7 +3811,8 @@ function loadPrivateChatMusicMessages(reset = true) {
         bodyId: "privateMusicBody",
         countId: "privateMusicCount",
         chatTarget: currentChatUser,
-        emptyHtml: '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No music shared yet.</div>',
+        emptyHtml:
+            '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No music shared yet.</div>',
         reset,
     });
 }
@@ -3196,7 +3823,8 @@ function loadGroupMusicMessages(reset = true) {
         bodyId: "groupMusicBody",
         countId: "groupMusicCount",
         chatTarget: currentChatUser,
-        emptyHtml: '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No music shared yet.</div>',
+        emptyHtml:
+            '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No music shared yet.</div>',
         reset,
     });
 }
@@ -3209,9 +3837,14 @@ async function loadPrivateChatOpinion() {
     if (!body) return;
     const userId = Number(chatUserIdsByUsername.get(currentChatUser) || 0);
     privateChatOpinionTargetUserId = userId;
-    if (!userId) { body.innerHTML = '<div class="opinion-empty">No opinions yet.</div>'; return; }
+    if (!userId) {
+        body.innerHTML = '<div class="opinion-empty">No opinions yet.</div>';
+        return;
+    }
     try {
-        const res = await window.ApiService.jsonOk("api/opinions/fetch.php?target_user_id=" + userId);
+        const res = await window.ApiService.jsonOk(
+            "api/opinions/fetch.php?target_user_id=" + userId,
+        );
         renderPrivateOpinions(res.opinions || []);
     } catch {
         body.innerHTML = '<div class="opinion-empty">No opinions yet.</div>';
@@ -3231,7 +3864,9 @@ function renderPrivateOpinions(opinions) {
         const dateStr = date ? new Date(date).toLocaleDateString() : "";
         const card = document.createElement("div");
         card.className = "private-opinion-card";
-        const bodyDir = startsWithRtlScriptChars(op.body || "", 2) ? "rtl" : "ltr";
+        const bodyDir = startsWithRtlScriptChars(op.body || "", 2)
+            ? "rtl"
+            : "ltr";
         card.innerHTML = `
             <div class="opinion-text" dir="${bodyDir}">${escapeHtml(op.body)}</div>
             <div class="opinion-date">${dateStr}</div>
@@ -3252,26 +3887,40 @@ function renderPrivateOpinions(opinions) {
                 input.focus();
             }
         });
-        card.querySelector(".delete-btn")?.addEventListener("click", async () => {
-            const confirmed = await showConfirmModal("Delete Opinion", "Delete this opinion?", { type: "warning", confirmLabel: "Delete" });
-            if (!confirmed) return;
-            try {
-                await window.ApiService.jsonOk("api/opinions/delete.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-                    body: JSON.stringify({ opinion_id: Number(op.id) }),
-                });
-                opinionsPanelCache = null;
-                loadPrivateChatOpinion();
-            } catch { /* ignore */ }
-        });
+        card.querySelector(".delete-btn")?.addEventListener(
+            "click",
+            async () => {
+                const confirmed = await showConfirmModal(
+                    "Delete Opinion",
+                    "Delete this opinion?",
+                    { type: "warning", confirmLabel: "Delete" },
+                );
+                if (!confirmed) return;
+                try {
+                    await window.ApiService.jsonOk("api/opinions/delete.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...getCsrfHeaders(),
+                        },
+                        body: JSON.stringify({ opinion_id: Number(op.id) }),
+                    });
+                    opinionsPanelCache = null;
+                    loadPrivateChatOpinion();
+                } catch {
+                    /* ignore */
+                }
+            },
+        );
         body.appendChild(card);
     });
 }
 
 async function loadSavedMessagesStats() {
     try {
-        const stats = await fetchConversationStats(currentChatUser || CURRENT_USER);
+        const stats = await fetchConversationStats(
+            currentChatUser || CURRENT_USER,
+        );
         setStatsUiByIdMap(stats, {
             total: "savedStatTotal",
             text: "savedStatText",
@@ -3290,19 +3939,28 @@ function renderSavedPlaylistPanel() {
     if (savedPlaylistCount) savedPlaylistCount.textContent = `(${list.length})`;
     savedPlaylistBody.innerHTML = "";
     if (!list.length) {
-        savedPlaylistBody.innerHTML = '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet. Add music from the context menu.</div>';
+        savedPlaylistBody.innerHTML =
+            '<div class="playlist-empty"><i class="fas fa-music me-2"></i>No tracks yet. Add music from the context menu.</div>';
         return;
     }
     list.forEach((track, idx) => {
         const item = document.createElement("div");
-        const freshMeta = messageMetaById.get(Number(track.meta?.id || track.msgId || 0));
-        const isPurged = Boolean((freshMeta && freshMeta.file_purged_at) || track.meta?.file_purged_at);
-        item.className = "saved-playlist-item" + (idx === savedPanelCurrentTrackIdx ? " active" : "") + (isPurged ? " playlist-item-purged" : "");
+        const freshMeta = messageMetaById.get(
+            Number(track.meta?.id || track.msgId || 0),
+        );
+        const isPurged = Boolean(
+            (freshMeta && freshMeta.file_purged_at) ||
+            track.meta?.file_purged_at,
+        );
+        item.className =
+            "saved-playlist-item" +
+            (idx === savedPanelCurrentTrackIdx ? " active" : "") +
+            (isPurged ? " playlist-item-purged" : "");
         item.setAttribute("data-playlist-idx", String(idx));
         item.tabIndex = 0;
         item.innerHTML = `
             <button type="button" class="saved-pl-play" title="${isPurged ? "File expired" : "Play"}" ${isPurged ? "disabled" : ""}>
-                <i class="fas ${isPurged ? "fa-clock" : (idx === savedPanelCurrentTrackIdx && savedPanelPlaylistAudio && !savedPanelPlaylistAudio.paused ? "fa-pause" : "fa-play")}"></i>
+                <i class="fas ${isPurged ? "fa-clock" : idx === savedPanelCurrentTrackIdx && savedPanelPlaylistAudio && !savedPanelPlaylistAudio.paused ? "fa-pause" : "fa-play"}"></i>
             </button>
             <div class="saved-pl-info">
                 <div class="saved-pl-title${isPurged ? " file-purged-title" : ""}">${ChatUtils.escapeHtml(String(track.title || "Unknown"))}</div>
@@ -3313,26 +3971,36 @@ function renderSavedPlaylistPanel() {
             </button>
         `;
         if (!isPurged) {
-            item.querySelector(".saved-pl-play")?.addEventListener("click", () => playSavedPanelTrack(idx));
+            item.querySelector(".saved-pl-play")?.addEventListener(
+                "click",
+                () => playSavedPanelTrack(idx),
+            );
         }
-        item.querySelector(".saved-pl-remove")?.addEventListener("click", async () => {
-            await removeFromPlaylist(track.msgId);
-            if (savedPanelCurrentTrackIdx === idx) {
-                stopSavedPanelAudio();
-            } else if (savedPanelCurrentTrackIdx > idx) {
-                savedPanelCurrentTrackIdx--;
-            }
-            renderSavedPlaylistPanel();
-        });
-        bindMusicItemContextMenu(item, {
-            id: Number(track.msgId || track.meta?.id || 0),
-            msgId: Number(track.msgId || 0),
-            title: String(track.title || "Unknown"),
-            ext: String(track.ext || ""),
-            chatTarget: String(track.chatTarget || currentChatUser || ""),
-            message: freshMeta || track.meta || null,
-            meta: track.meta || null,
-        }, { mode: "playlist" });
+        item.querySelector(".saved-pl-remove")?.addEventListener(
+            "click",
+            async () => {
+                await removeFromPlaylist(track.msgId);
+                if (savedPanelCurrentTrackIdx === idx) {
+                    stopSavedPanelAudio();
+                } else if (savedPanelCurrentTrackIdx > idx) {
+                    savedPanelCurrentTrackIdx--;
+                }
+                renderSavedPlaylistPanel();
+            },
+        );
+        bindMusicItemContextMenu(
+            item,
+            {
+                id: Number(track.msgId || track.meta?.id || 0),
+                msgId: Number(track.msgId || 0),
+                title: String(track.title || "Unknown"),
+                ext: String(track.ext || ""),
+                chatTarget: String(track.chatTarget || currentChatUser || ""),
+                message: freshMeta || track.meta || null,
+                meta: track.meta || null,
+            },
+            { mode: "playlist" },
+        );
         savedPlaylistBody.appendChild(item);
     });
 }
@@ -3362,32 +4030,57 @@ async function playSavedPanelTrack(idx) {
     renderSavedPlaylistPanel();
 
     try {
-        if (!track.meta) throw new Error("Track metadata missing — re-add from chat");
+        if (!track.meta)
+            throw new Error("Track metadata missing — re-add from chat");
 
         // Check if file was purged (proactive check from fresh message meta)
-        const freshMeta = messageMetaById.get(Number(track.meta?.id || track.msgId || 0));
-        if ((freshMeta && freshMeta.file_purged_at) || track.meta.file_purged_at) {
+        const freshMeta = messageMetaById.get(
+            Number(track.meta?.id || track.msgId || 0),
+        );
+        if (
+            (freshMeta && freshMeta.file_purged_at) ||
+            track.meta.file_purged_at
+        ) {
             throw new Error("FILE_UNAVAILABLE");
         }
 
         const mediaResource = await getDecryptedMediaResource(track.meta);
 
-        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (!audioContext)
+            audioContext = new (
+                window.AudioContext || window.webkitAudioContext
+            )();
         if (audioContext.state === "suspended") audioContext.resume();
 
         savedPanelPlaylistAudio = new Audio(mediaResource.objectUrl);
 
         savedPanelPlaylistAudio.addEventListener("loadedmetadata", () => {
-            if (isFinite(savedPanelPlaylistAudio.duration) && nowPlayingDuration) {
-                nowPlayingDuration.textContent = formatTimeShort(savedPanelPlaylistAudio.duration);
+            if (
+                isFinite(savedPanelPlaylistAudio.duration) &&
+                nowPlayingDuration
+            ) {
+                nowPlayingDuration.textContent = formatTimeShort(
+                    savedPanelPlaylistAudio.duration,
+                );
             }
         });
 
         savedPanelPlaylistAudio.addEventListener("timeupdate", () => {
-            if (!savedPanelPlaylistAudio || !isFinite(savedPanelPlaylistAudio.duration)) return;
-            if (nowPlayingCurrent) nowPlayingCurrent.textContent = formatTimeShort(savedPanelPlaylistAudio.currentTime);
-            const pct = (savedPanelPlaylistAudio.currentTime / savedPanelPlaylistAudio.duration) * 100;
-            if (nowPlayingProgressBar) nowPlayingProgressBar.style.width = `${pct}%`;
+            if (
+                !savedPanelPlaylistAudio ||
+                !isFinite(savedPanelPlaylistAudio.duration)
+            )
+                return;
+            if (nowPlayingCurrent)
+                nowPlayingCurrent.textContent = formatTimeShort(
+                    savedPanelPlaylistAudio.currentTime,
+                );
+            const pct =
+                (savedPanelPlaylistAudio.currentTime /
+                    savedPanelPlaylistAudio.duration) *
+                100;
+            if (nowPlayingProgressBar)
+                nowPlayingProgressBar.style.width = `${pct}%`;
         });
 
         savedPanelPlaylistAudio.addEventListener("ended", function () {
@@ -3414,12 +4107,19 @@ async function playSavedPanelTrack(idx) {
         updateNowPlayingUi(true);
         renderSavedPlaylistPanel();
         // Also show global now-playing bar
-        showGlobalNowPlaying(savedPanelPlaylistAudio, track.title || "Playlist track", "music");
+        showGlobalNowPlaying(
+            savedPanelPlaylistAudio,
+            track.title || "Playlist track",
+            "music",
+        );
     } catch (error) {
         const isPurged = error?.message === "FILE_UNAVAILABLE";
         if (isPurged) {
             // Auto-skip to next track instead of blocking
-            setComposerStatus(`Skipped "${track.title || "track"}" — file expired`, "warning");
+            setComposerStatus(
+                `Skipped "${track.title || "track"}" — file expired`,
+                "warning",
+            );
             stopSavedPanelAudio();
             renderSavedPlaylistPanel();
             const list = getPlaylist();
@@ -3427,7 +4127,11 @@ async function playSavedPanelTrack(idx) {
                 setTimeout(() => playSavedPanelTrack(idx + 1), 300);
             }
         } else {
-            showModal("Playback Error", error?.message || "Unable to play track.", "error");
+            showModal(
+                "Playback Error",
+                error?.message || "Unable to play track.",
+                "error",
+            );
             stopSavedPanelAudio();
             renderSavedPlaylistPanel();
         }
@@ -3490,17 +4194,31 @@ nowPlayingNext?.addEventListener("click", () => {
 // Seek on now-playing progress bar
 if (nowPlayingProgressWrap) {
     function seekNowPlaying(clientX) {
-        if (!savedPanelPlaylistAudio || !isFinite(savedPanelPlaylistAudio.duration)) return;
+        if (
+            !savedPanelPlaylistAudio ||
+            !isFinite(savedPanelPlaylistAudio.duration)
+        )
+            return;
         const rect = nowPlayingProgressWrap.getBoundingClientRect();
-        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        savedPanelPlaylistAudio.currentTime = ratio * savedPanelPlaylistAudio.duration;
-        if (nowPlayingProgressBar) nowPlayingProgressBar.style.width = `${ratio * 100}%`;
+        const ratio = Math.max(
+            0,
+            Math.min(1, (clientX - rect.left) / rect.width),
+        );
+        savedPanelPlaylistAudio.currentTime =
+            ratio * savedPanelPlaylistAudio.duration;
+        if (nowPlayingProgressBar)
+            nowPlayingProgressBar.style.width = `${ratio * 100}%`;
     }
     nowPlayingProgressWrap.addEventListener("mousedown", (e) => {
         e.preventDefault();
         seekNowPlaying(e.clientX);
-        function onMove(ev) { seekNowPlaying(ev.clientX); }
-        function onUp() { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); }
+        function onMove(ev) {
+            seekNowPlaying(ev.clientX);
+        }
+        function onUp() {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+        }
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
     });
@@ -3524,7 +4242,7 @@ function setComposerStatus(message = "", type = "neutral") {
     composerStatusElem.classList.remove(
         "composer-status-error",
         "composer-status-success",
-        "composer-status-warning"
+        "composer-status-warning",
     );
     if (type === "error") {
         composerStatusElem.classList.add("composer-status-error");
@@ -3539,11 +4257,14 @@ window.setComposerStatus = setComposerStatus;
 
 function showTransientComposerSuccessTick(durationMs = 900) {
     setComposerStatus("✓", "success");
-    window.setTimeout(() => {
-        if (composerStatusElem && composerStatusElem.textContent === "✓") {
-            setComposerStatus("");
-        }
-    }, Math.max(250, Number(durationMs) || 900));
+    window.setTimeout(
+        () => {
+            if (composerStatusElem && composerStatusElem.textContent === "✓") {
+                setComposerStatus("");
+            }
+        },
+        Math.max(250, Number(durationMs) || 900),
+    );
 }
 
 function isMobileViewport() {
@@ -3560,7 +4281,10 @@ function syncMobileComposerActions() {
     voiceBtn.disabled = isEditing;
     if (stickerPickerBtn) {
         stickerPickerBtn.disabled = isEditing;
-        stickerPickerBtn.setAttribute("aria-disabled", isEditing ? "true" : "false");
+        stickerPickerBtn.setAttribute(
+            "aria-disabled",
+            isEditing ? "true" : "false",
+        );
     }
 
     if (isEditing) {
@@ -3590,12 +4314,14 @@ function syncMobileComposerActions() {
     imageUploadBtn.style.display = showTools ? "inline-flex" : "none";
     voiceBtn.style.display = showTools ? "inline-flex" : "none";
     chatForm.classList.toggle("mobile-tools-visible", showTools);
-    composerToolsToggleBtn.setAttribute("aria-expanded", showTools ? "true" : "false");
+    composerToolsToggleBtn.setAttribute(
+        "aria-expanded",
+        showTools ? "true" : "false",
+    );
     if (!showTools) {
         closeImageSourceMenu();
     }
 }
-
 
 function closeImageSourceMenu({ restoreFocus = false } = {}) {
     if (!imageSourceMenu) {
@@ -3633,7 +4359,10 @@ function closeStickerPicker({ restoreFocus = false } = {}) {
     }
 }
 
-function setStickerPickerState(message = "", { isError = false, hidden = false } = {}) {
+function setStickerPickerState(
+    message = "",
+    { isError = false, hidden = false } = {},
+) {
     if (!stickerPickerState) {
         return;
     }
@@ -3646,7 +4375,10 @@ function setStickerPickerProgress(percent = 0, { visible = false } = {}) {
     if (!stickerPickerProgress || !stickerPickerProgressFill) {
         return;
     }
-    const safePercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+    const safePercent = Math.max(
+        0,
+        Math.min(100, Math.round(Number(percent) || 0)),
+    );
     stickerPickerProgress.hidden = !visible;
     stickerPickerProgressFill.style.width = `${safePercent}%`;
 }
@@ -3676,9 +4408,13 @@ function renderStickerPickerItems(stickers) {
         const uploadedBy = String(sticker?.uploaded_by_username || "").trim();
         item.setAttribute(
             "aria-label",
-            uploadedBy ? `Send sticker by ${uploadedBy}` : `Send sticker ${stickerId}`
+            uploadedBy
+                ? `Send sticker by ${uploadedBy}`
+                : `Send sticker ${stickerId}`,
         );
-        item.title = uploadedBy ? `Send sticker • by ${uploadedBy}` : "Send sticker";
+        item.title = uploadedBy
+            ? `Send sticker • by ${uploadedBy}`
+            : "Send sticker";
         item.setAttribute("data-sticker-id", String(stickerId));
         item.innerHTML = `<img src="${escapeHtml(String(sticker?.url || ""))}" alt="Sticker" loading="lazy" decoding="async" />`;
         item.addEventListener("click", async () => {
@@ -3702,13 +4438,20 @@ async function loadStickers({ force = false } = {}) {
     setStickerPickerProgress(0, { visible: false });
     setStickerPickerState("Loading stickers...");
     try {
-        const response = await window.ApiService.jsonOk("api/messages/stickers/fetch.php?limit=200");
-        stickersCache = Array.isArray(response?.stickers) ? response.stickers : [];
+        const response = await window.ApiService.jsonOk(
+            "api/messages/stickers/fetch.php?limit=200",
+        );
+        stickersCache = Array.isArray(response?.stickers)
+            ? response.stickers
+            : [];
         hasLoadedStickers = true;
         renderStickerPickerItems(stickersCache);
     } catch (error) {
         stickersCache = [];
-        setStickerPickerState(String(error?.message || "Failed to load stickers."), { isError: true });
+        setStickerPickerState(
+            String(error?.message || "Failed to load stickers."),
+            { isError: true },
+        );
     } finally {
         isStickersLoading = false;
     }
@@ -3732,7 +4475,11 @@ async function sendStickerMessage(stickerId) {
         return;
     }
     if (!currentChatUser) {
-        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        showModal(
+            I18N_TEXT.noChatSelectedTitle,
+            I18N_TEXT.noChatSelectedBody,
+            "warning",
+        );
         return;
     }
 
@@ -3772,7 +4519,11 @@ async function sendStickerMessage(stickerId) {
         setComposerStatus("");
     } catch (error) {
         setComposerStatus("Unable to send sticker", "error");
-        showModal("Sticker Send Error", error?.message || "Failed to send sticker.", "error");
+        showModal(
+            "Sticker Send Error",
+            error?.message || "Failed to send sticker.",
+            "error",
+        );
     }
 }
 
@@ -3785,11 +4536,19 @@ async function uploadSticker(file) {
     }
     const type = String(file.type || "").toLowerCase();
     if (type && !type.startsWith("image/")) {
-        showModal("Invalid Sticker", "Please choose a valid image file.", "warning");
+        showModal(
+            "Invalid Sticker",
+            "Please choose a valid image file.",
+            "warning",
+        );
         return;
     }
     if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
-        showModal("Sticker Too Large", "Sticker source image must be 20MB or smaller.", "warning");
+        showModal(
+            "Sticker Too Large",
+            "Sticker source image must be 20MB or smaller.",
+            "warning",
+        );
         return;
     }
 
@@ -3806,21 +4565,32 @@ async function uploadSticker(file) {
         preparedStickerFile = await normalizeStickerUploadFile(
             file,
             (percent, step) => {
-            const safePercent = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
-            const safeStep = String(step || "Preparing").trim();
-            setStickerPickerState(`${safeStep}... ${safePercent}%`);
-            setStickerPickerProgress(Math.min(85, safePercent), { visible: true });
+                const safePercent = Math.max(
+                    0,
+                    Math.min(100, Math.round(Number(percent) || 0)),
+                );
+                const safeStep = String(step || "Preparing").trim();
+                setStickerPickerState(`${safeStep}... ${safePercent}%`);
+                setStickerPickerProgress(Math.min(85, safePercent), {
+                    visible: true,
+                });
             },
-            { removeBackground: shouldRemoveBackground }
+            { removeBackground: shouldRemoveBackground },
         );
     } catch (error) {
         preparedStickerFile = file;
-        setStickerPickerState("Sticker optimization unavailable on this browser. Uploading original image...");
+        setStickerPickerState(
+            "Sticker optimization unavailable on this browser. Uploading original image...",
+        );
         setStickerPickerProgress(30, { visible: true });
     }
 
     if (preparedStickerFile.size > STICKER_UPLOAD_MAX_BYTES) {
-        showModal("Sticker Too Large", "Sticker must be 512KB or smaller.", "warning");
+        showModal(
+            "Sticker Too Large",
+            "Sticker must be 512KB or smaller.",
+            "warning",
+        );
         setStickerPickerProgress(0, { visible: false });
         return;
     }
@@ -3844,14 +4614,18 @@ async function uploadSticker(file) {
             setStickerPickerProgress(0, { visible: false });
         }, 450);
     } catch (error) {
-        setStickerPickerState(String(error?.message || "Sticker upload failed."), { isError: true });
+        setStickerPickerState(
+            String(error?.message || "Sticker upload failed."),
+            { isError: true },
+        );
         setStickerPickerProgress(0, { visible: false });
         setComposerStatus("Sticker upload failed", "error");
     }
 }
 
 // drawStickerImageOnCanvas, buildStickerChoicePreviewDataUrl → chat-sticker-utils.js
-const buildStickerChoicePreviewDataUrl = window.StickerUtils.buildStickerChoicePreviewDataUrl;
+const buildStickerChoicePreviewDataUrl =
+    window.StickerUtils.buildStickerChoicePreviewDataUrl;
 
 async function chooseStickerBackgroundOption(file) {
     if (
@@ -3866,7 +4640,10 @@ async function chooseStickerBackgroundOption(file) {
         return true;
     }
 
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousFocus =
+        document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
     stickerBgChoiceOverlay.hidden = false;
     stickerBgChoiceLoading.hidden = false;
     stickerBgChoiceGrid.hidden = true;
@@ -3930,10 +4707,11 @@ async function chooseStickerBackgroundOption(file) {
                     requestAnimationFrame(() => resolveFrame());
                 });
 
-                const [keepPreviewResult, removePreviewResult] = await Promise.allSettled([
-                    buildStickerChoicePreviewDataUrl(file, false),
-                    buildStickerChoicePreviewDataUrl(file, true),
-                ]);
+                const [keepPreviewResult, removePreviewResult] =
+                    await Promise.allSettled([
+                        buildStickerChoicePreviewDataUrl(file, false),
+                        buildStickerChoicePreviewDataUrl(file, true),
+                    ]);
 
                 if (settled) {
                     return;
@@ -3978,41 +4756,53 @@ async function chooseStickerBackgroundOption(file) {
 }
 
 // loadImageElementFromFile, canvasToBlob, removeEdgeBlackWhiteBackground, normalizeStickerUploadFile → chat-sticker-utils.js
-const normalizeStickerUploadFile = window.StickerUtils.normalizeStickerUploadFile;
+const normalizeStickerUploadFile =
+    window.StickerUtils.normalizeStickerUploadFile;
 
 function canUseNativeCameraCapture() {
     if (!imageCaptureInput) {
         return false;
     }
     const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches;
-    const mobileUserAgent = /Android|iPhone|iPad|iPod|Mobile/i.test(String(navigator.userAgent || ""));
+    const mobileUserAgent = /Android|iPhone|iPad|iPod|Mobile/i.test(
+        String(navigator.userAgent || ""),
+    );
     return Boolean(coarsePointer || mobileUserAgent);
 }
 
 function canUseBrowserCameraCapture() {
-    const secureContext = window.isSecureContext || window.location.hostname === "localhost";
+    const secureContext =
+        window.isSecureContext || window.location.hostname === "localhost";
     return Boolean(
         secureContext &&
-            navigator.mediaDevices &&
-            typeof navigator.mediaDevices.getUserMedia === "function"
+        navigator.mediaDevices &&
+        typeof navigator.mediaDevices.getUserMedia === "function",
     );
 }
 
 function canUseBrowserVideoCapture() {
-    return canUseBrowserCameraCapture() && typeof window.MediaRecorder !== "undefined";
+    return (
+        canUseBrowserCameraCapture() &&
+        typeof window.MediaRecorder !== "undefined"
+    );
 }
 
 async function detectVideoInputDevice() {
     if (hasVideoInputDevice !== null) {
         return hasVideoInputDevice;
     }
-    if (!navigator.mediaDevices || typeof navigator.mediaDevices.enumerateDevices !== "function") {
+    if (
+        !navigator.mediaDevices ||
+        typeof navigator.mediaDevices.enumerateDevices !== "function"
+    ) {
         hasVideoInputDevice = false;
         return false;
     }
     try {
         const devices = await navigator.mediaDevices.enumerateDevices();
-        hasVideoInputDevice = devices.some((device) => device.kind === "videoinput");
+        hasVideoInputDevice = devices.some(
+            (device) => device.kind === "videoinput",
+        );
         return hasVideoInputDevice;
     } catch (error) {
         hasVideoInputDevice = null;
@@ -4099,18 +4889,31 @@ function closeVideoCaptureOverlay() {
 }
 
 async function openCameraCaptureOverlay() {
-    if (!cameraCaptureOverlay || !cameraCaptureVideo || !canUseBrowserCameraCapture()) {
-        setComposerStatus("Camera capture is not supported in this browser/device.", "warning");
+    if (
+        !cameraCaptureOverlay ||
+        !cameraCaptureVideo ||
+        !canUseBrowserCameraCapture()
+    ) {
+        setComposerStatus(
+            "Camera capture is not supported in this browser/device.",
+            "warning",
+        );
         return false;
     }
 
     try {
-        const preferRear = { video: { facingMode: { ideal: "environment" } }, audio: false };
+        const preferRear = {
+            video: { facingMode: { ideal: "environment" } },
+            audio: false,
+        };
         let stream;
         try {
             stream = await navigator.mediaDevices.getUserMedia(preferRear);
         } catch (initialError) {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false,
+            });
         }
         cameraStream = stream;
         cameraCaptureVideo.srcObject = stream;
@@ -4120,7 +4923,10 @@ async function openCameraCaptureOverlay() {
         return true;
     } catch (error) {
         closeCameraCaptureOverlay();
-        setComposerStatus("Unable to access camera. Check browser permission settings.", "warning");
+        setComposerStatus(
+            "Unable to access camera. Check browser permission settings.",
+            "warning",
+        );
         return false;
     }
 }
@@ -4134,22 +4940,39 @@ function pickVideoRecordingMimeType() {
         "video/webm;codecs=vp8,opus",
         "video/webm",
     ];
-    return candidates.find((type) => window.MediaRecorder.isTypeSupported?.(type)) || "";
+    return (
+        candidates.find((type) =>
+            window.MediaRecorder.isTypeSupported?.(type),
+        ) || ""
+    );
 }
 
 async function openVideoCaptureOverlay() {
-    if (!videoCaptureOverlay || !videoCaptureVideo || !canUseBrowserVideoCapture()) {
-        setComposerStatus("Video recording is not supported in this browser/device.", "warning");
+    if (
+        !videoCaptureOverlay ||
+        !videoCaptureVideo ||
+        !canUseBrowserVideoCapture()
+    ) {
+        setComposerStatus(
+            "Video recording is not supported in this browser/device.",
+            "warning",
+        );
         return false;
     }
 
     try {
-        const preferRear = { video: { facingMode: { ideal: "environment" } }, audio: true };
+        const preferRear = {
+            video: { facingMode: { ideal: "environment" } },
+            audio: true,
+        };
         let stream;
         try {
             stream = await navigator.mediaDevices.getUserMedia(preferRear);
         } catch (initialError) {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true,
+            });
         }
 
         videoCaptureStream = stream;
@@ -4168,13 +4991,20 @@ async function openVideoCaptureOverlay() {
         return true;
     } catch (error) {
         closeVideoCaptureOverlay();
-        setComposerStatus("Unable to access camera/microphone for video recording.", "warning");
+        setComposerStatus(
+            "Unable to access camera/microphone for video recording.",
+            "warning",
+        );
         return false;
     }
 }
 
 function startVideoCaptureRecording() {
-    if (!videoCaptureStream || !canUseBrowserVideoCapture() || videoCaptureRecorder) {
+    if (
+        !videoCaptureStream ||
+        !canUseBrowserVideoCapture() ||
+        videoCaptureRecorder
+    ) {
         return;
     }
 
@@ -4205,9 +5035,13 @@ function startVideoCaptureRecording() {
 
             const extension = mimeType.includes("mp4") ? "mp4" : "webm";
             const videoBlob = new Blob(capturedChunks, { type: mimeType });
-            const videoFile = new File([videoBlob], `video_${Date.now()}.${extension}`, {
-                type: mimeType,
-            });
+            const videoFile = new File(
+                [videoBlob],
+                `video_${Date.now()}.${extension}`,
+                {
+                    type: mimeType,
+                },
+            );
             await sendFileMessage(videoFile, { asVideo: true });
         };
 
@@ -4240,14 +5074,22 @@ function stopVideoCaptureRecording({ send = false } = {}) {
 }
 
 async function captureImageFromCameraAndSend() {
-    if (!cameraCaptureVideo || !cameraCaptureCanvas || !cameraStream || isCameraCaptureBusy) {
+    if (
+        !cameraCaptureVideo ||
+        !cameraCaptureCanvas ||
+        !cameraStream ||
+        isCameraCaptureBusy
+    ) {
         return;
     }
 
     const width = cameraCaptureVideo.videoWidth || 1280;
     const height = cameraCaptureVideo.videoHeight || 720;
     if (!width || !height) {
-        setComposerStatus("Camera is still initializing. Please try again.", "warning");
+        setComposerStatus(
+            "Camera is still initializing. Please try again.",
+            "warning",
+        );
         return;
     }
 
@@ -4274,7 +5116,11 @@ async function captureImageFromCameraAndSend() {
             }
             if (blob.size > IMAGE_UPLOAD_MAX_BYTES) {
                 closeCameraCaptureOverlay();
-                showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.imageTooLargeBody, "warning");
+                showModal(
+                    I18N_TEXT.fileTooLargeTitle,
+                    I18N_TEXT.imageTooLargeBody,
+                    "warning",
+                );
                 return;
             }
             const capturedFile = new File([blob], `camera_${Date.now()}.jpg`, {
@@ -4284,7 +5130,7 @@ async function captureImageFromCameraAndSend() {
             void sendImageMessage(capturedFile);
         },
         "image/jpeg",
-        0.92
+        0.92,
     );
 }
 
@@ -4308,7 +5154,8 @@ async function syncImageSourceMenuCapabilities() {
         : "No camera available on this device/browser";
 
     if (imageSourceRecordVideoBtn) {
-        const supportsRecordVideo = supportsMobileCapture || (supportsVideoRecording && hasCamera);
+        const supportsRecordVideo =
+            supportsMobileCapture || (supportsVideoRecording && hasCamera);
         imageSourceRecordVideoBtn.disabled = !supportsRecordVideo;
         imageSourceRecordVideoBtn.title = supportsRecordVideo
             ? "Record new video"
@@ -4327,8 +5174,14 @@ function openImageSourceMenu() {
         imageSourceMenuHideTimer = null;
     }
     if (imageSourceMenuHint) {
-        const imageLimitMb = Math.max(1, Math.round(IMAGE_UPLOAD_MAX_BYTES / (1024 * 1024)));
-        const fileLimitMb = Math.max(1, Math.round(FILE_UPLOAD_MAX_BYTES / (1024 * 1024)));
+        const imageLimitMb = Math.max(
+            1,
+            Math.round(IMAGE_UPLOAD_MAX_BYTES / (1024 * 1024)),
+        );
+        const fileLimitMb = Math.max(
+            1,
+            Math.round(FILE_UPLOAD_MAX_BYTES / (1024 * 1024)),
+        );
         imageSourceMenuHint.textContent = `Photo up to ${imageLimitMb}MB • Video up to ${fileLimitMb}MB`;
     }
 
@@ -4367,7 +5220,8 @@ function applySettingsUi() {
     }
     syncPerfModeOptionStates();
     if (settingInteractiveMessageSearch) {
-        settingInteractiveMessageSearch.checked = appSettings.interactiveMessageSearch;
+        settingInteractiveMessageSearch.checked =
+            appSettings.interactiveMessageSearch;
     }
     if (settingNotificationSound) {
         settingNotificationSound.checked = appSettings.notificationSoundEnabled;
@@ -4376,7 +5230,8 @@ function applySettingsUi() {
         settingAutoScroll.checked = appSettings.autoScrollEnabled;
     }
     if (settingBrowserNotifications) {
-        settingBrowserNotifications.checked = appSettings.browserNotificationsEnabled;
+        settingBrowserNotifications.checked =
+            appSettings.browserNotificationsEnabled;
     }
     if (settingSendByEnter) {
         settingSendByEnter.checked = appSettings.sendByEnter;
@@ -4417,7 +5272,9 @@ function bindSettingsUiEvents() {
         toggleSettingsPanel(false);
         openAnnouncementsPanel();
     });
-    announcementsCloseBtn?.addEventListener("click", () => closeAnnouncementsPanel());
+    announcementsCloseBtn?.addEventListener("click", () =>
+        closeAnnouncementsPanel(),
+    );
     announcementsOverlay?.addEventListener("click", (event) => {
         if (event.target === announcementsOverlay) closeAnnouncementsPanel();
     });
@@ -4447,7 +5304,9 @@ function bindSettingsUiEvents() {
     });
 
     settingThemeMode?.addEventListener("change", (event) => {
-        appSettings.themeMode = ["system", "light", "dark"].includes(event.target.value)
+        appSettings.themeMode = ["system", "light", "dark"].includes(
+            event.target.value,
+        )
             ? event.target.value
             : "system";
         persistAppSettings();
@@ -4455,13 +5314,16 @@ function bindSettingsUiEvents() {
     });
 
     settingDensityMode?.addEventListener("change", (event) => {
-        appSettings.densityMode = event.target.value === "compact" ? "compact" : "comfortable";
+        appSettings.densityMode =
+            event.target.value === "compact" ? "compact" : "comfortable";
         persistAppSettings();
         applyUiPreferenceClasses();
     });
 
     settingFontScale?.addEventListener("change", (event) => {
-        appSettings.fontScale = ["sm", "md", "lg", "xl"].includes(event.target.value)
+        appSettings.fontScale = ["sm", "md", "lg", "xl"].includes(
+            event.target.value,
+        )
             ? event.target.value
             : "md";
         persistAppSettings();
@@ -4493,7 +5355,7 @@ function bindSettingsUiEvents() {
             appSettings.iosLagFix
                 ? "Performance mode enabled"
                 : "Performance mode disabled",
-            "success"
+            "success",
         );
     });
 
@@ -4513,7 +5375,7 @@ function bindSettingsUiEvents() {
             appSettings.classicDesign
                 ? "Classic design enabled"
                 : "Classic design disabled",
-            "success"
+            "success",
         );
     });
 
@@ -4531,13 +5393,15 @@ function bindSettingsUiEvents() {
 
     if (settingNotificationSound) {
         settingNotificationSound.addEventListener("change", (event) => {
-            appSettings.notificationSoundEnabled = Boolean(event.target.checked);
+            appSettings.notificationSoundEnabled = Boolean(
+                event.target.checked,
+            );
             persistAppSettings();
             setComposerStatus(
                 appSettings.notificationSoundEnabled
                     ? "Notification sound enabled"
                     : "Notification sound disabled",
-                "success"
+                "success",
             );
         });
     }
@@ -4550,7 +5414,7 @@ function bindSettingsUiEvents() {
                 appSettings.autoScrollEnabled
                     ? "Auto-scroll enabled"
                     : "Auto-scroll disabled",
-                "success"
+                "success",
             );
         });
     }
@@ -4565,16 +5429,22 @@ function bindSettingsUiEvents() {
         avatarUploadInput?.click();
     });
 
-    document.getElementById("openAnnouncementsBtn")?.addEventListener("click", () => {
-        toggleSettingsPanel(false);
-        openAnnouncementsPanel();
-    });
+    document
+        .getElementById("openAnnouncementsBtn")
+        ?.addEventListener("click", () => {
+            toggleSettingsPanel(false);
+            openAnnouncementsPanel();
+        });
 
-    document.getElementById("openOpinionsBtn")?.addEventListener("click", () => {
-        toggleSettingsPanel(false);
-        openOpinionsPanel();
-    });
-    document.getElementById("opinionsCloseBtn")?.addEventListener("click", () => closeOpinionsPanel());
+    document
+        .getElementById("openOpinionsBtn")
+        ?.addEventListener("click", () => {
+            toggleSettingsPanel(false);
+            openOpinionsPanel();
+        });
+    document
+        .getElementById("opinionsCloseBtn")
+        ?.addEventListener("click", () => closeOpinionsPanel());
     opinionsOverlay?.addEventListener("click", (event) => {
         if (event.target === opinionsOverlay) closeOpinionsPanel();
     });
@@ -4592,13 +5462,24 @@ function bindSettingsUiEvents() {
         }
 
         if (!String(selectedFile.type || "").startsWith("image/")) {
-            showModal("Invalid Avatar", "Please choose an image file.", "warning");
+            showModal(
+                "Invalid Avatar",
+                "Please choose an image file.",
+                "warning",
+            );
             return;
         }
 
         if (selectedFile.size > AVATAR_UPLOAD_MAX_BYTES) {
-            const avatarLimitMb = Math.max(1, Math.round(AVATAR_UPLOAD_MAX_BYTES / (1024 * 1024)));
-            showModal("Avatar Too Large", `Avatar size must be less than ${avatarLimitMb}MB.`, "warning");
+            const avatarLimitMb = Math.max(
+                1,
+                Math.round(AVATAR_UPLOAD_MAX_BYTES / (1024 * 1024)),
+            );
+            showModal(
+                "Avatar Too Large",
+                `Avatar size must be less than ${avatarLimitMb}MB.`,
+                "warning",
+            );
             return;
         }
 
@@ -4617,9 +5498,17 @@ function bindSettingsUiEvents() {
             refreshVisibleAvatars();
             updateSettingsAvatarPreview();
             setComposerStatus("Profile avatar updated", "success");
-            showModal("Avatar Updated", "Your profile avatar was updated successfully.", "success");
+            showModal(
+                "Avatar Updated",
+                "Your profile avatar was updated successfully.",
+                "success",
+            );
         } catch (error) {
-            showModal("Avatar Update Failed", error?.message || "Failed to update avatar.", "error");
+            showModal(
+                "Avatar Update Failed",
+                error?.message || "Failed to update avatar.",
+                "error",
+            );
             setComposerStatus("Unable to update avatar", "error");
         }
     });
@@ -4630,13 +5519,15 @@ function bindSettingsUiEvents() {
 
     chatUiSettingsTabAccount?.addEventListener("click", async () => {
         applySettingsTabUi("account");
-        if (window.AdminPanel) void window.AdminPanel.loadBlockedUsersSettings();
+        if (window.AdminPanel)
+            void window.AdminPanel.loadBlockedUsersSettings();
         await loadSettingsBio();
     });
 
     chatUiSettingsTabAdmin?.addEventListener("click", async () => {
         applySettingsTabUi("admin");
-        if (window.AdminPanel) await window.AdminPanel.refreshAdminSettingsData();
+        if (window.AdminPanel)
+            await window.AdminPanel.refreshAdminSettingsData();
     });
 
     chatUiSettingsTabSessions?.addEventListener("click", async () => {
@@ -4646,35 +5537,49 @@ function bindSettingsUiEvents() {
 
     chatUiSettingsTabIdeas?.addEventListener("click", async () => {
         applySettingsTabUi("ideas");
-        if (typeof window.loadIdeasList === "function") await window.loadIdeasList();
+        if (typeof window.loadIdeasList === "function")
+            await window.loadIdeasList();
     });
 
     if (settingBrowserNotifications) {
-        settingBrowserNotifications.addEventListener("change", async (event) => {
-            const wantEnabled = Boolean(event.target.checked);
-            if (wantEnabled) {
-                if (!("Notification" in window)) {
-                    event.target.checked = false;
-                    showModal("Not Supported", "Browser notifications are not supported in this browser.", "warning");
-                    return;
+        settingBrowserNotifications.addEventListener(
+            "change",
+            async (event) => {
+                const wantEnabled = Boolean(event.target.checked);
+                if (wantEnabled) {
+                    if (!("Notification" in window)) {
+                        event.target.checked = false;
+                        showModal(
+                            "Not Supported",
+                            "Browser notifications are not supported in this browser.",
+                            "warning",
+                        );
+                        return;
+                    }
+                    let permission = Notification.permission;
+                    if (permission === "default") {
+                        permission = await Notification.requestPermission();
+                    }
+                    if (permission !== "granted") {
+                        event.target.checked = false;
+                        showModal(
+                            "Permission Denied",
+                            "Browser notification permission was denied. Enable it in your browser settings.",
+                            "warning",
+                        );
+                        return;
+                    }
                 }
-                let permission = Notification.permission;
-                if (permission === "default") {
-                    permission = await Notification.requestPermission();
-                }
-                if (permission !== "granted") {
-                    event.target.checked = false;
-                    showModal("Permission Denied", "Browser notification permission was denied. Enable it in your browser settings.", "warning");
-                    return;
-                }
-            }
-            appSettings.browserNotificationsEnabled = wantEnabled;
-            persistAppSettings();
-            setComposerStatus(
-                wantEnabled ? "Browser notifications enabled" : "Browser notifications disabled",
-                "success"
-            );
-        });
+                appSettings.browserNotificationsEnabled = wantEnabled;
+                persistAppSettings();
+                setComposerStatus(
+                    wantEnabled
+                        ? "Browser notifications enabled"
+                        : "Browser notifications disabled",
+                    "success",
+                );
+            },
+        );
     }
 
     if (settingSendByEnter) {
@@ -4682,8 +5587,10 @@ function bindSettingsUiEvents() {
             appSettings.sendByEnter = Boolean(event.target.checked);
             persistAppSettings();
             setComposerStatus(
-                appSettings.sendByEnter ? "Enter sends message" : "Enter adds new line",
-                "success"
+                appSettings.sendByEnter
+                    ? "Enter sends message"
+                    : "Enter adds new line",
+                "success",
             );
         });
     }
@@ -4692,13 +5599,19 @@ function bindSettingsUiEvents() {
         settingShowSavedMessages.addEventListener("change", (event) => {
             appSettings.showSavedMessages = Boolean(event.target.checked);
             persistAppSettings();
-            const savedMsgItem = document.getElementById(chatListItemId(CURRENT_USER));
+            const savedMsgItem = document.getElementById(
+                chatListItemId(CURRENT_USER),
+            );
             if (savedMsgItem) {
-                savedMsgItem.style.display = appSettings.showSavedMessages ? "" : "none";
+                savedMsgItem.style.display = appSettings.showSavedMessages
+                    ? ""
+                    : "none";
             }
             setComposerStatus(
-                appSettings.showSavedMessages ? "\"You\" shown in chat list" : "\"You\" hidden from chat list",
-                "success"
+                appSettings.showSavedMessages
+                    ? '"You" shown in chat list'
+                    : '"You" hidden from chat list',
+                "success",
             );
         });
     }
@@ -4710,89 +5623,109 @@ function bindSettingsUiEvents() {
     // Media cache UI
     const clearMediaCacheBtn = document.getElementById("clearMediaCacheBtn");
     const mediaCacheSizeLabel = document.getElementById("mediaCacheSizeLabel");
-        const clearCookiesBtn = document.getElementById("clearCookiesBtn");
-        if (clearCookiesBtn) {
-            clearCookiesBtn.addEventListener("click", async () => {
-                const confirmed = await showConfirmModal(
-                    "Clear Data & Logout",
-                    "",
-                    {
-                        type: "warning",
-                        confirmLabel: "Clear & Logout",
-                        bodyHtml:
-                            '<span style="display:block;margin-bottom:0.75rem">Cookies and session will be cleared. You will be logged out.</span>' +
-                            '<label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.15rem;cursor:pointer;font-weight:500">' +
-                                '<input type="checkbox" id="confirmClearSiteData" checked> Site data' +
-                            '</label>' +
-                            '<small style="display:block;margin:0 0 0.6rem 1.5rem;opacity:0.7">IndexedDB, caches, service workers. Enable to get the latest version of the app after login.</small>' +
-                            '<label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.15rem;cursor:pointer;font-weight:500">' +
-                                '<input type="checkbox" id="confirmClearUserCustoms"> User customizations' +
-                            '</label>' +
-                            '<small style="display:block;margin:0 0 0 1.5rem;opacity:0.7">Also remove saved preferences (theme, font size, etc.).</small>',
-                    }
-                );
-                if (!confirmed) return;
+    const clearCookiesBtn = document.getElementById("clearCookiesBtn");
+    if (clearCookiesBtn) {
+        clearCookiesBtn.addEventListener("click", async () => {
+            const confirmed = await showConfirmModal(
+                "Clear Data & Logout",
+                "",
+                {
+                    type: "warning",
+                    confirmLabel: "Clear & Logout",
+                    bodyHtml:
+                        '<span style="display:block;margin-bottom:0.75rem">Cookies and session will be cleared. You will be logged out.</span>' +
+                        '<label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.15rem;cursor:pointer;font-weight:500">' +
+                        '<input type="checkbox" id="confirmClearSiteData" checked> Site data' +
+                        "</label>" +
+                        '<small style="display:block;margin:0 0 0.6rem 1.5rem;opacity:0.7">IndexedDB, caches, service workers. Enable to get the latest version of the app after login.</small>' +
+                        '<label style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.15rem;cursor:pointer;font-weight:500">' +
+                        '<input type="checkbox" id="confirmClearUserCustoms"> User customizations' +
+                        "</label>" +
+                        '<small style="display:block;margin:0 0 0 1.5rem;opacity:0.7">Also remove saved preferences (theme, font size, etc.).</small>',
+                },
+            );
+            if (!confirmed) return;
 
-                const clearSiteData = Boolean(document.getElementById("confirmClearSiteData")?.checked);
-                const clearCustomizations = Boolean(document.getElementById("confirmClearUserCustoms")?.checked);
+            const clearSiteData = Boolean(
+                document.getElementById("confirmClearSiteData")?.checked,
+            );
+            const clearCustomizations = Boolean(
+                document.getElementById("confirmClearUserCustoms")?.checked,
+            );
 
-                clearCookiesBtn.disabled = true;
-                clearCookiesBtn.textContent = "Clearing\u2026";
-                try {
-                    // 1. Always: clear cookies
-                    document.cookie.split(";").forEach(function(c) {
-                        document.cookie = c.replace(/^\s+/, "").replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
-                    });
+            clearCookiesBtn.disabled = true;
+            clearCookiesBtn.textContent = "Clearing\u2026";
+            try {
+                // 1. Always: clear cookies
+                document.cookie.split(";").forEach(function (c) {
+                    document.cookie = c
+                        .replace(/^\s+/, "")
+                        .replace(
+                            /=.*/,
+                            "=;expires=" +
+                                new Date(0).toUTCString() +
+                                ";path=/",
+                        );
+                });
 
-                    // 2. Always: clear sessionStorage
-                    sessionStorage.clear();
+                // 2. Always: clear sessionStorage
+                sessionStorage.clear();
 
-                    // 3. Conditionally: clear site data (IndexedDB, Cache API, service workers)
-                    if (clearSiteData) {
-                        try {
-                            if (window.indexedDB?.databases) {
-                                const dbs = await window.indexedDB.databases();
-                                for (const db of dbs) {
-                                    if (db.name) window.indexedDB.deleteDatabase(db.name);
-                                }
+                // 3. Conditionally: clear site data (IndexedDB, Cache API, service workers)
+                if (clearSiteData) {
+                    try {
+                        if (window.indexedDB?.databases) {
+                            const dbs = await window.indexedDB.databases();
+                            for (const db of dbs) {
+                                if (db.name)
+                                    window.indexedDB.deleteDatabase(db.name);
                             }
-                        } catch (_) {}
-                        try {
-                            if (window.caches) {
-                                const names = await window.caches.keys();
-                                for (const name of names) await window.caches.delete(name);
-                            }
-                        } catch (_) {}
-                        try {
-                            if (navigator.serviceWorker) {
-                                const regs = await navigator.serviceWorker.getRegistrations();
-                                for (const reg of regs) await reg.unregister();
-                            }
-                        } catch (_) {}
-                    }
-
-                    // 4. localStorage: backup settings if customizations should be preserved
-                    if (clearCustomizations) {
-                        localStorage.clear();
-                    } else {
-                        const settingsBackup = localStorage.getItem(SETTINGS_STORAGE_KEY);
-                        localStorage.clear();
-                        if (settingsBackup) {
-                            try {
-                                localStorage.setItem(SETTINGS_STORAGE_KEY, settingsBackup);
-                            } catch (_) {}
                         }
-                    }
-
-                    setComposerStatus("Data cleared, logging out\u2026", "success");
-                } catch (_) {
-                    setComposerStatus("Failed to clear data", "error");
+                    } catch (_) {}
+                    try {
+                        if (window.caches) {
+                            const names = await window.caches.keys();
+                            for (const name of names)
+                                await window.caches.delete(name);
+                        }
+                    } catch (_) {}
+                    try {
+                        if (navigator.serviceWorker) {
+                            const regs =
+                                await navigator.serviceWorker.getRegistrations();
+                            for (const reg of regs) await reg.unregister();
+                        }
+                    } catch (_) {}
                 }
-                clearCookiesBtn.disabled = false;
-                clearCookiesBtn.textContent = "Clear";
-                setTimeout(() => { window.location.reload(); }, 800);
-            });
-        }
+
+                // 4. localStorage: backup settings if customizations should be preserved
+                if (clearCustomizations) {
+                    localStorage.clear();
+                } else {
+                    const settingsBackup =
+                        localStorage.getItem(SETTINGS_STORAGE_KEY);
+                    localStorage.clear();
+                    if (settingsBackup) {
+                        try {
+                            localStorage.setItem(
+                                SETTINGS_STORAGE_KEY,
+                                settingsBackup,
+                            );
+                        } catch (_) {}
+                    }
+                }
+
+                setComposerStatus("Data cleared, logging out\u2026", "success");
+            } catch (_) {
+                setComposerStatus("Failed to clear data", "error");
+            }
+            clearCookiesBtn.disabled = false;
+            clearCookiesBtn.textContent = "Clear";
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
+        });
+    }
 
     refreshMediaCacheLabelGlobal = async function refreshMediaCacheLabel() {
         if (!mediaCacheSizeLabel) return;
@@ -4806,11 +5739,15 @@ function bindSettingsUiEvents() {
         } catch (_) {
             mediaCacheSizeLabel.textContent = "Unavailable";
         }
-    }
+    };
 
     if (clearMediaCacheBtn) {
         clearMediaCacheBtn.addEventListener("click", async () => {
-            const confirmed = await showConfirmModal("Clear Media Cache", "Clear all cached media? Images and videos will need to be re-downloaded.", { type: "warning", confirmLabel: "Clear" });
+            const confirmed = await showConfirmModal(
+                "Clear Media Cache",
+                "Clear all cached media? Images and videos will need to be re-downloaded.",
+                { type: "warning", confirmLabel: "Clear" },
+            );
             if (!confirmed) return;
 
             clearMediaCacheBtn.disabled = true;
@@ -4834,7 +5771,10 @@ function bindSettingsUiEvents() {
     /* Admin refresh, blocked users, media cleanup events moved to chat-admin.js */
 
     settingsBioInput?.addEventListener("input", () => {
-        if (settingsBioCharCount) settingsBioCharCount.textContent = String(settingsBioInput.value.length);
+        if (settingsBioCharCount)
+            settingsBioCharCount.textContent = String(
+                settingsBioInput.value.length,
+            );
     });
 
     settingsBioForm?.addEventListener("submit", async (event) => {
@@ -4843,12 +5783,19 @@ function bindSettingsUiEvents() {
         try {
             await window.ApiService.jsonOk("api/users/update_profile.php", {
                 method: "POST",
-                headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
                 body: JSON.stringify({ action: "bio", bio }),
             });
             setComposerStatus("Bio updated", "success");
         } catch (error) {
-            showModal("Bio Update Failed", error?.message || "Unable to update bio.", "error");
+            showModal(
+                "Bio Update Failed",
+                error?.message || "Unable to update bio.",
+                "error",
+            );
         }
     });
 
@@ -4856,48 +5803,75 @@ function bindSettingsUiEvents() {
         event.preventDefault();
         const username = String(settingsUsernameInput?.value || "").trim();
         if (!username) {
-            showModal("Invalid Username", "Please provide a username.", "warning");
+            showModal(
+                "Invalid Username",
+                "Please provide a username.",
+                "warning",
+            );
             return;
         }
 
         try {
-            const response = await window.ApiService.jsonOk("api/users/update_profile.php", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...getCsrfHeaders(),
+            const response = await window.ApiService.jsonOk(
+                "api/users/update_profile.php",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
+                    body: JSON.stringify({
+                        action: "username",
+                        username,
+                    }),
                 },
-                body: JSON.stringify({
-                    action: "username",
-                    username,
-                }),
-            });
+            );
             const updatedUsername = String(response?.username || username);
             updateCurrentUsernameUi(updatedUsername);
             setComposerStatus("Username updated", "success");
-            showModal("Username Updated", "Your username was updated successfully.", "success");
+            showModal(
+                "Username Updated",
+                "Your username was updated successfully.",
+                "success",
+            );
             window.setTimeout(() => {
                 window.location.reload();
             }, 260);
         } catch (error) {
-            showModal("Username Update Failed", error?.message || "Unable to update username.", "error");
+            showModal(
+                "Username Update Failed",
+                error?.message || "Unable to update username.",
+                "error",
+            );
             setComposerStatus("Unable to update username", "error");
         }
     });
 
     settingsPasswordForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const currentPassword = String(settingsCurrentPasswordInput?.value || "");
+        const currentPassword = String(
+            settingsCurrentPasswordInput?.value || "",
+        );
         const newPassword = String(settingsNewPasswordInput?.value || "");
-        const confirmPassword = String(settingsConfirmPasswordInput?.value || "");
+        const confirmPassword = String(
+            settingsConfirmPasswordInput?.value || "",
+        );
 
         if (!currentPassword || !newPassword || !confirmPassword) {
-            showModal("Missing Password Fields", "Please fill all password fields.", "warning");
+            showModal(
+                "Missing Password Fields",
+                "Please fill all password fields.",
+                "warning",
+            );
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            showModal("Password Mismatch", "New password and confirmation do not match.", "warning");
+            showModal(
+                "Password Mismatch",
+                "New password and confirmation do not match.",
+                "warning",
+            );
             return;
         }
 
@@ -4925,20 +5899,33 @@ function bindSettingsUiEvents() {
                 settingsConfirmPasswordInput.value = "";
             }
             setComposerStatus("Password updated", "success");
-            showModal("Password Updated", "Your password was changed successfully.", "success");
+            showModal(
+                "Password Updated",
+                "Your password was changed successfully.",
+                "success",
+            );
         } catch (error) {
-            showModal("Password Update Failed", error?.message || "Unable to update password.", "error");
+            showModal(
+                "Password Update Failed",
+                error?.message || "Unable to update password.",
+                "error",
+            );
             setComposerStatus("Unable to update password", "error");
         }
     });
 
     // Sessions tab — refresh button
-    const settingsRefreshSessionsBtn = document.getElementById("settingsRefreshSessionsBtn");
-    settingsRefreshSessionsBtn?.addEventListener("click", () => loadSessionsList());
+    const settingsRefreshSessionsBtn = document.getElementById(
+        "settingsRefreshSessionsBtn",
+    );
+    settingsRefreshSessionsBtn?.addEventListener("click", () =>
+        loadSessionsList(),
+    );
 
     if (composerToolsToggleBtn) {
         composerToolsToggleBtn.addEventListener("click", () => {
-            appSettings.mobileComposerExpanded = !appSettings.mobileComposerExpanded;
+            appSettings.mobileComposerExpanded =
+                !appSettings.mobileComposerExpanded;
             persistAppSettings();
             syncMobileComposerActions();
         });
@@ -4963,11 +5950,19 @@ function bindSettingsUiEvents() {
             settingsButton?.focus();
             return;
         }
-        if (event.key === "Escape" && chatUiSettingsOverlay && !chatUiSettingsOverlay.hidden) {
+        if (
+            event.key === "Escape" &&
+            chatUiSettingsOverlay &&
+            !chatUiSettingsOverlay.hidden
+        ) {
             closeUiSettingsModal();
             return;
         }
-        if (event.key === "Escape" && opinionsOverlay && !opinionsOverlay.hidden) {
+        if (
+            event.key === "Escape" &&
+            opinionsOverlay &&
+            !opinionsOverlay.hidden
+        ) {
             closeOpinionsPanel();
         }
     });
@@ -4986,7 +5981,12 @@ function bindSettingsUiEvents() {
     window.addEventListener("resize", syncMobileComposerActions);
 
     userInfoBtn?.addEventListener("click", () => {
-        if (!currentChatUser || isGroupToken(currentChatUser) || isSavedMessagesChat(currentChatUser)) return;
+        if (
+            !currentChatUser ||
+            isGroupToken(currentChatUser) ||
+            isSavedMessagesChat(currentChatUser)
+        )
+            return;
         togglePrivateChatInfoPanel();
     });
 
@@ -5075,7 +6075,9 @@ function bindSettingsUiEvents() {
         if (!item) {
             return;
         }
-        const usernameNode = item.querySelector("span:not(.avatar):not(.chat-item-unread-badge)");
+        const usernameNode = item.querySelector(
+            "span:not(.avatar):not(.chat-item-unread-badge)",
+        );
         const username = usernameNode?.textContent?.trim() || "";
         if (!username) {
             return;
@@ -5094,8 +6096,12 @@ function bindSettingsUiEvents() {
         event.preventDefault();
         const sourceElement = avatarImage || senderName;
         const messageElement = sourceElement?.closest(".message");
-        const userId = Number(messageElement?.getAttribute("data-sender-id") || 0);
-        const username = String(messageElement?.getAttribute("data-sender-username") || "");
+        const userId = Number(
+            messageElement?.getAttribute("data-sender-id") || 0,
+        );
+        const username = String(
+            messageElement?.getAttribute("data-sender-username") || "",
+        );
         if (!userId && !username) {
             return;
         }
@@ -5109,8 +6115,12 @@ function bindSettingsUiEvents() {
         }
         event.preventDefault();
         const memberItem = avatarImage.closest(".group-member-item");
-        const userId = Number(memberItem?.getAttribute("data-member-user-id") || 0);
-        const username = String(memberItem?.getAttribute("data-member-username") || "");
+        const userId = Number(
+            memberItem?.getAttribute("data-member-user-id") || 0,
+        );
+        const username = String(
+            memberItem?.getAttribute("data-member-username") || "",
+        );
         if (!userId && !username) {
             return;
         }
@@ -5126,7 +6136,11 @@ function bindMessageActionModalEvents() {
         }
     });
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && messageActionModalOverlay && !messageActionModalOverlay.hidden) {
+        if (
+            event.key === "Escape" &&
+            messageActionModalOverlay &&
+            !messageActionModalOverlay.hidden
+        ) {
             event.preventDefault();
             closeMessageActionModal();
             return;
@@ -5183,9 +6197,12 @@ window.getCsrfHeaders = getCsrfHeaders;
 
 function closeGroupInfoPanel({ fromHistory = false } = {}) {
     if (!groupInfoPanel || groupInfoPanel.hidden) return;
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.groupInfo, () => {
-        closeGroupInfoPanel({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.groupInfo, () => {
+            closeGroupInfoPanel({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.groupInfo);
@@ -5209,9 +6226,12 @@ function openGroupInfoPanel() {
     if (groupInfoPanel) {
         groupInfoPanel.hidden = false;
     }
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.groupInfo, ({ fromHistory = false } = {}) => {
-        closeGroupInfoPanel({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.groupInfo,
+        ({ fromHistory = false } = {}) => {
+            closeGroupInfoPanel({ fromHistory });
+        },
+    );
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "true");
     }
@@ -5224,9 +6244,12 @@ function openCreateGroupModal() {
         return;
     }
     createGroupModalOverlay.hidden = false;
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.createGroup, ({ fromHistory = false } = {}) => {
-        closeCreateGroupModal({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.createGroup,
+        ({ fromHistory = false } = {}) => {
+            closeCreateGroupModal({ fromHistory });
+        },
+    );
     if (createGroupForm) {
         createGroupForm.reset();
     }
@@ -5240,9 +6263,12 @@ function closeCreateGroupModal({ fromHistory = false } = {}) {
     if (!createGroupModalOverlay) {
         return;
     }
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.createGroup, () => {
-        closeCreateGroupModal({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.createGroup, () => {
+            closeCreateGroupModal({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.createGroup);
@@ -5262,7 +6288,11 @@ function bindCreateGroupModalEvents() {
     });
 
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && createGroupModalOverlay && !createGroupModalOverlay.hidden) {
+        if (
+            event.key === "Escape" &&
+            createGroupModalOverlay &&
+            !createGroupModalOverlay.hidden
+        ) {
             event.preventDefault();
             closeCreateGroupModal();
         }
@@ -5287,7 +6317,11 @@ function bindCreateGroupModalEvents() {
             closeCreateGroupModal();
         } catch (error) {
             createGroupSubmitBtn && (createGroupSubmitBtn.disabled = false);
-            showModal("Create Group Failed", error.message || "Unable to create group", "error");
+            showModal(
+                "Create Group Failed",
+                error.message || "Unable to create group",
+                "error",
+            );
         }
     });
 }
@@ -5348,7 +6382,10 @@ async function getGroupCryptoKey(groupId, forceRefresh = false) {
 
 function showMessageCopiedFeedback() {
     if (window.UIEnhancements?.showSearchNotification) {
-        window.UIEnhancements.showSearchNotification(I18N_TEXT.copiedBody, "success");
+        window.UIEnhancements.showSearchNotification(
+            I18N_TEXT.copiedBody,
+            "success",
+        );
         return;
     }
     showModal(I18N_TEXT.copiedTitle, I18N_TEXT.copiedBody, "success");
@@ -5382,7 +6419,8 @@ async function convertBlobToPng(blob) {
         const imageElement = new Image();
         const loaded = await new Promise((resolve, reject) => {
             imageElement.onload = () => resolve(true);
-            imageElement.onerror = () => reject(new Error("Unable to decode image."));
+            imageElement.onerror = () =>
+                reject(new Error("Unable to decode image."));
             imageElement.src = objectUrl;
         });
         if (!loaded) {
@@ -5390,8 +6428,14 @@ async function convertBlobToPng(blob) {
         }
 
         const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Number(imageElement.naturalWidth || imageElement.width || 0));
-        canvas.height = Math.max(1, Number(imageElement.naturalHeight || imageElement.height || 0));
+        canvas.width = Math.max(
+            1,
+            Number(imageElement.naturalWidth || imageElement.width || 0),
+        );
+        canvas.height = Math.max(
+            1,
+            Number(imageElement.naturalHeight || imageElement.height || 0),
+        );
         const context = canvas.getContext("2d");
         if (!context) {
             throw new Error("Canvas not available.");
@@ -5458,11 +6502,19 @@ function repositionReactionPickerForMessage(messageElement, pickerElement) {
 
     const top = Math.min(
         maxTop,
-        Math.max(8, showAbove ? messageRect.top - pickerRect.height - gap : messageRect.bottom + gap)
+        Math.max(
+            8,
+            showAbove
+                ? messageRect.top - pickerRect.height - gap
+                : messageRect.bottom + gap,
+        ),
     );
     const left = Math.min(
         maxLeft,
-        Math.max(8, messageRect.left + messageRect.width / 2 - pickerRect.width / 2)
+        Math.max(
+            8,
+            messageRect.left + messageRect.width / 2 - pickerRect.width / 2,
+        ),
     );
 
     pickerElement.style.top = `${top}px`;
@@ -5479,7 +6531,10 @@ function scheduleReactionPickerReposition() {
         if (!picker || !lastReactionPickerMessageElement) {
             return;
         }
-        repositionReactionPickerForMessage(lastReactionPickerMessageElement, picker);
+        repositionReactionPickerForMessage(
+            lastReactionPickerMessageElement,
+            picker,
+        );
     });
 }
 
@@ -5497,7 +6552,9 @@ function getActionModalFocusableElements() {
         "[tabindex]:not([tabindex='-1'])",
     ].join(",");
 
-    return Array.from(messageActionModalOverlay.querySelectorAll(selector)).filter((element) => {
+    return Array.from(
+        messageActionModalOverlay.querySelectorAll(selector),
+    ).filter((element) => {
         if (!(element instanceof HTMLElement)) {
             return false;
         }
@@ -5521,7 +6578,11 @@ function focusFirstActionModalElement() {
 }
 
 function trapActionModalFocus(event) {
-    if (!messageActionModalOverlay || messageActionModalOverlay.hidden || event.key !== "Tab") {
+    if (
+        !messageActionModalOverlay ||
+        messageActionModalOverlay.hidden ||
+        event.key !== "Tab"
+    ) {
         return;
     }
 
@@ -5548,12 +6609,18 @@ function trapActionModalFocus(event) {
 }
 
 function openMessageActionModal(title, bodyNode) {
-    if (!messageActionModalOverlay || !messageActionModalTitle || !messageActionModalBody) {
+    if (
+        !messageActionModalOverlay ||
+        !messageActionModalTitle ||
+        !messageActionModalBody
+    ) {
         return;
     }
 
     lastFocusedElementBeforeActionModal =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
 
     messageActionModalTitle.textContent = title;
     messageActionModalBody.innerHTML = "";
@@ -5561,15 +6628,21 @@ function openMessageActionModal(title, bodyNode) {
         messageActionModalBody.appendChild(bodyNode);
     }
     if (messageActionModalAnnouncer) {
-        messageActionModalAnnouncer.textContent = formatI18nText(I18N_TEXT.modalOpened, {
-            title,
-        });
+        messageActionModalAnnouncer.textContent = formatI18nText(
+            I18N_TEXT.modalOpened,
+            {
+                title,
+            },
+        );
     }
     messageActionModalOverlay.setAttribute("aria-hidden", "false");
     messageActionModalOverlay.hidden = false;
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.messageAction, ({ fromHistory = false } = {}) => {
-        closeMessageActionModal({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.messageAction,
+        ({ fromHistory = false } = {}) => {
+            closeMessageActionModal({ fromHistory });
+        },
+    );
     requestAnimationFrame(() => {
         messageActionModalOverlay.classList.add("visible");
         focusFirstActionModalElement();
@@ -5580,14 +6653,18 @@ function closeMessageActionModal({ fromHistory = false } = {}) {
     if (!messageActionModalOverlay) {
         return;
     }
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.messageAction, () => {
-        closeMessageActionModal({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.messageAction, () => {
+            closeMessageActionModal({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.messageAction);
 
-    const closedTitle = messageActionModalTitle?.textContent?.trim() || "message action";
+    const closedTitle =
+        messageActionModalTitle?.textContent?.trim() || "message action";
 
     messageActionModalOverlay.classList.remove("visible");
     messageActionModalOverlay.setAttribute("aria-hidden", "true");
@@ -5605,9 +6682,12 @@ function closeMessageActionModal({ fromHistory = false } = {}) {
             }
             lastFocusedElementBeforeActionModal = null;
             if (messageActionModalAnnouncer) {
-                messageActionModalAnnouncer.textContent = formatI18nText(I18N_TEXT.modalClosed, {
-                    title: closedTitle,
-                });
+                messageActionModalAnnouncer.textContent = formatI18nText(
+                    I18N_TEXT.modalClosed,
+                    {
+                        title: closedTitle,
+                    },
+                );
             }
         }
     }, 500);
@@ -5653,7 +6733,9 @@ function clearReplyState() {
 }
 
 function setReplyState(messageElement) {
-    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const messageId = Number(
+        messageElement.getAttribute("data-message-id") || 0,
+    );
     if (!messageId || !replyPreviewElem) {
         return;
     }
@@ -5661,7 +6743,8 @@ function setReplyState(messageElement) {
     const snippet = getReplySnippetFromMessageElement(messageElement);
     const senderLabel = messageElement.classList.contains("sent")
         ? "You"
-        : messageElement.getAttribute("data-sender-username") || getCurrentChatDisplayName();
+        : messageElement.getAttribute("data-sender-username") ||
+          getCurrentChatDisplayName();
 
     currentReplyTarget = {
         messageId,
@@ -5690,11 +6773,19 @@ function buildReplyPreviewHtml(msg, decryptedReplyText) {
         return "";
     }
 
-    const senderLabel = Number(msg.reply_sender_id) === Number(CURRENT_USER_ID)
-        ? "You"
-        : msg.reply_sender_username || getCurrentChatDisplayName();
-    const fallbackText = msg.reply_message_type === "text" ? "[Message]" : `[${msg.reply_message_type}]`;
-    const previewText = (decryptedReplyText || fallbackText || "[Message]").slice(0, 160);
+    const senderLabel =
+        Number(msg.reply_sender_id) === Number(CURRENT_USER_ID)
+            ? "You"
+            : msg.reply_sender_username || getCurrentChatDisplayName();
+    const fallbackText =
+        msg.reply_message_type === "text"
+            ? "[Message]"
+            : `[${msg.reply_message_type}]`;
+    const previewText = (
+        decryptedReplyText ||
+        fallbackText ||
+        "[Message]"
+    ).slice(0, 160);
 
     return `
         <div class="reply-quote" data-reply-target-id="${msg.reply_message_id}">
@@ -5731,7 +6822,10 @@ const globalNpCloseBtn = document.getElementById("globalNpClose");
 function showGlobalNowPlaying(audio, caption, type) {
     // Clean up previous audio listeners if switching tracks
     if (globalNpAudio && globalNpAudio !== audio) {
-        globalNpAudio.removeEventListener("timeupdate", globalNpAudio._gnpTimeUpdate);
+        globalNpAudio.removeEventListener(
+            "timeupdate",
+            globalNpAudio._gnpTimeUpdate,
+        );
         globalNpAudio.removeEventListener("ended", globalNpAudio._gnpEnded);
         globalNpAudio.removeEventListener("pause", globalNpAudio._gnpPause);
         globalNpAudio.removeEventListener("play", globalNpAudio._gnpPlay);
@@ -5750,7 +6844,8 @@ function showGlobalNowPlaying(audio, caption, type) {
         if (!isFinite(audio.duration) || audio.duration <= 0) return;
         const pct = (audio.currentTime / audio.duration) * 100;
         if (globalNpProgressBar) globalNpProgressBar.style.width = `${pct}%`;
-        if (globalNpTimeEl) globalNpTimeEl.textContent = formatTimeShort(audio.currentTime);
+        if (globalNpTimeEl)
+            globalNpTimeEl.textContent = formatTimeShort(audio.currentTime);
     };
     audio._gnpEnded = () => {
         hideGlobalNowPlaying();
@@ -5769,7 +6864,10 @@ function showGlobalNowPlaying(audio, caption, type) {
 
 function hideGlobalNowPlaying() {
     if (globalNpAudio) {
-        globalNpAudio.removeEventListener("timeupdate", globalNpAudio._gnpTimeUpdate);
+        globalNpAudio.removeEventListener(
+            "timeupdate",
+            globalNpAudio._gnpTimeUpdate,
+        );
         globalNpAudio.removeEventListener("ended", globalNpAudio._gnpEnded);
         globalNpAudio.removeEventListener("pause", globalNpAudio._gnpPause);
         globalNpAudio.removeEventListener("play", globalNpAudio._gnpPlay);
@@ -5805,12 +6903,18 @@ globalNpCloseBtn?.addEventListener("click", () => {
         globalNpAudio.pause();
     }
     // Also stop any in-message playing state
-    document.querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing").forEach((btn) => {
-        btn.classList.remove("playing");
-        btn.innerHTML = '<i class="fas fa-play"></i>';
-        btn.closest(".voice-player-container")?.classList.remove("is-playing");
-        btn.closest(".music-player-container")?.classList.remove("is-playing");
-    });
+    document
+        .querySelectorAll(".voice-play-btn.playing, .music-play-btn.playing")
+        .forEach((btn) => {
+            btn.classList.remove("playing");
+            btn.innerHTML = '<i class="fas fa-play"></i>';
+            btn.closest(".voice-player-container")?.classList.remove(
+                "is-playing",
+            );
+            btn.closest(".music-player-container")?.classList.remove(
+                "is-playing",
+            );
+        });
     hideGlobalNowPlaying();
 });
 
@@ -5819,15 +6923,24 @@ if (globalNpProgressWrap) {
     function seekGlobalNp(clientX) {
         if (!globalNpAudio || !isFinite(globalNpAudio.duration)) return;
         const rect = globalNpProgressWrap.getBoundingClientRect();
-        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const ratio = Math.max(
+            0,
+            Math.min(1, (clientX - rect.left) / rect.width),
+        );
         globalNpAudio.currentTime = ratio * globalNpAudio.duration;
-        if (globalNpProgressBar) globalNpProgressBar.style.width = `${ratio * 100}%`;
+        if (globalNpProgressBar)
+            globalNpProgressBar.style.width = `${ratio * 100}%`;
     }
     globalNpProgressWrap.addEventListener("mousedown", (e) => {
         e.preventDefault();
         seekGlobalNp(e.clientX);
-        function onMove(ev) { seekGlobalNp(ev.clientX); }
-        function onUp() { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); }
+        function onMove(ev) {
+            seekGlobalNp(ev.clientX);
+        }
+        function onUp() {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+        }
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
     });
@@ -5866,7 +6979,8 @@ function showInlineChatState({
     if (typeof onAction === "function") {
         const actionBtn = document.createElement("button");
         actionBtn.type = "button";
-        actionBtn.className = "btn btn-sm btn-outline-primary chat-inline-state-action";
+        actionBtn.className =
+            "btn btn-sm btn-outline-primary chat-inline-state-action";
         actionBtn.textContent = actionLabel;
         actionBtn.addEventListener("click", onAction);
         wrapper.appendChild(actionBtn);
@@ -5875,7 +6989,9 @@ function showInlineChatState({
     chatMessagesElem.appendChild(wrapper);
 }
 
-function showEmptyChatState(message = "No messages yet. Start the conversation.") {
+function showEmptyChatState(
+    message = "No messages yet. Start the conversation.",
+) {
     clearInlineChatState();
     showInlineChatState({ message, kind: "info" });
 }
@@ -5883,7 +6999,11 @@ function showEmptyChatState(message = "No messages yet. Start the conversation."
 async function copyMessageText(messageElement) {
     const messageText = getMessageTextForCopy(messageElement);
     if (!messageText) {
-        showModal(I18N_TEXT.copyFailedTitle, I18N_TEXT.copyFailedNoText, "warning");
+        showModal(
+            I18N_TEXT.copyFailedTitle,
+            I18N_TEXT.copyFailedNoText,
+            "warning",
+        );
         return;
     }
 
@@ -5903,21 +7023,41 @@ async function copyMessageText(messageElement) {
         }
         showMessageCopiedFeedback();
     } catch (err) {
-        showModal(I18N_TEXT.copyFailedTitle, I18N_TEXT.copyFailedUnknown, "error");
+        showModal(
+            I18N_TEXT.copyFailedTitle,
+            I18N_TEXT.copyFailedUnknown,
+            "error",
+        );
     }
 }
 
 async function copyImageMessageToClipboard(messageElement, messageData = null) {
     const messageType = String(
-        messageData?.message_type ?? messageElement?.getAttribute("data-message-type") ?? ""
+        messageData?.message_type ??
+            messageElement?.getAttribute("data-message-type") ??
+            "",
     );
     if (messageType !== "image") {
-        showModal("Copy Failed", "Only image messages can be copied as image.", "warning");
+        showModal(
+            "Copy Failed",
+            "Only image messages can be copied as image.",
+            "warning",
+        );
         return;
     }
 
-    if (!(window.isSecureContext && navigator.clipboard?.write && window.ClipboardItem)) {
-        showModal("Copy Failed", "Image copy requires a secure browser context.", "warning");
+    if (
+        !(
+            window.isSecureContext &&
+            navigator.clipboard?.write &&
+            window.ClipboardItem
+        )
+    ) {
+        showModal(
+            "Copy Failed",
+            "Image copy requires a secure browser context.",
+            "warning",
+        );
         return;
     }
 
@@ -5925,7 +7065,8 @@ async function copyImageMessageToClipboard(messageElement, messageData = null) {
         let imageBlob = null;
         if (messageData?.id) {
             try {
-                const mediaResource = await getDecryptedMediaResource(messageData);
+                const mediaResource =
+                    await getDecryptedMediaResource(messageData);
                 if (mediaResource?.blob instanceof Blob) {
                     imageBlob = mediaResource.blob;
                 }
@@ -5933,14 +7074,25 @@ async function copyImageMessageToClipboard(messageElement, messageData = null) {
         }
 
         if (!imageBlob) {
-            const imageElement = messageElement?.querySelector(".message-image");
-            if (imageElement && imageElement.getAttribute("data-ready") !== "1" && messageData) {
+            const imageElement =
+                messageElement?.querySelector(".message-image");
+            if (
+                imageElement &&
+                imageElement.getAttribute("data-ready") !== "1" &&
+                messageData
+            ) {
                 await hydrateImageMessageElement(messageElement, messageData);
             }
 
-            const imageSource = String(messageElement?.querySelector(".message-image")?.src || "").trim();
+            const imageSource = String(
+                messageElement?.querySelector(".message-image")?.src || "",
+            ).trim();
             if (!imageSource) {
-                showModal("Copy Failed", "Image is not available yet. Try again in a moment.", "warning");
+                showModal(
+                    "Copy Failed",
+                    "Image is not available yet. Try again in a moment.",
+                    "warning",
+                );
                 return;
             }
 
@@ -5950,10 +7102,14 @@ async function copyImageMessageToClipboard(messageElement, messageData = null) {
 
         const mimeType = String(imageBlob?.type || "image/png") || "image/png";
         try {
-            await navigator.clipboard.write([new ClipboardItem({ [mimeType]: imageBlob })]);
+            await navigator.clipboard.write([
+                new ClipboardItem({ [mimeType]: imageBlob }),
+            ]);
         } catch (error) {
             const pngBlob = await convertBlobToPng(imageBlob);
-            await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
+            await navigator.clipboard.write([
+                new ClipboardItem({ "image/png": pngBlob }),
+            ]);
         }
         showTransientSuccessToast("Image copied to clipboard.");
     } catch (error) {
@@ -5965,13 +7121,21 @@ async function sendEncryptedTextMessage(
     targetUsername,
     text,
     replyToMessageId = null,
-    forwardedFromMessageId = null
+    forwardedFromMessageId = null,
 ) {
     const recipientKey = await getPublicKey(targetUsername);
     const senderKey = await getPublicKey(CURRENT_USER);
 
-    const encryptedForRecipient = await encryptLongMessage(text, recipientKey, isTextPersian(text));
-    const encryptedForSender = await encryptLongMessage(text, senderKey, isTextPersian(text));
+    const encryptedForRecipient = await encryptLongMessage(
+        text,
+        recipientKey,
+        isTextPersian(text),
+    );
+    const encryptedForSender = await encryptLongMessage(
+        text,
+        senderKey,
+        isTextPersian(text),
+    );
 
     const formData = new FormData();
     formData.append("target", targetUsername);
@@ -5981,7 +7145,10 @@ async function sendEncryptedTextMessage(
         formData.append("reply_to_message_id", String(replyToMessageId));
     }
     if (forwardedFromMessageId) {
-        formData.append("forwarded_from_message_id", String(forwardedFromMessageId));
+        formData.append(
+            "forwarded_from_message_id",
+            String(forwardedFromMessageId),
+        );
     }
 
     const json = await window.ApiService.jsonOk("api/messages/send_text.php", {
@@ -5993,7 +7160,12 @@ async function sendEncryptedTextMessage(
     return json;
 }
 
-async function sendGroupTextMessage(groupId, text, replyToMessageId = null, forwardedFromMessageId = null) {
+async function sendGroupTextMessage(
+    groupId,
+    text,
+    replyToMessageId = null,
+    forwardedFromMessageId = null,
+) {
     let groupKey;
     try {
         groupKey = await getGroupCryptoKey(groupId);
@@ -6014,7 +7186,10 @@ async function sendGroupTextMessage(groupId, text, replyToMessageId = null, forw
         formData.append("reply_to_message_id", String(replyToMessageId));
     }
     if (forwardedFromMessageId) {
-        formData.append("forwarded_from_message_id", String(forwardedFromMessageId));
+        formData.append(
+            "forwarded_from_message_id",
+            String(forwardedFromMessageId),
+        );
     }
 
     const json = await window.ApiService.jsonOk("api/messages/send_text.php", {
@@ -6035,7 +7210,7 @@ function createForwardTargetListContent(onSelectUsername) {
         .sort((a, b) => a.localeCompare(b));
 
     const groups = Array.from(chatGroupsById.values()).sort((a, b) =>
-        String(a.title || "").localeCompare(String(b.title || ""))
+        String(a.title || "").localeCompare(String(b.title || "")),
     );
 
     if (!users.length && !groups.length) {
@@ -6056,7 +7231,9 @@ function createForwardTargetListContent(onSelectUsername) {
         <span class="forward-target-avatar saved-messages-avatar"><i class="fas fa-bookmark"></i></span>
         <span class="forward-target-name">You</span>
     `;
-    savedBtn.addEventListener("click", () => onSelectUsername(CURRENT_USER, savedBtn));
+    savedBtn.addEventListener("click", () =>
+        onSelectUsername(CURRENT_USER, savedBtn),
+    );
     wrapper.appendChild(savedBtn);
 
     users.forEach((username) => {
@@ -6068,7 +7245,9 @@ function createForwardTargetListContent(onSelectUsername) {
             <span class="forward-target-avatar">${escapeHtml((username[0] || "?").toUpperCase())}</span>
             <span class="forward-target-name">${escapeHtml(username)}</span>
         `;
-        button.addEventListener("click", () => onSelectUsername(username, button));
+        button.addEventListener("click", () =>
+            onSelectUsername(username, button),
+        );
         wrapper.appendChild(button);
     });
 
@@ -6081,7 +7260,9 @@ function createForwardTargetListContent(onSelectUsername) {
             <span class="forward-target-avatar"><i class="fas fa-users"></i></span>
             <span class="forward-target-name">${escapeHtml(group.title || `Group ${group.id}`)}</span>
         `;
-        button.addEventListener("click", () => onSelectUsername(buildGroupToken(group.id), button));
+        button.addEventListener("click", () =>
+            onSelectUsername(buildGroupToken(group.id), button),
+        );
         wrapper.appendChild(button);
     });
 
@@ -6089,23 +7270,46 @@ function createForwardTargetListContent(onSelectUsername) {
 }
 
 function showMessageDetailsModal(messageElement, messageData = null) {
-    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const messageId = Number(
+        messageElement.getAttribute("data-message-id") || 0,
+    );
     const details = messageData || messageMetaById.get(messageId) || {};
 
-    const senderId = Number(details.sender_id ?? messageElement.getAttribute("data-sender-id") ?? 0);
+    const senderId = Number(
+        details.sender_id ?? messageElement.getAttribute("data-sender-id") ?? 0,
+    );
     const senderUsername =
-        details.sender_username || messageElement.getAttribute("data-sender-username") || "";
+        details.sender_username ||
+        messageElement.getAttribute("data-sender-username") ||
+        "";
     const senderLabel =
         senderId === Number(CURRENT_USER_ID)
             ? "You"
             : senderUsername || getCurrentChatDisplayName() || "Peer";
-    const messageType = String(details.message_type || messageElement.getAttribute("data-message-type") || "text");
-    const sentAt = details.created_at || messageElement.getAttribute("data-created-at") || "";
-    const seenAt = details.seen_at || messageElement.getAttribute("data-seen-at") || "";
-    const groupSeenAt = details.group_seen_at || messageElement.getAttribute("data-group-seen-at") || "";
+    const messageType = String(
+        details.message_type ||
+            messageElement.getAttribute("data-message-type") ||
+            "text",
+    );
+    const sentAt =
+        details.created_at ||
+        messageElement.getAttribute("data-created-at") ||
+        "";
+    const seenAt =
+        details.seen_at || messageElement.getAttribute("data-seen-at") || "";
+    const groupSeenAt =
+        details.group_seen_at ||
+        messageElement.getAttribute("data-group-seen-at") ||
+        "";
     const groupSeenByUsername = details.group_seen_by_username || "";
-    const editedAt = details.edited_at || messageElement.getAttribute("data-edited-at") || "";
-    const fileSize = details.file_size || messageElement.getAttribute("data-file-size") || "";
+    const editedAt =
+        details.edited_at ||
+        messageElement.getAttribute("data-edited-at") ||
+        "";
+    const fileSize =
+        details.file_size ||
+        messageElement.getAttribute("data-file-size") ||
+        "";
     const text = getMessageTextForCopy(messageElement);
 
     const body = document.createElement("div");
@@ -6131,7 +7335,10 @@ function showMessageDetailsModal(messageElement, messageData = null) {
         rows.push(["Characters", String(text.length)]);
     }
     if (fileSize) {
-        rows.push(["File Size", formatFileSize(Number(fileSize)) || String(fileSize)]);
+        rows.push([
+            "File Size",
+            formatFileSize(Number(fileSize)) || String(fileSize),
+        ]);
     }
 
     rows.forEach(([label, value]) => {
@@ -6153,12 +7360,20 @@ function getMediaMessageType(messageElement) {
     if (messageElement.classList.contains("is-video-message")) return "video";
     if (messageElement.classList.contains("is-music-message")) return "file";
     if (messageElement.classList.contains("is-file-message")) return "file";
-    if (messageElement.classList.contains("is-sticker-message")) return "sticker";
+    if (messageElement.classList.contains("is-sticker-message"))
+        return "sticker";
     return null;
 }
 
-async function forwardMediaToDestination(messageMeta, mediaType, destination, sourceMessageId) {
-    const groupId = isGroupToken(destination) ? parseGroupIdFromToken(destination) : 0;
+async function forwardMediaToDestination(
+    messageMeta,
+    mediaType,
+    destination,
+    sourceMessageId,
+) {
+    const groupId = isGroupToken(destination)
+        ? parseGroupIdFromToken(destination)
+        : 0;
     const targetUsername = groupId > 0 ? null : destination;
 
     if (mediaType === "sticker") {
@@ -6171,10 +7386,14 @@ async function forwardMediaToDestination(messageMeta, mediaType, destination, so
             payload.set("target", targetUsername);
         }
         payload.set("sticker_id", String(stickerId));
-        if (sourceMessageId) payload.set("forwarded_from_message_id", String(sourceMessageId));
+        if (sourceMessageId)
+            payload.set("forwarded_from_message_id", String(sourceMessageId));
         await window.ApiService.jsonOk("api/messages/stickers/send.php", {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded", ...getCsrfHeaders() },
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                ...getCsrfHeaders(),
+            },
             body: payload.toString(),
         });
         return;
@@ -6191,8 +7410,12 @@ async function forwardMediaToDestination(messageMeta, mediaType, destination, so
     const context = groupId > 0 ? { groupId } : { targetUsername };
     const mediaPayload = await encryptMediaForMessage(
         blob,
-        { file_name: fileName, mime_type: mimeType, file_size: Number(blob.size || 0) },
-        context
+        {
+            file_name: fileName,
+            mime_type: mimeType,
+            file_size: Number(blob.size || 0),
+        },
+        context,
     );
 
     const formData = new FormData();
@@ -6203,26 +7426,56 @@ async function forwardMediaToDestination(messageMeta, mediaType, destination, so
     }
     formData.append("message", mediaPayload.messageForRecipient);
     formData.append("message_for_sender", mediaPayload.messageForSender);
-    if (sourceMessageId) formData.append("forwarded_from_message_id", String(sourceMessageId));
+    if (sourceMessageId)
+        formData.append("forwarded_from_message_id", String(sourceMessageId));
 
     const fwdBgId = registerBackgroundUpload("forwarded " + mediaType);
     await acquireUploadSlot(fwdBgId);
     try {
-        const fwdProgress = (pct, loaded, total) => updateBackgroundUploadProgress(fwdBgId, pct, loaded, total);
+        const fwdProgress = (pct, loaded, total) =>
+            updateBackgroundUploadProgress(fwdBgId, pct, loaded, total);
         if (mediaType === "voice") {
-            formData.append("voice_file", mediaPayload.encryptedBlob, "voice_message.enc");
-            await uploadWithProgress("api/messages/media/send_voice.php", formData, getCsrfHeaders(), fwdProgress);
+            formData.append(
+                "voice_file",
+                mediaPayload.encryptedBlob,
+                "voice_message.enc",
+            );
+            await uploadWithProgress(
+                "api/messages/media/send_voice.php",
+                formData,
+                getCsrfHeaders(),
+                fwdProgress,
+            );
         } else if (mediaType === "image") {
-            formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
-            await uploadWithProgress("api/messages/media/send_image.php", formData, getCsrfHeaders(), fwdProgress);
+            formData.append(
+                "image_file",
+                mediaPayload.encryptedBlob,
+                "image.enc",
+            );
+            await uploadWithProgress(
+                "api/messages/media/send_image.php",
+                formData,
+                getCsrfHeaders(),
+                fwdProgress,
+            );
         } else if (mediaType === "video") {
             formData.append("message_type", "video");
             formData.append("file", mediaPayload.encryptedBlob, "video.enc");
-            await uploadWithProgress("api/messages/media/send_file.php", formData, getCsrfHeaders(), fwdProgress);
+            await uploadWithProgress(
+                "api/messages/media/send_file.php",
+                formData,
+                getCsrfHeaders(),
+                fwdProgress,
+            );
         } else {
             formData.append("message_type", "file");
             formData.append("file", mediaPayload.encryptedBlob, "file.enc");
-            await uploadWithProgress("api/messages/media/send_file.php", formData, getCsrfHeaders(), fwdProgress);
+            await uploadWithProgress(
+                "api/messages/media/send_file.php",
+                formData,
+                getCsrfHeaders(),
+                fwdProgress,
+            );
         }
     } finally {
         completeBackgroundUpload(fwdBgId);
@@ -6230,56 +7483,88 @@ async function forwardMediaToDestination(messageMeta, mediaType, destination, so
 }
 
 async function forwardMessageText(messageElement) {
-    const sourceMessageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const sourceMessageId = Number(
+        messageElement.getAttribute("data-message-id") || 0,
+    );
     const messageMeta = messageMetaById.get(sourceMessageId);
     const mediaType = getMediaMessageType(messageElement);
     const messageText = getMessageTextForCopy(messageElement);
 
     // Must have either text or be a known media type
     if (!messageText && !mediaType) {
-        showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedOnlyText, "warning");
+        showModal(
+            I18N_TEXT.forwardFailedTitle,
+            I18N_TEXT.forwardFailedOnlyText,
+            "warning",
+        );
         return;
     }
 
-    const content = createForwardTargetListContent(async (destination, button) => {
-        if (!destination) {
-            showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedInvalidTarget, "warning");
-            return;
-        }
-
-        try {
-            if (button) {
-                button.disabled = true;
-                button.classList.add("is-forwarding");
+    const content = createForwardTargetListContent(
+        async (destination, button) => {
+            if (!destination) {
+                showModal(
+                    I18N_TEXT.forwardFailedTitle,
+                    I18N_TEXT.forwardFailedInvalidTarget,
+                    "warning",
+                );
+                return;
             }
 
-            if (mediaType && messageMeta) {
-                // Forward actual media
-                await forwardMediaToDestination(messageMeta, mediaType, destination, sourceMessageId || null);
-            } else {
-                // Forward text
-                if (isGroupToken(destination)) {
-                    const groupId = parseGroupIdFromToken(destination);
-                    await sendGroupTextMessage(groupId, messageText, null, sourceMessageId || null);
+            try {
+                if (button) {
+                    button.disabled = true;
+                    button.classList.add("is-forwarding");
+                }
+
+                if (mediaType && messageMeta) {
+                    // Forward actual media
+                    await forwardMediaToDestination(
+                        messageMeta,
+                        mediaType,
+                        destination,
+                        sourceMessageId || null,
+                    );
                 } else {
-                    await sendEncryptedTextMessage(destination, messageText, null, sourceMessageId || null);
+                    // Forward text
+                    if (isGroupToken(destination)) {
+                        const groupId = parseGroupIdFromToken(destination);
+                        await sendGroupTextMessage(
+                            groupId,
+                            messageText,
+                            null,
+                            sourceMessageId || null,
+                        );
+                    } else {
+                        await sendEncryptedTextMessage(
+                            destination,
+                            messageText,
+                            null,
+                            sourceMessageId || null,
+                        );
+                    }
+                }
+                if (!isGroupToken(destination)) addUserToChatList(destination);
+                closeMessageActionModal();
+                const destLabel = isGroupToken(destination)
+                    ? chatGroupsById.get(parseGroupIdFromToken(destination))
+                          ?.title || "group"
+                    : destination;
+                setComposerStatus(`Forwarded to ${destLabel}`, "success");
+            } catch (error) {
+                showModal(
+                    I18N_TEXT.forwardFailedTitle,
+                    error.message || "Unable to forward message.",
+                    "error",
+                );
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.classList.remove("is-forwarding");
                 }
             }
-            if (!isGroupToken(destination)) addUserToChatList(destination);
-            closeMessageActionModal();
-            const destLabel = isGroupToken(destination)
-                ? chatGroupsById.get(parseGroupIdFromToken(destination))?.title || "group"
-                : destination;
-            setComposerStatus(`Forwarded to ${destLabel}`, "success");
-        } catch (error) {
-            showModal(I18N_TEXT.forwardFailedTitle, error.message || "Unable to forward message.", "error");
-        } finally {
-            if (button) {
-                button.disabled = false;
-                button.classList.remove("is-forwarding");
-            }
-        }
-    });
+        },
+    );
 
     openMessageActionModal(I18N_TEXT.forwardTitle, content);
 }
@@ -6295,16 +7580,30 @@ async function saveMessageToSavedMessages(messageElement) {
     try {
         if (mediaType && messageMeta) {
             // Save actual media to self
-            await forwardMediaToDestination(messageMeta, mediaType, CURRENT_USER, msgId);
+            await forwardMediaToDestination(
+                messageMeta,
+                mediaType,
+                CURRENT_USER,
+                msgId,
+            );
         } else if (messageText) {
-            await sendEncryptedTextMessage(CURRENT_USER, messageText, null, msgId || null);
+            await sendEncryptedTextMessage(
+                CURRENT_USER,
+                messageText,
+                null,
+                msgId || null,
+            );
         } else {
             throw new Error("Unable to identify message content");
         }
         addUserToChatList(CURRENT_USER, { userId: CURRENT_USER_ID });
         setComposerStatus("Saved to your messages", "success");
     } catch (error) {
-        showModal("Save Failed", error.message || "Unable to save message.", "error");
+        showModal(
+            "Save Failed",
+            error.message || "Unable to save message.",
+            "error",
+        );
     }
 }
 
@@ -6315,7 +7614,8 @@ function formatSelectedCountLabel(count) {
 
 function updateSelectModeUi() {
     const selectedCount = selectedMessageIds.size;
-    const hasOnlyTextSelection = selectedCount > 0 && areSelectedMessagesTextOnly();
+    const hasOnlyTextSelection =
+        selectedCount > 0 && areSelectedMessagesTextOnly();
     if (selectModeBar) {
         selectModeBar.hidden = !isSelectModeActive;
     }
@@ -6359,7 +7659,10 @@ function getSelectedMessageElements() {
 }
 
 function isTextMessageElement(messageElement) {
-    return String(messageElement?.getAttribute("data-message-type") || "") === "text";
+    return (
+        String(messageElement?.getAttribute("data-message-type") || "") ===
+        "text"
+    );
 }
 
 function areSelectedMessagesTextOnly() {
@@ -6367,11 +7670,15 @@ function areSelectedMessagesTextOnly() {
     if (!selectedElements.length) {
         return false;
     }
-    return selectedElements.every((messageElement) => isTextMessageElement(messageElement));
+    return selectedElements.every((messageElement) =>
+        isTextMessageElement(messageElement),
+    );
 }
 
 function toSortableMessageTimestamp(messageElement) {
-    const createdAtRaw = String(messageElement?.getAttribute("data-created-at") || "").trim();
+    const createdAtRaw = String(
+        messageElement?.getAttribute("data-created-at") || "",
+    ).trim();
     const parsed = createdAtRaw ? new Date(createdAtRaw) : null;
     if (parsed && !Number.isNaN(parsed.getTime())) {
         return parsed.getTime();
@@ -6387,7 +7694,9 @@ function getSelectedMessageElementsSortedBySentTime() {
             return leftTs - rightTs;
         }
         const leftId = Number(leftElement.getAttribute("data-message-id") || 0);
-        const rightId = Number(rightElement.getAttribute("data-message-id") || 0);
+        const rightId = Number(
+            rightElement.getAttribute("data-message-id") || 0,
+        );
         return leftId - rightId;
     });
 }
@@ -6416,7 +7725,9 @@ function enterSelectMode(seedMessageElement = null) {
 }
 
 function toggleMessageSelection(messageElement) {
-    const messageId = Number(messageElement?.getAttribute("data-message-id") || 0);
+    const messageId = Number(
+        messageElement?.getAttribute("data-message-id") || 0,
+    );
     if (!messageId) {
         return;
     }
@@ -6451,71 +7762,92 @@ async function bulkForwardSelectedMessages() {
     const selectedTextMessages = selectedElements
         .map((messageElement) => ({
             messageElement,
-            messageId: Number(messageElement.getAttribute("data-message-id") || 0),
+            messageId: Number(
+                messageElement.getAttribute("data-message-id") || 0,
+            ),
             messageText: getMessageTextForCopy(messageElement),
         }))
         .filter((item) => item.messageId > 0 && item.messageText);
 
     if (!selectedTextMessages.length) {
-        showModal("Forward Failed", "Only selected text messages can be forwarded.", "warning");
+        showModal(
+            "Forward Failed",
+            "Only selected text messages can be forwarded.",
+            "warning",
+        );
         return;
     }
 
-    const skippedCount = Math.max(0, selectedElements.length - selectedTextMessages.length);
-    const content = createForwardTargetListContent(async (destination, button) => {
-        if (!destination) {
-            showModal(I18N_TEXT.forwardFailedTitle, I18N_TEXT.forwardFailedInvalidTarget, "warning");
-            return;
-        }
+    const skippedCount = Math.max(
+        0,
+        selectedElements.length - selectedTextMessages.length,
+    );
+    const content = createForwardTargetListContent(
+        async (destination, button) => {
+            if (!destination) {
+                showModal(
+                    I18N_TEXT.forwardFailedTitle,
+                    I18N_TEXT.forwardFailedInvalidTarget,
+                    "warning",
+                );
+                return;
+            }
 
-        let successCount = 0;
-        let failedCount = 0;
+            let successCount = 0;
+            let failedCount = 0;
 
-        try {
-            button.disabled = true;
-            button.classList.add("is-forwarding");
+            try {
+                button.disabled = true;
+                button.classList.add("is-forwarding");
 
-            for (const item of selectedTextMessages) {
-                try {
-                    if (isGroupToken(destination)) {
-                        await sendGroupTextMessage(
-                            parseGroupIdFromToken(destination),
-                            item.messageText,
-                            null,
-                            item.messageId
-                        );
-                    } else {
-                        await sendEncryptedTextMessage(destination, item.messageText, null, item.messageId);
-                        addUserToChatList(destination);
+                for (const item of selectedTextMessages) {
+                    try {
+                        if (isGroupToken(destination)) {
+                            await sendGroupTextMessage(
+                                parseGroupIdFromToken(destination),
+                                item.messageText,
+                                null,
+                                item.messageId,
+                            );
+                        } else {
+                            await sendEncryptedTextMessage(
+                                destination,
+                                item.messageText,
+                                null,
+                                item.messageId,
+                            );
+                            addUserToChatList(destination);
+                        }
+                        successCount++;
+                    } catch (error) {
+                        failedCount++;
                     }
-                    successCount++;
-                } catch (error) {
-                    failedCount++;
                 }
-            }
 
-            closeMessageActionModal();
-            exitSelectMode({ clearSelection: true });
-            const destinationLabel = isGroupToken(destination)
-                ? chatGroupsById.get(parseGroupIdFromToken(destination))?.title || "group"
-                : destination;
-            const summaryParts = [`Forwarded ${successCount}`];
-            if (failedCount) {
-                summaryParts.push(`${failedCount} failed`);
+                closeMessageActionModal();
+                exitSelectMode({ clearSelection: true });
+                const destinationLabel = isGroupToken(destination)
+                    ? chatGroupsById.get(parseGroupIdFromToken(destination))
+                          ?.title || "group"
+                    : destination;
+                const summaryParts = [`Forwarded ${successCount}`];
+                if (failedCount) {
+                    summaryParts.push(`${failedCount} failed`);
+                }
+                if (skippedCount) {
+                    summaryParts.push(`${skippedCount} skipped (non-text)`);
+                }
+                showModal(
+                    "Bulk Forward",
+                    `${summaryParts.join(", ")} to ${destinationLabel}.`,
+                    failedCount ? "warning" : "success",
+                );
+            } finally {
+                button.disabled = false;
+                button.classList.remove("is-forwarding");
             }
-            if (skippedCount) {
-                summaryParts.push(`${skippedCount} skipped (non-text)`);
-            }
-            showModal(
-                "Bulk Forward",
-                `${summaryParts.join(", ")} to ${destinationLabel}.`,
-                failedCount ? "warning" : "success"
-            );
-        } finally {
-            button.disabled = false;
-            button.classList.remove("is-forwarding");
-        }
-    });
+        },
+    );
 
     openMessageActionModal("Forward Selected Messages", content);
 }
@@ -6528,7 +7860,9 @@ async function bulkDeleteSelectedMessages() {
     }
 
     const selectedIds = selectedElements
-        .map((messageElement) => Number(messageElement.getAttribute("data-message-id") || 0))
+        .map((messageElement) =>
+            Number(messageElement.getAttribute("data-message-id") || 0),
+        )
         .filter((messageId) => messageId > 0);
     if (!selectedIds.length) {
         return;
@@ -6537,31 +7871,38 @@ async function bulkDeleteSelectedMessages() {
     const confirmed = await showConfirmModal(
         "Delete Messages",
         `Delete ${selectedIds.length} selected message${selectedIds.length === 1 ? "" : "s"}?`,
-        { type: "warning", confirmLabel: "Delete" }
+        { type: "warning", confirmLabel: "Delete" },
     );
     if (!confirmed) {
         return;
     }
 
     try {
-        const deleteResult = await window.ApiService.jsonOk("api/messages/delete.php", {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-                ...getCsrfHeaders(),
+        const deleteResult = await window.ApiService.jsonOk(
+            "api/messages/delete.php",
+            {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
+                body: JSON.stringify({ messages: selectedIds }),
             },
-            body: JSON.stringify({ messages: selectedIds }),
-        });
+        );
 
         const deletedIds = Array.isArray(deleteResult?.message_ids)
-            ? deleteResult.message_ids.map((id) => Number(id)).filter((id) => id > 0)
+            ? deleteResult.message_ids
+                  .map((id) => Number(id))
+                  .filter((id) => id > 0)
             : [];
         const deletedSet = new Set(deletedIds);
         const deletedCount = deletedIds.length;
         const failedCount = Math.max(0, selectedIds.length - deletedCount);
 
         selectedElements.forEach((messageElement) => {
-            const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+            const messageId = Number(
+                messageElement.getAttribute("data-message-id") || 0,
+            );
             if (deletedSet.has(messageId)) {
                 messageElement.remove();
             }
@@ -6573,7 +7914,7 @@ async function bulkDeleteSelectedMessages() {
         void removeMultipleMediaFromCache(deletedIds);
         if (Array.isArray(currentChatRecentMessages)) {
             currentChatRecentMessages = currentChatRecentMessages.filter(
-                (item) => !deletedSet.has(Number(item.id || 0))
+                (item) => !deletedSet.has(Number(item.id || 0)),
             );
         }
 
@@ -6583,11 +7924,15 @@ async function bulkDeleteSelectedMessages() {
             failedCount
                 ? `Deleted ${deletedCount} message(s), ${failedCount} could not be deleted.`
                 : `Deleted ${deletedCount} message(s).`,
-            failedCount ? "warning" : "success"
+            failedCount ? "warning" : "success",
         );
         rebuildMessageDaySeparators();
     } catch (error) {
-        showModal("Bulk Delete Failed", error?.message || "Unable to delete selected messages.", "error");
+        showModal(
+            "Bulk Delete Failed",
+            error?.message || "Unable to delete selected messages.",
+            "error",
+        );
     }
 }
 
@@ -6598,29 +7943,46 @@ async function bulkCopySelectedMessages() {
         return;
     }
 
-    if (!selectedElements.every((messageElement) => isTextMessageElement(messageElement))) {
-        setComposerStatus("Copy is available only for text-only selection.", "warning");
+    if (
+        !selectedElements.every((messageElement) =>
+            isTextMessageElement(messageElement),
+        )
+    ) {
+        setComposerStatus(
+            "Copy is available only for text-only selection.",
+            "warning",
+        );
         return;
     }
 
     const copiedTextLines = selectedElements
         .map((messageElement) => {
-            const messageText = String(getMessageTextForCopy(messageElement) || "")
+            const messageText = String(
+                getMessageTextForCopy(messageElement) || "",
+            )
                 .replace(/\s*\n+\s*/g, " ")
                 .trim();
             if (!messageText) {
                 return "";
             }
-            const senderUsername = String(messageElement.getAttribute("data-sender-username") || "").trim();
-            const senderLabel = senderUsername || (messageElement.classList.contains("sent")
-                ? String(CURRENT_USER || "You")
-                : String(getCurrentChatDisplayName() || "User"));
+            const senderUsername = String(
+                messageElement.getAttribute("data-sender-username") || "",
+            ).trim();
+            const senderLabel =
+                senderUsername ||
+                (messageElement.classList.contains("sent")
+                    ? String(CURRENT_USER || "You")
+                    : String(getCurrentChatDisplayName() || "User"));
             return `${senderLabel}: ${messageText}`;
         })
         .filter((line) => line.length > 0);
 
     if (!copiedTextLines.length) {
-        showModal("Copy Failed", "Only selected text messages can be copied.", "warning");
+        showModal(
+            "Copy Failed",
+            "Only selected text messages can be copied.",
+            "warning",
+        );
         return;
     }
 
@@ -6639,7 +8001,9 @@ async function bulkCopySelectedMessages() {
             document.execCommand("copy");
             helper.remove();
         }
-        showTransientSuccessToast(`Copied ${copiedTextLines.length} selected message(s).`);
+        showTransientSuccessToast(
+            `Copied ${copiedTextLines.length} selected message(s).`,
+        );
     } catch (error) {
         showModal("Copy Failed", "Unable to copy selected messages.", "error");
     }
@@ -6647,27 +8011,33 @@ async function bulkCopySelectedMessages() {
 
 function canEditMessage(messageElement, messageData = null) {
     const senderId = Number(
-        messageData?.sender_id ?? messageElement?.getAttribute("data-sender-id") ?? 0
+        messageData?.sender_id ??
+            messageElement?.getAttribute("data-sender-id") ??
+            0,
     );
     if (senderId !== Number(CURRENT_USER_ID)) {
         return false;
     }
     const messageType = String(
-        messageData?.message_type ?? messageElement?.getAttribute("data-message-type") ?? ""
+        messageData?.message_type ??
+            messageElement?.getAttribute("data-message-type") ??
+            "",
     );
     if (messageType !== "text") {
         return false;
     }
     const forwardedFromMessageId = Number(
         messageData?.forwarded_from_message_id ??
-        messageElement?.getAttribute("data-forwarded-from-message-id") ??
-        0
+            messageElement?.getAttribute("data-forwarded-from-message-id") ??
+            0,
     );
     if (forwardedFromMessageId > 0) {
         return false;
     }
     const createdAtRaw =
-        messageData?.created_at || messageElement?.getAttribute("data-created-at") || "";
+        messageData?.created_at ||
+        messageElement?.getAttribute("data-created-at") ||
+        "";
     const createdAt = new Date(createdAtRaw);
     if (Number.isNaN(createdAt.getTime())) {
         return false;
@@ -6692,15 +8062,25 @@ function cancelEditMode({ restoreFocus = false } = {}) {
 }
 
 function beginEditMode(messageElement) {
-    const messageId = Number(messageElement?.getAttribute("data-message-id") || 0);
+    const messageId = Number(
+        messageElement?.getAttribute("data-message-id") || 0,
+    );
     if (!messageId || !canEditMessage(messageElement)) {
-        showModal("Edit Not Allowed", "This message can no longer be edited.", "warning");
+        showModal(
+            "Edit Not Allowed",
+            "This message can no longer be edited.",
+            "warning",
+        );
         return;
     }
 
     const currentText = getMessageTextForCopy(messageElement);
     if (!currentText) {
-        showModal("Edit Not Allowed", "Only text messages can be edited.", "warning");
+        showModal(
+            "Edit Not Allowed",
+            "Only text messages can be edited.",
+            "warning",
+        );
         return;
     }
 
@@ -6723,14 +8103,19 @@ function beginEditMode(messageElement) {
         replyPreviewElem.style.display = "flex";
         replyPreviewElem
             .querySelector(".reply-preview-close")
-            ?.addEventListener("click", () => cancelEditMode({ restoreFocus: true }));
+            ?.addEventListener("click", () =>
+                cancelEditMode({ restoreFocus: true }),
+            );
     }
 
     chatInput.value = currentText;
     chatInput.focus();
     chatInput.selectionStart = 0;
     chatInput.selectionEnd = chatInput.value.length;
-    setComposerStatus("Edit mode: press Enter to save, Esc to cancel.", "warning");
+    setComposerStatus(
+        "Edit mode: press Enter to save, Esc to cancel.",
+        "warning",
+    );
     syncMobileComposerActions();
     syncComposerContextFlags();
 }
@@ -6749,8 +8134,16 @@ async function encryptEditedPayloadForCurrentChat(text) {
     const recipientKey = await getPublicKey(currentChatUser);
     const senderKey = await getPublicKey(CURRENT_USER);
     return {
-        message: await encryptLongMessage(text, recipientKey, isTextPersian(text)),
-        message_for_sender: await encryptLongMessage(text, senderKey, isTextPersian(text)),
+        message: await encryptLongMessage(
+            text,
+            recipientKey,
+            isTextPersian(text),
+        ),
+        message_for_sender: await encryptLongMessage(
+            text,
+            senderKey,
+            isTextPersian(text),
+        ),
     };
 }
 
@@ -6793,21 +8186,28 @@ async function saveEditedMessage() {
         setComposerStatus("Message edited", "success");
         return true;
     } catch (error) {
-        showModal("Edit Failed", error?.message || "Unable to edit message.", "error");
+        showModal(
+            "Edit Failed",
+            error?.message || "Unable to edit message.",
+            "error",
+        );
         setComposerStatus("Unable to save edits", "error");
         return false;
     }
 }
 
 function getMessageElementById(messageId) {
-    return chatMessagesElem.querySelector(`.message[data-message-id="${messageId}"]`);
+    return chatMessagesElem.querySelector(
+        `.message[data-message-id="${messageId}"]`,
+    );
 }
 
 function ensureEditedMarkerPlacement(messageElement, editedAt = "") {
     if (!messageElement) {
         return;
     }
-    const messageMetaTimes = messageElement.querySelectorAll(".message-meta-time");
+    const messageMetaTimes =
+        messageElement.querySelectorAll(".message-meta-time");
     if (!messageMetaTimes.length) {
         return;
     }
@@ -6820,11 +8220,13 @@ function ensureEditedMarkerPlacement(messageElement, editedAt = "") {
         timeEl.insertAdjacentHTML("beforeend", buildEditedMarkerHtml(editedAt));
     });
 
-    messageElement.querySelectorAll(".message-edited-marker").forEach((markerEl) => {
-        if (!markerEl.closest(".message-meta-time")) {
-            markerEl.remove();
-        }
-    });
+    messageElement
+        .querySelectorAll(".message-edited-marker")
+        .forEach((markerEl) => {
+            if (!markerEl.closest(".message-meta-time")) {
+                markerEl.remove();
+            }
+        });
 }
 
 function getReactionHostElement(messageElement) {
@@ -6832,12 +8234,19 @@ function getReactionHostElement(messageElement) {
         return null;
     }
     if (messageElement.classList.contains("group-incoming-message")) {
-        return messageElement.querySelector(".group-message-content") || messageElement;
+        return (
+            messageElement.querySelector(".group-message-content") ||
+            messageElement
+        );
     }
     return messageElement;
 }
 
-function triggerReactionSubmitBurst(messageElement, emoji, { kind = "add" } = {}) {
+function triggerReactionSubmitBurst(
+    messageElement,
+    emoji,
+    { kind = "add" } = {},
+) {
     const hostElement = getReactionHostElement(messageElement);
     const normalizedEmoji = String(emoji || "").trim();
     if (!hostElement || !normalizedEmoji) {
@@ -6870,7 +8279,7 @@ function triggerReactionSubmitBurst(messageElement, emoji, { kind = "add" } = {}
 function applyMessageReactionsUpdate(
     messageId,
     reactions = [],
-    { flashEmoji = "", removedEmoji = "" } = {}
+    { flashEmoji = "", removedEmoji = "" } = {},
 ) {
     const normalizedMessageId = Number(messageId || 0);
     if (!normalizedMessageId) {
@@ -6886,8 +8295,11 @@ function applyMessageReactionsUpdate(
     if (Array.isArray(currentChatRecentMessages)) {
         currentChatRecentMessages = currentChatRecentMessages.map((item) =>
             Number(item?.id || 0) === normalizedMessageId
-                ? { ...item, reactions: Array.isArray(reactions) ? reactions : [] }
-                : item
+                ? {
+                      ...item,
+                      reactions: Array.isArray(reactions) ? reactions : [],
+                  }
+                : item,
         );
     }
 
@@ -6896,15 +8308,23 @@ function applyMessageReactionsUpdate(
         return;
     }
     const normalizedFlashEmoji = String(flashEmoji || "").trim();
-    renderMessageReactions(messageElement, meta || { id: normalizedMessageId, reactions }, {
-        flashEmoji: normalizedFlashEmoji,
-    });
+    renderMessageReactions(
+        messageElement,
+        meta || { id: normalizedMessageId, reactions },
+        {
+            flashEmoji: normalizedFlashEmoji,
+        },
+    );
 
     const normalizedRemovedEmoji = String(removedEmoji || "").trim();
     if (normalizedFlashEmoji) {
-        triggerReactionSubmitBurst(messageElement, normalizedFlashEmoji, { kind: "add" });
+        triggerReactionSubmitBurst(messageElement, normalizedFlashEmoji, {
+            kind: "add",
+        });
     } else if (normalizedRemovedEmoji) {
-        triggerReactionSubmitBurst(messageElement, normalizedRemovedEmoji, { kind: "remove" });
+        triggerReactionSubmitBurst(messageElement, normalizedRemovedEmoji, {
+            kind: "remove",
+        });
     }
 }
 
@@ -6917,7 +8337,9 @@ function getCurrentUserReactionEmoji(messageId) {
     if (!Array.isArray(meta?.reactions)) {
         return "";
     }
-    const mine = meta.reactions.find((item) => item?.reacted_by_me && item?.emoji);
+    const mine = meta.reactions.find(
+        (item) => item?.reacted_by_me && item?.emoji,
+    );
     return String(mine?.emoji || "").trim();
 }
 
@@ -6927,14 +8349,17 @@ async function toggleMessageReaction(messageId, reaction) {
         reaction: String(reaction || "").trim(),
     };
     const previousReaction = getCurrentUserReactionEmoji(payload.message_id);
-    const data = await window.ApiService.jsonOk("api/messages/toggle_reaction.php", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            ...getCsrfHeaders(),
+    const data = await window.ApiService.jsonOk(
+        "api/messages/toggle_reaction.php",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+            },
+            body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-    });
+    );
     const reactions = Array.isArray(data?.reactions) ? data.reactions : [];
     applyMessageReactionsUpdate(payload.message_id, reactions, {
         flashEmoji: payload.reaction,
@@ -6947,11 +8372,16 @@ function buildReactionPickerContent(messageElement, messageData = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "reaction-picker-list";
 
-    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
-    const reactions = Array.isArray(messageData?.reactions) ? messageData.reactions : [];
+    const messageId = Number(
+        messageElement.getAttribute("data-message-id") || 0,
+    );
+    const reactions = Array.isArray(messageData?.reactions)
+        ? messageData.reactions
+        : [];
 
     REACTION_EMOJI_SET.forEach((emoji) => {
-        const reactionMeta = reactions.find((item) => item?.emoji === emoji) || null;
+        const reactionMeta =
+            reactions.find((item) => item?.emoji === emoji) || null;
         const button = document.createElement("button");
         button.type = "button";
         button.className = "reaction-picker-item";
@@ -6969,7 +8399,11 @@ function buildReactionPickerContent(messageElement, messageData = null) {
                 await toggleMessageReaction(messageId, nextReaction);
                 closeReactionPicker({ restoreFocus: false });
             } catch (error) {
-                showModal(I18N_TEXT.reactFailedTitle, error.message || I18N_TEXT.reactFailedBody, "error");
+                showModal(
+                    I18N_TEXT.reactFailedTitle,
+                    error.message || I18N_TEXT.reactFailedBody,
+                    "error",
+                );
             } finally {
                 button.disabled = false;
             }
@@ -6981,7 +8415,9 @@ function buildReactionPickerContent(messageElement, messageData = null) {
 }
 
 function openReactionPickerFromContext(messageElement, messageData = null) {
-    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const messageId = Number(
+        messageElement.getAttribute("data-message-id") || 0,
+    );
     const latestMeta = messageMetaById.get(messageId) || messageData;
     closeReactionPicker({ restoreFocus: false });
 
@@ -7013,13 +8449,19 @@ async function deleteMessageById(messageId) {
 }
 
 async function deleteMessageFromContext(messageElement) {
-    const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+    const messageId = Number(
+        messageElement.getAttribute("data-message-id") || 0,
+    );
     if (!messageId) {
         showModal("Delete Failed", "Invalid message id.", "warning");
         return;
     }
 
-    const confirmed = await showConfirmModal("Delete Message", "Delete this message?", { type: "warning", confirmLabel: "Delete" });
+    const confirmed = await showConfirmModal(
+        "Delete Message",
+        "Delete this message?",
+        { type: "warning", confirmLabel: "Delete" },
+    );
     if (!confirmed) {
         return;
     }
@@ -7034,7 +8476,7 @@ async function deleteMessageFromContext(messageElement) {
         }
         if (Array.isArray(currentChatRecentMessages)) {
             currentChatRecentMessages = currentChatRecentMessages.filter(
-                (item) => Number(item.id) !== messageId
+                (item) => Number(item.id) !== messageId,
             );
         }
         selectedMessageIds.delete(messageId);
@@ -7050,10 +8492,16 @@ async function deleteMessageFromContext(messageElement) {
         void removeMediaFromCache(messageId);
         // Update local playlist cache (DB CASCADE removes the row server-side)
         if (playlistCache) {
-            playlistCache = playlistCache.filter((t) => Number(t.msgId) !== messageId);
+            playlistCache = playlistCache.filter(
+                (t) => Number(t.msgId) !== messageId,
+            );
         }
     } catch (error) {
-        showModal("Delete Failed", error.message || "Unable to delete message.", "error");
+        showModal(
+            "Delete Failed",
+            error.message || "Unable to delete message.",
+            "error",
+        );
     }
 }
 
@@ -7071,7 +8519,7 @@ function addMessageActionHandlers(
         canSave = false,
         canDetails = true,
         messageData = null,
-    } = {}
+    } = {},
 ) {
     let longPressTimer = null;
     let longPressTriggered = false;
@@ -7093,8 +8541,10 @@ function addMessageActionHandlers(
     let swipeDirection = 0; // 0=undecided, 1=right, -1=left
 
     // Voice bar drag state (drag on waveform bars)
-    const isVoiceMessage = messageElement.classList.contains("is-voice-message");
-    const isMultimediaMessage = isVoiceMessage ||
+    const isVoiceMessage =
+        messageElement.classList.contains("is-voice-message");
+    const isMultimediaMessage =
+        isVoiceMessage ||
         messageElement.classList.contains("is-image-message") ||
         messageElement.classList.contains("is-video-message") ||
         messageElement.classList.contains("is-sticker-message") ||
@@ -7108,14 +8558,20 @@ function addMessageActionHandlers(
 
     const doHeartReaction = () => {
         if (!canReact) return;
-        const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+        const msgId = Number(
+            messageElement.getAttribute("data-message-id") || 0,
+        );
         if (!msgId) return;
         const currentEmoji = getCurrentUserReactionEmoji(msgId);
         const newEmoji = currentEmoji === "\u2764\uFE0F" ? "" : "\u2764\uFE0F";
         toggleMessageReaction(msgId, newEmoji).catch(() => {});
     };
 
-    const openContextMenu = (clientX, clientY, { focusFirstItem = true } = {}) => {
+    const openContextMenu = (
+        clientX,
+        clientY,
+        { focusFirstItem = true } = {},
+    ) => {
         // If a context menu was just closed (by clicking outside), don't immediately open a new one
         if (Date.now() - contextMenuJustClosedAt < 450) return;
         closeMessageContextMenu();
@@ -7157,7 +8613,8 @@ function addMessageActionHandlers(
             const copyImageBtn = document.createElement("button");
             copyImageBtn.type = "button";
             copyImageBtn.className = "message-context-menu-item";
-            copyImageBtn.innerHTML = '<i class="fas fa-image me-2"></i>Copy image';
+            copyImageBtn.innerHTML =
+                '<i class="fas fa-image me-2"></i>Copy image';
             copyImageBtn.addEventListener("click", async () => {
                 await copyImageMessageToClipboard(messageElement, messageData);
                 closeMessageContextMenu();
@@ -7182,7 +8639,8 @@ function addMessageActionHandlers(
             const selectBtn = document.createElement("button");
             selectBtn.type = "button";
             selectBtn.className = "message-context-menu-item";
-            selectBtn.innerHTML = '<i class="fas fa-check-square me-2"></i>Select messages';
+            selectBtn.innerHTML =
+                '<i class="fas fa-check-square me-2"></i>Select messages';
             selectBtn.addEventListener("click", () => {
                 enterSelectMode(messageElement);
                 closeMessageContextMenu();
@@ -7206,7 +8664,8 @@ function addMessageActionHandlers(
             const forwardBtn = document.createElement("button");
             forwardBtn.type = "button";
             forwardBtn.className = "message-context-menu-item";
-            forwardBtn.innerHTML = '<i class="fas fa-share-from-square me-2"></i>Forward';
+            forwardBtn.innerHTML =
+                '<i class="fas fa-share-from-square me-2"></i>Forward';
             forwardBtn.addEventListener("click", async () => {
                 await forwardMessageText(messageElement);
                 closeMessageContextMenu();
@@ -7230,10 +8689,13 @@ function addMessageActionHandlers(
             const addPlaylistBtn = document.createElement("button");
             addPlaylistBtn.type = "button";
             addPlaylistBtn.className = "message-context-menu-item";
-            addPlaylistBtn.innerHTML = '<i class="fas fa-list-ul me-2"></i>Add to Playlist';
+            addPlaylistBtn.innerHTML =
+                '<i class="fas fa-list-ul me-2"></i>Add to Playlist';
             addPlaylistBtn.addEventListener("click", async () => {
                 closeMessageContextMenu();
-                const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+                const msgId = Number(
+                    messageElement.getAttribute("data-message-id") || 0,
+                );
                 if (!msgId) return;
                 const titleEl = messageElement.querySelector(".music-title");
                 const title = titleEl?.textContent || "Unknown";
@@ -7273,7 +8735,8 @@ function addMessageActionHandlers(
             const detailsBtn = document.createElement("button");
             detailsBtn.type = "button";
             detailsBtn.className = "message-context-menu-item";
-            detailsBtn.innerHTML = '<i class="fas fa-circle-info me-2"></i>Details';
+            detailsBtn.innerHTML =
+                '<i class="fas fa-circle-info me-2"></i>Details';
             detailsBtn.addEventListener("click", () => {
                 closeMessageContextMenu();
                 showMessageDetailsModal(messageElement, messageData);
@@ -7299,7 +8762,9 @@ function addMessageActionHandlers(
         menu.style.top = `${Math.min(clientY, maxTop)}px`;
 
         if (focusFirstItem) {
-            const firstMenuButton = menu.querySelector(".message-context-menu-item");
+            const firstMenuButton = menu.querySelector(
+                ".message-context-menu-item",
+            );
             firstMenuButton?.focus();
         }
     };
@@ -7310,10 +8775,16 @@ function addMessageActionHandlers(
     });
 
     messageElement.addEventListener("keydown", (event) => {
-        if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+        if (
+            event.key === "ContextMenu" ||
+            (event.shiftKey && event.key === "F10")
+        ) {
             event.preventDefault();
             const rect = messageElement.getBoundingClientRect();
-            openContextMenu(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            openContextMenu(
+                rect.left + rect.width / 2,
+                rect.top + rect.height / 2,
+            );
         }
     });
 
@@ -7342,7 +8813,8 @@ function addMessageActionHandlers(
             }
 
             longPressTimer = setTimeout(() => {
-                const touchPoint = event.touches?.[0] || event.changedTouches?.[0];
+                const touchPoint =
+                    event.touches?.[0] || event.changedTouches?.[0];
                 if (!touchPoint) {
                     return;
                 }
@@ -7351,7 +8823,9 @@ function addMessageActionHandlers(
                 if (isMultimediaMessage) {
                     // Multimedia messages: long-press opens context menu
                     suppressNextContextMenuTapUntil = Date.now() + 420;
-                    openContextMenu(touchPoint.clientX, touchPoint.clientY, { focusFirstItem: false });
+                    openContextMenu(touchPoint.clientX, touchPoint.clientY, {
+                        focusFirstItem: false,
+                    });
                 } else {
                     // Text messages: long-press enters select mode
                     if (canSelect) {
@@ -7360,7 +8834,7 @@ function addMessageActionHandlers(
                 }
             }, MESSAGE_LONG_PRESS_MS);
         },
-        { passive: true }
+        { passive: true },
     );
 
     messageElement.addEventListener(
@@ -7388,7 +8862,10 @@ function addMessageActionHandlers(
             }
 
             // Cancel long press on any significant movement
-            if (deltaX > LONG_PRESS_MOVE_CANCEL_PX || deltaY > LONG_PRESS_MOVE_CANCEL_PX) {
+            if (
+                deltaX > LONG_PRESS_MOVE_CANCEL_PX ||
+                deltaY > LONG_PRESS_MOVE_CANCEL_PX
+            ) {
                 clearLongPress();
             }
 
@@ -7415,10 +8892,14 @@ function addMessageActionHandlers(
             if (!swipeActive) return;
 
             // Clamp the visual displacement
-            const clampedDelta = Math.sign(rawDeltaX) * Math.min(deltaX, SWIPE_MAX_TRANSLATE_PX);
+            const clampedDelta =
+                Math.sign(rawDeltaX) * Math.min(deltaX, SWIPE_MAX_TRANSLATE_PX);
 
             // Only allow swipe in the committed direction
-            if ((swipeDirection === 1 && rawDeltaX <= 0) || (swipeDirection === -1 && rawDeltaX >= 0)) {
+            if (
+                (swipeDirection === 1 && rawDeltaX <= 0) ||
+                (swipeDirection === -1 && rawDeltaX >= 0)
+            ) {
                 messageElement.style.transform = "";
                 return;
             }
@@ -7430,7 +8911,7 @@ function addMessageActionHandlers(
             const progress = deltaX / SWIPE_THRESHOLD_PX;
             messageElement.classList.toggle("swipe-ready", progress >= 1);
         },
-        { passive: true }
+        { passive: true },
     );
 
     const clearLongPress = () => {
@@ -7449,7 +8930,9 @@ function addMessageActionHandlers(
             messageElement.style.transform = "";
             messageElement.removeEventListener("transitionend", cleanup);
         };
-        messageElement.addEventListener("transitionend", cleanup, { once: true });
+        messageElement.addEventListener("transitionend", cleanup, {
+            once: true,
+        });
         // Fallback cleanup if transitionend doesn't fire
         setTimeout(cleanup, 250);
     };
@@ -7477,7 +8960,9 @@ function addMessageActionHandlers(
             if (touchPoint) {
                 applyVoiceSeek(messageElement, Number(touchPoint.clientX || 0));
                 if (!messageElement.querySelector("audio")) {
-                    const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+                    const msgId = Number(
+                        messageElement.getAttribute("data-message-id") || 0,
+                    );
                     if (msgId) playVoiceMessage(msgId);
                 }
                 suppressClickUntil = Date.now() + 400;
@@ -7501,9 +8986,14 @@ function addMessageActionHandlers(
         // Handle swipe action
         if (wasSwipeActive && touchPoint) {
             const finalDeltaX = Number(touchPoint.clientX || 0) - touchStartX;
-            const deltaY = Math.abs(Number(touchPoint.clientY || 0) - touchStartY);
+            const deltaY = Math.abs(
+                Number(touchPoint.clientY || 0) - touchStartY,
+            );
 
-            if (Math.abs(finalDeltaX) >= SWIPE_THRESHOLD_PX && deltaY < SWIPE_VERTICAL_LOCK_PX * 3) {
+            if (
+                Math.abs(finalDeltaX) >= SWIPE_THRESHOLD_PX &&
+                deltaY < SWIPE_VERTICAL_LOCK_PX * 3
+            ) {
                 event.preventDefault();
                 event.stopPropagation();
 
@@ -7514,7 +9004,11 @@ function addMessageActionHandlers(
                 } else if (finalDeltaX < 0) {
                     // Swipe left
                     const isSent = messageElement.classList.contains("sent");
-                    if (isSent && canEdit && canEditMessage(messageElement, messageData)) {
+                    if (
+                        isSent &&
+                        canEdit &&
+                        canEditMessage(messageElement, messageData)
+                    ) {
                         beginEditMode(messageElement);
                     } else if (canForward) {
                         forwardMessageText(messageElement);
@@ -7537,7 +9031,9 @@ function addMessageActionHandlers(
             const currentY = Number(touchPoint.clientY || 0);
             const totalMoveX = Math.abs(currentX - touchStartX);
             const totalMoveY = Math.abs(currentY - touchStartY);
-            const wasTap = totalMoveX < LONG_PRESS_MOVE_CANCEL_PX && totalMoveY < LONG_PRESS_MOVE_CANCEL_PX;
+            const wasTap =
+                totalMoveX < LONG_PRESS_MOVE_CANCEL_PX &&
+                totalMoveY < LONG_PRESS_MOVE_CANCEL_PX;
 
             if (!wasTap) {
                 // Finger moved significantly — not a tap (e.g. scroll)
@@ -7568,14 +9064,20 @@ function addMessageActionHandlers(
                 lastTapX = currentX;
                 lastTapY = currentY;
 
-                if (!isMultimediaMessage && !isSelectModeActive && !event.target?.closest?.(".reply-quote")) {
+                if (
+                    !isMultimediaMessage &&
+                    !isSelectModeActive &&
+                    !event.target?.closest?.(".reply-quote")
+                ) {
                     // Text messages: delayed context menu (cancelled if double-tap follows)
                     if (singleTapTimer) clearTimeout(singleTapTimer);
                     singleTapTimer = setTimeout(() => {
                         singleTapTimer = null;
                         if (isSelectModeActive) return;
                         suppressNextContextMenuTapUntil = Date.now() + 420;
-                        openContextMenu(currentX, currentY, { focusFirstItem: false });
+                        openContextMenu(currentX, currentY, {
+                            focusFirstItem: false,
+                        });
                     }, DOUBLE_TAP_MS);
                     suppressClickUntil = Date.now() + 400;
                 }
@@ -7625,14 +9127,20 @@ function addMessageActionHandlers(
             if (isVoiceMessage && event.target.closest(".waveform-bars")) {
                 applyVoiceSeek(messageElement, event.clientX);
                 if (!messageElement.querySelector("audio")) {
-                    const msgId = Number(messageElement.getAttribute("data-message-id") || 0);
+                    const msgId = Number(
+                        messageElement.getAttribute("data-message-id") || 0,
+                    );
                     if (msgId) playVoiceMessage(msgId);
                 }
                 return;
             }
 
             // Don't intercept clicks on interactive child elements
-            if (event.target.closest("a, button, .message-reaction-chip, .voice-play-btn, .reply-quote")) {
+            if (
+                event.target.closest(
+                    "a, button, .message-reaction-chip, .voice-play-btn, .reply-quote",
+                )
+            ) {
                 return;
             }
 
@@ -7651,7 +9159,7 @@ function addMessageActionHandlers(
             }
             // Multimedia: don't intercept — let native handlers work
         },
-        true
+        true,
     );
 
     // Desktop double-click → heart reaction (cancels pending single-click context menu)
@@ -7672,7 +9180,8 @@ function addMessageActionHandlers(
         if (event.button !== 0) return; // left click only
         if (isSelectModeActive) return;
 
-        const onBars = isVoiceMessage && !!event.target.closest(".waveform-bars");
+        const onBars =
+            isVoiceMessage && !!event.target.closest(".waveform-bars");
         mouseDragInfo = {
             startX: event.clientX,
             startY: event.clientY,
@@ -7693,7 +9202,11 @@ function addMessageActionHandlers(
             if (deltaX > 3 || deltaY > 3) mouseDragInfo.moved = true;
 
             // Voice bar drag
-            if (mouseDragInfo.onBars && !mouseDragInfo.barDragActive && !mouseDragInfo.swipeActive) {
+            if (
+                mouseDragInfo.onBars &&
+                !mouseDragInfo.barDragActive &&
+                !mouseDragInfo.swipeActive
+            ) {
                 if (deltaX > LONG_PRESS_MOVE_CANCEL_PX) {
                     mouseDragInfo.barDragActive = true;
                     messageElement.classList.add("voice-seeking");
@@ -7725,14 +9238,21 @@ function addMessageActionHandlers(
             if (!mouseDragInfo.swipeActive) return;
 
             e.preventDefault();
-            const clampedDelta = Math.sign(rawDeltaX) * Math.min(deltaX, SWIPE_MAX_TRANSLATE_PX);
-            if ((mouseDragInfo.swipeDirection === 1 && rawDeltaX <= 0) || (mouseDragInfo.swipeDirection === -1 && rawDeltaX >= 0)) {
+            const clampedDelta =
+                Math.sign(rawDeltaX) * Math.min(deltaX, SWIPE_MAX_TRANSLATE_PX);
+            if (
+                (mouseDragInfo.swipeDirection === 1 && rawDeltaX <= 0) ||
+                (mouseDragInfo.swipeDirection === -1 && rawDeltaX >= 0)
+            ) {
                 messageElement.style.transform = "";
                 return;
             }
             messageElement.style.transform = `translateX(${clampedDelta}px)`;
             messageElement.style.transition = "none";
-            messageElement.classList.toggle("swipe-ready", deltaX / SWIPE_THRESHOLD_PX >= 1);
+            messageElement.classList.toggle(
+                "swipe-ready",
+                deltaX / SWIPE_THRESHOLD_PX >= 1,
+            );
         };
 
         const onMouseUp = (e) => {
@@ -7753,13 +9273,21 @@ function addMessageActionHandlers(
                 const finalDeltaX = e.clientX - info.startX;
                 const finalDeltaY = Math.abs(e.clientY - info.startY);
 
-                if (Math.abs(finalDeltaX) >= SWIPE_THRESHOLD_PX && finalDeltaY < SWIPE_VERTICAL_LOCK_PX * 3) {
+                if (
+                    Math.abs(finalDeltaX) >= SWIPE_THRESHOLD_PX &&
+                    finalDeltaY < SWIPE_VERTICAL_LOCK_PX * 3
+                ) {
                     if (finalDeltaX > 0 && canReply) {
                         setReplyState(messageElement);
                         chatInput?.focus();
                     } else if (finalDeltaX < 0) {
-                        const isSent = messageElement.classList.contains("sent");
-                        if (isSent && canEdit && canEditMessage(messageElement, messageData)) {
+                        const isSent =
+                            messageElement.classList.contains("sent");
+                        if (
+                            isSent &&
+                            canEdit &&
+                            canEditMessage(messageElement, messageData)
+                        ) {
                             beginEditMode(messageElement);
                         } else if (canForward) {
                             forwardMessageText(messageElement);
@@ -7775,7 +9303,8 @@ function addMessageActionHandlers(
     });
 
     // Expose actions for horizon (empty space beside messages) clicks
-    messageElement._openContextMenu = (x, y) => openContextMenu(x, y, { focusFirstItem: false });
+    messageElement._openContextMenu = (x, y) =>
+        openContextMenu(x, y, { focusFirstItem: false });
     messageElement._doHeartReaction = doHeartReaction;
 }
 
@@ -7788,7 +9317,7 @@ document.addEventListener(
             suppressNextContextMenuTapUntil = 0;
         }
     },
-    true
+    true,
 );
 
 document.addEventListener(
@@ -7803,44 +9332,50 @@ document.addEventListener(
         if (Date.now() < suppressReactionPickerAutoCloseUntil) {
             return;
         }
-    const detailsMenu = document.getElementById("detailsMusicContextMenu");
-    const menu = document.getElementById("messageContextMenu");
-    if (!menu) {
-        const picker = document.getElementById("messageReactionPicker");
-        if (!picker && !detailsMenu) {
+        const detailsMenu = document.getElementById("detailsMusicContextMenu");
+        const menu = document.getElementById("messageContextMenu");
+        if (!menu) {
+            const picker = document.getElementById("messageReactionPicker");
+            if (!picker && !detailsMenu) {
+                return;
+            }
+            if (!event.target.closest("#messageReactionPicker")) {
+                closeReactionPicker({ restoreFocus: false });
+            }
+            if (!event.target.closest("#detailsMusicContextMenu")) {
+                closeDetailsMusicContextMenu({ restoreFocus: false });
+            }
             return;
         }
-        if (!event.target.closest("#messageReactionPicker")) {
+        if (!event.target.closest("#messageContextMenu")) {
+            closeMessageContextMenu();
+        }
+
+        const picker = document.getElementById("messageReactionPicker");
+        if (picker && !event.target.closest("#messageReactionPicker")) {
             closeReactionPicker({ restoreFocus: false });
         }
-        if (!event.target.closest("#detailsMusicContextMenu")) {
+        if (detailsMenu && !event.target.closest("#detailsMusicContextMenu")) {
             closeDetailsMusicContextMenu({ restoreFocus: false });
         }
-        return;
-    }
-    if (!event.target.closest("#messageContextMenu")) {
-        closeMessageContextMenu();
-    }
-
-    const picker = document.getElementById("messageReactionPicker");
-    if (picker && !event.target.closest("#messageReactionPicker")) {
-        closeReactionPicker({ restoreFocus: false });
-    }
-    if (detailsMenu && !event.target.closest("#detailsMusicContextMenu")) {
-        closeDetailsMusicContextMenu({ restoreFocus: false });
-    }
     },
-    true
+    true,
 );
 
 document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.getElementById("detailsMusicContextMenu")) {
+    if (
+        event.key === "Escape" &&
+        document.getElementById("detailsMusicContextMenu")
+    ) {
         event.preventDefault();
         closeDetailsMusicContextMenu();
         return;
     }
 
-    if (event.key === "Escape" && document.getElementById("messageReactionPicker")) {
+    if (
+        event.key === "Escape" &&
+        document.getElementById("messageReactionPicker")
+    ) {
         event.preventDefault();
         closeReactionPicker();
         return;
@@ -7851,7 +9386,9 @@ document.addEventListener("keydown", (event) => {
         return;
     }
 
-    const items = Array.from(menu.querySelectorAll(".message-context-menu-item"));
+    const items = Array.from(
+        menu.querySelectorAll(".message-context-menu-item"),
+    );
     if (!items.length) {
         return;
     }
@@ -7864,24 +9401,30 @@ document.addEventListener("keydown", (event) => {
     }
     if (event.key === "ArrowDown") {
         event.preventDefault();
-        const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+        const nextIndex =
+            currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
         items[nextIndex].focus();
     }
     if (event.key === "ArrowUp") {
         event.preventDefault();
-        const nextIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+        const nextIndex =
+            currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
         items[nextIndex].focus();
     }
 });
 
-document.addEventListener("scroll", () => {
-    if (document.getElementById("messageReactionPicker")) {
-        scheduleReactionPickerReposition();
-    }
-    if (document.getElementById("detailsMusicContextMenu")) {
-        closeDetailsMusicContextMenu({ restoreFocus: false });
-    }
-}, true);
+document.addEventListener(
+    "scroll",
+    () => {
+        if (document.getElementById("messageReactionPicker")) {
+            scheduleReactionPickerReposition();
+        }
+        if (document.getElementById("detailsMusicContextMenu")) {
+            closeDetailsMusicContextMenu({ restoreFocus: false });
+        }
+    },
+    true,
+);
 
 window.addEventListener("resize", () => {
     if (document.getElementById("messageReactionPicker")) {
@@ -7941,7 +9484,11 @@ document.addEventListener("scroll", closeMessageContextMenu, true);
         const msg = findHorizonMessage(event.clientX, event.clientY);
         if (!msg?._openContextMenu) return;
 
-        if (horizonClickTimer && Math.abs(event.clientX - horizonLastClickX) < 80 && Math.abs(event.clientY - horizonLastClickY) < 30) {
+        if (
+            horizonClickTimer &&
+            Math.abs(event.clientX - horizonLastClickX) < 80 &&
+            Math.abs(event.clientY - horizonLastClickY) < 30
+        ) {
             // Second click within delay → double-click → heart/unheart
             clearTimeout(horizonClickTimer);
             horizonClickTimer = null;
@@ -7985,7 +9532,8 @@ window.addEventListener("resize", () => {
                 }
                 mobileResizeSnapTimerId = setTimeout(() => {
                     if (chatMessagesElem) {
-                        chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
+                        chatMessagesElem.scrollTop =
+                            chatMessagesElem.scrollHeight;
                     }
                     mobileResizeSnapTimerId = 0;
                 }, 300);
@@ -8013,12 +9561,22 @@ function addUserToChatList(username, options = {}) {
     if (chatUsers.has(username)) {
         const existingItem = document.getElementById(chatListItemId(username));
         if (isSelf && existingItem) {
-            existingItem.style.display = appSettings.showSavedMessages ? "" : "none";
+            existingItem.style.display = appSettings.showSavedMessages
+                ? ""
+                : "none";
         }
-        const existingAvatarImage = existingItem?.querySelector(".avatar-image");
+        const existingAvatarImage =
+            existingItem?.querySelector(".avatar-image");
         if (existingAvatarImage && userId > 0) {
-            existingAvatarImage.setAttribute("data-avatar-user-id", String(userId));
-            existingAvatarImage.src = buildAvatarUrl({ userId, username, size: 84 });
+            existingAvatarImage.setAttribute(
+                "data-avatar-user-id",
+                String(userId),
+            );
+            existingAvatarImage.src = buildAvatarUrl({
+                userId,
+                username,
+                size: 84,
+            });
         }
         setUserUnreadBadge(username, unreadCount);
         return false;
@@ -8034,13 +9592,13 @@ function addUserToChatList(username, options = {}) {
     if (isSelf) {
         li.setAttribute("aria-label", "Open your messages");
         li.innerHTML = `<span class="avatar saved-messages-avatar"><i class="fas fa-bookmark"></i></span> <span>You</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
-            username
+            username,
         )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
         if (!appSettings.showSavedMessages) li.style.display = "none";
     } else {
         li.setAttribute("aria-label", `Open chat with ${username}`);
         li.innerHTML = `<span class="avatar">${buildAvatarImageHtml({ userId, username, className: "avatar-image", size: 84 })}</span> <span>${escapeHtml(username)}</span><span class="chat-item-unread-badge" style="display:none;" aria-label="Unread messages">0</span><span id='${chatListSpinnerId(
-            username
+            username,
         )}' style="display:none" class="spinner-border spinner-border-sm text-primary ms-2" role="status" aria-hidden="true"></span>`;
     }
     li.id = chatListItemId(username);
@@ -8090,7 +9648,10 @@ function addGroupToChatList(group) {
         const metaElement = existing.querySelector(".chat-item-meta");
         if (titleElement) titleElement.textContent = title;
         if (metaElement) metaElement.textContent = `Group • ${role}`;
-        const unreadCount = Math.max(0, Number(chatGroupsById.get(groupId)?.unread_count || 0));
+        const unreadCount = Math.max(
+            0,
+            Number(chatGroupsById.get(groupId)?.unread_count || 0),
+        );
         setGroupUnreadBadge(token, unreadCount);
         return false;
     }
@@ -8128,12 +9689,17 @@ function addGroupToChatList(group) {
     });
 
     chatListElem.appendChild(li);
-    setGroupUnreadBadge(token, Math.max(0, Number(chatGroupsById.get(groupId)?.unread_count || 0)));
+    setGroupUnreadBadge(
+        token,
+        Math.max(0, Number(chatGroupsById.get(groupId)?.unread_count || 0)),
+    );
     return true;
 }
 
 function updateLoadingSpinnerState(chatTarget, show = false) {
-    const loadingSpinnerElement = document.getElementById(chatListSpinnerId(chatTarget));
+    const loadingSpinnerElement = document.getElementById(
+        chatListSpinnerId(chatTarget),
+    );
     if (loadingSpinnerElement) {
         loadingSpinnerElement.style = `display: ${show ? "inline" : "none"}`;
     }
@@ -8141,7 +9707,10 @@ function updateLoadingSpinnerState(chatTarget, show = false) {
 
 async function selectChatTarget(target) {
     const previousChatTarget = currentChatUser;
-    if (previousChatTarget && typingStateByTarget.get(previousChatTarget) === true) {
+    if (
+        previousChatTarget &&
+        typingStateByTarget.get(previousChatTarget) === true
+    ) {
         updateTypingStatus(false, previousChatTarget);
     }
 
@@ -8154,11 +9723,15 @@ async function selectChatTarget(target) {
         updateLoadingSpinnerState(currentChatUser, false);
     }
 
-    document.getElementById(chatListItemId(currentChatUser))?.classList.remove("selected-chat");
+    document
+        .getElementById(chatListItemId(currentChatUser))
+        ?.classList.remove("selected-chat");
     currentChatUser = target;
     currentChatRecentMessages = null;
-lastRecentPollTime = "";
-    document.getElementById(chatListItemId(currentChatUser))?.classList.add("selected-chat");
+    lastRecentPollTime = "";
+    document
+        .getElementById(chatListItemId(currentChatUser))
+        ?.classList.add("selected-chat");
     chatInput.disabled = false;
     chatWithElem.textContent = getCurrentChatDisplayName();
     chatWithElem.classList.toggle("direct-chat-clickable", Boolean(target));
@@ -8171,7 +9744,11 @@ lastRecentPollTime = "";
     clearReplyState();
     closeConversationSearchBar({ clearInput: true });
     // Preserve playing audio from being destroyed by innerHTML clear
-    if (globalNpAudio && globalNpAudio.parentElement && chatMessagesElem.contains(globalNpAudio)) {
+    if (
+        globalNpAudio &&
+        globalNpAudio.parentElement &&
+        chatMessagesElem.contains(globalNpAudio)
+    ) {
         globalNpAudio.parentElement.removeChild(globalNpAudio);
     }
     chatMessagesElem.innerHTML = "";
@@ -8191,8 +9768,13 @@ lastRecentPollTime = "";
 
     const isGroup = isGroupToken(currentChatUser);
     groupInfoBtn.hidden = !isGroup;
-    userInfoBtn && (userInfoBtn.hidden = isGroup || !currentChatUser || isSavedMessagesChat(currentChatUser));
-    if (savedMessagesInfoBtn) savedMessagesInfoBtn.hidden = !isSavedMessagesChat(currentChatUser);
+    userInfoBtn &&
+        (userInfoBtn.hidden =
+            isGroup ||
+            !currentChatUser ||
+            isSavedMessagesChat(currentChatUser));
+    if (savedMessagesInfoBtn)
+        savedMessagesInfoBtn.hidden = !isSavedMessagesChat(currentChatUser);
     if (alertPanelBtn) alertPanelBtn.hidden = Boolean(currentChatUser);
     if (groupInfoBtn) {
         groupInfoBtn.setAttribute("aria-expanded", "false");
@@ -8229,7 +9811,10 @@ async function selectGroupChat(groupId) {
     try {
         await getGroupCryptoKey(groupId);
     } catch (error) {
-        setComposerStatus("Unable to initialize group encryption key", "warning");
+        setComposerStatus(
+            "Unable to initialize group encryption key",
+            "warning",
+        );
     }
     return selectChatTarget(token);
 }
@@ -8273,10 +9858,16 @@ async function updateMessagesStatus(messages) {
     return true;
 }
 
-async function loadMessages(chatTarget, showLoading = false, isInitialLoad = false) {
+async function loadMessages(
+    chatTarget,
+    showLoading = false,
+    isInitialLoad = false,
+) {
     if (isLoadingMessages) return;
 
-    const loadingSpinnerElement = document.getElementById(chatListSpinnerId(chatTarget));
+    const loadingSpinnerElement = document.getElementById(
+        chatListSpinnerId(chatTarget),
+    );
     try {
         isLoadingMessages = true;
 
@@ -8290,7 +9881,9 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             offset,
         });
 
-        const data = await window.ApiService.json(`api/messages/fetch.php?${query.toString()}`);
+        const data = await window.ApiService.json(
+            `api/messages/fetch.php?${query.toString()}`,
+        );
         clearInlineChatState();
         setComposerStatus("");
 
@@ -8300,7 +9893,7 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                 showEmptyChatState(
                     isGroupToken(chatTarget)
                         ? "No messages in this group yet. Start the conversation."
-                        : "No messages yet. Start the conversation."
+                        : "No messages yet. Start the conversation.",
                 );
                 currentChatRecentMessages = [];
                 messageOffset = 0;
@@ -8309,8 +9902,14 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             if (currentChatRecentMessages?.length) {
                 const lastMessage = data.messages?.[data.messages.length - 1],
                     previosLastMessageId =
-                        currentChatRecentMessages?.[currentChatRecentMessages.length - 1]?.id;
-                if (lastMessage && previosLastMessageId && lastMessage.id <= previosLastMessageId) {
+                        currentChatRecentMessages?.[
+                            currentChatRecentMessages.length - 1
+                        ]?.id;
+                if (
+                    lastMessage &&
+                    previosLastMessageId &&
+                    lastMessage.id <= previosLastMessageId
+                ) {
                     return;
                 }
             }
@@ -8343,21 +9942,31 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
             const topVisibleAnchorBeforePrepend = captureViewportAnchor();
             const scrollTopBeforePrepend = chatMessagesElem.scrollTop;
             const scrollHeightBeforePrepend = chatMessagesElem.scrollHeight;
-            const previousInlineScrollBehavior = chatMessagesElem.style.scrollBehavior;
+            const previousInlineScrollBehavior =
+                chatMessagesElem.style.scrollBehavior;
             chatMessagesElem.style.scrollBehavior = "auto";
             const loadMoreBtn = document.getElementById("loadMoreBtn");
-            const insertBeforeNode = loadMoreBtn ? loadMoreBtn.nextSibling : chatMessagesElem.firstChild;
+            const insertBeforeNode = loadMoreBtn
+                ? loadMoreBtn.nextSibling
+                : chatMessagesElem.firstChild;
             const prependFragment = document.createDocumentFragment();
             try {
                 isBatchRendering = true;
                 for (let i = data.messages.length - 1; i >= 0; i--) {
-                    const messageNode = await addMessageToChat(data.messages[i], true, { deferInsert: true });
+                    const messageNode = await addMessageToChat(
+                        data.messages[i],
+                        true,
+                        { deferInsert: true },
+                    );
                     if (messageNode instanceof HTMLElement) {
-                        messageNode.style.animation = 'none';
+                        messageNode.style.animation = "none";
                         prependFragment.appendChild(messageNode);
                     }
                 }
-                chatMessagesElem.insertBefore(prependFragment, insertBeforeNode || null);
+                chatMessagesElem.insertBefore(
+                    prependFragment,
+                    insertBeforeNode || null,
+                );
                 isBatchRendering = false;
                 rebuildMessageDaySeparators();
                 if (hasMoreMessages) {
@@ -8370,12 +9979,16 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
                     restoreViewportAnchor(topVisibleAnchorBeforePrepend);
                     stabilizeViewportAnchor(topVisibleAnchorBeforePrepend, 28);
                 } else {
-                    const finalHeightDelta = chatMessagesElem.scrollHeight - scrollHeightBeforePrepend;
-                    chatMessagesElem.scrollTop = scrollTopBeforePrepend + finalHeightDelta;
+                    const finalHeightDelta =
+                        chatMessagesElem.scrollHeight -
+                        scrollHeightBeforePrepend;
+                    chatMessagesElem.scrollTop =
+                        scrollTopBeforePrepend + finalHeightDelta;
                 }
             } finally {
                 isBatchRendering = false;
-                chatMessagesElem.style.scrollBehavior = previousInlineScrollBehavior;
+                chatMessagesElem.style.scrollBehavior =
+                    previousInlineScrollBehavior;
             }
 
             hasLoadedMoreMessages = true;
@@ -8391,14 +10004,16 @@ async function loadMessages(chatTarget, showLoading = false, isInitialLoad = fal
         });
         setComposerStatus("Message loading failed. You can retry.", "error");
     } finally {
-        if (loadingSpinnerElement) loadingSpinnerElement.style = "display: none";
+        if (loadingSpinnerElement)
+            loadingSpinnerElement.style = "display: none";
         isLoadingMessages = false;
     }
 }
 
 async function showBrowserNotification(lastMsg, newCount) {
     try {
-        const senderName = lastMsg.sender_username || lastMsg.sender_id || "Someone";
+        const senderName =
+            lastMsg.sender_username || lastMsg.sender_id || "Someone";
         let body = "";
         if (newCount > 1) {
             body = `${newCount} new messages`;
@@ -8406,8 +10021,11 @@ async function showBrowserNotification(lastMsg, newCount) {
             try {
                 const isGroup = Number(lastMsg.group_id || 0) > 0;
                 if (isGroup) {
-                    const gKey = await getGroupCryptoKey(Number(lastMsg.group_id));
-                    const payload = lastMsg.message || lastMsg.message_for_sender || "";
+                    const gKey = await getGroupCryptoKey(
+                        Number(lastMsg.group_id),
+                    );
+                    const payload =
+                        lastMsg.message || lastMsg.message_for_sender || "";
                     body = await decryptGroupMessage(String(payload), gKey);
                 } else {
                     body = await decryptLongMessage(lastMsg.message);
@@ -8417,7 +10035,13 @@ async function showBrowserNotification(lastMsg, newCount) {
                 body = "New message";
             }
         } else {
-            const typeLabels = { image: "Photo", voice: "Voice message", video: "Video", file: "File", sticker: "Sticker" };
+            const typeLabels = {
+                image: "Photo",
+                voice: "Voice message",
+                video: "Video",
+                file: "File",
+                sticker: "Sticker",
+            };
             body = typeLabels[lastMsg.message_type] || "New message";
         }
 
@@ -8432,7 +10056,10 @@ async function showBrowserNotification(lastMsg, newCount) {
         if ("serviceWorker" in navigator) {
             const reg = await navigator.serviceWorker.ready;
             if (reg?.showNotification) {
-                await reg.showNotification(`${senderName} — TinTinChat`, notifOptions);
+                await reg.showNotification(
+                    `${senderName} — TinTinChat`,
+                    notifOptions,
+                );
                 return;
             }
         }
@@ -8446,15 +10073,20 @@ async function loadCurrentChatsRecentMessages() {
     try {
         isLoadingMessages = true;
         const offsetMsgId =
-            Array.isArray(currentChatRecentMessages) && currentChatRecentMessages.length
-                ? Number(currentChatRecentMessages[currentChatRecentMessages.length - 1].id || 0)
+            Array.isArray(currentChatRecentMessages) &&
+            currentChatRecentMessages.length
+                ? Number(
+                      currentChatRecentMessages[
+                          currentChatRecentMessages.length - 1
+                      ].id || 0,
+                  )
                 : 0;
         const query = buildChatQueryParams(currentChatUser, {
             offsetMsgId,
             editedSince: lastRecentPollTime || undefined,
         });
         const data = await window.ApiService.json(
-            `api/messages/fetch_recent.php?${query.toString()}`
+            `api/messages/fetch_recent.php?${query.toString()}`,
         );
         if (data?.server_time) lastRecentPollTime = data.server_time;
 
@@ -8471,12 +10103,18 @@ async function loadCurrentChatsRecentMessages() {
         }
 
         // Separate new messages from re-fetched edits
-        const newMessages = data.messages.filter(m => Number(m.id) > offsetMsgId);
-        const lastNew = newMessages.length ? newMessages[newMessages.length - 1] : null;
+        const newMessages = data.messages.filter(
+            (m) => Number(m.id) > offsetMsgId,
+        );
+        const lastNew = newMessages.length
+            ? newMessages[newMessages.length - 1]
+            : null;
 
         if (lastNew && Number(lastNew.sender_id) !== Number(CURRENT_USER_ID)) {
             if (appSettings.notificationSoundEnabled) {
-                try { playNotificationSound(); } catch (_) {}
+                try {
+                    playNotificationSound();
+                } catch (_) {}
             }
             // Browser Notification API
             if (
@@ -8494,7 +10132,9 @@ async function loadCurrentChatsRecentMessages() {
             messageOffset += newMessages.length;
         }
 
-        const editedMessages = data.messages.filter((msg) => Number(msg.id) <= offsetMsgId);
+        const editedMessages = data.messages.filter(
+            (msg) => Number(msg.id) <= offsetMsgId,
+        );
 
         for (const msg of newMessages) {
             await addMessageToChat(msg, false, true);
@@ -8529,17 +10169,27 @@ async function loadCurrentChatsRecentMessages() {
 }
 
 async function refreshPendingSeenStates() {
-    if (!currentChatUser || !pendingSeenMessageIds.size || !navigator.onLine || isGroupToken(currentChatUser)) {
+    if (
+        !currentChatUser ||
+        !pendingSeenMessageIds.size ||
+        !navigator.onLine ||
+        isGroupToken(currentChatUser)
+    ) {
         return;
     }
 
     const ids = Array.from(pendingSeenMessageIds).slice(0, 200);
-    const query = buildChatQueryParams(currentChatUser, { message_ids: ids.join(",") });
+    const query = buildChatQueryParams(currentChatUser, {
+        message_ids: ids.join(","),
+    });
 
     try {
-        const data = await window.ApiService.json(`api/messages/fetch_seen.php?${query.toString()}`, {
-            cache: "no-store",
-        });
+        const data = await window.ApiService.json(
+            `api/messages/fetch_seen.php?${query.toString()}`,
+            {
+                cache: "no-store",
+            },
+        );
         if (!data || data.status !== "ok") {
             return;
         }
@@ -8549,7 +10199,8 @@ async function refreshPendingSeenStates() {
                 if (!seenId) {
                     return;
                 }
-                const seenAt = typeof item?.seen_at === "string" ? item.seen_at : "";
+                const seenAt =
+                    typeof item?.seen_at === "string" ? item.seen_at : "";
                 updateMessageTickStatus(seenId, true, seenAt);
             });
             return;
@@ -8583,7 +10234,9 @@ function generateWaveformBars() {
     for (let i = 0; i < barCount; i++) {
         const height = Math.random() * 65 + 12;
         const normalizedHeight = Math.max(10, Math.round(height));
-        bars.push(`<div class="waveform-bar" data-bar-index="${i}" data-base-height="${normalizedHeight}" style="height: ${normalizedHeight}%"></div>`);
+        bars.push(
+            `<div class="waveform-bar" data-bar-index="${i}" data-base-height="${normalizedHeight}" style="height: ${normalizedHeight}%"></div>`,
+        );
     }
     return bars.join("");
 }
@@ -8622,7 +10275,8 @@ async function loadMoreMessages() {
     } else if (loadMoreBtn) {
         const btn = loadMoreBtn.querySelector("button");
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Load More Messages';
+        btn.innerHTML =
+            '<i class="fas fa-chevron-up me-1"></i>Load More Messages';
     }
 
     updateGoToLatestButton();
@@ -8631,7 +10285,7 @@ async function loadMoreMessages() {
 function targetElement_playHighlight(el) {
     el.classList.remove("reply-target-highlight");
     // Clear any inline animation override (prepended messages set animation:none)
-    el.style.animation = '';
+    el.style.animation = "";
     void el.offsetWidth; // force reflow to restart animation if re-triggered
     el.classList.add("reply-target-highlight");
     setTimeout(() => el.classList.remove("reply-target-highlight"), 2500);
@@ -8642,13 +10296,19 @@ function scrollToMessageAndHighlight(targetElement) {
     targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
     // Step 2: Wait for scroll to finish, THEN play highlight animation
     // Use IntersectionObserver to detect when element is actually in view
-    const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-            observer.disconnect();
-            // Small extra delay so the scroll fully settles visually
-            setTimeout(() => targetElement_playHighlight(targetElement), 150);
-        }
-    }, { root: chatMessagesElem, threshold: 0.5 });
+    const observer = new IntersectionObserver(
+        (entries) => {
+            if (entries[0].isIntersecting) {
+                observer.disconnect();
+                // Small extra delay so the scroll fully settles visually
+                setTimeout(
+                    () => targetElement_playHighlight(targetElement),
+                    150,
+                );
+            }
+        },
+        { root: chatMessagesElem, threshold: 0.5 },
+    );
     observer.observe(targetElement);
     // Safety: if observer never fires (edge case), highlight after 2s
     setTimeout(() => {
@@ -8662,12 +10322,17 @@ function scrollToMessageAndHighlight(targetElement) {
 async function scrollToReplyTarget(targetId) {
     const normalizedTargetId = Number(targetId || 0);
     if (!normalizedTargetId) {
-        setComposerStatus("Original message is no longer available.", "warning");
+        setComposerStatus(
+            "Original message is no longer available.",
+            "warning",
+        );
         return;
     }
 
     // 1. Check if already in DOM
-    let targetMessage = chatMessagesElem.querySelector(`[data-message-id="${normalizedTargetId}"]`);
+    let targetMessage = chatMessagesElem.querySelector(
+        `[data-message-id="${normalizedTargetId}"]`,
+    );
     if (targetMessage) {
         scrollToMessageAndHighlight(targetMessage);
         return;
@@ -8675,7 +10340,10 @@ async function scrollToReplyTarget(targetId) {
 
     // 2. Not loaded — try targeted fetch and then incremental loading fallback
     if (!currentChatUser) {
-        setComposerStatus("Original message is no longer available.", "warning");
+        setComposerStatus(
+            "Original message is no longer available.",
+            "warning",
+        );
         return;
     }
 
@@ -8687,19 +10355,26 @@ async function scrollToReplyTarget(targetId) {
             }
             const containerRect = chatMessagesElem.getBoundingClientRect();
             const targetRect = targetElement.getBoundingClientRect();
-            const idealTop = containerRect.top + (chatMessagesElem.clientHeight / 2) - (targetRect.height / 2);
+            const idealTop =
+                containerRect.top +
+                chatMessagesElem.clientHeight / 2 -
+                targetRect.height / 2;
             const delta = targetRect.top - idealTop;
             if (Math.abs(delta) > 0.5) {
                 chatMessagesElem.scrollTop += delta;
             }
-            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+            await new Promise((r) =>
+                requestAnimationFrame(() => requestAnimationFrame(r)),
+            );
         };
 
         const query = buildChatQueryParams(currentChatUser, {
             offset: 0,
             target_id: normalizedTargetId,
         });
-        const data = await window.ApiService.json(`api/messages/fetch.php?${query.toString()}`);
+        const data = await window.ApiService.json(
+            `api/messages/fetch.php?${query.toString()}`,
+        );
 
         if (Array.isArray(data?.messages) && data.messages.length) {
             const existingLoadMore = document.getElementById("loadMoreBtn");
@@ -8712,7 +10387,12 @@ async function scrollToReplyTarget(targetId) {
             for (let i = data.messages.length - 1; i >= 0; i--) {
                 const incoming = data.messages[i];
                 const incomingId = Number(incoming?.id || 0);
-                if (incomingId > 0 && chatMessagesElem.querySelector(`.message[data-message-id="${incomingId}"]`)) {
+                if (
+                    incomingId > 0 &&
+                    chatMessagesElem.querySelector(
+                        `.message[data-message-id="${incomingId}"]`,
+                    )
+                ) {
                     messageMetaById.set(incomingId, incoming);
                     continue;
                 }
@@ -8732,27 +10412,37 @@ async function scrollToReplyTarget(targetId) {
         }
 
         // Now find the target — wait for layout to settle, then scroll once + highlight
-        targetMessage = chatMessagesElem.querySelector(`[data-message-id="${normalizedTargetId}"]`);
+        targetMessage = chatMessagesElem.querySelector(
+            `[data-message-id="${normalizedTargetId}"]`,
+        );
         let safety = 0;
         while (!targetMessage && safety < 180) {
             safety++;
             const beforeOffset = Number(messageOffset || 0);
             const beforeHasMore = Boolean(hasMoreMessages);
             await loadMessages(currentChatUser, false, false);
-            targetMessage = chatMessagesElem.querySelector(`[data-message-id="${normalizedTargetId}"]`);
+            targetMessage = chatMessagesElem.querySelector(
+                `[data-message-id="${normalizedTargetId}"]`,
+            );
             if (targetMessage) {
                 break;
             }
             if (!beforeHasMore && Number(messageOffset || 0) === beforeOffset) {
                 break;
             }
-            if (!hasMoreMessages && Number(messageOffset || 0) === beforeOffset) {
+            if (
+                !hasMoreMessages &&
+                Number(messageOffset || 0) === beforeOffset
+            ) {
                 break;
             }
         }
 
         if (!targetMessage) {
-            setComposerStatus("Could not find the original message.", "warning");
+            setComposerStatus(
+                "Could not find the original message.",
+                "warning",
+            );
             return;
         }
 
@@ -8768,10 +10458,19 @@ async function scrollToReplyTarget(targetId) {
 
 function newDateTag(
     msg,
-    { atLeft = true, topSpace = 3, fontSize = 10, strictMargins = false, extraStyles = "", editedAt = "" }
+    {
+        atLeft = true,
+        topSpace = 3,
+        fontSize = 10,
+        strictMargins = false,
+        extraStyles = "",
+        editedAt = "",
+    },
 ) {
     const timeLabel = formatMessageTimeLabel(msg.created_at);
-    const margins = strictMargins ? `mt-${topSpace}` : `mt-0 mt-lg-${topSpace} mt-md-${topSpace}`;
+    const margins = strictMargins
+        ? `mt-${topSpace}`
+        : `mt-0 mt-lg-${topSpace} mt-md-${topSpace}`;
     const editedMarker = editedAt ? buildEditedMarkerHtml(editedAt) : "";
     return `<span class="message-meta-time mx-2 ${margins}" style="font-size: ${fontSize}px; float: ${
         atLeft ? "left" : "right"
@@ -8779,7 +10478,9 @@ function newDateTag(
 }
 
 function buildEditedMarkerHtml(editedAt = "") {
-    const title = editedAt ? `Edited at ${formatMessageTimestamp(editedAt)}` : "Edited";
+    const title = editedAt
+        ? `Edited at ${formatMessageTimestamp(editedAt)}`
+        : "Edited";
     return `<span class="message-edited-marker" title="${escapeHtml(title)}" aria-label="Edited"><i class="fas fa-pen" aria-hidden="true"></i></span>`;
 }
 
@@ -8820,7 +10521,9 @@ function buildMessageTextHtmlWithLinks(text) {
             continue;
         }
 
-        const href = core.toLowerCase().startsWith("www.") ? `https://${core}` : core;
+        const href = core.toLowerCase().startsWith("www.")
+            ? `https://${core}`
+            : core;
         html += `<a class="message-text-link" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(core)}</a>${escapeHtml(trailing)}`;
         lastIndex = end;
     }
@@ -8893,7 +10596,9 @@ function rebuildMessageDaySeparators() {
         .querySelectorAll(".message-day-separator")
         .forEach((separator) => separator.remove());
 
-    const messageElements = Array.from(chatMessagesElem.querySelectorAll(".message"));
+    const messageElements = Array.from(
+        chatMessagesElem.querySelectorAll(".message"),
+    );
     let previousDayKey = "";
 
     messageElements.forEach((messageElement) => {
@@ -8917,7 +10622,9 @@ function rebuildMessageDaySeparators() {
 }
 
 function resetConversationSearchHighlights() {
-    const textNodes = chatMessagesElem.querySelectorAll(".message-text-content");
+    const textNodes = chatMessagesElem.querySelectorAll(
+        ".message-text-content",
+    );
     textNodes.forEach((node) => {
         const originalText = node.getAttribute("data-original-text");
         if (originalText !== null) {
@@ -8953,11 +10660,13 @@ function focusConversationSearchResult(index, { behavior = "smooth" } = {}) {
         updateConversationSearchCounter();
         return;
     }
-    conversationSearchResults.forEach((node) => node.classList.remove("is-active"));
+    conversationSearchResults.forEach((node) =>
+        node.classList.remove("is-active"),
+    );
 
     const normalizedIndex = Math.max(
         0,
-        Math.min(Number(index) || 0, conversationSearchResults.length - 1)
+        Math.min(Number(index) || 0, conversationSearchResults.length - 1),
     );
     conversationSearchResultIndex = normalizedIndex;
 
@@ -8977,7 +10686,9 @@ function runConversationSearch(force = false) {
 function highlightConversationSearchHits(query) {
     const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`(${safeQuery})`, "gi");
-    const messageTextNodes = chatMessagesElem.querySelectorAll(".message-text-content");
+    const messageTextNodes = chatMessagesElem.querySelectorAll(
+        ".message-text-content",
+    );
 
     messageTextNodes.forEach((node) => {
         const originalText = node.textContent || "";
@@ -8987,8 +10698,13 @@ function highlightConversationSearchHits(query) {
         }
         regex.lastIndex = 0;
         node.setAttribute("data-original-text", originalText);
-        node.innerHTML = escapeHtml(originalText).replace(regex, '<mark class="chat-search-hit">$1</mark>');
-        conversationSearchResults.push(...node.querySelectorAll(".chat-search-hit"));
+        node.innerHTML = escapeHtml(originalText).replace(
+            regex,
+            '<mark class="chat-search-hit">$1</mark>',
+        );
+        conversationSearchResults.push(
+            ...node.querySelectorAll(".chat-search-hit"),
+        );
     });
 
     return conversationSearchResults.length;
@@ -9034,7 +10750,9 @@ async function runConversationSearchAsync() {
     if (loadedOlderBatches > 0) {
         setComposerStatus("Found results including older messages", "success");
     }
-    focusConversationSearchResult(conversationSearchResults.length - 1, { behavior: "auto" });
+    focusConversationSearchResult(conversationSearchResults.length - 1, {
+        behavior: "auto",
+    });
 }
 
 async function navigateConversationSearch(direction = 1) {
@@ -9062,7 +10780,10 @@ async function navigateConversationSearch(direction = 1) {
         }
         resetConversationSearchHighlights();
         highlightConversationSearchHits(query);
-        const addedCount = Math.max(0, conversationSearchResults.length - previousCount);
+        const addedCount = Math.max(
+            0,
+            conversationSearchResults.length - previousCount,
+        );
         if (addedCount > 0) {
             targetIndex = addedCount - 1;
         }
@@ -9131,26 +10852,40 @@ function bindConversationSearchEvents() {
     });
 
     document.addEventListener("keydown", (event) => {
-        const wantsSearch = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f";
+        const wantsSearch =
+            (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f";
         if (wantsSearch && currentChatUser) {
             event.preventDefault();
             openConversationSearchBar();
         }
-        if (event.key === "Escape" && conversationSearchBar && !conversationSearchBar.hidden) {
+        if (
+            event.key === "Escape" &&
+            conversationSearchBar &&
+            !conversationSearchBar.hidden
+        ) {
             closeConversationSearchBar();
         }
     });
 }
 
-function renderMessageReactions(messageElement, messageData, { flashEmoji = "" } = {}) {
+function renderMessageReactions(
+    messageElement,
+    messageData,
+    { flashEmoji = "" } = {},
+) {
     if (!messageElement) {
         return;
     }
 
-    messageElement.querySelectorAll(".message-reactions").forEach((node) => node.remove());
+    messageElement
+        .querySelectorAll(".message-reactions")
+        .forEach((node) => node.remove());
     messageElement.classList.remove("message-has-reactions");
 
-    if (!Array.isArray(messageData?.reactions) || !messageData.reactions.length) {
+    if (
+        !Array.isArray(messageData?.reactions) ||
+        !messageData.reactions.length
+    ) {
         return;
     }
 
@@ -9181,9 +10916,16 @@ function renderMessageReactions(messageElement, messageData, { flashEmoji = "" }
             event.stopPropagation();
             const currentEmoji = reactionItem?.reacted_by_me ? "" : emoji;
             try {
-                await toggleMessageReaction(Number(messageData?.id || 0), currentEmoji);
+                await toggleMessageReaction(
+                    Number(messageData?.id || 0),
+                    currentEmoji,
+                );
             } catch (error) {
-                showModal(I18N_TEXT.reactFailedTitle, error.message || I18N_TEXT.reactFailedBody, "error");
+                showModal(
+                    I18N_TEXT.reactFailedTitle,
+                    error.message || I18N_TEXT.reactFailedBody,
+                    "error",
+                );
             }
         });
         container.appendChild(chip);
@@ -9201,7 +10943,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
     const normalizedMessageId = Number(msg?.id || 0);
     if (normalizedMessageId > 0) {
         const existingMessageElement = chatMessagesElem.querySelector(
-            `.message[data-message-id="${normalizedMessageId}"]`
+            `.message[data-message-id="${normalizedMessageId}"]`,
         );
         if (existingMessageElement) {
             const prevMeta = messageMetaById.get(normalizedMessageId);
@@ -9210,30 +10952,52 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
             updateMessageTickStatus(
                 normalizedMessageId,
                 Boolean(msg.seen_at),
-                msg.seen_at || ""
+                msg.seen_at || "",
             );
-            if (msg.edited_at && msg.edited_at !== (prevMeta?.edited_at || "")) {
+            if (
+                msg.edited_at &&
+                msg.edited_at !== (prevMeta?.edited_at || "")
+            ) {
                 try {
                     const isGroup = Number(msg.group_id || 0) > 0;
                     let newText = "";
                     if (isGroup) {
-                        const gKey = await getGroupCryptoKey(Number(msg.group_id));
-                        const payload = msg.sender_id == CURRENT_USER_ID
-                            ? msg.message_for_sender || msg.message || ""
-                            : msg.message || msg.message_for_sender || "";
-                        newText = await decryptGroupMessage(String(payload), gKey);
+                        const gKey = await getGroupCryptoKey(
+                            Number(msg.group_id),
+                        );
+                        const payload =
+                            msg.sender_id == CURRENT_USER_ID
+                                ? msg.message_for_sender || msg.message || ""
+                                : msg.message || msg.message_for_sender || "";
+                        newText = await decryptGroupMessage(
+                            String(payload),
+                            gKey,
+                        );
                     } else {
                         newText = await decryptLongMessage(
-                            msg.sender_id == CURRENT_USER_ID ? msg.message_for_sender : msg.message
+                            msg.sender_id == CURRENT_USER_ID
+                                ? msg.message_for_sender
+                                : msg.message,
                         );
                     }
-                    const textSpan = existingMessageElement.querySelector(".message-text-content");
+                    const textSpan = existingMessageElement.querySelector(
+                        ".message-text-content",
+                    );
                     if (textSpan) {
-                        textSpan.innerHTML = buildMessageTextHtmlWithLinks(newText);
+                        textSpan.innerHTML =
+                            buildMessageTextHtmlWithLinks(newText);
                     }
-                    existingMessageElement.setAttribute("data-edited-at", msg.edited_at || "");
-                    ensureEditedMarkerPlacement(existingMessageElement, msg.edited_at || "");
-                } catch (_) { /* decryption failure — leave existing text */ }
+                    existingMessageElement.setAttribute(
+                        "data-edited-at",
+                        msg.edited_at || "",
+                    );
+                    ensureEditedMarkerPlacement(
+                        existingMessageElement,
+                        msg.edited_at || "",
+                    );
+                } catch (_) {
+                    /* decryption failure — leave existing text */
+                }
             }
             return existingMessageElement;
         }
@@ -9264,10 +11028,16 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                       : msg.reply_message;
                 if (replyPayload) {
                     if (isGroup) {
-                        const gk = await getGroupCryptoKey(Number(msg.group_id));
-                        decryptedReplyText = await decryptGroupMessage(String(replyPayload), gk);
+                        const gk = await getGroupCryptoKey(
+                            Number(msg.group_id),
+                        );
+                        decryptedReplyText = await decryptGroupMessage(
+                            String(replyPayload),
+                            gk,
+                        );
                     } else {
-                        decryptedReplyText = await decryptLongMessage(replyPayload);
+                        decryptedReplyText =
+                            await decryptLongMessage(replyPayload);
                     }
                 }
             } catch (_) {}
@@ -9276,7 +11046,6 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
     }
 
     if (msg.message_type === "voice" && msg.voice_file_path) {
-
         div.classList.add("is-voice-message");
         hasContextActions = true;
         canReact = true;
@@ -9351,11 +11120,11 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                         atLeft: msg.sender_id != CURRENT_USER_ID,
                         topSpace: 1,
                         fontSize: 8.5,
-                        extraStyles: "color: var(--text-color); font-weight: 600;",
+                        extraStyles:
+                            "color: var(--text-color); font-weight: 600;",
                     })}`;
         }
         div.setAttribute("data-message-id", msg.id);
-
     } else if (msg.message_type === "video" && msg.any_file_path) {
         div.classList.add("is-video-message");
         hasContextActions = true;
@@ -9392,7 +11161,6 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
             `;
         }
         div.setAttribute("data-message-id", msg.id);
-
     } else if (msg.message_type === "file" && msg.any_file_path) {
         hasContextActions = true;
         canReact = true;
@@ -9403,7 +11171,10 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
             let fileName = "File";
             try {
                 const mediaMeta = await getDecryptedMediaMetadata(msg);
-                fileName = sanitizeAttachmentFileName(String(mediaMeta?.file_name || "").trim(), fileName);
+                fileName = sanitizeAttachmentFileName(
+                    String(mediaMeta?.file_name || "").trim(),
+                    fileName,
+                );
             } catch (_) {}
             const safeFileName = escapeHtml(fileName);
             const isAudio = isAudioFileName(fileName);
@@ -9426,7 +11197,8 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                       atLeft: msg.sender_id != CURRENT_USER_ID,
                       topSpace: 1,
                       fontSize: 8.5,
-                      extraStyles: "color: var(--text-color); font-weight: 600;",
+                      extraStyles:
+                          "color: var(--text-color); font-weight: 600;",
                   })}
                 `;
             } else {
@@ -9446,7 +11218,8 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                       atLeft: msg.sender_id != CURRENT_USER_ID,
                       topSpace: 1,
                       fontSize: 8.5,
-                      extraStyles: "color: var(--text-color); font-weight: 600;",
+                      extraStyles:
+                          "color: var(--text-color); font-weight: 600;",
                   })}
                 `;
             }
@@ -9456,7 +11229,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                 const mediaMeta = await getDecryptedMediaMetadata(msg);
                 fileName = sanitizeAttachmentFileName(
                     String(mediaMeta?.file_name || "").trim(),
-                    fileName
+                    fileName,
                 );
             } catch (error) {}
             const fileSize = msg.file_size ? formatFileSize(msg.file_size) : "";
@@ -9494,16 +11267,23 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                       atLeft: msg.sender_id != CURRENT_USER_ID,
                       topSpace: 1,
                       fontSize: 8.5,
-                      extraStyles: "color: var(--text-color); font-weight: 600;",
+                      extraStyles:
+                          "color: var(--text-color); font-weight: 600;",
                   })}
                 `;
             } else {
                 // ── Generic file ──
                 div.classList.add("is-file-message");
                 const isDownloaded = await isFileDownloaded(msg.id);
-                const downloadIconClass = isDownloaded ? "fa-check-circle" : "fa-download";
-                const downloadIconColor = isDownloaded ? "color: var(--primary-color);" : "";
-                const cacheTitle = isDownloaded ? 'title="Click to open cached file"' : "";
+                const downloadIconClass = isDownloaded
+                    ? "fa-check-circle"
+                    : "fa-download";
+                const downloadIconColor = isDownloaded
+                    ? "color: var(--primary-color);"
+                    : "";
+                const cacheTitle = isDownloaded
+                    ? 'title="Click to open cached file"'
+                    : "";
 
                 div.innerHTML = `
                   ${buildForwardedPreviewHtml(msg)}${replyHtml}
@@ -9523,13 +11303,17 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                       atLeft: msg.sender_id != CURRENT_USER_ID,
                       topSpace: 1,
                       fontSize: 8.5,
-                      extraStyles: "color: var(--text-color); font-weight: 600;",
+                      extraStyles:
+                          "color: var(--text-color); font-weight: 600;",
                   })}
                 `;
             }
         }
         div.setAttribute("data-message-id", msg.id);
-    } else if (msg.message_type === "sticker" && Number(msg.sticker_id || 0) > 0) {
+    } else if (
+        msg.message_type === "sticker" &&
+        Number(msg.sticker_id || 0) > 0
+    ) {
         div.classList.add("is-sticker-message");
         hasContextActions = true;
         canReact = true;
@@ -9581,45 +11365,58 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     msg.sender_id == CURRENT_USER_ID
                         ? msg.message_for_sender || msg.message || ""
                         : msg.message || msg.message_for_sender || "";
-                decryptedText = await decryptGroupMessage(String(groupPayload || ""), groupKey);
+                decryptedText = await decryptGroupMessage(
+                    String(groupPayload || ""),
+                    groupKey,
+                );
             } else {
                 if (msg.sender_id == CURRENT_USER_ID) {
-                    decryptedText = await decryptLongMessage(msg.message_for_sender);
+                    decryptedText = await decryptLongMessage(
+                        msg.message_for_sender,
+                    );
                 } else {
                     decryptedText = await decryptLongMessage(msg.message);
                 }
             }
 
             if (msg.reply_message_id && msg.reply_message_type === "text") {
-                const replyPayload =
-                    isGroupMessage
-                        ? msg.reply_message || msg.reply_message_for_sender
-                        : msg.reply_sender_id == CURRENT_USER_ID
-                          ? msg.reply_message_for_sender
-                          : msg.reply_message;
+                const replyPayload = isGroupMessage
+                    ? msg.reply_message || msg.reply_message_for_sender
+                    : msg.reply_sender_id == CURRENT_USER_ID
+                      ? msg.reply_message_for_sender
+                      : msg.reply_message;
                 if (replyPayload) {
                     if (isGroupMessage) {
                         const groupId = Number(msg.group_id || 0);
                         const groupKey = await getGroupCryptoKey(groupId);
-                        decryptedReplyText = await decryptGroupMessage(String(replyPayload), groupKey);
+                        decryptedReplyText = await decryptGroupMessage(
+                            String(replyPayload),
+                            groupKey,
+                        );
                     } else {
-                        decryptedReplyText = await decryptLongMessage(replyPayload);
+                        decryptedReplyText =
+                            await decryptLongMessage(replyPayload);
                     }
                 }
             }
         } catch (e) {
-            decryptedText = isGroupMessage ? String(msg.message || "") : "[Unsupported message]";
+            decryptedText = isGroupMessage
+                ? String(msg.message || "")
+                : "[Unsupported message]";
         }
         const isPersian = isTextPersian(decryptedText.trim());
         const safeText = buildMessageTextHtmlWithLinks(decryptedText);
-        const isIncomingGroup = isGroupMessage && msg.sender_id != CURRENT_USER_ID;
-        const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
+        const isIncomingGroup =
+            isGroupMessage && msg.sender_id != CURRENT_USER_ID;
+        const senderUsername = escapeHtml(
+            String(msg.sender_username || "Member"),
+        );
         const groupDateTag = `<span class="message-meta-time group-message-meta-time">${escapeHtml(formatMessageTimeLabel(msg.created_at))}${msg.edited_at ? buildEditedMarkerHtml(msg.edited_at) : ""}</span>`;
         const messageBodyContent = `${buildForwardedPreviewHtml(msg)}${buildReplyPreviewHtml(msg, decryptedReplyText)}<span class="message-text-content">${safeText}</span>${isIncomingGroup ? groupDateTag : ""}`;
         const outsideDateTag = isIncomingGroup
             ? ""
             : newDateTag(msg, {
-                atLeft: msg.sender_id != CURRENT_USER_ID,
+                  atLeft: msg.sender_id != CURRENT_USER_ID,
                   strictMargins: true,
                   topSpace: 3,
                   editedAt: msg.edited_at || "",
@@ -9627,7 +11424,9 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
         div.classList.add("is-text-message");
         if (isIncomingGroup) {
             div.classList.add("group-incoming-message");
-            div.classList.add(isPersian ? "group-incoming-rtl" : "group-incoming-ltr");
+            div.classList.add(
+                isPersian ? "group-incoming-rtl" : "group-incoming-ltr",
+            );
         }
         hasContextActions = true;
         canCopy = true;
@@ -9652,7 +11451,9 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
         const replyQuote = div.querySelector(".reply-quote");
         if (replyQuote) {
             replyQuote.addEventListener("click", () => {
-                const targetId = replyQuote.getAttribute("data-reply-target-id");
+                const targetId = replyQuote.getAttribute(
+                    "data-reply-target-id",
+                );
                 if (!targetId) {
                     return;
                 }
@@ -9666,9 +11467,15 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
         Number(msg.sender_id || 0) !== Number(CURRENT_USER_ID) &&
         String(msg.message_type || "") !== "text";
     if (isIncomingGroupMediaMessage) {
-        const senderUsername = escapeHtml(String(msg.sender_username || "Member"));
+        const senderUsername = escapeHtml(
+            String(msg.sender_username || "Member"),
+        );
         const mediaBodyContent = div.innerHTML;
-        div.classList.add("group-incoming-message", "group-incoming-ltr", "group-incoming-media-message");
+        div.classList.add(
+            "group-incoming-message",
+            "group-incoming-ltr",
+            "group-incoming-media-message",
+        );
         div.innerHTML = `
             <div class="group-message-row">
                 <span class="group-message-avatar">${buildAvatarImageHtml({ userId: Number(msg.sender_id || 0), username: String(msg.sender_username || "Member"), className: "group-message-avatar-image", size: 64 })}</span>
@@ -9685,7 +11492,9 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
         const replyQuote = div.querySelector(".reply-quote");
         if (replyQuote) {
             replyQuote.addEventListener("click", () => {
-                const targetId = replyQuote.getAttribute("data-reply-target-id");
+                const targetId = replyQuote.getAttribute(
+                    "data-reply-target-id",
+                );
                 if (targetId) void scrollToReplyTarget(targetId);
             });
         }
@@ -9709,7 +11518,11 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
             });
         }
         void hydrateImageMessageElement(div, msg);
-    } else if (msg.message_type === "video" && msg.any_file_path && !isFilePurged) {
+    } else if (
+        msg.message_type === "video" &&
+        msg.any_file_path &&
+        !isFilePurged
+    ) {
         void hydrateVideoMessageElement(div, msg);
     }
 
@@ -9717,7 +11530,9 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
     const isGroupMessageForStatus = Number(msg.group_id || 0) > 0;
     if (isOwnMessage && !isSavedMessagesChat(currentChatUser)) {
         const tickContainer = document.createElement("span");
-        const isSeen = isGroupMessageForStatus ? Boolean(msg.group_seen_at) : Boolean(msg.seen_at);
+        const isSeen = isGroupMessageForStatus
+            ? Boolean(msg.group_seen_at)
+            : Boolean(msg.seen_at);
         tickContainer.className = isSeen
             ? "message-status-indicator seen-ticks"
             : "message-status-indicator just-sent-tick";
@@ -9740,7 +11555,10 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
     div.setAttribute("data-created-at", msg.created_at || "");
     div.setAttribute("data-seen-at", msg.seen_at || "");
     div.setAttribute("data-group-seen-at", msg.group_seen_at || "");
-    div.setAttribute("data-forwarded-from-message-id", String(Number(msg.forwarded_from_message_id || 0)));
+    div.setAttribute(
+        "data-forwarded-from-message-id",
+        String(Number(msg.forwarded_from_message_id || 0)),
+    );
     div.setAttribute("data-edited-at", msg.edited_at || "");
     if (msg.file_size) {
         div.setAttribute("data-file-size", String(msg.file_size));
@@ -9769,7 +11587,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
         if (prepend) {
             // Disable entrance animation for older (prepended) messages —
             // they are historical content, not new arrivals.
-            div.style.animation = 'none';
+            div.style.animation = "none";
             const loadMoreBtn = document.getElementById("loadMoreBtn");
             if (loadMoreBtn) {
                 chatMessagesElem.insertBefore(div, loadMoreBtn.nextSibling);
@@ -9820,7 +11638,9 @@ function captureViewportAnchor() {
     }
 
     const containerRect = chatMessagesElem.getBoundingClientRect();
-    const messageElements = Array.from(chatMessagesElem.querySelectorAll(".message"));
+    const messageElements = Array.from(
+        chatMessagesElem.querySelectorAll(".message"),
+    );
     const anchorElement = messageElements.find((element) => {
         const rect = element.getBoundingClientRect();
         return rect.bottom >= containerRect.top;
@@ -9837,7 +11657,8 @@ function captureViewportAnchor() {
 
     return {
         id: anchorId,
-        offsetTop: anchorElement.getBoundingClientRect().top - containerRect.top,
+        offsetTop:
+            anchorElement.getBoundingClientRect().top - containerRect.top,
     };
 }
 
@@ -9846,14 +11667,18 @@ function restoreViewportAnchor(anchor) {
         return;
     }
 
-    const target = chatMessagesElem.querySelector(`[data-message-id="${anchor.id}"]`);
+    const target = chatMessagesElem.querySelector(
+        `[data-message-id="${anchor.id}"]`,
+    );
     if (!target) {
         return;
     }
 
     const containerRect = chatMessagesElem.getBoundingClientRect();
-    const currentOffsetTop = target.getBoundingClientRect().top - containerRect.top;
-    chatMessagesElem.scrollTop += currentOffsetTop - Number(anchor.offsetTop || 0);
+    const currentOffsetTop =
+        target.getBoundingClientRect().top - containerRect.top;
+    chatMessagesElem.scrollTop +=
+        currentOffsetTop - Number(anchor.offsetTop || 0);
 }
 
 function stabilizeViewportAnchor(anchor, frameBudget = 24) {
@@ -9875,14 +11700,17 @@ function stabilizeViewportAnchor(anchor, frameBudget = 24) {
             return;
         }
 
-        const target = chatMessagesElem.querySelector(`[data-message-id="${anchor.id}"]`);
+        const target = chatMessagesElem.querySelector(
+            `[data-message-id="${anchor.id}"]`,
+        );
         if (!(target instanceof HTMLElement)) {
             viewportAnchorStabilizeRafId = 0;
             return;
         }
 
         const containerRect = chatMessagesElem.getBoundingClientRect();
-        const currentOffsetTop = target.getBoundingClientRect().top - containerRect.top;
+        const currentOffsetTop =
+            target.getBoundingClientRect().top - containerRect.top;
         const delta = currentOffsetTop - Number(anchor.offsetTop || 0);
 
         if (Math.abs(delta) > 0.5) {
@@ -10022,7 +11850,8 @@ function getImageModalElements() {
     const imageModalDownload = document.getElementById("imageModalDownload");
     const imageModalZoomIn = document.getElementById("imageModalZoomIn");
     const imageModalZoomOut = document.getElementById("imageModalZoomOut");
-    const imageModalContent = imageModalOverlay?.querySelector(".image-modal-content") || null;
+    const imageModalContent =
+        imageModalOverlay?.querySelector(".image-modal-content") || null;
     return {
         imageModalOverlay,
         imageModalImage,
@@ -10034,10 +11863,16 @@ function getImageModalElements() {
 }
 
 function clampImageModalScale(scale) {
-    return Math.min(IMAGE_MODAL_MAX_SCALE, Math.max(IMAGE_MODAL_MIN_SCALE, Number(scale) || IMAGE_MODAL_MIN_SCALE));
+    return Math.min(
+        IMAGE_MODAL_MAX_SCALE,
+        Math.max(IMAGE_MODAL_MIN_SCALE, Number(scale) || IMAGE_MODAL_MIN_SCALE),
+    );
 }
 
-function applyImageModalScale(scale, { focalClientX = null, focalClientY = null } = {}) {
+function applyImageModalScale(
+    scale,
+    { focalClientX = null, focalClientY = null } = {},
+) {
     const { imageModalImage } = getImageModalElements();
     if (!imageModalImage) {
         return;
@@ -10078,7 +11913,8 @@ function getTouchMidpoint(touchA, touchB) {
 }
 
 function openImageModal(imageUrl) {
-    const { imageModalOverlay, imageModalImage, imageModalDownload } = getImageModalElements();
+    const { imageModalOverlay, imageModalImage, imageModalDownload } =
+        getImageModalElements();
 
     if (!imageModalOverlay || !imageModalImage || !imageModalDownload) return;
 
@@ -10091,9 +11927,12 @@ function openImageModal(imageUrl) {
     imageModalDownload.download = `image_${Date.now()}.jpg`;
 
     imageModalOverlay.style.display = "flex";
-    pushUiBackLayer(UI_BACK_LAYER_KEYS.imageModal, ({ fromHistory = false } = {}) => {
-        closeImageModal({ fromHistory });
-    });
+    pushUiBackLayer(
+        UI_BACK_LAYER_KEYS.imageModal,
+        ({ fromHistory = false } = {}) => {
+            closeImageModal({ fromHistory });
+        },
+    );
     setTimeout(() => {
         imageModalOverlay.classList.add("visible");
     }, 10);
@@ -10104,9 +11943,12 @@ function openImageModal(imageUrl) {
 function closeImageModal({ fromHistory = false } = {}) {
     const { imageModalOverlay, imageModalImage } = getImageModalElements();
     if (!imageModalOverlay) return;
-    if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.imageModal, () => {
-        closeImageModal({ fromHistory: true });
-    })) {
+    if (
+        !fromHistory &&
+        requestUiLayerClose(UI_BACK_LAYER_KEYS.imageModal, () => {
+            closeImageModal({ fromHistory: true });
+        })
+    ) {
         return;
     }
     removeUiBackLayer(UI_BACK_LAYER_KEYS.imageModal);
@@ -10179,7 +12021,10 @@ async function getDownloadDirectory() {
         localStorage.setItem("tintinchat_download_dir", JSON.stringify(handle));
         return handle;
     } catch (error) {
-        console.warn("File System Access API not available or permission denied:", error);
+        console.warn(
+            "File System Access API not available or permission denied:",
+            error,
+        );
     }
     return null;
 }
@@ -10192,9 +12037,12 @@ async function openCachedFile(messageId) {
         const dirHandle = await getDownloadDirectory();
         if (dirHandle) {
             try {
-                const fileHandle = await dirHandle.getFileHandle(cachedFile.fileName, {
-                    create: true,
-                });
+                const fileHandle = await dirHandle.getFileHandle(
+                    cachedFile.fileName,
+                    {
+                        create: true,
+                    },
+                );
                 const writable = await fileHandle.createWritable();
                 await writable.write(cachedFile.fileBlob);
                 await writable.close();
@@ -10205,7 +12053,7 @@ async function openCachedFile(messageId) {
                     showModal(
                         "File Saved",
                         `File saved to your downloads folder:\n${cachedFile.fileName}`,
-                        "success"
+                        "success",
                     );
                 }
                 return true;
@@ -10240,7 +12088,11 @@ async function openCachedFileBlob(cachedFile) {
 async function downloadAndOpenFile(messageId) {
     const messageMeta = messageMetaById.get(Number(messageId));
     if (!messageMeta) {
-        showModal(I18N_TEXT.downloadErrorTitle, "Message metadata not found.", "error");
+        showModal(
+            I18N_TEXT.downloadErrorTitle,
+            "Message metadata not found.",
+            "error",
+        );
         return;
     }
 
@@ -10249,16 +12101,18 @@ async function downloadAndOpenFile(messageId) {
         const metadata = await getDecryptedMediaMetadata(messageMeta);
         fileName = sanitizeAttachmentFileName(
             String(metadata?.file_name || metadata?.name || "").trim(),
-            fileName
+            fileName,
         );
     } catch (error) {}
 
     // Check if file was previously downloaded
     const fileDownloaded = await isFileDownloaded(messageId);
     const fileIcon = document.querySelector(
-        `[data-file-msg-id="${messageId}"] .file-download-icon i`
+        `[data-file-msg-id="${messageId}"] .file-download-icon i`,
     );
-    const container = document.querySelector(`[data-file-msg-id="${messageId}"]`);
+    const container = document.querySelector(
+        `[data-file-msg-id="${messageId}"]`,
+    );
 
     if (fileDownloaded) {
         if (fileIcon) {
@@ -10322,8 +12176,12 @@ async function downloadAndOpenFile(messageId) {
         const isUnavailable = error?.message === "FILE_UNAVAILABLE";
         showModal(
             isUnavailable ? "File Unavailable" : I18N_TEXT.downloadErrorTitle,
-            isUnavailable ? "This file is no longer available on the server." : formatI18nText(I18N_TEXT.downloadErrorBody, { error: error.message || "Unknown" }),
-            isUnavailable ? "warning" : "error"
+            isUnavailable
+                ? "This file is no longer available on the server."
+                : formatI18nText(I18N_TEXT.downloadErrorBody, {
+                      error: error.message || "Unknown",
+                  }),
+            isUnavailable ? "warning" : "error",
         );
     } finally {
         if (container) {
@@ -10361,43 +12219,64 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (imageModalContent) {
-        imageModalContent.addEventListener("wheel", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const direction = e.deltaY < 0 ? 1 : -1;
-            const step = IMAGE_MODAL_SCALE_STEP * (e.ctrlKey ? 0.7 : 1);
-            applyImageModalScale(
-                imageModalScale + (direction * step),
-                { focalClientX: e.clientX, focalClientY: e.clientY }
-            );
-        }, { passive: false });
-
-        imageModalContent.addEventListener("touchstart", function (e) {
-            if (e.touches.length === 2) {
+        imageModalContent.addEventListener(
+            "wheel",
+            function (e) {
                 e.preventDefault();
                 e.stopPropagation();
-                imageModalPinchStartDistance = getTouchDistance(e.touches[0], e.touches[1]);
-                imageModalPinchStartScale = imageModalScale;
-            }
-        }, { passive: false });
+                const direction = e.deltaY < 0 ? 1 : -1;
+                const step = IMAGE_MODAL_SCALE_STEP * (e.ctrlKey ? 0.7 : 1);
+                applyImageModalScale(imageModalScale + direction * step, {
+                    focalClientX: e.clientX,
+                    focalClientY: e.clientY,
+                });
+            },
+            { passive: false },
+        );
 
-        imageModalContent.addEventListener("touchmove", function (e) {
-            if (e.touches.length !== 2 || imageModalPinchStartDistance <= 0) {
-                return;
-            }
-            e.preventDefault();
-            e.stopPropagation();
-            const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
-            if (currentDistance <= 0) {
-                return;
-            }
-            const ratio = currentDistance / imageModalPinchStartDistance;
-            const midpoint = getTouchMidpoint(e.touches[0], e.touches[1]);
-            applyImageModalScale(
-                imageModalPinchStartScale * ratio,
-                { focalClientX: midpoint.x, focalClientY: midpoint.y }
-            );
-        }, { passive: false });
+        imageModalContent.addEventListener(
+            "touchstart",
+            function (e) {
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    imageModalPinchStartDistance = getTouchDistance(
+                        e.touches[0],
+                        e.touches[1],
+                    );
+                    imageModalPinchStartScale = imageModalScale;
+                }
+            },
+            { passive: false },
+        );
+
+        imageModalContent.addEventListener(
+            "touchmove",
+            function (e) {
+                if (
+                    e.touches.length !== 2 ||
+                    imageModalPinchStartDistance <= 0
+                ) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                const currentDistance = getTouchDistance(
+                    e.touches[0],
+                    e.touches[1],
+                );
+                if (currentDistance <= 0) {
+                    return;
+                }
+                const ratio = currentDistance / imageModalPinchStartDistance;
+                const midpoint = getTouchMidpoint(e.touches[0], e.touches[1]);
+                applyImageModalScale(imageModalPinchStartScale * ratio, {
+                    focalClientX: midpoint.x,
+                    focalClientY: midpoint.y,
+                });
+            },
+            { passive: false },
+        );
 
         imageModalContent.addEventListener("touchend", function () {
             if (imageModalPinchStartDistance > 0) {
@@ -10419,7 +12298,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        const imageModalContent = imageModalOverlay.querySelector(".image-modal-content");
+        const imageModalContent = imageModalOverlay.querySelector(
+            ".image-modal-content",
+        );
         if (imageModalContent) {
             imageModalContent.addEventListener("click", function (e) {
                 e.stopPropagation();
@@ -10492,15 +12373,19 @@ window.playVoiceMessage = async function (messageId) {
         if (!durationDisplay || !audio) return;
         const hasDuration = isFinite(audio.duration) && audio.duration > 0;
         const currentSeconds = Math.max(0, Math.round(audio.currentTime || 0));
-        const displaySeconds = audio.ended && hasDuration
-            ? Math.round(audio.duration)
-            : currentSeconds;
+        const displaySeconds =
+            audio.ended && hasDuration
+                ? Math.round(audio.duration)
+                : currentSeconds;
         const minutes = Math.floor(displaySeconds / 60);
         const seconds = displaySeconds % 60;
         durationDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
         if (hasDuration) {
-            const progress = Math.max(0, Math.min(1, audio.currentTime / audio.duration));
+            const progress = Math.max(
+                0,
+                Math.min(1, audio.currentTime / audio.duration),
+            );
             const waveformBarsEl = messageDiv.querySelector(".waveform-bars");
             if (waveformBarsEl) {
                 updateVoiceSeekBars(waveformBarsEl, progress);
@@ -10511,7 +12396,9 @@ window.playVoiceMessage = async function (messageId) {
     let audio = messageDiv.querySelector("audio");
     if (!audio) {
         if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContext = new (
+                window.AudioContext || window.webkitAudioContext
+            )();
         }
 
         audio = document.createElement("audio");
@@ -10522,10 +12409,15 @@ window.playVoiceMessage = async function (messageId) {
             const isPurged = error?.message === "FILE_UNAVAILABLE";
             showModal(
                 isPurged ? "File Expired" : "Audio Error",
-                isPurged ? "This voice message has been removed due to server cleanup." : "Unable to decrypt voice message.",
-                isPurged ? "warning" : "error"
+                isPurged
+                    ? "This voice message has been removed due to server cleanup."
+                    : "Unable to decrypt voice message.",
+                isPurged ? "warning" : "error",
             );
-            if (playBtn) { playBtn.disabled = true; playBtn.style.opacity = "0.4"; }
+            if (playBtn) {
+                playBtn.disabled = true;
+                playBtn.style.opacity = "0.4";
+            }
             return;
         }
         audio.preload = "metadata";
@@ -10545,8 +12437,14 @@ window.playVoiceMessage = async function (messageId) {
 
         audio.addEventListener("loadedmetadata", function () {
             if (isFinite(audio.duration)) {
-                const pendingRatio = parseFloat(messageDiv.dataset.pendingVoiceSeekRatio);
-                if (isFinite(pendingRatio) && pendingRatio >= 0 && pendingRatio <= 1) {
+                const pendingRatio = parseFloat(
+                    messageDiv.dataset.pendingVoiceSeekRatio,
+                );
+                if (
+                    isFinite(pendingRatio) &&
+                    pendingRatio >= 0 &&
+                    pendingRatio <= 1
+                ) {
                     audio.currentTime = pendingRatio * audio.duration;
                     delete messageDiv.dataset.pendingVoiceSeekRatio;
                 }
@@ -10586,7 +12484,7 @@ window.playVoiceMessage = async function (messageId) {
             showModal(
                 "Audio Error",
                 "Unable to load voice message. The audio file may be missing or corrupted.",
-                "error"
+                "error",
             );
             playBtn.disabled = true;
             playBtn.style.opacity = "0.5";
@@ -10609,6 +12507,51 @@ window.playVoiceMessage = async function (messageId) {
                     if (idx < playedCount) bar.classList.add("played");
                     else bar.classList.remove("played");
                 });
+            });
+        }
+
+        // ── Force-discover duration for blob URLs ──
+        // WebM files produced by MediaRecorder lack a duration in their
+        // container header, so browsers report audio.duration === Infinity.
+        // Seeking to a huge value forces the browser to scan the file and
+        // report the real duration via the "durationchange" event.
+        if (!isFinite(audio.duration) || audio.duration <= 0) {
+            await new Promise((resolve) => {
+                let settled = false;
+                const finish = () => {
+                    if (settled) return;
+                    settled = true;
+                    audio.removeEventListener("durationchange", onDur);
+                    resolve();
+                };
+                const onDur = () => {
+                    if (isFinite(audio.duration) && audio.duration > 0) {
+                        audio.currentTime = 0;
+                        finish();
+                    }
+                };
+                audio.addEventListener("durationchange", onDur);
+
+                // Seek after enough data is available
+                if (audio.readyState >= 1) {
+                    audio.currentTime = 1e101;
+                } else {
+                    audio.addEventListener(
+                        "loadedmetadata",
+                        () => {
+                            if (!settled) audio.currentTime = 1e101;
+                        },
+                        { once: true },
+                    );
+                }
+
+                // Safety fallback — proceed even if discovery fails
+                setTimeout(() => {
+                    try {
+                        if (!settled) audio.currentTime = 0;
+                    } catch (_) {}
+                    finish();
+                }, 4000);
             });
         }
     }
@@ -10651,17 +12594,27 @@ window.playVoiceMessage = async function (messageId) {
             audioContext.resume();
         }
 
-        audio.play().then(function () {
-            draw();
-            updateVoicePlaybackUi();
-        }).catch(function (error) {
-            showModal(I18N_TEXT.playbackErrorTitle, I18N_TEXT.playbackErrorBody, "error");
-        });
+        audio
+            .play()
+            .then(function () {
+                draw();
+                updateVoicePlaybackUi();
+            })
+            .catch(function (error) {
+                showModal(
+                    I18N_TEXT.playbackErrorTitle,
+                    I18N_TEXT.playbackErrorBody,
+                    "error",
+                );
+            });
         playBtn.classList.add("playing");
         voiceContainer?.classList.add("is-playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
         // Show global now-playing bar
-        const voiceCaption = (messageMeta.sender_username || "Voice") + " · " + formatMessageTimeLabel(messageMeta.created_at);
+        const voiceCaption =
+            (messageMeta.sender_username || "Voice") +
+            " · " +
+            formatMessageTimeLabel(messageMeta.created_at);
         showGlobalNowPlaying(audio, voiceCaption, "voice");
     } else {
         audio.pause();
@@ -10690,7 +12643,9 @@ window.playMusicMessage = async function (messageId) {
     let audio = messageDiv.querySelector("audio");
     if (!audio) {
         if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContext = new (
+                window.AudioContext || window.webkitAudioContext
+            )();
         }
 
         audio = document.createElement("audio");
@@ -10701,10 +12656,15 @@ window.playMusicMessage = async function (messageId) {
             const isPurged = error?.message === "FILE_UNAVAILABLE";
             showModal(
                 isPurged ? "File Expired" : "Audio Error",
-                isPurged ? "This music file has been removed due to server cleanup." : "Unable to decrypt music file.",
-                isPurged ? "warning" : "error"
+                isPurged
+                    ? "This music file has been removed due to server cleanup."
+                    : "Unable to decrypt music file.",
+                isPurged ? "warning" : "error",
             );
-            if (playBtn) { playBtn.disabled = true; playBtn.style.opacity = "0.4"; }
+            if (playBtn) {
+                playBtn.disabled = true;
+                playBtn.style.opacity = "0.4";
+            }
             return;
         }
         audio.preload = "metadata";
@@ -10750,7 +12710,10 @@ window.playMusicMessage = async function (messageId) {
             function seekToPosition(clientX) {
                 if (!audio || !isFinite(audio.duration)) return;
                 const rect = progressWrap.getBoundingClientRect();
-                const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                const ratio = Math.max(
+                    0,
+                    Math.min(1, (clientX - rect.left) / rect.width),
+                );
                 audio.currentTime = ratio * audio.duration;
                 if (progressBar) progressBar.style.width = `${ratio * 100}%`;
             }
@@ -10760,7 +12723,9 @@ window.playMusicMessage = async function (messageId) {
                 e.preventDefault();
                 seekToPosition(e.clientX);
                 progressWrap.classList.add("seeking");
-                function onMouseMove(ev) { seekToPosition(ev.clientX); }
+                function onMouseMove(ev) {
+                    seekToPosition(ev.clientX);
+                }
                 function onMouseUp() {
                     progressWrap.classList.remove("seeking");
                     document.removeEventListener("mousemove", onMouseMove);
@@ -10800,7 +12765,8 @@ window.playMusicMessage = async function (messageId) {
         container?.classList.add("is-playing");
         playBtn.innerHTML = `<i class="fas fa-pause"></i>`;
         // Show global now-playing bar
-        const musicCaption = messageDiv.querySelector(".music-title")?.textContent || "Music";
+        const musicCaption =
+            messageDiv.querySelector(".music-title")?.textContent || "Music";
         showGlobalNowPlaying(audio, musicCaption, "music");
     } else {
         audio.pause();
@@ -10812,7 +12778,11 @@ window.playMusicMessage = async function (messageId) {
 
 const sendTextMessage = async () => {
     if (!currentChatUser) {
-        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        showModal(
+            I18N_TEXT.noChatSelectedTitle,
+            I18N_TEXT.noChatSelectedBody,
+            "warning",
+        );
         return;
     }
     const text = chatInput.value.trim();
@@ -10853,14 +12823,18 @@ const sendTextMessage = async () => {
             await sendGroupTextMessage(
                 getCurrentGroupId(),
                 text,
-                currentReplyTarget?.messageId || null
+                currentReplyTarget?.messageId || null,
             );
         } else {
-            await sendEncryptedTextMessage(currentChatUser, text, currentReplyTarget?.messageId || null);
+            await sendEncryptedTextMessage(
+                currentChatUser,
+                text,
+                currentReplyTarget?.messageId || null,
+            );
             addUserToChatList(currentChatUser);
         }
         chatInput.value = "";
-    chatInput.style.height = "";
+        chatInput.style.height = "";
         updateSendButtonIcon();
         clearReplyState();
         if (!isGroupToken(currentChatUser)) {
@@ -10875,7 +12849,10 @@ const sendTextMessage = async () => {
         clearInlineChatState();
     } catch (err) {
         const errorMessage =
-            (err && typeof err === "object" && "message" in err && String(err.message || "").trim())
+            err &&
+            typeof err === "object" &&
+            "message" in err &&
+            String(err.message || "").trim()
                 ? String(err.message)
                 : String(err || "Unknown");
         setComposerStatus("Message failed to send. Try again.", "error");
@@ -10895,7 +12872,7 @@ const sendTextMessage = async () => {
         showModal(
             I18N_TEXT.sendErrorTitle,
             formatI18nText(I18N_TEXT.sendErrorBody, { error: errorMessage }),
-            "error"
+            "error",
         );
     } finally {
         sendBtn.disabled = false;
@@ -10906,7 +12883,9 @@ function setClipboardImageButtonVisibility(isVisible) {
     if (!pasteClipboardImageBtn) {
         return;
     }
-    const shouldShow = Boolean(isVisible && currentChatUser && isChatInputFocused);
+    const shouldShow = Boolean(
+        isVisible && currentChatUser && isChatInputFocused,
+    );
     pasteClipboardImageBtn.hidden = !shouldShow;
     pasteClipboardImageBtn.disabled = !shouldShow;
     pasteClipboardImageBtn.classList.toggle("is-visible", shouldShow);
@@ -10921,7 +12900,9 @@ function createClipboardImageFile(blob) {
           : mimeType.includes("gif")
             ? "gif"
             : "png";
-    return new File([blob], `clipboard_${Date.now()}.${extension}`, { type: mimeType });
+    return new File([blob], `clipboard_${Date.now()}.${extension}`, {
+        type: mimeType,
+    });
 }
 
 async function refreshClipboardImageCandidate() {
@@ -10939,7 +12920,9 @@ async function refreshClipboardImageCandidate() {
     try {
         if (navigator.permissions) {
             try {
-                const perm = await navigator.permissions.query({ name: "clipboard-read" });
+                const perm = await navigator.permissions.query({
+                    name: "clipboard-read",
+                });
                 if (perm.state === "denied") {
                     pendingClipboardImageFile = null;
                     setClipboardImageButtonVisibility(false);
@@ -10950,7 +12933,9 @@ async function refreshClipboardImageCandidate() {
 
         const clipboardItems = await navigator.clipboard.read();
         for (const clipboardItem of clipboardItems) {
-            const imageType = (clipboardItem.types || []).find((t) => String(t).startsWith("image/"));
+            const imageType = (clipboardItem.types || []).find((t) =>
+                String(t).startsWith("image/"),
+            );
             if (!imageType) {
                 continue;
             }
@@ -10973,7 +12958,11 @@ async function sendClipboardImage({ requireConfirm = true } = {}) {
         return;
     }
     if (!currentChatUser) {
-        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        showModal(
+            I18N_TEXT.noChatSelectedTitle,
+            I18N_TEXT.noChatSelectedBody,
+            "warning",
+        );
         return;
     }
 
@@ -10986,7 +12975,13 @@ async function sendClipboardImage({ requireConfirm = true } = {}) {
         return;
     }
 
-    const shouldSend = !requireConfirm || await showConfirmModal("Send Image", "Send clipboard image to this chat?", { type: "info", confirmLabel: "Send" });
+    const shouldSend =
+        !requireConfirm ||
+        (await showConfirmModal(
+            "Send Image",
+            "Send clipboard image to this chat?",
+            { type: "info", confirmLabel: "Send" },
+        ));
     if (!shouldSend) {
         return;
     }
@@ -11002,14 +12997,18 @@ function extractClipboardImageFileFromDataTransfer(dataTransfer) {
     }
 
     const clipboardItems = Array.from(dataTransfer.items || []);
-    const imageItem = clipboardItems.find((item) => String(item.type || "").startsWith("image/"));
+    const imageItem = clipboardItems.find((item) =>
+        String(item.type || "").startsWith("image/"),
+    );
     const imageBlob = imageItem?.getAsFile?.();
     if (imageBlob) {
         return createClipboardImageFile(imageBlob);
     }
 
     const files = Array.from(dataTransfer.files || []);
-    const imageFile = files.find((file) => String(file.type || "").startsWith("image/"));
+    const imageFile = files.find((file) =>
+        String(file.type || "").startsWith("image/"),
+    );
     if (imageFile) {
         return createClipboardImageFile(imageFile);
     }
@@ -11018,7 +13017,9 @@ function extractClipboardImageFileFromDataTransfer(dataTransfer) {
 }
 
 function extractPastedImageFile(pasteEvent) {
-    return extractClipboardImageFileFromDataTransfer(pasteEvent?.clipboardData || null);
+    return extractClipboardImageFileFromDataTransfer(
+        pasteEvent?.clipboardData || null,
+    );
 }
 
 const fileUploadInput = document.getElementById("fileUploadInput");
@@ -11086,7 +13087,11 @@ fileUploadInput.addEventListener("change", async (e) => {
         buffer = await file.arrayBuffer();
     } catch (_readErr) {
         e.target.value = null;
-        showModal("File Send Error", "Unable to read the selected file. Please try again.", "error");
+        showModal(
+            "File Send Error",
+            "Unable to read the selected file. Please try again.",
+            "error",
+        );
         return;
     }
     const fileName = file.name;
@@ -11103,17 +13108,25 @@ async function loadSettingsBio() {
     try {
         const profile = await fetchUserProfile({ username: CURRENT_USER });
         settingsBioInput.value = profile.bio || "";
-        if (settingsBioCharCount) settingsBioCharCount.textContent = String(settingsBioInput.value.length);
-    } catch { /* ignore */ }
+        if (settingsBioCharCount)
+            settingsBioCharCount.textContent = String(
+                settingsBioInput.value.length,
+            );
+    } catch {
+        /* ignore */
+    }
 }
 
 // ── Sessions tab ──────────────────────────────────────────────
 async function loadSessionsList() {
     const container = document.getElementById("settingsSessionsList");
     if (!container) return;
-    container.innerHTML = '<div class="chat-ui-admin-empty"><i class="fas fa-spinner fa-spin me-1"></i>Loading sessions...</div>';
+    container.innerHTML =
+        '<div class="chat-ui-admin-empty"><i class="fas fa-spinner fa-spin me-1"></i>Loading sessions...</div>';
     try {
-        const data = await window.ApiService.jsonOk("api/users/list_sessions.php");
+        const data = await window.ApiService.jsonOk(
+            "api/users/list_sessions.php",
+        );
         renderSessionsList(data.sessions || [], container);
     } catch (err) {
         container.innerHTML = `<div class="chat-ui-admin-empty" style="color:var(--error-color)">Failed to load sessions.</div>`;
@@ -11164,12 +13177,17 @@ function formatSessionTime(dateStr) {
     if (diffH < 24) return `${diffH}h ago`;
     const diffD = Math.floor(diffH / 24);
     if (diffD < 7) return `${diffD}d ago`;
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return d.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
 }
 
 function renderSessionsList(sessions, container) {
     if (!sessions.length) {
-        container.innerHTML = '<div class="chat-ui-admin-empty">No active sessions found.</div>';
+        container.innerHTML =
+            '<div class="chat-ui-admin-empty">No active sessions found.</div>';
         return;
     }
     let html = "";
@@ -11191,11 +13209,12 @@ function renderSessionsList(sessions, container) {
                 </div>
             </div>
             <div class="session-actions">
-                ${canRevoke
-                    ? `<button type="button" class="btn btn-sm btn-outline-danger session-revoke-btn" data-session-id="${s.id}"><i class="fas fa-sign-out-alt me-1"></i>Revoke</button>`
-                    : isCurrent
-                        ? ""
-                        : `<span class="session-hint">< 12h</span>`
+                ${
+                    canRevoke
+                        ? `<button type="button" class="btn btn-sm btn-outline-danger session-revoke-btn" data-session-id="${s.id}"><i class="fas fa-sign-out-alt me-1"></i>Revoke</button>`
+                        : isCurrent
+                          ? ""
+                          : `<span class="session-hint">< 12h</span>`
                 }
             </div>
         </div>`;
@@ -11211,19 +13230,29 @@ function renderSessionsList(sessions, container) {
             try {
                 await window.ApiService.jsonOk("api/users/revoke_session.php", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getCsrfHeaders(),
+                    },
                     body: JSON.stringify({ session_id: sessionId }),
                 });
                 const item = btn.closest(".session-item");
                 if (item) {
                     item.style.animation = "sessionSlideOut 0.3s ease forwards";
-                    item.addEventListener("animationend", () => item.remove(), { once: true });
+                    item.addEventListener("animationend", () => item.remove(), {
+                        once: true,
+                    });
                 }
                 setComposerStatus("Session revoked", "success");
             } catch (err) {
-                showModal("Revoke Failed", err?.message || "Unable to revoke session.", "error");
+                showModal(
+                    "Revoke Failed",
+                    err?.message || "Unable to revoke session.",
+                    "error",
+                );
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i>Revoke';
+                btn.innerHTML =
+                    '<i class="fas fa-sign-out-alt me-1"></i>Revoke';
             }
         });
     });
@@ -11244,16 +13273,20 @@ function playComposerButtonTap(btn, { variant = "default" } = {}) {
     } else {
         target.classList.add("composer-action-icon-shake");
     }
-    target.addEventListener("animationend", () => {
-        target.classList.remove("composer-action-icon-shake");
-        target.classList.remove("composer-action-icon-soft");
-        target.classList.remove("composer-sticker-icon-cute");
-    }, { once: true });
+    target.addEventListener(
+        "animationend",
+        () => {
+            target.classList.remove("composer-action-icon-shake");
+            target.classList.remove("composer-action-icon-soft");
+            target.classList.remove("composer-sticker-icon-cute");
+        },
+        { once: true },
+    );
 }
 
 // Animates the swap with a vertical slide (old icon exits up, new enters from below)
 let _sendBtnIconState = null; // track current icon to avoid redundant swaps
-let _iconSwapAbort = null;    // abort controller for in-flight animation
+let _iconSwapAbort = null; // abort controller for in-flight animation
 function updateSendButtonIcon() {
     const icon = sendBtn?.querySelector("i");
     if (!icon) return;
@@ -11266,7 +13299,7 @@ function updateSendButtonIcon() {
         _iconSwapAbort.abort();
         _iconSwapAbort = null;
         icon.classList.remove("icon-exit", "icon-enter");
-        icon.getAnimations().forEach(a => a.cancel());
+        icon.getAnimations().forEach((a) => a.cancel());
     }
 
     const isFirstCall = _sendBtnIconState === null;
@@ -11296,18 +13329,26 @@ function updateSendButtonIcon() {
     _iconSwapAbort = ac;
 
     icon.classList.add("icon-exit");
-    icon.addEventListener("animationend", () => {
-        if (ac.signal.aborted) return;
-        icon.classList.remove("icon-exit");
-        applyIcon();
-        void icon.offsetWidth; // force reflow
-        icon.classList.add("icon-enter");
-        icon.addEventListener("animationend", () => {
+    icon.addEventListener(
+        "animationend",
+        () => {
             if (ac.signal.aborted) return;
-            icon.classList.remove("icon-enter");
-            _iconSwapAbort = null;
-        }, { once: true, signal: ac.signal });
-    }, { once: true, signal: ac.signal });
+            icon.classList.remove("icon-exit");
+            applyIcon();
+            void icon.offsetWidth; // force reflow
+            icon.classList.add("icon-enter");
+            icon.addEventListener(
+                "animationend",
+                () => {
+                    if (ac.signal.aborted) return;
+                    icon.classList.remove("icon-enter");
+                    _iconSwapAbort = null;
+                },
+                { once: true, signal: ac.signal },
+            );
+        },
+        { once: true, signal: ac.signal },
+    );
 }
 updateSendButtonIcon();
 
@@ -11326,7 +13367,12 @@ chatForm.addEventListener("submit", async (e) => {
 
 chatInput.addEventListener("keydown", async (e) => {
     // Prevent arrow keys from bubbling to global handlers (chat nav, context menu, etc.)
-    if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+    if (
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight"
+    ) {
         e.stopPropagation();
         return;
     }
@@ -11358,7 +13404,9 @@ chatInput.addEventListener("beforeinput", (event) => {
     if (String(event?.inputType || "") !== "insertFromPaste") {
         return;
     }
-    const pastedImageFile = extractClipboardImageFileFromDataTransfer(event?.dataTransfer || null);
+    const pastedImageFile = extractClipboardImageFileFromDataTransfer(
+        event?.dataTransfer || null,
+    );
     if (!pastedImageFile) {
         return;
     }
@@ -11435,13 +13483,15 @@ document.addEventListener("keydown", async (event) => {
     }
 
     const isSelectAllShortcut =
-        (event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "a";
+        (event.ctrlKey || event.metaKey) &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "a";
     if (!isSelectAllShortcut || !isSelectModeActive) {
         return;
     }
 
     const inEditableField = ["INPUT", "TEXTAREA", "SELECT"].includes(
-        String(document.activeElement?.tagName || "")
+        String(document.activeElement?.tagName || ""),
     );
     if (inEditableField) {
         return;
@@ -11449,7 +13499,9 @@ document.addEventListener("keydown", async (event) => {
 
     event.preventDefault();
     getVisibleMessageElements().forEach((messageElement) => {
-        const messageId = Number(messageElement.getAttribute("data-message-id") || 0);
+        const messageId = Number(
+            messageElement.getAttribute("data-message-id") || 0,
+        );
         if (messageId > 0) {
             selectedMessageIds.add(messageId);
             setMessageSelectedState(messageElement, true);
@@ -11496,7 +13548,9 @@ chatInput.addEventListener("focus", () => {
     isChatInputFocused = true;
     setClipboardImageButtonVisibility(Boolean(pendingClipboardImageFile));
     // Defer clipboard read so it doesn't block keyboard on iOS
-    setTimeout(() => { void refreshClipboardImageCandidate(); }, 800);
+    setTimeout(() => {
+        void refreshClipboardImageCandidate();
+    }, 800);
 });
 
 chatInput.addEventListener("click", () => {
@@ -11509,7 +13563,6 @@ chatInput.addEventListener("blur", () => {
     isChatInputFocused = false;
     setClipboardImageButtonVisibility(false);
 });
-
 
 pasteClipboardImageBtn?.addEventListener("mousedown", (event) => {
     event.preventDefault();
@@ -11574,7 +13627,7 @@ async function searchForUser(selectUser = false) {
         showModal(
             "Invalid Username",
             "Username must start with a letter and contain only letters, numbers, hyphens, and underscores.",
-            "error"
+            "error",
         );
         searchUserInput.value = "";
         return;
@@ -11586,7 +13639,7 @@ async function searchForUser(selectUser = false) {
 
     try {
         const data = await window.ApiService.json(
-            `api/users/check_exists.php?username=${encodeURIComponent(val)}`
+            `api/users/check_exists.php?username=${encodeURIComponent(val)}`,
         );
 
         if (data.exists) {
@@ -11598,12 +13651,16 @@ async function searchForUser(selectUser = false) {
             showModal(
                 "User Not Found",
                 `User "${val}" does not exist. Please check the username and try again.`,
-                "warning"
+                "warning",
             );
             searchUserInput.value = "";
         }
     } catch (error) {
-        showModal(I18N_TEXT.connectionErrorTitle, I18N_TEXT.connectionErrorBody, "error");
+        showModal(
+            I18N_TEXT.connectionErrorTitle,
+            I18N_TEXT.connectionErrorBody,
+            "error",
+        );
         searchUserInput.value = "";
     } finally {
         searchUserInput.placeholder = originalPlaceholder;
@@ -11611,12 +13668,17 @@ async function searchForUser(selectUser = false) {
     }
 }
 searchUserInput.addEventListener("keydown", async function (e) {
-    const suggestions = searchSuggestions.querySelectorAll(".search-suggestion-item");
+    const suggestions = searchSuggestions.querySelectorAll(
+        ".search-suggestion-item",
+    );
 
     switch (e.key) {
         case "ArrowDown":
             e.preventDefault();
-            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+            selectedSuggestionIndex = Math.min(
+                selectedSuggestionIndex + 1,
+                suggestions.length - 1,
+            );
             updateSuggestionSelection(suggestions);
             break;
 
@@ -11628,8 +13690,13 @@ searchUserInput.addEventListener("keydown", async function (e) {
 
         case "Enter":
             e.preventDefault();
-            if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
-                await selectSuggestion(suggestions[selectedSuggestionIndex].dataset.username);
+            if (
+                selectedSuggestionIndex >= 0 &&
+                suggestions[selectedSuggestionIndex]
+            ) {
+                await selectSuggestion(
+                    suggestions[selectedSuggestionIndex].dataset.username,
+                );
             } else {
                 await searchForUser(true);
             }
@@ -11662,13 +13729,17 @@ async function searchUserSuggestions(query) {
 
     try {
         const data = await window.ApiService.json(
-            `api/users/search.php?query=${encodeURIComponent(query)}`
+            `api/users/search.php?query=${encodeURIComponent(query)}`,
         );
 
         const users = Array.isArray(data.users) ? data.users : [];
         // Inject Saved Messages if query matches
         const lq = query.toLowerCase();
-        if ("you".includes(lq) || "saved messages".includes(lq) || CURRENT_USER.toLowerCase().includes(lq)) {
+        if (
+            "you".includes(lq) ||
+            "saved messages".includes(lq) ||
+            CURRENT_USER.toLowerCase().includes(lq)
+        ) {
             if (!users.includes(CURRENT_USER)) {
                 users.unshift(CURRENT_USER);
             }
@@ -11706,11 +13777,13 @@ function showSuggestions(users) {
 
         const isSelf = username === CURRENT_USER;
         const displayName = isSelf ? "You" : username;
-        const initials = isSelf ? '<i class="fas fa-bookmark"></i>' : username
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase();
+        const initials = isSelf
+            ? '<i class="fas fa-bookmark"></i>'
+            : username
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase();
 
         item.innerHTML = `
             <div class="search-suggestion-avatar${isSelf ? " saved-messages-avatar" : ""}">${initials}</div>
@@ -11722,7 +13795,7 @@ function showSuggestions(users) {
         item.addEventListener("mouseenter", () => {
             selectedSuggestionIndex = index;
             updateSuggestionSelection(
-                searchSuggestions.querySelectorAll(".search-suggestion-item")
+                searchSuggestions.querySelectorAll(".search-suggestion-item"),
             );
         });
 
@@ -11764,7 +13837,9 @@ async function selectSuggestion(username) {
     hideSuggestions();
 
     if (isANewUser && window.UIEnhancements) {
-        const label = isSavedMessagesChat(username) ? "Opened your messages" : `Started chat with ${username}`;
+        const label = isSavedMessagesChat(username)
+            ? "Opened your messages"
+            : `Started chat with ${username}`;
         window.UIEnhancements.showSearchNotification(label, "success");
     }
 }
@@ -11776,12 +13851,14 @@ function showSearchLoading(show) {
 }
 
 chatInput.disabled = true;
-chatInput.placeholder = "Select someone to chat...";
+chatInput.placeholder = "...";
 fetchAndImportPrivateKey().catch((err) => {
     showModal(
         I18N_TEXT.keyErrorTitle,
-        formatI18nText(I18N_TEXT.keyErrorBody, { error: err.message || "Unknown" }),
-        "error"
+        formatI18nText(I18N_TEXT.keyErrorBody, {
+            error: err.message || "Unknown",
+        }),
+        "error",
     );
 });
 
@@ -11794,7 +13871,9 @@ function showChatListErrorState() {
     li.id = "chatListRetryItem";
     li.className = "chat-list-retry-item";
     li.innerHTML = `<button type="button" class="btn btn-sm btn-outline-primary">Retry loading chats</button>`;
-    li.querySelector("button")?.addEventListener("click", () => loadChatList(true));
+    li.querySelector("button")?.addEventListener("click", () =>
+        loadChatList(true),
+    );
     chatListElem.appendChild(li);
 }
 
@@ -11811,7 +13890,7 @@ async function loadGroupDetails(groupId, force = false) {
     }
 
     const data = await window.ApiService.json(
-        `api/groups/fetch_details.php?group_id=${encodeURIComponent(groupId)}`
+        `api/groups/fetch_details.php?group_id=${encodeURIComponent(groupId)}`,
     );
     groupDetailsCache.set(groupId, data);
     return data;
@@ -11824,11 +13903,13 @@ async function renderGroupInfoPanel(groupId) {
         const members = Array.isArray(details?.members) ? details.members : [];
         const role = String(details?.role || "member");
 
-        if (groupInfoTitle) groupInfoTitle.textContent = group.title || `Group ${groupId}`;
+        if (groupInfoTitle)
+            groupInfoTitle.textContent = group.title || `Group ${groupId}`;
         if (groupInfoDescription)
             groupInfoDescription.textContent =
                 group.description || "No description provided yet.";
-        if (groupInfoMemberCount) groupInfoMemberCount.textContent = String(members.length);
+        if (groupInfoMemberCount)
+            groupInfoMemberCount.textContent = String(members.length);
         if (groupInfoMembers) {
             groupInfoMembers.innerHTML = "";
             if (!members.length) {
@@ -11873,33 +13954,46 @@ async function renderGroupInfoPanel(groupId) {
         }
 
         if (groupJoinLinkInput) {
-            groupJoinLinkInput.value = details?.can_manage && group.join_link ? group.join_link : "";
-            groupJoinLinkInput.style.display = details?.can_manage ? "" : "none";
+            groupJoinLinkInput.value =
+                details?.can_manage && group.join_link ? group.join_link : "";
+            groupJoinLinkInput.style.display = details?.can_manage
+                ? ""
+                : "none";
         }
         if (groupCopyJoinLinkBtn) {
-            groupCopyJoinLinkBtn.style.display = details?.can_manage ? "" : "none";
+            groupCopyJoinLinkBtn.style.display = details?.can_manage
+                ? ""
+                : "none";
         }
         if (groupRotateJoinLinkBtn) {
-            groupRotateJoinLinkBtn.style.display = details?.can_manage ? "" : "none";
+            groupRotateJoinLinkBtn.style.display = details?.can_manage
+                ? ""
+                : "none";
         }
         if (groupAddMemberBtn) {
             groupAddMemberBtn.hidden = !Boolean(details?.can_manage);
         }
         if (groupTransferOwnerBtn) {
-            groupTransferOwnerBtn.hidden = !Boolean(details?.can_transfer_owner);
+            groupTransferOwnerBtn.hidden = !Boolean(
+                details?.can_transfer_owner,
+            );
         }
         if (groupLeaveBtn) {
             groupLeaveBtn.hidden = !Boolean(details?.can_leave);
         }
         groupInfoPanel?.setAttribute(
             "aria-label",
-            `Group details for ${group.title || `Group ${groupId}`}`
+            `Group details for ${group.title || `Group ${groupId}`}`,
         );
 
         void loadGroupChatStats();
         loadGroupMusicMessages(true);
     } catch (error) {
-        showModal("Group Details", error.message || "Failed to load group details", "warning");
+        showModal(
+            "Group Details",
+            error.message || "Failed to load group details",
+            "warning",
+        );
     }
 }
 
@@ -11919,7 +14013,11 @@ async function createGroupFlow(title, description = "") {
     if (data?.group) {
         addGroupToChatList(data.group);
         await selectGroupChat(Number(data.group.id));
-        showModal("Group Created", `Created group "${data.group.title}" successfully.`, "success");
+        showModal(
+            "Group Created",
+            `Created group "${data.group.title}" successfully.`,
+            "success",
+        );
     }
 }
 
@@ -11944,9 +14042,17 @@ async function handleJoinGroupFromUrl() {
         if (data?.group?.id) {
             await selectGroupChat(Number(data.group.id));
         }
-        showModal("Joined Group", "You have joined the group successfully.", "success");
+        showModal(
+            "Joined Group",
+            "You have joined the group successfully.",
+            "success",
+        );
     } catch (error) {
-        showModal("Join Group Failed", error.message || "Invalid join link.", "error");
+        showModal(
+            "Join Group Failed",
+            error.message || "Invalid join link.",
+            "error",
+        );
     } finally {
         params.delete("join_group");
         const cleaned = `${window.location.pathname}${
@@ -11962,14 +14068,17 @@ async function runGroupKeyHealthCheck() {
 
     try {
         setComposerStatus("Running group key health check...");
-        const data = await window.ApiService.jsonOk("api/keys/group_health.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...getCsrfHeaders(),
+        const data = await window.ApiService.jsonOk(
+            "api/keys/group_health.php",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
+                body: JSON.stringify(body),
             },
-            body: JSON.stringify(body),
-        });
+        );
 
         const groups = Array.isArray(data?.groups) ? data.groups : [];
         if (!groups.length) {
@@ -11985,13 +14094,19 @@ async function runGroupKeyHealthCheck() {
         });
 
         setComposerStatus(
-            unhealthyGroups.length ? "Group key health check found issues" : "Group key health check passed",
-            unhealthyGroups.length ? "warning" : "success"
+            unhealthyGroups.length
+                ? "Group key health check found issues"
+                : "Group key health check passed",
+            unhealthyGroups.length ? "warning" : "success",
         );
         openMessageActionModal("Group Key Health", modalBody);
     } catch (error) {
         setComposerStatus("Group key health check failed", "error");
-        showModal("Group Key Health", error.message || "Unable to run health check.", "error");
+        showModal(
+            "Group Key Health",
+            error.message || "Unable to run health check.",
+            "error",
+        );
     }
 }
 
@@ -12001,13 +14116,18 @@ function createAddMemberPickerContent(groupId, details) {
 
     const existingUsernames = new Set(
         (Array.isArray(details?.members) ? details.members : []).map((member) =>
-            String(member?.username || "").trim().toLowerCase()
-        )
+            String(member?.username || "")
+                .trim()
+                .toLowerCase(),
+        ),
     );
 
     const candidates = Array.from(chatUsers)
         .filter((username) => username && username !== CURRENT_USER)
-        .filter((username) => !existingUsernames.has(String(username).toLowerCase()))
+        .filter(
+            (username) =>
+                !existingUsernames.has(String(username).toLowerCase()),
+        )
         .sort((a, b) => a.localeCompare(b));
 
     if (!candidates.length) {
@@ -12045,10 +14165,18 @@ function createAddMemberPickerContent(groupId, details) {
                 await renderGroupInfoPanel(groupId);
                 closeMessageActionModal();
                 setComposerStatus("Member added", "success");
-                showModal("Member Added", `${username} added to group.`, "success");
+                showModal(
+                    "Member Added",
+                    `${username} added to group.`,
+                    "success",
+                );
             } catch (error) {
                 setComposerStatus("Failed to add member", "error");
-                showModal("Add Member Failed", error.message || "Unable to add member", "error");
+                showModal(
+                    "Add Member Failed",
+                    error.message || "Unable to add member",
+                    "error",
+                );
             } finally {
                 button.disabled = false;
                 button.classList.remove("is-forwarding");
@@ -12070,23 +14198,34 @@ async function openAddMemberModal() {
     try {
         const details = await loadGroupDetails(groupId, true);
         if (!details?.can_manage) {
-            showModal("Add Member", "You do not have permission to add members.", "warning");
+            showModal(
+                "Add Member",
+                "You do not have permission to add members.",
+                "warning",
+            );
             return;
         }
         const pickerContent = createAddMemberPickerContent(groupId, details);
         openMessageActionModal("Add Group Member", pickerContent);
     } catch (error) {
-        showModal("Add Member", error.message || "Unable to load member picker.", "error");
+        showModal(
+            "Add Member",
+            error.message || "Unable to load member picker.",
+            "error",
+        );
     }
 }
 
-function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt = "" } = {}) {
+function createGroupKeyHealthModalContent(
+    groups,
+    { activeGroupId = 0, checkedAt = "" } = {},
+) {
     const wrapper = document.createElement("div");
     wrapper.className = "group-health-modal";
 
     const unhealthyGroups = groups.filter((group) => !group.is_healthy);
     const legacyGroups = groups.filter(
-        (group) => Number(group.legacy_plaintext_text_messages_count || 0) > 0
+        (group) => Number(group.legacy_plaintext_text_messages_count || 0) > 0,
     );
 
     const summary = document.createElement("div");
@@ -12135,7 +14274,13 @@ function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt
 
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
-    ["Group", "Missing Keys", "Encrypted Text", "Legacy Plaintext", "Status"].forEach((title) => {
+    [
+        "Group",
+        "Missing Keys",
+        "Encrypted Text",
+        "Legacy Plaintext",
+        "Status",
+    ].forEach((title) => {
         const th = document.createElement("th");
         th.scope = "col";
         th.textContent = title;
@@ -12152,13 +14297,19 @@ function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt
         titleCell.textContent = group.title || `Group ${group.group_id}`;
 
         const missingCell = document.createElement("td");
-        missingCell.textContent = String(Number(group.missing_member_keys_count || 0));
+        missingCell.textContent = String(
+            Number(group.missing_member_keys_count || 0),
+        );
 
         const encryptedCell = document.createElement("td");
-        encryptedCell.textContent = String(Number(group.encrypted_text_messages_count || 0));
+        encryptedCell.textContent = String(
+            Number(group.encrypted_text_messages_count || 0),
+        );
 
         const legacyCell = document.createElement("td");
-        legacyCell.textContent = String(Number(group.legacy_plaintext_text_messages_count || 0));
+        legacyCell.textContent = String(
+            Number(group.legacy_plaintext_text_messages_count || 0),
+        );
 
         const statusCell = document.createElement("td");
         const statusPill = document.createElement("span");
@@ -12200,7 +14351,9 @@ function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt
                 const item = document.createElement("li");
                 const username = String(member?.username || "").trim();
                 const memberUserId = Number(member?.user_id || 0);
-                item.textContent = username ? `${username} (id: ${memberUserId})` : `User ${memberUserId}`;
+                item.textContent = username
+                    ? `${username} (id: ${memberUserId})`
+                    : `User ${memberUserId}`;
                 detailsList.appendChild(item);
             });
 
@@ -12211,7 +14364,10 @@ function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt
             toggleBtn.addEventListener("click", () => {
                 const willOpen = detailsRow.hidden;
                 detailsRow.hidden = !willOpen;
-                toggleBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+                toggleBtn.setAttribute(
+                    "aria-expanded",
+                    willOpen ? "true" : "false",
+                );
                 toggleBtn.textContent = willOpen ? "Hide" : "Details";
             });
         }
@@ -12240,8 +14396,12 @@ function createGroupKeyHealthModalContent(groups, { activeGroupId = 0, checkedAt
 async function loadChatList(_force = false) {
     try {
         const data = await window.ApiService.json("api/chats/fetch.php");
-        const incomingGroups = Array.isArray(data.chatGroups) ? data.chatGroups : [];
-        const incomingGroupIds = new Set(incomingGroups.map((group) => Number(group.id || 0)));
+        const incomingGroups = Array.isArray(data.chatGroups)
+            ? data.chatGroups
+            : [];
+        const incomingGroupIds = new Set(
+            incomingGroups.map((group) => Number(group.id || 0)),
+        );
         if (Array.isArray(data.chatUserItems) && data.chatUserItems.length) {
             data.chatUserItems.forEach((item) => {
                 addUserToChatList(String(item?.username || ""), {
@@ -12250,7 +14410,9 @@ async function loadChatList(_force = false) {
                 });
             });
         } else if (data.chatUsers && Array.isArray(data.chatUsers)) {
-            data.chatUsers.forEach((username) => addUserToChatList(String(username || "")));
+            data.chatUsers.forEach((username) =>
+                addUserToChatList(String(username || "")),
+            );
         }
         Array.from(chatGroupsById.keys()).forEach((groupId) => {
             if (!incomingGroupIds.has(Number(groupId))) {
@@ -12289,9 +14451,12 @@ createGroupBtn?.addEventListener("click", () => {
 
     function openAddChatModal() {
         addChatModalOverlay.hidden = false;
-        pushUiBackLayer(UI_BACK_LAYER_KEYS.addChat, ({ fromHistory = false } = {}) => {
-            closeAddChatModal({ fromHistory });
-        });
+        pushUiBackLayer(
+            UI_BACK_LAYER_KEYS.addChat,
+            ({ fromHistory = false } = {}) => {
+                closeAddChatModal({ fromHistory });
+            },
+        );
         addChatSearchInput.value = "";
         addChatResults.innerHTML = "";
         if (addChatEmpty) addChatEmpty.hidden = false;
@@ -12299,9 +14464,12 @@ createGroupBtn?.addEventListener("click", () => {
     }
 
     function closeAddChatModal({ fromHistory = false } = {}) {
-        if (!fromHistory && requestUiLayerClose(UI_BACK_LAYER_KEYS.addChat, () => {
-            closeAddChatModal({ fromHistory: true });
-        })) {
+        if (
+            !fromHistory &&
+            requestUiLayerClose(UI_BACK_LAYER_KEYS.addChat, () => {
+                closeAddChatModal({ fromHistory: true });
+            })
+        ) {
             return;
         }
         removeUiBackLayer(UI_BACK_LAYER_KEYS.addChat);
@@ -12317,7 +14485,11 @@ createGroupBtn?.addEventListener("click", () => {
         if (e.target === addChatModalOverlay) closeAddChatModal();
     });
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && addChatModalOverlay && !addChatModalOverlay.hidden) {
+        if (
+            e.key === "Escape" &&
+            addChatModalOverlay &&
+            !addChatModalOverlay.hidden
+        ) {
             closeAddChatModal();
         }
     });
@@ -12338,7 +14510,7 @@ createGroupBtn?.addEventListener("click", () => {
         addChatSearching = true;
         try {
             const data = await window.ApiService.json(
-                `api/users/search.php?query=${encodeURIComponent(query)}`
+                `api/users/search.php?query=${encodeURIComponent(query)}`,
             );
             const users = Array.isArray(data.users) ? data.users : [];
             renderAddChatResults(users);
@@ -12363,7 +14535,11 @@ createGroupBtn?.addEventListener("click", () => {
             const displayName = isSelf ? "Saved Messages" : username;
             const initials = isSelf
                 ? '<i class="fas fa-bookmark"></i>'
-                : username.split(" ").map((n) => n[0]).join("").toUpperCase();
+                : username
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase();
 
             const item = document.createElement("div");
             item.className = "add-chat-result-item";
@@ -12409,49 +14585,68 @@ privateChatInfoBackBtn?.addEventListener("click", () => {
 });
 
 // Opinion form handlers
-document.getElementById("privateOpinionAddBtn")?.addEventListener("click", () => {
-    const formWrap = document.getElementById("privateOpinionFormWrap");
-    const input = document.getElementById("privateOpinionInput");
-    if (formWrap) {
-        // Always reset for a new opinion when clicking add
-        privateOpinionEditingId = 0;
-        if (input) input.value = "";
+document
+    .getElementById("privateOpinionAddBtn")
+    ?.addEventListener("click", () => {
+        const formWrap = document.getElementById("privateOpinionFormWrap");
+        const input = document.getElementById("privateOpinionInput");
+        if (formWrap) {
+            // Always reset for a new opinion when clicking add
+            privateOpinionEditingId = 0;
+            if (input) input.value = "";
+            const cc = document.getElementById("privateOpinionCharCount");
+            if (cc) cc.textContent = "0";
+            formWrap.hidden = !formWrap.hidden;
+            if (!formWrap.hidden && input) input.focus();
+        }
+    });
+
+document
+    .getElementById("privateOpinionInput")
+    ?.addEventListener("input", () => {
         const cc = document.getElementById("privateOpinionCharCount");
-        if (cc) cc.textContent = "0";
-        formWrap.hidden = !formWrap.hidden;
-        if (!formWrap.hidden && input) input.focus();
-    }
-});
+        const input = document.getElementById("privateOpinionInput");
+        if (cc && input) cc.textContent = String(input.value.length);
+    });
 
-document.getElementById("privateOpinionInput")?.addEventListener("input", () => {
-    const cc = document.getElementById("privateOpinionCharCount");
-    const input = document.getElementById("privateOpinionInput");
-    if (cc && input) cc.textContent = String(input.value.length);
-});
-
-document.getElementById("privateOpinionCancelBtn")?.addEventListener("click", () => {
-    resetPrivateOpinionForm();
-});
-
-document.getElementById("privateOpinionSaveBtn")?.addEventListener("click", async () => {
-    const input = document.getElementById("privateOpinionInput");
-    const body = String(input?.value || "").trim();
-    if (!body || !privateChatOpinionTargetUserId) return;
-    try {
-        const payload = { target_user_id: privateChatOpinionTargetUserId, body };
-        if (privateOpinionEditingId > 0) payload.opinion_id = privateOpinionEditingId;
-        await window.ApiService.jsonOk("api/opinions/save.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", ...getCsrfHeaders() },
-            body: JSON.stringify(payload),
-        });
-        opinionsPanelCache = null;
+document
+    .getElementById("privateOpinionCancelBtn")
+    ?.addEventListener("click", () => {
         resetPrivateOpinionForm();
-        loadPrivateChatOpinion();
-    } catch (error) {
-        showModal("Opinion Error", error?.message || "Failed to save opinion.", "error");
-    }
-});
+    });
+
+document
+    .getElementById("privateOpinionSaveBtn")
+    ?.addEventListener("click", async () => {
+        const input = document.getElementById("privateOpinionInput");
+        const body = String(input?.value || "").trim();
+        if (!body || !privateChatOpinionTargetUserId) return;
+        try {
+            const payload = {
+                target_user_id: privateChatOpinionTargetUserId,
+                body,
+            };
+            if (privateOpinionEditingId > 0)
+                payload.opinion_id = privateOpinionEditingId;
+            await window.ApiService.jsonOk("api/opinions/save.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
+                body: JSON.stringify(payload),
+            });
+            opinionsPanelCache = null;
+            resetPrivateOpinionForm();
+            loadPrivateChatOpinion();
+        } catch (error) {
+            showModal(
+                "Opinion Error",
+                error?.message || "Failed to save opinion.",
+                "error",
+            );
+        }
+    });
 
 groupAddMemberBtn?.addEventListener("click", async () => {
     await openAddMemberModal();
@@ -12477,22 +14672,33 @@ groupRotateJoinLinkBtn?.addEventListener("click", async () => {
     }
     try {
         setComposerStatus("Rotating join link...");
-        const data = await window.ApiService.jsonOk("api/groups/rotate_join_link.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...getCsrfHeaders(),
+        const data = await window.ApiService.jsonOk(
+            "api/groups/rotate_join_link.php",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getCsrfHeaders(),
+                },
+                body: JSON.stringify({ group_id: groupId }),
             },
-            body: JSON.stringify({ group_id: groupId }),
-        });
+        );
         if (groupJoinLinkInput) {
             groupJoinLinkInput.value = data.join_link || "";
         }
         setComposerStatus("Join link rotated", "success");
-        showModal("Join Link Rotated", "A new join link is now active.", "success");
+        showModal(
+            "Join Link Rotated",
+            "A new join link is now active.",
+            "success",
+        );
     } catch (error) {
         setComposerStatus("Unable to rotate join link", "error");
-        showModal("Rotate Failed", error.message || "Unable to rotate join link.", "error");
+        showModal(
+            "Rotate Failed",
+            error.message || "Unable to rotate join link.",
+            "error",
+        );
     }
 });
 
@@ -12510,7 +14716,11 @@ groupInfoMembers?.addEventListener("click", async (event) => {
     }
 
     if (action === "remove-member") {
-        const confirmed = await showConfirmModal("Remove Member", `Remove ${username} from this group?`, { type: "warning", confirmLabel: "Remove" });
+        const confirmed = await showConfirmModal(
+            "Remove Member",
+            `Remove ${username} from this group?`,
+            { type: "warning", confirmLabel: "Remove" },
+        );
         if (!confirmed) {
             return;
         }
@@ -12525,16 +14735,28 @@ groupInfoMembers?.addEventListener("click", async (event) => {
             });
             await renderGroupInfoPanel(groupId);
             setComposerStatus("Member removed", "success");
-            showModal("Member Removed", `${username} was removed from group.`, "success");
+            showModal(
+                "Member Removed",
+                `${username} was removed from group.`,
+                "success",
+            );
         } catch (error) {
             setComposerStatus("Unable to remove member", "error");
-            showModal("Remove Failed", error.message || "Unable to remove member.", "error");
+            showModal(
+                "Remove Failed",
+                error.message || "Unable to remove member.",
+                "error",
+            );
         }
         return;
     }
 
     if (action === "transfer-owner") {
-        const confirmed = await showConfirmModal("Transfer Ownership", `Transfer ownership to ${username}?`, { type: "warning", confirmLabel: "Transfer" });
+        const confirmed = await showConfirmModal(
+            "Transfer Ownership",
+            `Transfer ownership to ${username}?`,
+            { type: "warning", confirmLabel: "Transfer" },
+        );
         if (!confirmed) {
             return;
         }
@@ -12545,15 +14767,26 @@ groupInfoMembers?.addEventListener("click", async (event) => {
                     "Content-Type": "application/json",
                     ...getCsrfHeaders(),
                 },
-                body: JSON.stringify({ group_id: groupId, new_owner_user_id: userId }),
+                body: JSON.stringify({
+                    group_id: groupId,
+                    new_owner_user_id: userId,
+                }),
             });
             await renderGroupInfoPanel(groupId);
             await loadChatList(true);
             setComposerStatus("Ownership transferred", "success");
-            showModal("Ownership Transferred", `${username} is now the group owner.`, "success");
+            showModal(
+                "Ownership Transferred",
+                `${username} is now the group owner.`,
+                "success",
+            );
         } catch (error) {
             setComposerStatus("Unable to transfer ownership", "error");
-            showModal("Transfer Failed", error.message || "Unable to transfer ownership.", "error");
+            showModal(
+                "Transfer Failed",
+                error.message || "Unable to transfer ownership.",
+                "error",
+            );
         }
     }
 });
@@ -12562,7 +14795,7 @@ groupTransferOwnerBtn?.addEventListener("click", () => {
     showModal(
         "Transfer Ownership",
         "Use the Owner button next to a member name to transfer ownership.",
-        "info"
+        "info",
     );
 });
 
@@ -12575,7 +14808,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
     const confirmed = await showConfirmModal(
         "Leave Group",
         "Leave this group? If you are the owner, transfer ownership first unless you are the last member.",
-        { type: "warning", confirmLabel: "Leave" }
+        { type: "warning", confirmLabel: "Leave" },
     );
     if (!confirmed) {
         return;
@@ -12600,14 +14833,14 @@ groupLeaveBtn?.addEventListener("click", async () => {
         if (alertPanelBtn) alertPanelBtn.hidden = false;
         currentChatUser = null;
         currentChatRecentMessages = null;
-lastRecentPollTime = "";
+        lastRecentPollTime = "";
         chatMessagesElem.innerHTML = "";
         clearDecryptedMediaCache();
         chatWithElem.textContent = "Select a chat";
         chatInput.value = "";
-    chatInput.style.height = "";
+        chatInput.style.height = "";
         chatInput.disabled = true;
-        chatInput.placeholder = "Select someone to chat...";
+        chatInput.placeholder = "...";
         if (typeof window.setMobileChatSelected === "function") {
             window.setMobileChatSelected(false);
         }
@@ -12617,7 +14850,11 @@ lastRecentPollTime = "";
         showModal("Left Group", "You have left the group.", "success");
     } catch (error) {
         setComposerStatus("Unable to leave group", "error");
-        showModal("Leave Failed", error.message || "Unable to leave group.", "error");
+        showModal(
+            "Leave Failed",
+            error.message || "Unable to leave group.",
+            "error",
+        );
     }
 });
 
@@ -12649,9 +14886,9 @@ setInterval(async () => {
     }
 
     const now = Date.now();
-    const doMessages = (now - lastMsgPollTime >= msgIntervalMs);
-    const doSeen = (pollSeenCounter === 0);
-    const doChatList = (pollChatListCounter === 0);
+    const doMessages = now - lastMsgPollTime >= msgIntervalMs;
+    const doSeen = pollSeenCounter === 0;
+    const doChatList = pollChatListCounter === 0;
 
     if (doMessages) lastMsgPollTime = now;
     pollSeenCounter = (pollSeenCounter + 1) % seenInterval;
@@ -12681,7 +14918,8 @@ setInterval(async () => {
     isRefreshLoopBusy = true;
     try {
         const tasks = [];
-        if (doMessages && currentChatUser?.length) tasks.push(forceFetchCurrentChatMessages());
+        if (doMessages && currentChatUser?.length)
+            tasks.push(forceFetchCurrentChatMessages());
         if (doChatList) tasks.push(loadChatList());
         if (doSeen) tasks.push(refreshPendingSeenStates());
         if (tasks.length) await Promise.all(tasks);
@@ -12696,7 +14934,11 @@ voiceBtn.addEventListener("click", async () => {
         return;
     }
     if (!currentChatUser) {
-        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        showModal(
+            I18N_TEXT.noChatSelectedTitle,
+            I18N_TEXT.noChatSelectedBody,
+            "warning",
+        );
         return;
     }
     if (!isRecording) {
@@ -12719,15 +14961,21 @@ voiceBtn.addEventListener("click", async () => {
             ];
             let selectedMimeType = "";
             for (const mime of preferredMimeTypes) {
-                if (typeof MediaRecorder.isTypeSupported === "function" && MediaRecorder.isTypeSupported(mime)) {
+                if (
+                    typeof MediaRecorder.isTypeSupported === "function" &&
+                    MediaRecorder.isTypeSupported(mime)
+                ) {
                     selectedMimeType = mime;
                     break;
                 }
             }
 
-            const recorderOptions = selectedMimeType ? { mimeType: selectedMimeType, audioBitsPerSecond: 64000 } : { audioBitsPerSecond: 64000 };
+            const recorderOptions = selectedMimeType
+                ? { mimeType: selectedMimeType, audioBitsPerSecond: 64000 }
+                : { audioBitsPerSecond: 64000 };
             mediaRecorder = new MediaRecorder(stream, recorderOptions);
-            const actualMimeType = mediaRecorder.mimeType || selectedMimeType || "audio/webm";
+            const actualMimeType =
+                mediaRecorder.mimeType || selectedMimeType || "audio/webm";
             audioChunks = [];
             recordingStartTime = Date.now();
             shouldSendRecording = true;
@@ -12741,7 +14989,8 @@ voiceBtn.addEventListener("click", async () => {
                 resetRecordingState();
 
                 if (shouldSendRecording && audioChunks.length > 0) {
-                    const blobMimeType = actualMimeType.split(";")[0] || "audio/webm";
+                    const blobMimeType =
+                        actualMimeType.split(";")[0] || "audio/webm";
                     const audioBlob = new Blob(audioChunks, {
                         type: blobMimeType,
                     });
@@ -12755,7 +15004,11 @@ voiceBtn.addEventListener("click", async () => {
 
             addRecordingIndicator();
         } catch (err) {
-            showModal(I18N_TEXT.microphoneErrorTitle, I18N_TEXT.microphoneErrorBody, "error");
+            showModal(
+                I18N_TEXT.microphoneErrorTitle,
+                I18N_TEXT.microphoneErrorBody,
+                "error",
+            );
         }
     } else {
         stopRecording();
@@ -12844,7 +15097,11 @@ async function sendVoiceMessage(audioBlob) {
     await acquireUploadSlot(bgId);
     try {
         const voiceMimeType = String(audioBlob?.type || "audio/webm");
-        const voiceExtMap = { "audio/mp4": "m4a", "audio/ogg": "ogg", "audio/webm": "webm" };
+        const voiceExtMap = {
+            "audio/mp4": "m4a",
+            "audio/ogg": "ogg",
+            "audio/webm": "webm",
+        };
         const voiceExt = voiceExtMap[voiceMimeType] || "webm";
         const mediaPayload = await encryptMediaForMessage(
             audioBlob,
@@ -12853,7 +15110,7 @@ async function sendVoiceMessage(audioBlob) {
                 mime_type: voiceMimeType,
                 file_size: Number(audioBlob?.size || 0),
             },
-            groupId > 0 ? { groupId } : { targetUsername: capturedTarget }
+            groupId > 0 ? { groupId } : { targetUsername: capturedTarget },
         );
 
         const formData = new FormData();
@@ -12864,14 +15121,20 @@ async function sendVoiceMessage(audioBlob) {
         }
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
-        formData.append("voice_file", mediaPayload.encryptedBlob, `voice_message.enc`);
-        if (replyToId) formData.append("reply_to_message_id", String(replyToId));
+        formData.append(
+            "voice_file",
+            mediaPayload.encryptedBlob,
+            `voice_message.enc`,
+        );
+        if (replyToId)
+            formData.append("reply_to_message_id", String(replyToId));
 
         await uploadWithProgress(
             "api/messages/media/send_voice.php",
             formData,
             getCsrfHeaders(),
-            (pct, loaded, total) => updateBackgroundUploadProgress(bgId, pct, loaded, total)
+            (pct, loaded, total) =>
+                updateBackgroundUploadProgress(bgId, pct, loaded, total),
         );
 
         if (!isGroupToken(capturedTarget)) {
@@ -12889,8 +15152,10 @@ async function sendVoiceMessage(audioBlob) {
         }
         showModal(
             I18N_TEXT.voiceSendErrorTitle,
-            formatI18nText(I18N_TEXT.voiceSendErrorBody, { error: err.message || "Unknown" }),
-            "error"
+            formatI18nText(I18N_TEXT.voiceSendErrorBody, {
+                error: err.message || "Unknown",
+            }),
+            "error",
         );
     } finally {
         completeBackgroundUpload(bgId);
@@ -12903,10 +15168,18 @@ imageUploadBtn.addEventListener("click", () => {
         return;
     }
     if (!currentChatUser) {
-        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        showModal(
+            I18N_TEXT.noChatSelectedTitle,
+            I18N_TEXT.noChatSelectedBody,
+            "warning",
+        );
         return;
     }
-    if (imageSourceMenu && !imageSourceMenu.hidden && imageSourceMenu.classList.contains("is-open")) {
+    if (
+        imageSourceMenu &&
+        !imageSourceMenu.hidden &&
+        imageSourceMenu.classList.contains("is-open")
+    ) {
         closeImageSourceMenu({ restoreFocus: true });
         return;
     }
@@ -12919,11 +15192,19 @@ stickerPickerBtn?.addEventListener("click", () => {
         return;
     }
     if (!currentChatUser) {
-        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        showModal(
+            I18N_TEXT.noChatSelectedTitle,
+            I18N_TEXT.noChatSelectedBody,
+            "warning",
+        );
         return;
     }
 
-    if (stickerPickerMenu && !stickerPickerMenu.hidden && stickerPickerMenu.classList.contains("is-open")) {
+    if (
+        stickerPickerMenu &&
+        !stickerPickerMenu.hidden &&
+        stickerPickerMenu.classList.contains("is-open")
+    ) {
         closeStickerPicker({ restoreFocus: true });
         return;
     }
@@ -12951,7 +15232,11 @@ stickerUploadInput?.addEventListener("change", async (event) => {
         buffer = await selectedFile.arrayBuffer();
     } catch (_readErr) {
         event.target.value = "";
-        showModal("Sticker Upload Error", "Unable to read the selected file. Please try again.", "error");
+        showModal(
+            "Sticker Upload Error",
+            "Unable to read the selected file. Please try again.",
+            "error",
+        );
         return;
     }
     const fileName = selectedFile.name;
@@ -12975,13 +15260,21 @@ async function handleSelectedImageFile(e) {
 
     if (!file.type.startsWith("image/")) {
         e.target.value = null;
-        showModal(I18N_TEXT.invalidFileTypeTitle, I18N_TEXT.invalidFileTypeImageBody, "warning");
+        showModal(
+            I18N_TEXT.invalidFileTypeTitle,
+            I18N_TEXT.invalidFileTypeImageBody,
+            "warning",
+        );
         return;
     }
 
     if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
         e.target.value = null;
-        showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.imageTooLargeBody, "warning");
+        showModal(
+            I18N_TEXT.fileTooLargeTitle,
+            I18N_TEXT.imageTooLargeBody,
+            "warning",
+        );
         return;
     }
 
@@ -12992,7 +15285,11 @@ async function handleSelectedImageFile(e) {
         buffer = await file.arrayBuffer();
     } catch (_readErr) {
         e.target.value = null;
-        showModal(I18N_TEXT.imageSendErrorTitle, "Unable to read the selected file. Please try again.", "error");
+        showModal(
+            I18N_TEXT.imageSendErrorTitle,
+            "Unable to read the selected file. Please try again.",
+            "error",
+        );
         return;
     }
     const fileName = file.name;
@@ -13017,13 +15314,21 @@ async function handleSelectedVideoFile(e) {
     const mimeType = String(file.type || "").toLowerCase();
     if (!mimeType.startsWith("video/")) {
         e.target.value = null;
-        showModal(I18N_TEXT.invalidFileTypeTitle, "Please select a video file.", "warning");
+        showModal(
+            I18N_TEXT.invalidFileTypeTitle,
+            "Please select a video file.",
+            "warning",
+        );
         return;
     }
 
     if (file.size > FILE_UPLOAD_MAX_BYTES) {
         e.target.value = null;
-        showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.fileTooLargeBody, "warning");
+        showModal(
+            I18N_TEXT.fileTooLargeTitle,
+            I18N_TEXT.fileTooLargeBody,
+            "warning",
+        );
         return;
     }
 
@@ -13033,7 +15338,11 @@ async function handleSelectedVideoFile(e) {
         buffer = await file.arrayBuffer();
     } catch (_readErr) {
         e.target.value = null;
-        showModal("Video Send Error", "Unable to read the selected file. Please try again.", "error");
+        showModal(
+            "Video Send Error",
+            "Unable to read the selected file. Please try again.",
+            "error",
+        );
         return;
     }
     const fileName = file.name;
@@ -13059,7 +15368,10 @@ imageSourceCameraBtn?.addEventListener("click", () => {
         void openCameraCaptureOverlay();
         return;
     }
-    setComposerStatus("Camera capture is not available on this device/browser.", "warning");
+    setComposerStatus(
+        "Camera capture is not available on this device/browser.",
+        "warning",
+    );
 });
 
 imageSourceSelectVideoBtn?.addEventListener("click", () => {
@@ -13077,7 +15389,10 @@ imageSourceRecordVideoBtn?.addEventListener("click", () => {
         void openVideoCaptureOverlay();
         return;
     }
-    setComposerStatus("Video recording is not available on this device/browser.", "warning");
+    setComposerStatus(
+        "Video recording is not available on this device/browser.",
+        "warning",
+    );
 });
 
 imageUploadInput.addEventListener("change", (e) => {
@@ -13098,14 +15413,20 @@ videoCaptureInput?.addEventListener("change", (e) => {
 
 document.addEventListener("click", (event) => {
     if (imageSourceMenu?.hidden) {
-    } else if (!event.target.closest("#imageSourceMenu") && !event.target.closest("#imageUploadBtn")) {
+    } else if (
+        !event.target.closest("#imageSourceMenu") &&
+        !event.target.closest("#imageUploadBtn")
+    ) {
         closeImageSourceMenu();
     }
 
     if (stickerPickerMenu?.hidden) {
         return;
     }
-    if (!event.target.closest("#stickerPickerMenu") && !event.target.closest("#stickerPickerBtn")) {
+    if (
+        !event.target.closest("#stickerPickerMenu") &&
+        !event.target.closest("#stickerPickerBtn")
+    ) {
         closeStickerPicker();
     }
 });
@@ -13114,13 +15435,25 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && imageSourceMenu && !imageSourceMenu.hidden) {
         closeImageSourceMenu({ restoreFocus: true });
     }
-    if (event.key === "Escape" && stickerPickerMenu && !stickerPickerMenu.hidden) {
+    if (
+        event.key === "Escape" &&
+        stickerPickerMenu &&
+        !stickerPickerMenu.hidden
+    ) {
         closeStickerPicker({ restoreFocus: true });
     }
-    if (event.key === "Escape" && cameraCaptureOverlay && !cameraCaptureOverlay.hidden) {
+    if (
+        event.key === "Escape" &&
+        cameraCaptureOverlay &&
+        !cameraCaptureOverlay.hidden
+    ) {
         closeCameraCaptureOverlay();
     }
-    if (event.key === "Escape" && videoCaptureOverlay && !videoCaptureOverlay.hidden) {
+    if (
+        event.key === "Escape" &&
+        videoCaptureOverlay &&
+        !videoCaptureOverlay.hidden
+    ) {
         stopVideoCaptureRecording({ send: false });
     }
 });
@@ -13132,9 +15465,15 @@ cameraCaptureTakeBtn?.addEventListener("click", () => {
 cameraCaptureCancelBtn?.addEventListener("click", closeCameraCaptureOverlay);
 cameraCaptureCloseBtn?.addEventListener("click", closeCameraCaptureOverlay);
 videoCaptureStartBtn?.addEventListener("click", startVideoCaptureRecording);
-videoCaptureStopBtn?.addEventListener("click", () => stopVideoCaptureRecording({ send: true }));
-videoCaptureCancelBtn?.addEventListener("click", () => stopVideoCaptureRecording({ send: false }));
-videoCaptureCloseBtn?.addEventListener("click", () => stopVideoCaptureRecording({ send: false }));
+videoCaptureStopBtn?.addEventListener("click", () =>
+    stopVideoCaptureRecording({ send: true }),
+);
+videoCaptureCancelBtn?.addEventListener("click", () =>
+    stopVideoCaptureRecording({ send: false }),
+);
+videoCaptureCloseBtn?.addEventListener("click", () =>
+    stopVideoCaptureRecording({ send: false }),
+);
 
 cameraCaptureOverlay?.addEventListener("click", (event) => {
     if (event.target === cameraCaptureOverlay) {
@@ -13168,7 +15507,7 @@ async function sendImageMessage(imageFile) {
                 mime_type: String(imageFile?.type || "image/jpeg"),
                 file_size: Number(imageFile?.size || 0),
             },
-            groupId > 0 ? { groupId } : { targetUsername: capturedTarget }
+            groupId > 0 ? { groupId } : { targetUsername: capturedTarget },
         );
 
         const formData = new FormData();
@@ -13180,13 +15519,15 @@ async function sendImageMessage(imageFile) {
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("image_file", mediaPayload.encryptedBlob, "image.enc");
-        if (replyToId) formData.append("reply_to_message_id", String(replyToId));
+        if (replyToId)
+            formData.append("reply_to_message_id", String(replyToId));
 
         await uploadWithProgress(
             "api/messages/media/send_image.php",
             formData,
             getCsrfHeaders(),
-            (pct, loaded, total) => updateBackgroundUploadProgress(bgId, pct, loaded, total)
+            (pct, loaded, total) =>
+                updateBackgroundUploadProgress(bgId, pct, loaded, total),
         );
 
         if (!isGroupToken(capturedTarget)) {
@@ -13202,8 +15543,10 @@ async function sendImageMessage(imageFile) {
         }
         showModal(
             I18N_TEXT.imageSendErrorTitle,
-            formatI18nText(I18N_TEXT.imageSendErrorBody, { error: err.message || "Unknown" }),
-            "error"
+            formatI18nText(I18N_TEXT.imageSendErrorBody, {
+                error: err.message || "Unknown",
+            }),
+            "error",
         );
     } finally {
         completeBackgroundUpload(bgId);
@@ -13215,20 +15558,32 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         return;
     }
     if (!currentChatUser) {
-        showModal(I18N_TEXT.noChatSelectedTitle, I18N_TEXT.noChatSelectedBody, "warning");
+        showModal(
+            I18N_TEXT.noChatSelectedTitle,
+            I18N_TEXT.noChatSelectedBody,
+            "warning",
+        );
         return;
     }
 
     if (asVideo) {
         const mimeType = String(file?.type || "").toLowerCase();
         if (!mimeType.startsWith("video/")) {
-            showModal(I18N_TEXT.invalidFileTypeTitle, "Please select a valid video file.", "warning");
+            showModal(
+                I18N_TEXT.invalidFileTypeTitle,
+                "Please select a valid video file.",
+                "warning",
+            );
             return;
         }
     }
 
     if (file.size > FILE_UPLOAD_MAX_BYTES) {
-        showModal(I18N_TEXT.fileTooLargeTitle, I18N_TEXT.fileTooLargeBody, "warning");
+        showModal(
+            I18N_TEXT.fileTooLargeTitle,
+            I18N_TEXT.fileTooLargeBody,
+            "warning",
+        );
         return;
     }
 
@@ -13237,7 +15592,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         showModal(
             I18N_TEXT.invalidFileTypeTitle,
             "This file type is blocked for security reasons.",
-            "warning"
+            "warning",
         );
         return;
     }
@@ -13259,7 +15614,7 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
                 mime_type: String(file?.type || "application/octet-stream"),
                 file_size: Number(file?.size || 0),
             },
-            groupId > 0 ? { groupId } : { targetUsername: capturedTarget }
+            groupId > 0 ? { groupId } : { targetUsername: capturedTarget },
         );
 
         const formData = new FormData();
@@ -13271,14 +15626,20 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         formData.append("message", mediaPayload.messageForRecipient);
         formData.append("message_for_sender", mediaPayload.messageForSender);
         formData.append("message_type", asVideo ? "video" : "file");
-        formData.append("file", mediaPayload.encryptedBlob, asVideo ? "video.enc" : "file.enc");
-        if (replyToId) formData.append("reply_to_message_id", String(replyToId));
+        formData.append(
+            "file",
+            mediaPayload.encryptedBlob,
+            asVideo ? "video.enc" : "file.enc",
+        );
+        if (replyToId)
+            formData.append("reply_to_message_id", String(replyToId));
 
         await uploadWithProgress(
             "api/messages/media/send_file.php",
             formData,
             getCsrfHeaders(),
-            (pct, loaded, total) => updateBackgroundUploadProgress(bgId, pct, loaded, total)
+            (pct, loaded, total) =>
+                updateBackgroundUploadProgress(bgId, pct, loaded, total),
         );
 
         if (!isGroupToken(capturedTarget)) {
@@ -13290,9 +15651,18 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         }
     } catch (err) {
         if (currentChatUser === capturedTarget) {
-            setComposerStatus(asVideo ? "Video upload failed. Try again." : "File upload failed. Try again.", "error");
+            setComposerStatus(
+                asVideo
+                    ? "Video upload failed. Try again."
+                    : "File upload failed. Try again.",
+                "error",
+            );
         }
-        showModal(asVideo ? "Video Send Error" : "File Send Error", (asVideo ? "Video" : "File") + " send error: " + err.message, "error");
+        showModal(
+            asVideo ? "Video Send Error" : "File Send Error",
+            (asVideo ? "Video" : "File") + " send error: " + err.message,
+            "error",
+        );
     } finally {
         completeBackgroundUpload(bgId);
     }
