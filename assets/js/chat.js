@@ -9517,6 +9517,7 @@ async function loadMessages(
             }
             isBatchRendering = false;
             rebuildMessageDaySeparators();
+            applyPhotoGrouping();
 
             if (hasMoreMessages) {
                 addLoadMoreButton();
@@ -9558,7 +9559,9 @@ async function loadMessages(
                     insertBeforeNode || null,
                 );
                 isBatchRendering = false;
+                unwrapPhotoGroups();
                 rebuildMessageDaySeparators();
+                applyPhotoGrouping();
                 if (hasMoreMessages) {
                     addLoadMoreButton();
                 } else {
@@ -9739,6 +9742,10 @@ async function loadCurrentChatsRecentMessages() {
                 continue;
             }
             await addMessageToChat(msg, false, true);
+        }
+
+        if (newMessages.length) {
+            applyPhotoGrouping();
         }
 
         updateMessagesStatus(data.messages);
@@ -10174,6 +10181,71 @@ function formatMessageDayLabel(createdAt) {
         year: "numeric",
         month: "short",
         day: "numeric",
+    });
+}
+
+/**
+ * Remove all photo-group wrappers, returning their children to the
+ * main message list (direct children of chatMessagesElem).
+ * Must be called before rebuildMessageDaySeparators() so that
+ * separator insertion can use chatMessagesElem.insertBefore safely.
+ */
+function unwrapPhotoGroups() {
+    if (!chatMessagesElem) return;
+    chatMessagesElem
+        .querySelectorAll(".photo-group-wrapper")
+        .forEach((wrapper) => {
+            wrapper
+                .querySelectorAll(".photo-grouped")
+                .forEach((el) => el.classList.remove("photo-grouped"));
+            while (wrapper.firstChild) {
+                wrapper.parentNode.insertBefore(wrapper.firstChild, wrapper);
+            }
+            wrapper.remove();
+        });
+}
+
+/**
+ * Find messages that share the same `grouped_with` value and wrap
+ * them in a `.photo-group-wrapper` grid container.  Always unwraps
+ * first so it is safe to call repeatedly (idempotent).
+ */
+function applyPhotoGrouping() {
+    if (!chatMessagesElem) return;
+    unwrapPhotoGroups();
+
+    const allGrouped = chatMessagesElem.querySelectorAll(
+        ".message[data-grouped-with]",
+    );
+    if (!allGrouped.length) return;
+
+    // Collect by grouped_with value, preserving DOM order
+    const groups = new Map();
+    allGrouped.forEach((el) => {
+        const gw = el.getAttribute("data-grouped-with");
+        if (!groups.has(gw)) groups.set(gw, []);
+        groups.get(gw).push(el);
+    });
+
+    groups.forEach((elements, gwValue) => {
+        // Need at least 2 messages to form a visual group
+        if (elements.length < 2) return;
+
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("photo-group-wrapper");
+        wrapper.classList.add(
+            elements[0].classList.contains("sent") ? "sent" : "received",
+        );
+        wrapper.setAttribute("data-grouped-with", gwValue);
+        wrapper.setAttribute("data-photo-count", String(elements.length));
+
+        // Insert wrapper at the position of the first element
+        elements[0].parentNode.insertBefore(wrapper, elements[0]);
+
+        elements.forEach((el) => {
+            el.classList.add("photo-grouped");
+            wrapper.appendChild(el);
+        });
     });
 }
 
@@ -10911,6 +10983,12 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
         String(Number(msg.forwarded_from_message_id || 0)),
     );
     div.setAttribute("data-edited-at", msg.edited_at || "");
+    if (msg.grouped_with) {
+        div.setAttribute(
+            "data-grouped-with",
+            String(msg.grouped_with),
+        );
+    }
     if (msg.file_size) {
         div.setAttribute("data-file-size", String(msg.file_size));
     }
@@ -13904,52 +13982,73 @@ async function handleSelectedImageFile(e) {
         e.target.value = null;
         return;
     }
-    const file = e.target.files?.[0];
-    if (!file) {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) {
         e.target.value = null;
         return;
     }
 
-    if (!file.type.startsWith("image/")) {
+    const MAX_GROUPED_PHOTOS = 10;
+    if (fileList.length > MAX_GROUPED_PHOTOS) {
         e.target.value = null;
         showModal(
-            I18N_TEXT.invalidFileTypeTitle,
-            I18N_TEXT.invalidFileTypeImageBody,
+            "Too Many Photos",
+            `You can select up to ${MAX_GROUPED_PHOTOS} photos at once.`,
             "warning",
         );
         return;
     }
 
-    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
-        e.target.value = null;
-        showModal(
-            I18N_TEXT.fileTooLargeTitle,
-            I18N_TEXT.imageTooLargeBody,
-            "warning",
-        );
-        return;
+    // Validate and buffer all files first (Android content:// URIs expire on input clear)
+    const validFiles = [];
+    for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        if (!file.type.startsWith("image/")) {
+            e.target.value = null;
+            showModal(
+                I18N_TEXT.invalidFileTypeTitle,
+                I18N_TEXT.invalidFileTypeImageBody,
+                "warning",
+            );
+            return;
+        }
+        if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+            e.target.value = null;
+            showModal(
+                I18N_TEXT.fileTooLargeTitle,
+                I18N_TEXT.imageTooLargeBody,
+                "warning",
+            );
+            return;
+        }
     }
 
-    // Read bytes NOW while the content:// URI grant is still active (Android revokes
-    // it as soon as the input is cleared, causing "permission denied" on later reads).
-    let buffer;
-    try {
-        buffer = await file.arrayBuffer();
-    } catch (_readErr) {
-        e.target.value = null;
-        showModal(
-            I18N_TEXT.imageSendErrorTitle,
-            "Unable to read the selected file. Please try again.",
-            "error",
-        );
-        return;
+    // Read all file buffers before clearing the input
+    for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        try {
+            const buffer = await file.arrayBuffer();
+            validFiles.push(
+                new File([buffer], file.name, { type: file.type }),
+            );
+        } catch (_readErr) {
+            e.target.value = null;
+            showModal(
+                I18N_TEXT.imageSendErrorTitle,
+                "Unable to read the selected file. Please try again.",
+                "error",
+            );
+            return;
+        }
     }
-    const fileName = file.name;
-    const fileType = file.type;
+
     e.target.value = null;
 
-    const standaloneFile = new File([buffer], fileName, { type: fileType });
-    void sendImageMessage(standaloneFile);
+    if (validFiles.length === 1) {
+        void sendImageMessage(validFiles[0]);
+    } else {
+        void sendGroupedImageMessages(validFiles);
+    }
 }
 
 async function handleSelectedVideoFile(e) {
@@ -14181,6 +14280,121 @@ async function sendImageMessage(imageFile) {
             (pct, loaded, total) =>
                 updateBackgroundUploadProgress(bgId, pct, loaded, total),
         );
+
+        if (!isGroupToken(capturedTarget)) {
+            addUserToChatList(capturedTarget);
+        }
+        if (currentChatUser === capturedTarget) {
+            loadCurrentChatsRecentMessages();
+            setComposerStatus("");
+        }
+    } catch (err) {
+        if (currentChatUser === capturedTarget) {
+            setComposerStatus("Image upload failed. Try again.", "error");
+        }
+        showModal(
+            I18N_TEXT.imageSendErrorTitle,
+            formatI18nText(I18N_TEXT.imageSendErrorBody, {
+                error: err.message || "Unknown",
+            }),
+            "error",
+        );
+    } finally {
+        completeBackgroundUpload(bgId);
+    }
+}
+
+async function sendGroupedImageMessages(imageFiles) {
+    if (!ensureEditModeAllowsTextOnly("send images")) {
+        return;
+    }
+    const capturedTarget = currentChatUser;
+    const replyToId = currentReplyTarget?.messageId || null;
+    const groupId = parseGroupIdFromToken(capturedTarget);
+    clearReplyState();
+
+    const totalFiles = imageFiles.length;
+    const bgId = registerBackgroundUpload("image");
+    await acquireUploadSlot(bgId);
+
+    let groupedWithId = null;
+    let completedCount = 0;
+
+    try {
+        for (let i = 0; i < totalFiles; i++) {
+            const file = imageFiles[i];
+
+            const mediaPayload = await encryptMediaForMessage(
+                file,
+                {
+                    file_name: String(file?.name || "image"),
+                    mime_type: String(file?.type || "image/jpeg"),
+                    file_size: Number(file?.size || 0),
+                },
+                groupId > 0
+                    ? { groupId }
+                    : { targetUsername: capturedTarget },
+            );
+
+            const formData = new FormData();
+            if (groupId > 0) {
+                formData.append("group_id", String(groupId));
+            } else {
+                formData.append("target", capturedTarget);
+            }
+            formData.append("message", mediaPayload.messageForRecipient);
+            formData.append(
+                "message_for_sender",
+                mediaPayload.messageForSender,
+            );
+            formData.append(
+                "image_file",
+                mediaPayload.encryptedBlob,
+                "image.enc",
+            );
+
+            // Only the first photo carries the reply reference
+            if (i === 0 && replyToId) {
+                formData.append("reply_to_message_id", String(replyToId));
+            }
+
+            // Grouping: first photo sends 'self', rest reference the anchor
+            if (i === 0) {
+                formData.append("grouped_with", "self");
+            } else {
+                formData.append("grouped_with", String(groupedWithId));
+            }
+
+            const response = await uploadWithProgress(
+                "api/messages/media/send_image.php",
+                formData,
+                getCsrfHeaders(),
+                (pct) => {
+                    const aggregatePct = Math.round(
+                        (completedCount * 100 + pct) / totalFiles,
+                    );
+                    updateBackgroundUploadProgress(
+                        bgId,
+                        aggregatePct,
+                        0,
+                        0,
+                    );
+                },
+            );
+
+            // Capture the group anchor ID from the first upload
+            if (i === 0) {
+                groupedWithId =
+                    response?.grouped_with ?? response?.message_id;
+                if (!groupedWithId) {
+                    throw new Error(
+                        "Server did not return a group ID for the first photo.",
+                    );
+                }
+            }
+
+            completedCount++;
+        }
 
         if (!isGroupToken(capturedTarget)) {
             addUserToChatList(capturedTarget);

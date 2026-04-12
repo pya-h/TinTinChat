@@ -7284,6 +7284,211 @@ textarea,
     font-size: 0.9rem;
 }
 
+/* ── Photo-group (album) wrapper ── */
+.photo-group-wrapper {
+    display: grid;
+    gap: 2px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    max-width: 360px;
+    width: fit-content;
+    margin-bottom: 0.95rem;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.10);
+}
+
+.photo-group-wrapper.sent {
+    margin-left: auto;
+}
+
+.photo-group-wrapper.received {
+    margin-right: auto;
+}
+
+/* Grid layouts by photo count */
+.photo-group-wrapper[data-photo-count="2"] {
+    grid-template-columns: 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="3"] {
+    grid-template-columns: 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="3"] > .message:first-child {
+    grid-column: 1 / -1;
+}
+
+.photo-group-wrapper[data-photo-count="4"] {
+    grid-template-columns: 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="5"] {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="5"] > .message:nth-child(4),
+.photo-group-wrapper[data-photo-count="5"] > .message:nth-child(5) {
+    /* last row of 2 items — each spans 1.5fr visually */
+}
+
+.photo-group-wrapper[data-photo-count="6"] {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="7"] {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="8"] {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="8"] > .message:nth-child(7),
+.photo-group-wrapper[data-photo-count="8"] > .message:nth-child(8) {
+    /* last row of 2 items */
+}
+
+.photo-group-wrapper[data-photo-count="9"] {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="10"] {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.photo-group-wrapper[data-photo-count="10"] > .message:nth-child(10) {
+    grid-column: 1 / -1;
+}
+
+/* Strip down individual message styling inside groups */
+.message.photo-grouped {
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    animation: none;
+    max-width: none;
+    width: auto;
+    clear: none;
+}
+
+.message.photo-grouped:hover {
+    box-shadow: none;
+}
+
+.message.photo-grouped .image-message-link {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.message.photo-grouped .image-message-link:hover {
+    box-shadow: none;
+}
+
+.message.photo-grouped .message-image {
+    border-radius: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 80px;
+    object-fit: cover;
+    transition: opacity 0.2s ease;
+}
+
+.message.photo-grouped .message-image:hover {
+    transform: none;
+    opacity: 0.92;
+}
+
+/* Hide date tags on all but the last photo in a group */
+.photo-group-wrapper .message.photo-grouped .message-meta-time {
+    display: none;
+}
+
+.photo-group-wrapper .message.photo-grouped:last-child .message-meta-time {
+    display: block;
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+    font-size: 0.7rem;
+    background: rgb(0 0 0 / 0.5);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 8px;
+    z-index: 2;
+}
+
+/* Hide reactions container on grouped photos except last */
+.photo-group-wrapper .message.photo-grouped .reactions-container {
+    display: none;
+}
+
+.photo-group-wrapper .message.photo-grouped:last-child .reactions-container {
+    display: flex;
+}
+
+/* Hide status indicator on grouped except last */
+.photo-group-wrapper .message.photo-grouped .message-status-indicator {
+    display: none;
+}
+
+.photo-group-wrapper .message.photo-grouped:last-child .message-status-indicator {
+    display: block;
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+}
+
+/* Reply preview only on first photo (server only sets reply_to on first) */
+.photo-group-wrapper .message.photo-grouped .reply-quote {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    z-index: 2;
+    border-radius: 8px;
+    background: rgb(0 0 0 / 0.45);
+    backdrop-filter: blur(6px);
+}
+
+/* Forwarded label inside grouped */
+.photo-group-wrapper .message.photo-grouped .forwarded-meta {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 2;
+    background: rgb(0 0 0 / 0.45);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 8px;
+    backdrop-filter: blur(6px);
+    font-size: 0.72rem;
+}
+
+/* Loading placeholder inside grouped photos */
+.message.photo-grouped .image-message-loading {
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-color);
+}
+
+/* Purged placeholder inside grouped */
+.message.photo-grouped .file-purged-media-placeholder {
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-color);
+}
+
+@media (max-width: 767.98px) {
+    .photo-group-wrapper {
+        max-width: 75%;
+    }
+}
+
 .message.is-sticker-message {
     background: transparent;
     padding: 0;

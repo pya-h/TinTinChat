@@ -25,6 +25,11 @@ $forwardedFromMessageId = isset($_POST['forwarded_from_message_id']) && is_numer
 $replyToMessageId = isset($_POST['reply_to_message_id']) && is_numeric($_POST['reply_to_message_id'])
 	? (int) $_POST['reply_to_message_id']
 	: null;
+$rawGroupedWith = trim((string) ($_POST['grouped_with'] ?? ''));
+$groupedWithSelf = ($rawGroupedWith === 'self');
+$groupedWith = (!$groupedWithSelf && $rawGroupedWith !== '' && is_numeric($rawGroupedWith))
+	? (int) $rawGroupedWith
+	: null;
 $image_file = apiRequireUploadedFile('image_file');
 
 if ($message_for_recipient === '' || $message_for_sender === '') {
@@ -70,6 +75,20 @@ if ($replyToMessageId) {
 	}
 }
 
+// Validate grouped_with references an image message in the same conversation sent by this user
+if ($groupedWith !== null) {
+	if ($groupId > 0) {
+		$gwStmt = $pdo->prepare("SELECT id FROM messages WHERE id = ? AND group_id = ? AND sender_id = ? AND message_type = 'image' LIMIT 1");
+		$gwStmt->execute([$groupedWith, $groupId, $sender_id]);
+	} else {
+		$gwStmt = $pdo->prepare("SELECT id FROM messages WHERE id = ? AND sender_id = ? AND receiver_id = ? AND message_type = 'image' LIMIT 1");
+		$gwStmt->execute([$groupedWith, $sender_id, $receiver_id]);
+	}
+	if (!$gwStmt->fetch()) {
+		apiError('INVALID_GROUPED_WITH', 'Invalid group reference', 400);
+	}
+}
+
 if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
 	apiEnsureWritableDirectory($upload_dir, 'images directory');
 	if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
@@ -79,8 +98,8 @@ if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
 
 try {
 	$stmt = $pdo->prepare(
-		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id)
-		 VALUES (?, ?, ?, ?, ?, 'image', ?, ?, ?, ?, ?)"
+		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id, grouped_with)
+		 VALUES (?, ?, ?, ?, ?, 'image', ?, ?, ?, ?, ?, ?)"
 	);
 	if (
 		!$stmt->execute([
@@ -94,13 +113,24 @@ try {
 			$replyToMessageId,
 			$forwardedFromMessageId,
 			$forwardedFromMessageId ? $sender_id : null,
+			$groupedWith,
 		])
 	) {
 		apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);
 	}
 
+	$newMessageId = (int) $pdo->lastInsertId();
+
+	// For the first photo in a group, set grouped_with to its own id
+	if ($groupedWithSelf) {
+		$pdo->prepare('UPDATE messages SET grouped_with = ? WHERE id = ?')
+			->execute([$newMessageId, $newMessageId]);
+		$groupedWith = $newMessageId;
+	}
+
 	apiSuccess([
-		'message_id' => (int) $pdo->lastInsertId(),
+		'message_id' => $newMessageId,
+		'grouped_with' => $groupedWith,
 		'message' => 'Image sent successfully'
 	]);
 } catch (PDOException $e) {

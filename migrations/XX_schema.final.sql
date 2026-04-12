@@ -65,6 +65,7 @@ CREATE TABLE messages (
   reply_to_message_id INT NULL,
   forwarded_from_message_id INT NULL,
   forwarded_by_user_id INT NULL,
+  grouped_with INT NULL DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   edited_at TIMESTAMP DEFAULT NULL,
   seen_at TIMESTAMP DEFAULT NULL,
@@ -253,6 +254,7 @@ CREATE INDEX idx_messages_reply_to ON messages(reply_to_message_id);
 CREATE INDEX idx_messages_forwarded_from ON messages(forwarded_from_message_id);
 CREATE INDEX idx_messages_forwarded_by ON messages(forwarded_by_user_id);
 CREATE INDEX idx_messages_sticker_id ON messages(sticker_id);
+CREATE INDEX idx_messages_grouped_with ON messages(grouped_with);
 
 CREATE INDEX idx_messages_group_created_at ON messages(group_id, created_at);
 

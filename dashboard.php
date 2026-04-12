@@ -412,7 +412,7 @@ $csrfToken = generateCsrfToken();
                             <i class="fas fa-paste"></i>
                         </button>
                         
-                        <input type="file" id="imageUploadInput" accept="image/*" style="display: none;">
+                        <input type="file" id="imageUploadInput" accept="image/*" multiple style="display: none;">
                         <input type="file" id="imageCaptureInput" accept="image/*" capture="environment" style="display: none;">
                         <input type="file" id="videoUploadInput" accept="video/*" style="display: none;">
                         <input type="file" id="videoCaptureInput" accept="video/*" capture="environment" style="display: none;">
