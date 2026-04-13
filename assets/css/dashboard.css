@@ -4676,7 +4676,7 @@ textarea,
     left: 50%;
     transform: translateX(-50%);
     z-index: 1080;
-    pointer-events: none;
+    pointer-events: auto;
     animation: bgUploadSlideIn 0.3s var(--ease-spring);
 }
 
@@ -4684,8 +4684,8 @@ textarea,
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    min-width: 200px;
-    max-width: 300px;
+    min-width: 220px;
+    max-width: 320px;
     padding: 0.5rem 0.85rem;
     border-radius: 14px;
     background: var(--surface-color);
@@ -4694,12 +4694,54 @@ textarea,
     gap: 0.3rem;
 }
 
+.bg-upload-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
 .bg-upload-label {
     font-size: 0.78rem;
     font-weight: 500;
     color: var(--text-color);
     white-space: nowrap;
-    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.bg-upload-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--subtle-text-color);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease,
+        background 0.15s ease;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.bg-upload-cancel:hover {
+    color: #e74c3c;
+    border-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.08);
+}
+
+.bg-upload-cancel:active {
+    background: rgba(231, 76, 60, 0.16);
+}
+
+.bg-upload-cancel .fas {
+    font-size: 0.6rem;
 }
 
 .bg-upload-detail {

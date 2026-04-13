@@ -465,17 +465,16 @@ function updateBgUploadIndicator() {
         container.hidden = true;
         return;
     }
-    const entries = [...backgroundUploads.values()];
+    const entries = [...backgroundUploads.entries()];
     const count = entries.length;
-    const activeEntries = entries.filter((e) => !e.queued);
-    const queuedCount = entries.length - activeEntries.length;
-    const label = count > 1 ? count + " files" : entries[0].label;
+    const queuedCount = entries.filter(([, e]) => e.queued).length;
+
     // Aggregate progress: average across all uploads (queued ones count as 0%)
     let totalPct = 0;
     let totalLoaded = 0;
     let totalSize = 0;
     let hasByteInfo = false;
-    for (const entry of entries) {
+    for (const [, entry] of entries) {
         totalPct += entry.progress || 0;
         if (entry.total > 0) {
             totalLoaded += entry.loaded || 0;
@@ -484,6 +483,21 @@ function updateBgUploadIndicator() {
         }
     }
     const avgPct = Math.round(totalPct / count);
+
+    // Build label — for multi-item batches show "Photo 2/5"
+    let label;
+    if (count === 1) {
+        const [, e] = entries[0];
+        if (e.totalItems > 1) {
+            const cur = Math.min(e.currentItem + 1, e.totalItems);
+            label = `${e.label} ${cur}/${e.totalItems}`;
+        } else {
+            label = e.label;
+        }
+    } else {
+        label = count + " files";
+    }
+
     const pctText = avgPct > 0 && avgPct < 100 ? ` ${avgPct}%` : "";
     const queueText =
         queuedCount > 0
@@ -492,20 +506,115 @@ function updateBgUploadIndicator() {
     const detailText = hasByteInfo
         ? `<span class="bg-upload-detail">${formatUploadSize(totalLoaded)} / ${formatUploadSize(totalSize)}</span>`
         : "";
+
+    // Build cancel buttons — one per active (non-queued) upload
+    let cancelHtml = "";
+    const cancelableEntries = entries.filter(
+        ([, e]) => !e.queued && typeof e.abort === "function",
+    );
+    if (cancelableEntries.length > 0 || count > 0) {
+        // Single cancel button that cancels the first active upload (or the only one)
+        const cancelId = cancelableEntries.length
+            ? cancelableEntries[0][0]
+            : entries[0][0];
+        cancelHtml =
+            `<button class="bg-upload-cancel" data-cancel-bg-id="${cancelId}" title="Cancel upload">` +
+            `<i class="fas fa-times"></i> Cancel</button>`;
+    }
+
     container.innerHTML =
         `<div class="bg-upload-content">` +
-        `<span class="bg-upload-label">Sending ${label}…${pctText}${queueText}</span>` +
+        `<div class="bg-upload-header">` +
+        `<span class="bg-upload-label">Sending ${escapeHtml(label)}…${pctText}${queueText}</span>` +
+        cancelHtml +
+        `</div>` +
         detailText +
         `<div class="bg-upload-bar"><div class="bg-upload-bar-fill" style="width:${avgPct}%"></div></div>` +
         `</div>`;
     container.hidden = false;
+
+    // Wire cancel button click handler
+    const cancelBtn = container.querySelector(".bg-upload-cancel");
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const bgId = Number(cancelBtn.getAttribute("data-cancel-bg-id"));
+            if (bgId > 0) cancelBackgroundUpload(bgId);
+        });
+    }
 }
 
-function registerBackgroundUpload(label) {
+function registerBackgroundUpload(label, { totalItems = 1 } = {}) {
     const id = ++bgUploadIdCounter;
-    backgroundUploads.set(id, { label, progress: 0, queued: true });
+    backgroundUploads.set(id, {
+        label,
+        progress: 0,
+        queued: true,
+        abort: null,
+        totalItems,
+        currentItem: 0,
+        cancelled: false,
+    });
     updateBgUploadIndicator();
     return id;
+}
+
+/**
+ * Store / replace the abort callback for a background upload,
+ * so the cancel button can invoke it.
+ * If the upload was already cancelled before the abort was set,
+ * immediately call the abort to terminate the in-flight XHR.
+ */
+function setBackgroundUploadAbort(id, abortFn) {
+    const entry = backgroundUploads.get(id);
+    if (!entry) return;
+    entry.abort = abortFn || null;
+    if (entry.cancelled && typeof abortFn === "function") {
+        abortFn();
+    }
+}
+
+/**
+ * Check if a background upload was cancelled by the user.
+ * Single-file senders should call this before starting the XHR.
+ */
+function isUploadCancelled(id) {
+    return backgroundUploads.get(id)?.cancelled === true;
+}
+
+/**
+ * Returns true if an error was caused by user-initiated cancel.
+ * Used to suppress error modals for deliberate cancellations.
+ */
+function isUploadCancelError(err) {
+    return (
+        err &&
+        (err.message === "Upload cancelled" ||
+            err.message === "Upload was cancelled")
+    );
+}
+
+/**
+ * Update which item is currently being uploaded (for multi-file batches).
+ */
+function setBackgroundUploadCurrentItem(id, itemIndex) {
+    const entry = backgroundUploads.get(id);
+    if (entry) {
+        entry.currentItem = itemIndex;
+        updateBgUploadIndicator();
+    }
+}
+
+/**
+ * Cancel a background upload. Calls the stored abort callback,
+ * which will cause uploadWithProgress to reject with "Upload cancelled".
+ */
+function cancelBackgroundUpload(id) {
+    const entry = backgroundUploads.get(id);
+    if (!entry) return;
+    if (typeof entry.abort === "function") entry.abort();
+    entry.cancelled = true;
+    updateBgUploadIndicator();
 }
 
 /**
@@ -526,13 +635,29 @@ function acquireUploadSlot(bgId) {
 
 function releaseUploadSlot() {
     activeUploadCount = Math.max(0, activeUploadCount - 1);
-    if (uploadQueue.length > 0 && activeUploadCount < MAX_CONCURRENT_UPLOADS) {
+    while (
+        uploadQueue.length > 0 &&
+        activeUploadCount < MAX_CONCURRENT_UPLOADS
+    ) {
         const next = uploadQueue.shift();
-        activeUploadCount++;
         const entry = backgroundUploads.get(next.bgId);
+        // Skip cancelled queued uploads — let the sender detect via
+        // isUploadCancelled and run its own cleanup lifecycle.
+        if (entry?.cancelled) {
+            // Increment so the sender's finally → releaseUploadSlot
+            // can decrement it back without desynchronising the count.
+            activeUploadCount++;
+            if (entry) entry.queued = false;
+            updateBgUploadIndicator();
+            next.resolve();
+            // Continue loop to try waking the next valid entry.
+            continue;
+        }
+        activeUploadCount++;
         if (entry) entry.queued = false;
         updateBgUploadIndicator();
         next.resolve();
+        break;
     }
 }
 
@@ -556,11 +681,13 @@ function completeBackgroundUpload(id) {
 
 /**
  * Upload FormData via XHR with progress tracking.
- * Returns a Promise that resolves with the parsed JSON response.
+ * Returns { promise, abort } so callers can cancel the upload.
  */
 function uploadWithProgress(url, formData, headers, onProgress) {
-    return new Promise((resolve, reject) => {
+    let xhrRef = null;
+    const promise = new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        xhrRef = xhr;
         xhr.open("POST", url, true);
         if (headers) {
             for (const [key, value] of Object.entries(headers)) {
@@ -608,6 +735,10 @@ function uploadWithProgress(url, formData, headers, onProgress) {
         );
         xhr.send(formData);
     });
+    return {
+        promise,
+        abort: () => { if (xhrRef) xhrRef.abort(); },
+    };
 }
 
 const appSettings = {
@@ -7022,15 +7153,18 @@ async function forwardMediaToDestination(
     const fwdBgId = registerBackgroundUpload("forwarded " + mediaType);
     await acquireUploadSlot(fwdBgId);
     try {
+        if (isUploadCancelled(fwdBgId)) throw new Error("Upload cancelled");
+
         const fwdProgress = (pct, loaded, total) =>
             updateBackgroundUploadProgress(fwdBgId, pct, loaded, total);
+        let fwdUpload;
         if (mediaType === "voice") {
             formData.append(
                 "voice_file",
                 mediaPayload.encryptedBlob,
                 "voice_message.enc",
             );
-            await uploadWithProgress(
+            fwdUpload = uploadWithProgress(
                 "api/messages/media/send_voice.php",
                 formData,
                 getCsrfHeaders(),
@@ -7042,7 +7176,7 @@ async function forwardMediaToDestination(
                 mediaPayload.encryptedBlob,
                 "image.enc",
             );
-            await uploadWithProgress(
+            fwdUpload = uploadWithProgress(
                 "api/messages/media/send_image.php",
                 formData,
                 getCsrfHeaders(),
@@ -7051,7 +7185,7 @@ async function forwardMediaToDestination(
         } else if (mediaType === "video") {
             formData.append("message_type", "video");
             formData.append("file", mediaPayload.encryptedBlob, "video.enc");
-            await uploadWithProgress(
+            fwdUpload = uploadWithProgress(
                 "api/messages/media/send_file.php",
                 formData,
                 getCsrfHeaders(),
@@ -7060,13 +7194,15 @@ async function forwardMediaToDestination(
         } else {
             formData.append("message_type", "file");
             formData.append("file", mediaPayload.encryptedBlob, "file.enc");
-            await uploadWithProgress(
+            fwdUpload = uploadWithProgress(
                 "api/messages/media/send_file.php",
                 formData,
                 getCsrfHeaders(),
                 fwdProgress,
             );
         }
+        setBackgroundUploadAbort(fwdBgId, fwdUpload.abort);
+        await fwdUpload.promise;
     } finally {
         completeBackgroundUpload(fwdBgId);
     }
@@ -7142,11 +7278,13 @@ async function forwardMessageText(messageElement) {
                     : destination;
                 setComposerStatus(`Forwarded to ${destLabel}`, "success");
             } catch (error) {
-                showModal(
-                    I18N_TEXT.forwardFailedTitle,
-                    error.message || "Unable to forward message.",
-                    "error",
-                );
+                if (!isUploadCancelError(error)) {
+                    showModal(
+                        I18N_TEXT.forwardFailedTitle,
+                        error.message || "Unable to forward message.",
+                        "error",
+                    );
+                }
             } finally {
                 if (button) {
                     button.disabled = false;
@@ -7189,11 +7327,13 @@ async function saveMessageToSavedMessages(messageElement) {
         addUserToChatList(CURRENT_USER, { userId: CURRENT_USER_ID });
         setComposerStatus("Saved to your messages", "success");
     } catch (error) {
-        showModal(
-            "Save Failed",
-            error.message || "Unable to save message.",
-            "error",
-        );
+        if (!isUploadCancelError(error)) {
+            showModal(
+                "Save Failed",
+                error.message || "Unable to save message.",
+                "error",
+            );
+        }
     }
 }
 
@@ -13871,13 +14011,17 @@ async function sendVoiceMessage(audioBlob) {
         if (replyToId)
             formData.append("reply_to_message_id", String(replyToId));
 
-        await uploadWithProgress(
+        if (isUploadCancelled(bgId)) throw new Error("Upload cancelled");
+
+        const voiceUpload = uploadWithProgress(
             "api/messages/media/send_voice.php",
             formData,
             getCsrfHeaders(),
             (pct, loaded, total) =>
                 updateBackgroundUploadProgress(bgId, pct, loaded, total),
         );
+        setBackgroundUploadAbort(bgId, voiceUpload.abort);
+        await voiceUpload.promise;
 
         if (!isGroupToken(capturedTarget)) {
             addUserToChatList(capturedTarget);
@@ -13888,17 +14032,18 @@ async function sendVoiceMessage(audioBlob) {
             setComposerStatus("");
         }
     } catch (err) {
-        // Show error only if user is still on the same chat
-        if (currentChatUser === capturedTarget) {
-            setComposerStatus("Voice message failed. Try again.", "error");
+        if (!isUploadCancelError(err)) {
+            if (currentChatUser === capturedTarget) {
+                setComposerStatus("Voice message failed. Try again.", "error");
+            }
+            showModal(
+                I18N_TEXT.voiceSendErrorTitle,
+                formatI18nText(I18N_TEXT.voiceSendErrorBody, {
+                    error: err.message || "Unknown",
+                }),
+                "error",
+            );
         }
-        showModal(
-            I18N_TEXT.voiceSendErrorTitle,
-            formatI18nText(I18N_TEXT.voiceSendErrorBody, {
-                error: err.message || "Unknown",
-            }),
-            "error",
-        );
     } finally {
         completeBackgroundUpload(bgId);
     }
@@ -14285,13 +14430,17 @@ async function sendImageMessage(imageFile) {
         if (replyToId)
             formData.append("reply_to_message_id", String(replyToId));
 
-        await uploadWithProgress(
+        if (isUploadCancelled(bgId)) throw new Error("Upload cancelled");
+
+        const imgUpload = uploadWithProgress(
             "api/messages/media/send_image.php",
             formData,
             getCsrfHeaders(),
             (pct, loaded, total) =>
                 updateBackgroundUploadProgress(bgId, pct, loaded, total),
         );
+        setBackgroundUploadAbort(bgId, imgUpload.abort);
+        await imgUpload.promise;
 
         if (!isGroupToken(capturedTarget)) {
             addUserToChatList(capturedTarget);
@@ -14301,16 +14450,18 @@ async function sendImageMessage(imageFile) {
             setComposerStatus("");
         }
     } catch (err) {
-        if (currentChatUser === capturedTarget) {
-            setComposerStatus("Image upload failed. Try again.", "error");
+        if (!isUploadCancelError(err)) {
+            if (currentChatUser === capturedTarget) {
+                setComposerStatus("Image upload failed. Try again.", "error");
+            }
+            showModal(
+                I18N_TEXT.imageSendErrorTitle,
+                formatI18nText(I18N_TEXT.imageSendErrorBody, {
+                    error: err.message || "Unknown",
+                }),
+                "error",
+            );
         }
-        showModal(
-            I18N_TEXT.imageSendErrorTitle,
-            formatI18nText(I18N_TEXT.imageSendErrorBody, {
-                error: err.message || "Unknown",
-            }),
-            "error",
-        );
     } finally {
         completeBackgroundUpload(bgId);
     }
@@ -14326,7 +14477,7 @@ async function sendGroupedImageMessages(imageFiles) {
     clearReplyState();
 
     const totalFiles = imageFiles.length;
-    const bgId = registerBackgroundUpload("image");
+    const bgId = registerBackgroundUpload("image", { totalItems: totalFiles });
     await acquireUploadSlot(bgId);
 
     let groupedWithId = null;
@@ -14334,6 +14485,15 @@ async function sendGroupedImageMessages(imageFiles) {
 
     try {
         for (let i = 0; i < totalFiles; i++) {
+            // Check if cancelled before starting next photo
+            const bgEntry = backgroundUploads.get(bgId);
+            if (bgEntry?.cancelled) {
+                throw new Error("Upload cancelled");
+            }
+
+            setBackgroundUploadCurrentItem(bgId, i);
+            if (isUploadCancelled(bgId)) throw new Error("Upload cancelled");
+
             const file = imageFiles[i];
 
             const mediaPayload = await encryptMediaForMessage(
@@ -14377,7 +14537,7 @@ async function sendGroupedImageMessages(imageFiles) {
                 formData.append("grouped_with", String(groupedWithId));
             }
 
-            const response = await uploadWithProgress(
+            const groupedUpload = uploadWithProgress(
                 "api/messages/media/send_image.php",
                 formData,
                 getCsrfHeaders(),
@@ -14393,6 +14553,8 @@ async function sendGroupedImageMessages(imageFiles) {
                     );
                 },
             );
+            setBackgroundUploadAbort(bgId, groupedUpload.abort);
+            const response = await groupedUpload.promise;
 
             // Capture the group anchor ID from the first upload
             if (i === 0) {
@@ -14416,16 +14578,18 @@ async function sendGroupedImageMessages(imageFiles) {
             setComposerStatus("");
         }
     } catch (err) {
-        if (currentChatUser === capturedTarget) {
-            setComposerStatus("Image upload failed. Try again.", "error");
+        if (!isUploadCancelError(err)) {
+            if (currentChatUser === capturedTarget) {
+                setComposerStatus("Image upload failed. Try again.", "error");
+            }
+            showModal(
+                I18N_TEXT.imageSendErrorTitle,
+                formatI18nText(I18N_TEXT.imageSendErrorBody, {
+                    error: err.message || "Unknown",
+                }),
+                "error",
+            );
         }
-        showModal(
-            I18N_TEXT.imageSendErrorTitle,
-            formatI18nText(I18N_TEXT.imageSendErrorBody, {
-                error: err.message || "Unknown",
-            }),
-            "error",
-        );
     } finally {
         completeBackgroundUpload(bgId);
     }
@@ -14512,13 +14676,17 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
         if (replyToId)
             formData.append("reply_to_message_id", String(replyToId));
 
-        await uploadWithProgress(
+        if (isUploadCancelled(bgId)) throw new Error("Upload cancelled");
+
+        const fileUpload = uploadWithProgress(
             "api/messages/media/send_file.php",
             formData,
             getCsrfHeaders(),
             (pct, loaded, total) =>
                 updateBackgroundUploadProgress(bgId, pct, loaded, total),
         );
+        setBackgroundUploadAbort(bgId, fileUpload.abort);
+        await fileUpload.promise;
 
         if (!isGroupToken(capturedTarget)) {
             addUserToChatList(capturedTarget);
@@ -14528,19 +14696,21 @@ async function sendFileMessage(file, { asVideo = false } = {}) {
             setComposerStatus("");
         }
     } catch (err) {
-        if (currentChatUser === capturedTarget) {
-            setComposerStatus(
-                asVideo
-                    ? "Video upload failed. Try again."
-                    : "File upload failed. Try again.",
+        if (!isUploadCancelError(err)) {
+            if (currentChatUser === capturedTarget) {
+                setComposerStatus(
+                    asVideo
+                        ? "Video upload failed. Try again."
+                        : "File upload failed. Try again.",
+                    "error",
+                );
+            }
+            showModal(
+                asVideo ? "Video Send Error" : "File Send Error",
+                (asVideo ? "Video" : "File") + " send error: " + err.message,
                 "error",
             );
         }
-        showModal(
-            asVideo ? "Video Send Error" : "File Send Error",
-            (asVideo ? "Video" : "File") + " send error: " + err.message,
-            "error",
-        );
     } finally {
         completeBackgroundUpload(bgId);
     }
