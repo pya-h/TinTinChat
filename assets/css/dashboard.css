@@ -7328,86 +7328,95 @@ textarea,
 
 /* ── Photo-group (album) wrapper ── */
 .photo-group-wrapper {
-    display: grid;
-    gap: 2px;
-    border-radius: var(--border-radius);
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     max-width: 360px;
     width: fit-content;
     margin-bottom: 0.95rem;
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.10);
 }
 
 .photo-group-wrapper.sent {
     margin-left: auto;
+    align-items: flex-end;
 }
 
 .photo-group-wrapper.received {
     margin-right: auto;
+    align-items: flex-start;
+}
+
+/* Inner grid that holds the actual photos */
+.photo-group-grid {
+    display: grid;
+    gap: 2px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.10);
+    align-self: stretch;
 }
 
 /* Grid layouts by photo count */
-.photo-group-wrapper[data-photo-count="2"] {
+.photo-group-grid[data-photo-count="2"] {
     grid-template-columns: 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="3"] {
+.photo-group-grid[data-photo-count="3"] {
     grid-template-columns: 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="3"] > .message:first-child {
+.photo-group-grid[data-photo-count="3"] > .message:first-child {
     grid-column: 1 / -1;
 }
 
-.photo-group-wrapper[data-photo-count="4"] {
+.photo-group-grid[data-photo-count="4"] {
     grid-template-columns: 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="5"] {
+.photo-group-grid[data-photo-count="5"] {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="5"] > .message:nth-child(4) {
+.photo-group-grid[data-photo-count="5"] > .message:nth-child(4) {
     grid-column: 1 / 2;
 }
 
-.photo-group-wrapper[data-photo-count="5"] > .message:nth-child(5) {
+.photo-group-grid[data-photo-count="5"] > .message:nth-child(5) {
     grid-column: 2 / -1;
 }
 
-.photo-group-wrapper[data-photo-count="6"] {
+.photo-group-grid[data-photo-count="6"] {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="7"] {
+.photo-group-grid[data-photo-count="7"] {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="7"] > .message:nth-child(7) {
+.photo-group-grid[data-photo-count="7"] > .message:nth-child(7) {
     grid-column: 1 / -1;
 }
 
-.photo-group-wrapper[data-photo-count="8"] {
+.photo-group-grid[data-photo-count="8"] {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="8"] > .message:nth-child(7) {
+.photo-group-grid[data-photo-count="8"] > .message:nth-child(7) {
     grid-column: 1 / 2;
 }
 
-.photo-group-wrapper[data-photo-count="8"] > .message:nth-child(8) {
+.photo-group-grid[data-photo-count="8"] > .message:nth-child(8) {
     grid-column: 2 / -1;
 }
 
-.photo-group-wrapper[data-photo-count="9"] {
+.photo-group-grid[data-photo-count="9"] {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="10"] {
+.photo-group-grid[data-photo-count="10"] {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="10"] > .message:nth-child(10) {
+.photo-group-grid[data-photo-count="10"] > .message:nth-child(10) {
     grid-column: 1 / -1;
 }
 
@@ -7422,6 +7431,11 @@ textarea,
     max-width: none;
     width: auto;
     clear: none;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: transparent !important;
 }
 
 .message.photo-grouped:hover {
@@ -7431,6 +7445,10 @@ textarea,
 .message.photo-grouped .image-message-link {
     border-radius: 0;
     box-shadow: none;
+    display: block;
+    line-height: 0;
+    flex: 1;
+    min-height: 0;
 }
 
 .message.photo-grouped .image-message-link:hover {
@@ -7452,16 +7470,17 @@ textarea,
 }
 
 /* Hide date tags on all but the last photo in a group */
-.photo-group-wrapper .message.photo-grouped .message-meta-time {
+.photo-group-grid .message.photo-grouped .message-meta-time {
     display: none;
 }
 
-.photo-group-wrapper .message.photo-grouped:last-child .message-meta-time {
+.photo-group-grid .message.photo-grouped:last-child .message-meta-time {
     display: block;
     position: absolute;
     bottom: 4px;
     right: 6px;
     font-size: 0.7rem;
+    line-height: normal;
     background: rgb(0 0 0 / 0.5);
     color: #fff;
     padding: 1px 6px;
@@ -7470,20 +7489,20 @@ textarea,
 }
 
 /* Hide reactions container on grouped photos except last */
-.photo-group-wrapper .message.photo-grouped .reactions-container {
+.photo-group-grid .message.photo-grouped .reactions-container {
     display: none;
 }
 
-.photo-group-wrapper .message.photo-grouped:last-child .reactions-container {
+.photo-group-grid .message.photo-grouped:last-child .reactions-container {
     display: flex;
 }
 
 /* Hide status indicator on grouped except last */
-.photo-group-wrapper .message.photo-grouped .message-status-indicator {
+.photo-group-grid .message.photo-grouped .message-status-indicator {
     display: none;
 }
 
-.photo-group-wrapper .message.photo-grouped:last-child .message-status-indicator {
+.photo-group-grid .message.photo-grouped:last-child .message-status-indicator {
     display: block;
     position: absolute;
     bottom: 4px;
@@ -7495,7 +7514,7 @@ textarea,
 }
 
 /* Reply preview only on first photo (server only sets reply_to on first) */
-.photo-group-wrapper .message.photo-grouped .reply-quote {
+.photo-group-grid .message.photo-grouped .reply-quote {
     position: absolute;
     top: 4px;
     left: 4px;
@@ -7506,18 +7525,25 @@ textarea,
     backdrop-filter: blur(6px);
 }
 
-/* Forwarded label inside grouped */
-.photo-group-wrapper .message.photo-grouped .forwarded-meta {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    z-index: 2;
-    background: rgb(0 0 0 / 0.45);
-    color: #fff;
-    padding: 2px 8px;
-    border-radius: 8px;
-    backdrop-filter: blur(6px);
+/* Forwarded label inside grouped — hide all individual tags */
+.photo-group-grid .message.photo-grouped .forwarded-meta {
+    display: none;
+}
+
+/* Forwarded tag above the photo grid — matches single-photo look */
+.photo-group-forwarded-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     font-size: 0.72rem;
+    line-height: normal;
+    margin: 0.15rem 0.2rem 0.3rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    color: var(--subtle-text-color);
+    background: color-mix(in srgb, var(--secondary-color) 10%, var(--surface-color));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    width: fit-content;
 }
 
 /* Loading placeholder inside grouped photos */

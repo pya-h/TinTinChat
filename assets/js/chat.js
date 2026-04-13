@@ -7091,6 +7091,7 @@ async function forwardMediaToDestination(
     mediaType,
     destination,
     sourceMessageId,
+    { groupedWith } = {},
 ) {
     const groupId = isGroupToken(destination)
         ? parseGroupIdFromToken(destination)
@@ -7109,15 +7110,18 @@ async function forwardMediaToDestination(
         payload.set("sticker_id", String(stickerId));
         if (sourceMessageId)
             payload.set("forwarded_from_message_id", String(sourceMessageId));
-        await window.ApiService.jsonOk("api/messages/stickers/send.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                ...getCsrfHeaders(),
+        const stickerResult = await window.ApiService.jsonOk(
+            "api/messages/stickers/send.php",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    ...getCsrfHeaders(),
+                },
+                body: payload.toString(),
             },
-            body: payload.toString(),
-        });
-        return;
+        );
+        return stickerResult;
     }
 
     // Decrypt the original media
@@ -7149,6 +7153,11 @@ async function forwardMediaToDestination(
     formData.append("message_for_sender", mediaPayload.messageForSender);
     if (sourceMessageId)
         formData.append("forwarded_from_message_id", String(sourceMessageId));
+
+    // Grouped-with for preserving photo groups in forwarded messages
+    if (groupedWith && mediaType === "image") {
+        formData.append("grouped_with", String(groupedWith));
+    }
 
     const fwdBgId = registerBackgroundUpload("forwarded " + mediaType);
     await acquireUploadSlot(fwdBgId);
@@ -7202,7 +7211,8 @@ async function forwardMediaToDestination(
             );
         }
         setBackgroundUploadAbort(fwdBgId, fwdUpload.abort);
-        await fwdUpload.promise;
+        const result = await fwdUpload.promise;
+        return result;
     } finally {
         completeBackgroundUpload(fwdBgId);
     }
@@ -7489,29 +7499,60 @@ async function bulkForwardSelectedMessages() {
         return;
     }
 
-    const selectedTextMessages = selectedElements
-        .map((messageElement) => ({
-            messageElement,
-            messageId: Number(
+    // Build ordered list of items to forward, enriched with media info
+    const forwardItems = selectedElements
+        .map((messageElement) => {
+            const messageId = Number(
                 messageElement.getAttribute("data-message-id") || 0,
-            ),
-            messageText: getMessageTextForCopy(messageElement),
-        }))
-        .filter((item) => item.messageId > 0 && item.messageText);
+            );
+            if (!messageId) return null;
+            const mediaType = getMediaMessageType(messageElement);
+            const messageMeta = messageMetaById.get(messageId);
+            const messageText = getMessageTextForCopy(messageElement);
+            const groupedWith =
+                messageElement.getAttribute("data-grouped-with") || null;
+            return {
+                messageElement,
+                messageId,
+                mediaType,
+                messageMeta,
+                messageText,
+                groupedWith,
+            };
+        })
+        .filter(Boolean);
 
-    if (!selectedTextMessages.length) {
-        showModal(
-            "Forward Failed",
-            "Only selected text messages can be forwarded.",
-            "warning",
-        );
+    if (!forwardItems.length) {
+        showModal("Forward Failed", "No valid messages selected.", "warning");
         return;
     }
 
-    const skippedCount = Math.max(
-        0,
-        selectedElements.length - selectedTextMessages.length,
-    );
+    // Organise into ordered batches, merging same-group images into batches
+    const batches = [];
+    const groupBatchIndex = new Map(); // grouped_with value → index in batches
+    for (const item of forwardItems) {
+        if (
+            item.groupedWith &&
+            item.mediaType === "image" &&
+            item.messageMeta
+        ) {
+            // Image belonging to a photo group
+            if (groupBatchIndex.has(item.groupedWith)) {
+                batches[groupBatchIndex.get(item.groupedWith)].items.push(item);
+            } else {
+                groupBatchIndex.set(item.groupedWith, batches.length);
+                batches.push({ type: "image-group", items: [item] });
+            }
+        } else if (item.mediaType && item.messageMeta) {
+            batches.push({ type: "media", items: [item] });
+        } else if (item.messageText) {
+            batches.push({ type: "text", items: [item] });
+        } else {
+            // Cannot forward (e.g. purged media with no text) — skip silently
+            batches.push({ type: "skip", items: [item] });
+        }
+    }
+
     const content = createForwardTargetListContent(
         async (destination, button) => {
             if (!destination) {
@@ -7525,32 +7566,97 @@ async function bulkForwardSelectedMessages() {
 
             let successCount = 0;
             let failedCount = 0;
+            let skippedCount = 0;
 
             try {
                 button.disabled = true;
                 button.classList.add("is-forwarding");
 
-                for (const item of selectedTextMessages) {
+                for (const batch of batches) {
+                    let batchSent = 0;
                     try {
-                        if (isGroupToken(destination)) {
-                            await sendGroupTextMessage(
-                                parseGroupIdFromToken(destination),
-                                item.messageText,
-                                null,
-                                item.messageId,
-                            );
-                        } else {
-                            await sendEncryptedTextMessage(
+                        if (batch.type === "skip") {
+                            skippedCount += batch.items.length;
+                            continue;
+                        }
+
+                        if (batch.type === "text") {
+                            const item = batch.items[0];
+                            if (isGroupToken(destination)) {
+                                await sendGroupTextMessage(
+                                    parseGroupIdFromToken(destination),
+                                    item.messageText,
+                                    null,
+                                    item.messageId,
+                                );
+                            } else {
+                                await sendEncryptedTextMessage(
+                                    destination,
+                                    item.messageText,
+                                    null,
+                                    item.messageId,
+                                );
+                            }
+                            successCount++;
+                        } else if (batch.type === "media") {
+                            const item = batch.items[0];
+                            await forwardMediaToDestination(
+                                item.messageMeta,
+                                item.mediaType,
                                 destination,
-                                item.messageText,
-                                null,
                                 item.messageId,
                             );
+                            successCount++;
+                        } else if (batch.type === "image-group") {
+                            // Forward grouped images preserving the group
+                            let newGroupedWith = null;
+                            for (
+                                let i = 0;
+                                i < batch.items.length;
+                                i++
+                            ) {
+                                const item = batch.items[i];
+                                const gwOpt =
+                                    i === 0
+                                        ? "self"
+                                        : newGroupedWith
+                                          ? String(newGroupedWith)
+                                          : undefined;
+                                const result =
+                                    await forwardMediaToDestination(
+                                        item.messageMeta,
+                                        "image",
+                                        destination,
+                                        item.messageId,
+                                        { groupedWith: gwOpt },
+                                    );
+                                batchSent++;
+                                if (i === 0) {
+                                    newGroupedWith =
+                                        result?.grouped_with ??
+                                        result?.message_id ??
+                                        null;
+                                }
+                            }
+                            successCount += batchSent;
+                        }
+
+                        if (!isGroupToken(destination)) {
                             addUserToChatList(destination);
                         }
-                        successCount++;
                     } catch (error) {
-                        failedCount++;
+                        if (isUploadCancelError(error)) {
+                            // Count partial successes from image-group
+                            successCount += batchSent;
+                            // Upload was cancelled — stop processing further batches
+                            break;
+                        }
+                        // Count partial successes for image-group batches
+                        successCount += batchSent;
+                        failedCount +=
+                            batch.type === "image-group"
+                                ? batch.items.length - batchSent
+                                : 1;
                     }
                 }
 
@@ -7560,18 +7666,28 @@ async function bulkForwardSelectedMessages() {
                     ? chatGroupsById.get(parseGroupIdFromToken(destination))
                           ?.title || "group"
                     : destination;
-                const summaryParts = [`Forwarded ${successCount}`];
+                const totalForwarded = successCount;
+                if (totalForwarded === 0 && failedCount === 0) {
+                    // All cancelled — don't show modal
+                    return;
+                }
+                const summaryParts = [];
+                if (totalForwarded > 0) {
+                    summaryParts.push(`Forwarded ${totalForwarded}`);
+                }
                 if (failedCount) {
                     summaryParts.push(`${failedCount} failed`);
                 }
                 if (skippedCount) {
-                    summaryParts.push(`${skippedCount} skipped (non-text)`);
+                    summaryParts.push(`${skippedCount} skipped`);
                 }
-                showModal(
-                    "Bulk Forward",
-                    `${summaryParts.join(", ")} to ${destinationLabel}.`,
-                    failedCount ? "warning" : "success",
-                );
+                if (summaryParts.length) {
+                    showModal(
+                        "Bulk Forward",
+                        `${summaryParts.join(", ")} to ${destinationLabel}.`,
+                        failedCount ? "warning" : "success",
+                    );
+                }
             } finally {
                 button.disabled = false;
                 button.classList.remove("is-forwarding");
@@ -8376,6 +8492,41 @@ function addMessageActionHandlers(
                 closeMessageContextMenu();
             });
             appendMenuAction(selectBtn);
+        }
+
+        // "Select Group" — shown when message belongs to a photo group
+        const msgGroupedWith =
+            messageElement.getAttribute("data-grouped-with") || null;
+        if (canSelect && msgGroupedWith) {
+            const selectGroupBtn = document.createElement("button");
+            selectGroupBtn.type = "button";
+            selectGroupBtn.className = "message-context-menu-item";
+            selectGroupBtn.innerHTML =
+                '<i class="fas fa-layer-group me-2"></i>Select group';
+            selectGroupBtn.addEventListener("click", () => {
+                // Enter select mode if not already active (additive)
+                if (!isSelectModeActive) {
+                    enterSelectMode();
+                }
+                // Find all messages with the same grouped_with value
+                const groupMembers = chatMessagesElem
+                    ? chatMessagesElem.querySelectorAll(
+                          `.message[data-grouped-with="${CSS.escape(msgGroupedWith)}"]`,
+                      )
+                    : [];
+                groupMembers.forEach((el) => {
+                    const gMsgId = Number(
+                        el.getAttribute("data-message-id") || 0,
+                    );
+                    if (gMsgId && !selectedMessageIds.has(gMsgId)) {
+                        selectedMessageIds.add(gMsgId);
+                        setMessageSelectedState(el, true);
+                    }
+                });
+                updateSelectModeUi();
+                closeMessageContextMenu();
+            });
+            appendMenuAction(selectGroupBtn);
         }
 
         if (canEdit) {
@@ -10335,11 +10486,17 @@ function unwrapPhotoGroups() {
     chatMessagesElem
         .querySelectorAll(".photo-group-wrapper")
         .forEach((wrapper) => {
-            wrapper
-                .querySelectorAll(".photo-grouped")
-                .forEach((el) => el.classList.remove("photo-grouped"));
-            while (wrapper.firstChild) {
-                wrapper.parentNode.insertBefore(wrapper.firstChild, wrapper);
+            // Remove hoisted forwarded-meta
+            const hoisted = wrapper.querySelector(".photo-group-forwarded-meta");
+            if (hoisted) hoisted.remove();
+            // Unwrap photos from the inner grid
+            const grid = wrapper.querySelector(".photo-group-grid");
+            if (grid) {
+                grid.querySelectorAll(".photo-grouped")
+                    .forEach((el) => el.classList.remove("photo-grouped"));
+                while (grid.firstChild) {
+                    wrapper.parentNode.insertBefore(grid.firstChild, wrapper);
+                }
             }
             wrapper.remove();
         });
@@ -10371,21 +10528,37 @@ function applyPhotoGrouping() {
         // Need at least 2 messages to form a visual group
         if (elements.length < 2) return;
 
+        const isSent = elements[0].classList.contains("sent");
+
         const wrapper = document.createElement("div");
         wrapper.classList.add("photo-group-wrapper");
-        wrapper.classList.add(
-            elements[0].classList.contains("sent") ? "sent" : "received",
-        );
+        wrapper.classList.add(isSent ? "sent" : "received");
         wrapper.setAttribute("data-grouped-with", gwValue);
-        wrapper.setAttribute("data-photo-count", String(elements.length));
+
+        const grid = document.createElement("div");
+        grid.classList.add("photo-group-grid");
+        grid.setAttribute("data-photo-count", String(elements.length));
 
         // Insert wrapper at the position of the first element
         elements[0].parentNode.insertBefore(wrapper, elements[0]);
 
         elements.forEach((el) => {
             el.classList.add("photo-grouped");
-            wrapper.appendChild(el);
+            grid.appendChild(el);
         });
+
+        // If forwarded, hoist the tag above the grid inside the
+        // wrapper — visually separate from the photo grid, just
+        // like a single forwarded photo.
+        const firstFwdMeta =
+            elements[0].querySelector(".forwarded-meta");
+        if (firstFwdMeta) {
+            const hoisted = firstFwdMeta.cloneNode(true);
+            hoisted.classList.add("photo-group-forwarded-meta");
+            wrapper.appendChild(hoisted);
+        }
+
+        wrapper.appendChild(grid);
     });
 }
 
