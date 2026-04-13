@@ -10278,7 +10278,18 @@ function rebuildMessageDaySeparators() {
         const separator = document.createElement("div");
         separator.className = "message-day-separator";
         separator.innerHTML = `<span class="message-day-separator-label">${escapeHtml(label)}</span>`;
-        chatMessagesElem.insertBefore(separator, messageElement);
+        // If the message sits inside a wrapper (e.g. photo-group-wrapper),
+        // insert the separator before the wrapper instead.
+        const insertTarget =
+            messageElement.parentNode === chatMessagesElem
+                ? messageElement
+                : messageElement.closest(".photo-group-wrapper") ||
+                  messageElement;
+        if (insertTarget.parentNode === chatMessagesElem) {
+            chatMessagesElem.insertBefore(separator, insertTarget);
+        } else {
+            chatMessagesElem.insertBefore(separator, messageElement);
+        }
         previousDayKey = dayKey;
     });
 }

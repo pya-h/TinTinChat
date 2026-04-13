@@ -87,6 +87,13 @@ if ($groupedWith !== null) {
 	if (!$gwStmt->fetch()) {
 		apiError('INVALID_GROUPED_WITH', 'Invalid group reference', 400);
 	}
+
+	// Enforce server-side limit on photos per group (max 10)
+	$countStmt = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE grouped_with = ?');
+	$countStmt->execute([$groupedWith]);
+	if ((int) $countStmt->fetchColumn() >= 10) {
+		apiError('GROUP_LIMIT_REACHED', 'Maximum of 10 photos per group', 400);
+	}
 }
 
 if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
@@ -97,6 +104,8 @@ if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
 }
 
 try {
+	$pdo->beginTransaction();
+
 	$stmt = $pdo->prepare(
 		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id, grouped_with)
 		 VALUES (?, ?, ?, ?, ?, 'image', ?, ?, ?, ?, ?, ?)"
@@ -116,6 +125,7 @@ try {
 			$groupedWith,
 		])
 	) {
+		$pdo->rollBack();
 		apiError('SEND_FAILED', 'Something went wrong while sending your message!', 409);
 	}
 
@@ -128,12 +138,17 @@ try {
 		$groupedWith = $newMessageId;
 	}
 
+	$pdo->commit();
+
 	apiSuccess([
 		'message_id' => $newMessageId,
 		'grouped_with' => $groupedWith,
 		'message' => 'Image sent successfully'
 	]);
 } catch (PDOException $e) {
+	if ($pdo->inTransaction()) {
+		$pdo->rollBack();
+	}
 	@unlink($upload_path);
 	apiError('DB_SAVE_FAILED', 'Failed to save image message', 500);
 }

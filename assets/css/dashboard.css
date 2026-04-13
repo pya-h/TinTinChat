@@ -7325,9 +7325,12 @@ textarea,
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="5"] > .message:nth-child(4),
+.photo-group-wrapper[data-photo-count="5"] > .message:nth-child(4) {
+    grid-column: 1 / 2;
+}
+
 .photo-group-wrapper[data-photo-count="5"] > .message:nth-child(5) {
-    /* last row of 2 items — each spans 1.5fr visually */
+    grid-column: 2 / -1;
 }
 
 .photo-group-wrapper[data-photo-count="6"] {
@@ -7338,13 +7341,20 @@ textarea,
     grid-template-columns: 1fr 1fr 1fr;
 }
 
+.photo-group-wrapper[data-photo-count="7"] > .message:nth-child(7) {
+    grid-column: 1 / -1;
+}
+
 .photo-group-wrapper[data-photo-count="8"] {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.photo-group-wrapper[data-photo-count="8"] > .message:nth-child(7),
+.photo-group-wrapper[data-photo-count="8"] > .message:nth-child(7) {
+    grid-column: 1 / 2;
+}
+
 .photo-group-wrapper[data-photo-count="8"] > .message:nth-child(8) {
-    /* last row of 2 items */
+    grid-column: 2 / -1;
 }
 
 .photo-group-wrapper[data-photo-count="9"] {
