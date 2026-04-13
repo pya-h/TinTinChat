@@ -10288,7 +10288,8 @@ function rebuildMessageDaySeparators() {
         if (insertTarget.parentNode === chatMessagesElem) {
             chatMessagesElem.insertBefore(separator, insertTarget);
         } else {
-            chatMessagesElem.insertBefore(separator, messageElement);
+            // Safety: skip if the element is in an unknown wrapper
+            return;
         }
         previousDayKey = dayKey;
     });

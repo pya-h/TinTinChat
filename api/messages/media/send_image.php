@@ -88,12 +88,6 @@ if ($groupedWith !== null) {
 		apiError('INVALID_GROUPED_WITH', 'Invalid group reference', 400);
 	}
 
-	// Enforce server-side limit on photos per group (max 10)
-	$countStmt = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE grouped_with = ?');
-	$countStmt->execute([$groupedWith]);
-	if ((int) $countStmt->fetchColumn() >= 10) {
-		apiError('GROUP_LIMIT_REACHED', 'Maximum of 10 photos per group', 400);
-	}
 }
 
 if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
@@ -105,6 +99,17 @@ if (!move_uploaded_file($image_file['tmp_name'], $upload_path)) {
 
 try {
 	$pdo->beginTransaction();
+
+	// Enforce server-side limit on photos per group (max 10) — inside transaction to avoid TOCTOU race
+	if ($groupedWith !== null) {
+		$countStmt = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE grouped_with = ? FOR UPDATE');
+		$countStmt->execute([$groupedWith]);
+		if ((int) $countStmt->fetchColumn() >= 10) {
+			$pdo->rollBack();
+			@unlink($upload_path);
+			apiError('GROUP_LIMIT_REACHED', 'Maximum of 10 photos per group', 400);
+		}
+	}
 
 	$stmt = $pdo->prepare(
 		"INSERT INTO messages (sender_id, receiver_id, group_id, message, message_for_sender, message_type, image_file_path, file_size, reply_to_message_id, forwarded_from_message_id, forwarded_by_user_id, grouped_with)
