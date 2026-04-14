@@ -17,64 +17,64 @@
 (function initChangelog() {
     "use strict";
 
-    const CHANGELOG_LAST_UPDATED = "2026-03-31T00:00:00.000Z";
+    const CHANGELOG_LAST_UPDATED = "2026-04-14T00:00:00.000Z";
 
     const CHANGELOG_HTML = `
 <ul class="changelog-list">
     <li class="changelog-item changelog-highlight">
+        <span class="changelog-icon"><i class="fas fa-images"></i></span>
+        <div>
+            <strong>Send Multiple Photos as Albums</strong>
+            <p>Select up to 10 photos at once and send them as a grouped album. Photos are displayed in a compact grid layout.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-search-plus"></i></span>
+        <div>
+            <strong>Photo Zoom</strong>
+            <p>Tap any image to open a full-screen viewer with pinch-to-zoom and directional open/close animations.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-share"></i></span>
+        <div>
+            <strong>Forward Any Message Type</strong>
+            <p>Multi-select and forward images, voice messages, videos, files &amp; music &mdash; not just text. Forwarded photo albums keep their grouping.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-spinner"></i></span>
+        <div>
+            <strong>Upload Progress &amp; Cancel</strong>
+            <p>See a real-time progress bar when uploading photos, videos, voice messages and files. Cancel any upload in progress with one tap.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
+        <span class="changelog-icon"><i class="fas fa-layer-group"></i></span>
+        <div>
+            <strong>Select Group</strong>
+            <p>Right-click (or long-press) a grouped photo and choose <em>Select Group</em> to instantly select all photos in that album.</p>
+        </div>
+    </li>
+    <li class="changelog-item">
         <span class="changelog-icon"><i class="fas fa-sticky-note"></i></span>
         <div>
             <strong>User Notes &amp; Profile Details</strong>
-            <p>Write multiple notes about any user from their profile details panel. View and manage all notes in the <em>Opinions</em> section. Block or delete a chat directly from the profile panel.</p>
+            <p>Write multiple notes about any user from their profile details panel. View and manage all notes in the <em>Opinions</em> section.</p>
         </div>
     </li>
     <li class="changelog-item">
         <span class="changelog-icon"><i class="fas fa-music"></i></span>
         <div>
             <strong>Music Messages &amp; Playlists</strong>
-            <p>Send and receive music files with a dedicated player. Your music messages are collected in a <em>Playlist</em> section for easy access &mdash; now in group chats too.</p>
+            <p>Send and receive music files with a dedicated player. Your music messages are collected in a <em>Playlist</em> section for easy access.</p>
         </div>
     </li>
     <li class="changelog-item">
         <span class="changelog-icon"><i class="fas fa-mouse-pointer"></i></span>
         <div>
             <strong>New Click &amp; Long-press Actions</strong>
-            <p><em>Double-click</em> a message to heart/unheart it. <em>Click</em>/<em>Long-press</em> (or right-click) to open the message action menu. Tap on a reply banner to scroll to the original message.</p>
-        </div>
-    </li>
-    <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-hand-pointer"></i></span>
-        <div>
-            <strong>Swipe Chat List (Mobile)</strong>
-            <p>On mobile, <em>drag</em> the pull handle down to expand your chat list full-screen, and drag it back up to collapse &mdash; just like a notification shade.</p>
-        </div>
-    </li>
-    <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-play-circle"></i></span>
-        <div>
-            <strong>Now Playing Bar</strong>
-            <p>A floating mini-player appears at the top when a voice or music message is playing, so you can keep scrolling without losing your spot.</p>
-        </div>
-    </li>
-    <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-bookmark"></i></span>
-        <div>
-            <strong>Saved Messages (You)</strong>
-            <p>Forward any message to <em>Saved Messages</em> to keep it for later. Access it from the top of your chat list.</p>
-        </div>
-    </li>
-    <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-bullhorn"></i></span>
-        <div>
-            <strong>Announcements</strong>
-            <p>Important platform announcements now appear with a notification badge. Tap the bell icon in the header to view them.</p>
-        </div>
-    </li>
-    <li class="changelog-item">
-        <span class="changelog-icon"><i class="fas fa-sliders-h"></i></span>
-        <div>
-            <strong>Voice Seek &amp; Drag</strong>
-            <p>Drag on the voice message waveform to seek to any position in the recording.</p>
+            <p><em>Double-click</em> a message to heart/unheart it. <em>Click</em>/<em>Long-press</em> (or right-click) to open the action menu. Tap a reply banner to scroll to the original.</p>
         </div>
     </li>
 </ul>
