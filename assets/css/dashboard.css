@@ -6685,6 +6685,14 @@ textarea,
     white-space: nowrap;
 }
 
+.file-purged-reason {
+    font-size: 0.65rem;
+    color: var(--text-muted, #888);
+    letter-spacing: 0.01em;
+    margin-top: 1px;
+    opacity: 0.85;
+}
+
 .file-purged-media-placeholder {
     display: flex;
     flex-direction: column;

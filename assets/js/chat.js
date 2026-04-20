@@ -1659,7 +1659,9 @@ async function hydrateImageMessageElement(messageElement, msg) {
         if (loadingElem) {
             loadingElem.textContent =
                 error?.message === "FILE_UNAVAILABLE"
-                    ? "File no longer available"
+                    ? (msg.forwarded_from_message_id
+                        ? "The original file has been deleted"
+                        : "File no longer available")
                     : "Unable to decrypt image";
         }
     }
@@ -1693,7 +1695,9 @@ async function hydrateVideoMessageElement(messageElement, msg) {
         if (loadingElem) {
             loadingElem.textContent =
                 error?.message === "FILE_UNAVAILABLE"
-                    ? "File no longer available"
+                    ? (msg.forwarded_from_message_id
+                        ? "The original file has been deleted"
+                        : "File no longer available")
                     : "Unable to decrypt video";
         }
     }
@@ -10807,6 +10811,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                   </div>
                 </div>
                 <div class="file-purged-badge"><i class="fas fa-clock"></i> Expired</div>
+                <div class="file-purged-reason">Removed due to age or size</div>
               </div>
             ${newDateTag(msg, {
                 atLeft: msg.sender_id != CURRENT_USER_ID,
@@ -10849,6 +10854,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
             div.innerHTML = `${buildForwardedPreviewHtml(msg)}${replyHtml}<div class="file-purged-media-placeholder">
                     <i class="fas fa-image file-purged-media-icon"></i>
                     <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
+                    <div class="file-purged-reason">Removed due to age or size</div>
                 </div>${newDateTag(msg, {
                     atLeft: msg.sender_id != CURRENT_USER_ID,
                     topSpace: 1,
@@ -10880,6 +10886,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                 <div class="file-purged-media-placeholder">
                     <i class="fas fa-video file-purged-media-icon"></i>
                     <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
+                    <div class="file-purged-reason">Removed due to age or size</div>
                 </div>
                 ${newDateTag(msg, {
                     atLeft: msg.sender_id != CURRENT_USER_ID,
@@ -10934,6 +10941,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     <div class="music-info">
                       <div class="music-title file-purged-title">${musicTitle}</div>
                       <div class="file-purged-badge"><i class="fas fa-clock"></i> Expired</div>
+                      <div class="file-purged-reason">Removed due to age or size</div>
                     </div>
                   </div>
                   ${newDateTag(msg, {
@@ -10955,6 +10963,7 @@ async function addMessageToChat(msg, prepend = false, options = {}) {
                     <div class="file-info">
                       <div class="file-name file-purged-title">${safeFileName}</div>
                       <div class="file-purged-badge"><i class="fas fa-clock"></i> File expired</div>
+                      <div class="file-purged-reason">Removed due to age or size</div>
                     </div>
                   </div>
                   ${newDateTag(msg, {
@@ -11788,10 +11797,14 @@ async function downloadAndOpenFile(messageId) {
         }
     } catch (error) {
         const isUnavailable = error?.message === "FILE_UNAVAILABLE";
+        const msg = isUnavailable ? messageMetaById.get(Number(messageId)) : null;
+        const isForwarded = isUnavailable && Number(msg?.forwarded_from_message_id || 0) > 0;
         showModal(
             isUnavailable ? "File Unavailable" : I18N_TEXT.downloadErrorTitle,
             isUnavailable
-                ? "This file is no longer available on the server."
+                ? (isForwarded
+                    ? "The original file has been deleted by its sender."
+                    : "This file is no longer available on the server.")
                 : formatI18nText(I18N_TEXT.downloadErrorBody, {
                       error: error.message || "Unknown",
                   }),

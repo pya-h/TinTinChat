@@ -31,9 +31,20 @@ $placeholders = implode(',', array_fill(0, count($messages), '?'));
 $accessStmt = $pdo->prepare(
 	"SELECT id, message_type, voice_file_path, image_file_path, any_file_path
 	 FROM messages
-	 WHERE id IN ($placeholders) AND (receiver_id = ? OR sender_id = ?)"
+	 WHERE id IN ($placeholders)
+	   AND (
+	     receiver_id = ?
+	     OR sender_id = ?
+	     OR (
+	       group_id IS NOT NULL
+	       AND sender_id = ?
+	       AND group_id IN (
+	           SELECT group_id FROM group_members WHERE user_id = ? AND left_at IS NULL
+	       )
+	     )
+	   )"
 );
-$accessStmt->execute(array_merge($messages, [$userId, $userId]));
+$accessStmt->execute(array_merge($messages, [$userId, $userId, $userId, $userId]));
 
 $rows = $accessStmt->fetchAll(PDO::FETCH_ASSOC);
 $deletableIds = array_values(array_filter(array_map(static function ($row) {
@@ -79,22 +90,12 @@ foreach ($filesToDelete as $entry) {
 		continue;
 	}
 
-	// Only delete the physical file if no other message row still references it.
-	// This protects shared files created by forward_media.php (no re-upload forwarding).
-	$col = '';
-	if ($entry['col'] === 'voice_file_path') {
-		$col = 'voice_file_path';
-	} elseif ($entry['col'] === 'image_file_path') {
-		$col = 'image_file_path';
-	} else {
-		$col = 'any_file_path';
-	}
-	$refCheck = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE `$col` = ?");
-	$refCheck->execute([$fileName]);
-	if ((int) $refCheck->fetchColumn() > 0) {
-		continue; // still referenced by another row, keep the file
-	}
-
+	// Delete the physical file unconditionally.
+	// Forwarded copies (created by forward_media.php) share the same filename,
+	// but forwarding is considered re-sharing by the user's own choice.
+	// When the original sender deletes their message they intend to remove the
+	// file; forwarded copies will display "The original file has been deleted"
+	// instead of trying (and failing) to fetch it.
 	if (@unlink($fullPath)) {
 		$filesDeleted++;
 	}
