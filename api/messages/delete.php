@@ -56,11 +56,11 @@ $filesToDelete = [];
 foreach ($rows as $row) {
 	$messageType = isset($row['message_type']) ? (string) $row['message_type'] : '';
 	if ($messageType === 'voice' && !empty($row['voice_file_path'])) {
-		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/voice_messages', 'name' => (string) $row['voice_file_path']];
+		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/voice_messages', 'name' => (string) $row['voice_file_path'], 'col' => 'voice_file_path'];
 	} elseif ($messageType === 'image' && !empty($row['image_file_path'])) {
-		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/images', 'name' => (string) $row['image_file_path']];
+		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/images', 'name' => (string) $row['image_file_path'], 'col' => 'image_file_path'];
 	} elseif (($messageType === 'file' || $messageType === 'video') && !empty($row['any_file_path'])) {
-		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/files', 'name' => (string) $row['any_file_path']];
+		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/files', 'name' => (string) $row['any_file_path'], 'col' => 'any_file_path'];
 	}
 }
 
@@ -78,6 +78,23 @@ foreach ($filesToDelete as $entry) {
 	if (!$fullPath || strpos($fullPath, $baseDir . DIRECTORY_SEPARATOR) !== 0 || !is_file($fullPath)) {
 		continue;
 	}
+
+	// Only delete the physical file if no other message row still references it.
+	// This protects shared files created by forward_media.php (no re-upload forwarding).
+	$col = '';
+	if ($entry['col'] === 'voice_file_path') {
+		$col = 'voice_file_path';
+	} elseif ($entry['col'] === 'image_file_path') {
+		$col = 'image_file_path';
+	} else {
+		$col = 'any_file_path';
+	}
+	$refCheck = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE `$col` = ?");
+	$refCheck->execute([$fileName]);
+	if ((int) $refCheck->fetchColumn() > 0) {
+		continue; // still referenced by another row, keep the file
+	}
+
 	if (@unlink($fullPath)) {
 		$filesDeleted++;
 	}

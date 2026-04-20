@@ -73,6 +73,27 @@ foreach ($rows as $row) {
     $fileSize = file_exists($fullPath) ? (int) filesize($fullPath) : 0;
     $fileDeleted = false;
 
+    // Only delete if no other message row still references this file
+    // (shared files from no-reupload forwarding must not be wiped prematurely).
+    $col = match ($row['message_type']) {
+        'image' => 'image_file_path',
+        'voice' => 'voice_file_path',
+        default => 'any_file_path',
+    };
+    $fileName = basename($filePath);
+    $refCheck = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE id != ? AND `$col` = ?");
+    $refCheck->execute([$row['id'], $fileName]);
+    $otherRefs = (int) $refCheck->fetchColumn();
+
+    if ($otherRefs > 0) {
+        // Other rows reference this file — only mark purged in DB, don't delete on disk
+        $purgeStmt = $pdo->prepare('UPDATE messages SET file_purged_at = NOW() WHERE id = ?');
+        $purgeStmt->execute([$row['id']]);
+        $deletedCount++;
+        $freedBytes += 0; // file stays on disk, shared by other message(s)
+        continue;
+    }
+
     if (file_exists($fullPath)) {
         $fileDeleted = @unlink($fullPath);
     } else {

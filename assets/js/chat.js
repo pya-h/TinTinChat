@@ -7124,94 +7124,89 @@ async function forwardMediaToDestination(
         return stickerResult;
     }
 
-    // Decrypt the original media
-    const mediaResource = await getDecryptedMediaResource(messageMeta);
-    const blob = mediaResource.blob;
-    const metadata = mediaResource.metadata || {};
-    const fileName = metadata.file_name || "attachment";
-    const mimeType = metadata.mime_type || "application/octet-stream";
+    // --- Key-only re-wrapping (no blob re-upload) ---
+    // 1. Parse the original envelope to extract the wrapped AES key (k) and
+    //    encrypted metadata (m).  Both are tied to the same AES key.
+    // 2. Unwrap the AES key using the current user's private key (or group key).
+    // 3. Re-wrap that exact same AES key for the new destination.
+    // 4. Reuse the existing encrypted metadata blob (m) — it was encrypted with
+    //    the same AES key so the new recipient can decrypt it identically.
+    // 5. POST the new envelopes to forward_media.php which creates a DB row
+    //    pointing to the original file on disk.  Zero duplicate files written.
 
-    // Re-encrypt for the destination
-    const context = groupId > 0 ? { groupId } : { targetUsername };
-    const mediaPayload = await encryptMediaForMessage(
-        blob,
-        {
-            file_name: fileName,
-            mime_type: mimeType,
-            file_size: Number(blob.size || 0),
-        },
-        context,
-    );
+    const envelopePayload = getMediaEnvelopePayloadForMessage(messageMeta);
+    const envelope = parseMediaEnvelopePayload(envelopePayload);
+    const aesKey = await resolveMediaAesKey(messageMeta, envelope.k);
 
-    const formData = new FormData();
+    let newMessageForRecipient;
+    let newMessageForSender;
+
     if (groupId > 0) {
-        formData.append("group_id", String(groupId));
+        // Forwarding into a group — wrap the media key with the group AES-GCM key
+        const groupKey = await getGroupCryptoKey(groupId);
+        const keyVersion = Number(
+            groupKeyVersionCache.get(groupId) || 1,
+        );
+        const wrappedForGroup = await wrapMediaKeyForGroup(aesKey, groupKey);
+        // Both columns are identical for group messages
+        newMessageForRecipient = buildMediaEnvelopePayload(
+            wrappedForGroup,
+            envelope.m,
+            keyVersion,
+        );
+        newMessageForSender = newMessageForRecipient;
     } else {
-        formData.append("target", targetUsername);
+        // Forwarding to a DM — wrap for recipient and sender separately
+        const recipientPublicKey = await getPublicKey(targetUsername);
+        const senderPublicKey = await getPublicKey(CURRENT_USER);
+        const wrappedForRecipient = await wrapMediaKeyForPublicKey(
+            aesKey,
+            recipientPublicKey,
+        );
+        const wrappedForSender = await wrapMediaKeyForPublicKey(
+            aesKey,
+            senderPublicKey,
+        );
+        newMessageForRecipient = buildMediaEnvelopePayload(
+            wrappedForRecipient,
+            envelope.m,
+            1,
+        );
+        newMessageForSender = buildMediaEnvelopePayload(
+            wrappedForSender,
+            envelope.m,
+            1,
+        );
     }
-    formData.append("message", mediaPayload.messageForRecipient);
-    formData.append("message_for_sender", mediaPayload.messageForSender);
-    if (sourceMessageId)
-        formData.append("forwarded_from_message_id", String(sourceMessageId));
 
-    // Grouped-with for preserving photo groups in forwarded messages
-    if (groupedWith && mediaType === "image") {
-        formData.append("grouped_with", String(groupedWith));
-    }
-
-    const fwdBgId = registerBackgroundUpload("forwarded " + mediaType);
+    const fwdBgId = registerBackgroundUpload("forwarding " + mediaType);
     await acquireUploadSlot(fwdBgId);
     try {
         if (isUploadCancelled(fwdBgId)) throw new Error("Upload cancelled");
 
-        const fwdProgress = (pct, loaded, total) =>
-            updateBackgroundUploadProgress(fwdBgId, pct, loaded, total);
-        let fwdUpload;
-        if (mediaType === "voice") {
-            formData.append(
-                "voice_file",
-                mediaPayload.encryptedBlob,
-                "voice_message.enc",
-            );
-            fwdUpload = uploadWithProgress(
-                "api/messages/media/send_voice.php",
-                formData,
-                getCsrfHeaders(),
-                fwdProgress,
-            );
-        } else if (mediaType === "image") {
-            formData.append(
-                "image_file",
-                mediaPayload.encryptedBlob,
-                "image.enc",
-            );
-            fwdUpload = uploadWithProgress(
-                "api/messages/media/send_image.php",
-                formData,
-                getCsrfHeaders(),
-                fwdProgress,
-            );
-        } else if (mediaType === "video") {
-            formData.append("message_type", "video");
-            formData.append("file", mediaPayload.encryptedBlob, "video.enc");
-            fwdUpload = uploadWithProgress(
-                "api/messages/media/send_file.php",
-                formData,
-                getCsrfHeaders(),
-                fwdProgress,
-            );
+        const formData = new FormData();
+        if (groupId > 0) {
+            formData.append("group_id", String(groupId));
         } else {
-            formData.append("message_type", "file");
-            formData.append("file", mediaPayload.encryptedBlob, "file.enc");
-            fwdUpload = uploadWithProgress(
-                "api/messages/media/send_file.php",
-                formData,
-                getCsrfHeaders(),
-                fwdProgress,
-            );
+            formData.append("target", targetUsername);
         }
-        setBackgroundUploadAbort(fwdBgId, fwdUpload.abort);
-        const result = await fwdUpload.promise;
+        formData.append("source_message_id", String(sourceMessageId));
+        formData.append("message", newMessageForRecipient);
+        formData.append("message_for_sender", newMessageForSender);
+        if (groupedWith && mediaType === "image") {
+            formData.append("grouped_with", String(groupedWith));
+        }
+
+        updateBackgroundUploadProgress(fwdBgId, 50, 0, 0);
+        const result = await window.ApiService.jsonOk(
+            "api/messages/media/forward_media.php",
+            {
+                method: "POST",
+                headers: getCsrfHeaders(),
+                body: formData,
+            },
+        );
+        updateBackgroundUploadProgress(fwdBgId, 100, 0, 0);
         return result;
     } finally {
         completeBackgroundUpload(fwdBgId);
