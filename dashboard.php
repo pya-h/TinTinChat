@@ -1794,7 +1794,7 @@ $csrfToken = generateCsrfToken();
     <script src="assets/js/api-service.js"></script>
     <script src="assets/js/chat-utils.js"></script>
     <script src="assets/js/chat-notifications.js"></script>
-    <script src="assets/js/crypto.js"></script>
+    <script src="assets/js/crypto.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/crypto.js')); ?>"></script>
     <script src="assets/js/chat-sticker-utils.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-sticker-utils.js')); ?>"></script>
     <script src="assets/js/chat-media-cache.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat-media-cache.js')); ?>"></script>
     <script src="assets/js/chat.js?v=<?php echo urlencode((string) @filemtime(__DIR__ . '/assets/js/chat.js')); ?>"></script>
