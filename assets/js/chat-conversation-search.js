@@ -28,22 +28,33 @@ let conversationSearchActiveQuery = ""; // query string that produced current re
 
 // ── Regex builder ───────────────────────────────────────────────────────────────
 function buildSearchRegex(query) {
+    const normalizedQuery = String(query || "");
+
+    // Guard: wildcard-only queries are too broad and can degrade performance.
+    if (
+        appSettings.searchSqlWildcards &&
+        normalizedQuery.replace(/[\s%_]/g, "").length === 0
+    ) {
+        return null;
+    }
+
     if (appSettings.searchSqlWildcards) {
         // % → .* (any substring),  _ → . (any single char); escape everything else
-        const pattern = Array.from(query)
+        const pattern = Array.from(normalizedQuery)
             .map((ch) => {
                 if (ch === "%") return ".*";
                 if (ch === "_") return ".";
                 return ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             })
             .join("");
+        const compactPattern = pattern.replace(/(\.\*){2,}/g, ".*");
         try {
-            return new RegExp(`(${pattern})`, "gi");
+            return new RegExp(`(${compactPattern})`, "gi");
         } catch {
             /* bad pattern — fall through to literal */
         }
     }
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escaped = normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp(`(${escaped})`, "gi");
 }
 
@@ -99,6 +110,9 @@ function clearActiveSearchHighlight() {
  */
 function scanDomForSearchMatches(query) {
     const regex = buildSearchRegex(query);
+    if (!(regex instanceof RegExp)) {
+        return [];
+    }
     const textNodes = Array.from(
         chatMessagesElem?.querySelectorAll(
             ".message[data-message-id] .message-text-content",
@@ -164,7 +178,7 @@ async function centerMessageInSearchView(messageElement) {
     if (!(messageElement instanceof HTMLElement) || !chatMessagesElem) return;
 
     // Bring into rough view first (instant, no jank)
-    messageElement.scrollIntoView({ behavior: "instant", block: "center" });
+    messageElement.scrollIntoView({ behavior: "auto", block: "center" });
 
     // Wait two frames for layout to settle
     await new Promise((r) =>
@@ -231,6 +245,16 @@ async function runConversationSearchAsync() {
 
     if (!conversationSearchMatchMsgIds.length) {
         updateConversationSearchCounter();
+        if (
+            appSettings.searchSqlWildcards &&
+            query.replace(/[\s%_]/g, "").length === 0
+        ) {
+            setComposerStatus(
+                "Search placeholders need at least one non-placeholder character.",
+                "warning",
+            );
+            return;
+        }
         setComposerStatus(
             hasMoreMessages
                 ? "No matches in visible messages. Press ↑ to search older messages."
@@ -288,18 +312,35 @@ async function navigateConversationSearch(direction = -1) {
                 ];
 
             setComposerStatus("Loading older messages…", "success");
-            await loadMessages(currentChatUser, false, false);
 
-            if (conversationSearchToken !== token) return; // cancelled
+            let foundOlder = false;
+            let safety = 0;
+            while (hasMoreMessages && !foundOlder && safety < 180) {
+                safety++;
+                await loadMessages(currentChatUser, false, false);
 
-            // Rebuild: rescan everything (old rendered + newly loaded)
-            resetConversationSearchHighlights();
-            if (conversationSearchToken !== token) return;
+                if (conversationSearchToken !== token) return; // cancelled
 
-            conversationSearchActiveQuery = query;
-            conversationSearchMatchMsgIds = scanDomForSearchMatches(query);
+                // Rebuild after each page so we can stop as soon as a next older hit appears
+                resetConversationSearchHighlights();
+                if (conversationSearchToken !== token) return;
 
-            if (conversationSearchToken !== token) return;
+                conversationSearchActiveQuery = query;
+                conversationSearchMatchMsgIds = scanDomForSearchMatches(query);
+
+                if (conversationSearchToken !== token) return;
+
+                const oldIdxProbe = conversationSearchMatchMsgIds.indexOf(
+                    oldestLoadedId,
+                );
+                if (
+                    oldIdxProbe >= 0 &&
+                    oldIdxProbe + 1 < conversationSearchMatchMsgIds.length
+                ) {
+                    foundOlder = true;
+                    break;
+                }
+            }
 
             if (!conversationSearchMatchMsgIds.length) {
                 updateConversationSearchCounter();

@@ -214,13 +214,13 @@ async function exportAesKeyBase64(aesKey) {
     return uint8ArrayToBase64(new Uint8Array(raw));
 }
 
-async function importAesKeyFromBase64(base64Key) {
+async function importAesKeyFromBase64(base64Key, { extractable = false } = {}) {
     const keyBytes = base64ToUint8Array(base64Key);
     return window.crypto.subtle.importKey(
         "raw",
         keyBytes,
         { name: "AES-GCM" },
-        false,
+        Boolean(extractable),
         ["encrypt", "decrypt"]
     );
 }
@@ -230,9 +230,9 @@ async function wrapMediaKeyForPublicKey(aesKey, recipientPublicKey) {
     return encryptMessage(exportedKeyBase64, recipientPublicKey);
 }
 
-async function unwrapMediaKeyFromPrivateWrapped(wrappedKey) {
+async function unwrapMediaKeyFromPrivateWrapped(wrappedKey, options = {}) {
     const exportedKeyBase64 = await decryptMessage(wrappedKey);
-    return importAesKeyFromBase64(exportedKeyBase64);
+    return importAesKeyFromBase64(exportedKeyBase64, options);
 }
 
 async function wrapMediaKeyForGroup(aesKey, groupKey) {
@@ -240,9 +240,9 @@ async function wrapMediaKeyForGroup(aesKey, groupKey) {
     return encryptGroupMessage(exportedKeyBase64, groupKey);
 }
 
-async function unwrapMediaKeyFromGroupWrapped(wrappedKey, groupKey) {
+async function unwrapMediaKeyFromGroupWrapped(wrappedKey, groupKey, options = {}) {
     const exportedKeyBase64 = await decryptGroupMessage(wrappedKey, groupKey);
-    return importAesKeyFromBase64(exportedKeyBase64);
+    return importAesKeyFromBase64(exportedKeyBase64, options);
 }
 
 async function encryptBinaryWithAesKey(inputBuffer, aesKey) {

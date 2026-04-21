@@ -1156,15 +1156,19 @@ function getMissingMediaUserMessage(msg) {
         : "File expired";
 }
 
-async function resolveMediaAesKey(msg, wrappedKeyPayload) {
+async function resolveMediaAesKey(msg, wrappedKeyPayload, options = {}) {
     const isGroupMessage = Number(msg?.group_id || 0) > 0;
     if (isGroupMessage) {
         const groupId = Number(msg?.group_id || 0);
         const groupKey = await getGroupCryptoKey(groupId);
-        return unwrapMediaKeyFromGroupWrapped(wrappedKeyPayload, groupKey);
+        return unwrapMediaKeyFromGroupWrapped(
+            wrappedKeyPayload,
+            groupKey,
+            options,
+        );
     }
     await ensurePrivateKeyLoaded();
-    return unwrapMediaKeyFromPrivateWrapped(wrappedKeyPayload);
+    return unwrapMediaKeyFromPrivateWrapped(wrappedKeyPayload, options);
 }
 
 async function getDecryptedMediaResource(msg) {
@@ -6884,7 +6888,9 @@ async function forwardMediaToDestination(
 
     const envelopePayload = getMediaEnvelopePayloadForMessage(messageMeta);
     const envelope = parseMediaEnvelopePayload(envelopePayload);
-    const aesKey = await resolveMediaAesKey(messageMeta, envelope.k);
+    const aesKey = await resolveMediaAesKey(messageMeta, envelope.k, {
+        extractable: true,
+    });
 
     let newMessageForRecipient;
     let newMessageForSender;

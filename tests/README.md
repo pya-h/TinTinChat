@@ -143,6 +143,7 @@ tests/
     message_edit_smoke.sh           # Message edit + edit window enforcement
     ideas_smoke.sh                  # Ideas CRUD + voting
     search_smoke.sh                 # User search API
+    conversation_search_navigation_smoke.sh # Newest-first search cursor + up/down/no-wrap/on-demand older loading contract
     session_smoke.sh                # Session & CSRF validation
     conversation_insights_smoke.sh  # Full-history stats/music endpoints + jump-loading contract
     ui_back_sync_smoke.sh           # UI history/back-layer wiring contract for panels/modals
