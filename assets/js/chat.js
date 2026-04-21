@@ -367,6 +367,7 @@ let hasMoreMessages = true;
 let isLoadingMessages = false;
 let isBatchRendering = false; // Skip per-message rebuildMessageDaySeparators during batch loads
 let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
+let historyModeNewMsgCount = 0;    // New messages received while in history-reading mode
 const MESSAGES_PER_PAGE = Number(appConstants.messagesPerPage) || 50;
 
 let searchTimeout = null;
@@ -957,6 +958,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                     messageOffset = 0;
                     hasMoreMessages = true;
                     hasLoadedMoreMessages = false;
+                    historyModeNewMsgCount = 0;
                     pendingSeenMessageIds.clear();
                     messageMetaById.clear();
                     clearDecryptedMediaCache();
@@ -983,6 +985,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                                 messageOffset = 0;
                                 hasMoreMessages = true;
                                 hasLoadedMoreMessages = false;
+                                historyModeNewMsgCount = 0;
                                 await loadMessages(currentChatUser, true, true);
                             }
                         }, 250);
@@ -2529,6 +2532,7 @@ function setupPrivateChatActions(profile) {
                         messageOffset = 0;
                         hasMoreMessages = true;
                         hasLoadedMoreMessages = false;
+                        historyModeNewMsgCount = 0;
                         pendingSeenMessageIds.clear();
                         messageMetaById.clear();
                         clearDecryptedMediaCache();
@@ -4835,6 +4839,9 @@ function bindSettingsUiEvents() {
     if (settingAutoScroll) {
         settingAutoScroll.addEventListener("change", (event) => {
             appSettings.autoScrollEnabled = Boolean(event.target.checked);
+            if (!appSettings.autoScrollEnabled) {
+                exitHistoryReadingMode();
+            }
             persistAppSettings();
             setComposerStatus(
                 appSettings.autoScrollEnabled
@@ -9364,6 +9371,7 @@ async function selectChatTarget(target) {
     hasMoreMessages = true;
     isLoadingMessages = false;
     hasLoadedMoreMessages = false; // Reset when selecting a new chat
+    historyModeNewMsgCount = 0;
 
     const isGroup = isGroupToken(currentChatUser);
     groupInfoBtn.hidden = !isGroup;
@@ -9763,6 +9771,10 @@ async function loadCurrentChatsRecentMessages() {
         if (newMessages.length) {
             if (appSettings.autoScrollEnabled && !hasLoadedMoreMessages) {
                 scheduleSnapToBottom();
+            } else if (appSettings.autoScrollEnabled && hasLoadedMoreMessages) {
+                // History-reading mode: count incoming messages, update badge
+                historyModeNewMsgCount += newMessages.length;
+                addGoToLatestButton(); // creates button if absent, then refreshes badge
             } else {
                 addGoToLatestButton();
             }
@@ -11094,7 +11106,10 @@ window.loadMoreMessages = loadMoreMessages;
 
 function addGoToLatestButton() {
     const existingBtn = document.getElementById("goToLatestBtn");
-    if (existingBtn) return; // Don't add if already exists
+    if (existingBtn) {
+        updateGoToLatestBadge();
+        return;
+    }
 
     const goToLatestBtn = document.createElement("div");
     goToLatestBtn.id = "goToLatestBtn";
@@ -11102,11 +11117,24 @@ function addGoToLatestButton() {
     goToLatestBtn.innerHTML = `
         <button class="btn btn-primary btn-sm go-to-latest-btn" onclick="scrollToLatest()">
             <i class="fas fa-chevron-down me-1"></i>
-            Go to Latest
+            <span class="go-to-latest-label">Latest</span>
+            <span class="go-to-latest-badge" id="historyNewMsgBadge" hidden></span>
         </button>
     `;
 
     chatMessagesElem.appendChild(goToLatestBtn);
+    updateGoToLatestBadge();
+}
+
+function updateGoToLatestBadge() {
+    const badge = document.getElementById("historyNewMsgBadge");
+    if (!badge) return;
+    if (historyModeNewMsgCount > 0) {
+        badge.textContent = historyModeNewMsgCount > 99 ? "99+" : String(historyModeNewMsgCount);
+        badge.hidden = false;
+    } else {
+        badge.hidden = true;
+    }
 }
 
 function captureViewportAnchor() {
@@ -11247,16 +11275,26 @@ function removeGoToLatestButton() {
     }
 }
 
+/**
+ * Exit history-reading mode: re-enable auto-scroll, reset the new-message
+ * counter, and remove the "Latest" badge button.
+ * Call whenever the user returns to the live bottom of the chat.
+ */
+function exitHistoryReadingMode() {
+    hasLoadedMoreMessages = false;
+    historyModeNewMsgCount = 0;
+    removeGoToLatestButton();
+}
+
 function updateGoToLatestButton() {
     if (!hasLoadedMoreMessages) {
         removeGoToLatestButton();
         return;
     }
 
-    const isNearBottom = isChatNearBottom(100);
-
-    if (isNearBottom) {
-        removeGoToLatestButton();
+    if (isChatNearBottom(60)) {
+        // User manually scrolled back to the live view—exit history-reading mode
+        exitHistoryReadingMode();
     } else {
         addGoToLatestButton();
     }
@@ -11269,9 +11307,7 @@ function scrollToLatest() {
     });
     setTimeout(snapChatToBottom, 120);
     setTimeout(snapChatToBottom, 320);
-    setTimeout(() => {
-        removeGoToLatestButton();
-    }, 100);
+    setTimeout(exitHistoryReadingMode, 360);
 }
 
 window.scrollToLatest = scrollToLatest;
