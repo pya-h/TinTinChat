@@ -11602,6 +11602,7 @@ function updateMessageTickStatus(messageId, isSeen, seenAtOverride = "") {
 window.updateMessageTickStatus = updateMessageTickStatus;
 
 /* ── Image Modal / Zoom System → chat-image-modal.js ──
+ * Back-layer key: UI_BACK_LAYER_KEYS.imageModal
  * openImageModal, closeImageModal, zoom controls, pinch-to-zoom, wheel zoom
  */
 

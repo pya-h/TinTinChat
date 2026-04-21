@@ -42,7 +42,17 @@ function apiRequireAuth(): int
         apiError('UNAUTHORIZED', 'Not logged in', 401);
     }
 
-    return (int) $_SESSION['user_id'];
+    $userId = (int) $_SESSION['user_id'];
+
+    // Enforce account-ban checks centrally when DB connection is available.
+    // Most API entry points include db.php before api_helpers.php, so this
+    // applies broadly without duplicating checks in every endpoint.
+    $pdo = $GLOBALS['pdo'] ?? null;
+    if ($pdo instanceof PDO) {
+        apiRequireBanCheck($pdo, $userId);
+    }
+
+    return $userId;
 }
 
 function apiRequireBanCheck(PDO $pdo, int $userId): void

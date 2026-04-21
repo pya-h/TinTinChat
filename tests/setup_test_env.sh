@@ -63,7 +63,7 @@ foreach (explode(";", $schemaSql) as $stmt) {
         $pdo->exec($stmt);
     } catch (PDOException $e) {
         $code = (string) ($e->errorInfo[1] ?? "");
-    if (!in_array($code, ["1060", "1061", "1050", "1091"], true)) {
+    if (!in_array($code, ["1060", "1061", "1050", "1091", "1072"], true)) {
             throw $e;
         }
     }
@@ -79,7 +79,7 @@ foreach ($migrationFiles as $file) {
         $pdo->exec($sql);
     } catch (PDOException $e) {
         $code = (string) ($e->errorInfo[1] ?? "");
-    if (!in_array($code, ["1060", "1061", "1050", "1091"], true)) {
+    if (!in_array($code, ["1060", "1061", "1050", "1091", "1072"], true)) {
             throw $e;
         }
     }

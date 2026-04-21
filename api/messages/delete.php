@@ -39,7 +39,7 @@ $accessStmt = $pdo->prepare(
 	       group_id IS NOT NULL
 	       AND sender_id = ?
 	       AND group_id IN (
-	           SELECT group_id FROM group_members WHERE user_id = ? AND left_at IS NULL
+	           SELECT group_id FROM group_members WHERE user_id = ?
 	       )
 	     )
 	   )"

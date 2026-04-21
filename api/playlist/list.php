@@ -80,7 +80,7 @@ foreach ($rows as $row) {
         'message'            => $row['message'],
         'message_for_sender' => $row['message_for_sender'],
         'message_type'       => $row['message_type'],
-        'file_path'          => $row['any_file_path'] ?? '',
+        'file_path'          => !empty($row['any_file_path']) ? 1 : null,
         'file_purged_at'     => $row['file_purged_at'],
         'file_size'          => $row['file_size'] !== null ? (int) $row['file_size'] : null,
     ];
