@@ -435,21 +435,29 @@
     function getMediaCleanupParams() {
         const days = Number(document.getElementById("mediaCleanupDays")?.value || 0);
         const maxSizeMB = Number(document.getElementById("mediaCleanupMaxSize")?.value || 0);
+        const includeSavedInput = document.getElementById('mediaCleanupIncludeSaved');
+        const includePlaylistsInput = document.getElementById('mediaCleanupIncludePlaylists');
         if (days < 1 || maxSizeMB <= 0) {
             showModal("Invalid Input", "Please provide valid values for days and file size.", "warning");
             return null;
         }
-        return { days, maxSizeMB, maxSizeBytes: Math.round(maxSizeMB * 1024 * 1024) };
+        return {
+            days,
+            maxSizeMB,
+            maxSizeBytes: Math.round(maxSizeMB * 1024 * 1024),
+            includeSavedMessages: Boolean(includeSavedInput?.checked),
+            includePlaylists: Boolean(includePlaylistsInput?.checked),
+        };
     }
 
-    async function fetchMediaAnalysis(days, maxSizeBytes) {
+    async function fetchMediaAnalysis(days, maxSizeBytes, includeSavedMessages, includePlaylists) {
         return window.ApiService.jsonOk(
-            `api/admin/media_analyze.php?older_than_days=${days}&max_size_bytes=${maxSizeBytes}`,
+            `api/admin/media_analyze.php?older_than_days=${days}&max_size_bytes=${maxSizeBytes}&include_saved_messages=${includeSavedMessages ? 1 : 0}&include_playlists=${includePlaylists ? 1 : 0}`,
             { method: "GET" }
         );
     }
 
-    function buildAnalysisHtml(stats, days, maxSizeMB) {
+    function buildAnalysisHtml(stats, days, maxSizeMB, includeSavedMessages, includePlaylists) {
         const typeLabels = { image: "Images", voice: "Voice", file: "Files", video: "Videos" };
         const typeIcons = { image: "fa-image", voice: "fa-microphone", file: "fa-file", video: "fa-video" };
 
@@ -469,6 +477,7 @@
 
         // Criteria
         html += `<div class="media-analysis-criteria">Older than <strong>${days}</strong> days &amp; larger than <strong>${maxSizeMB} MB</strong> &mdash; before ${stats.cutoff_date}</div>`;
+        html += `<div class="media-analysis-criteria">Saved messages included: <strong>${includeSavedMessages ? 'Yes' : 'No'}</strong> &middot; Playlists included: <strong>${includePlaylists ? 'Yes' : 'No'}</strong></div>`;
 
         // Breakdown by type
         const types = stats.by_type || {};
@@ -527,6 +536,15 @@
             html += '</div>';
         }
 
+        const excludedSaved = Number(stats.excluded_saved_count || 0);
+        const excludedPlaylist = Number(stats.excluded_playlist_count || 0);
+        if (excludedSaved > 0 || excludedPlaylist > 0) {
+            const parts = [];
+            if (excludedSaved > 0) parts.push(`${excludedSaved} saved`);
+            if (excludedPlaylist > 0) parts.push(`${excludedPlaylist} playlist`);
+            html += `<div class="media-analysis-extra"><span><i class="fas fa-filter"></i> Excluded by switches: ${parts.join(', ')}</span></div>`;
+        }
+
         if (stats.total_files === 0) {
             html += '<div class="media-analysis-empty"><i class="fas fa-check-circle"></i> No files match these criteria.</div>';
         }
@@ -549,8 +567,8 @@
             mediaAnalyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Analyzing...';
 
             try {
-                const stats = await fetchMediaAnalysis(p.days, p.maxSizeBytes);
-                const html = buildAnalysisHtml(stats, p.days, p.maxSizeMB);
+                const stats = await fetchMediaAnalysis(p.days, p.maxSizeBytes, p.includeSavedMessages, p.includePlaylists);
+                const html = buildAnalysisHtml(stats, p.days, p.maxSizeMB, p.includeSavedMessages, p.includePlaylists);
                 showModalHtml("Storage Analysis", html, "info");
             } catch (error) {
                 showModal("Analysis Failed", error?.message || "Unable to analyze media.", "error");
@@ -571,15 +589,21 @@
 
             try {
                 // Step 1: fetch analysis first
-                const stats = await fetchMediaAnalysis(p.days, p.maxSizeBytes);
+                const stats = await fetchMediaAnalysis(p.days, p.maxSizeBytes, p.includeSavedMessages, p.includePlaylists);
 
                 if (stats.total_files === 0) {
-                    showModal("Nothing to clean", "No files match the specified criteria.", "info");
+                    const excSaved = Number(stats.excluded_saved_count || 0);
+                    const excPlaylist = Number(stats.excluded_playlist_count || 0);
+                    const excParts = [];
+                    if (excSaved > 0) excParts.push(`${excSaved} saved`);
+                    if (excPlaylist > 0) excParts.push(`${excPlaylist} playlist`);
+                    const excNote = excParts.length > 0 ? ` (${excParts.join(', ')} excluded by switches)` : '';
+                    showModal("Nothing to clean", `No files match the specified criteria.${excNote}`, "info");
                     return;
                 }
 
                 // Step 2: show preview and confirm
-                let html = buildAnalysisHtml(stats, p.days, p.maxSizeMB);
+                let html = buildAnalysisHtml(stats, p.days, p.maxSizeMB, p.includeSavedMessages, p.includePlaylists);
                 html += `<div class="media-analysis-confirm">
                     <div class="media-analysis-confirm-warning"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone.</div>
                     <button type="button" id="mediaCleanupConfirmBtn" class="btn btn-sm btn-danger">
@@ -599,7 +623,12 @@
                             const result = await window.ApiService.jsonOk("api/admin/media_cleanup.php", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json", ...window.getCsrfHeaders() },
-                                body: JSON.stringify({ older_than_days: p.days, max_size_bytes: p.maxSizeBytes }),
+                                body: JSON.stringify({
+                                    older_than_days: p.days,
+                                    max_size_bytes: p.maxSizeBytes,
+                                    include_saved_messages: p.includeSavedMessages,
+                                    include_playlists: p.includePlaylists,
+                                }),
                             });
                             closeModal();
                             const freed = formatFileSize(result.freed_bytes || 0);

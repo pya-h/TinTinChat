@@ -9969,6 +9969,18 @@ textarea,
     flex: 0 0 auto;
 }
 
+.media-cleanup-form .media-cleanup-switch {
+    margin: 0;
+    padding-top: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.media-cleanup-form .media-cleanup-switch .form-check-input {
+    margin-top: 0;
+}
+
 /* ── Media Analysis Modal ── */
 .media-analysis {
     text-align: left;

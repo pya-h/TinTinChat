@@ -12,6 +12,10 @@ apiRequireSuperuserAdmin($pdo, $userId);
 
 $olderThanDays = isset($_GET['older_than_days']) ? (int) $_GET['older_than_days'] : 0;
 $maxSizeBytes = isset($_GET['max_size_bytes']) ? (int) $_GET['max_size_bytes'] : 0;
+$includeSavedMessages = isset($_GET['include_saved_messages'])
+    && in_array(strtolower((string) $_GET['include_saved_messages']), ['1', 'true', 'yes', 'on'], true);
+$includePlaylists = isset($_GET['include_playlists'])
+    && in_array(strtolower((string) $_GET['include_playlists']), ['1', 'true', 'yes', 'on'], true);
 
 if ($olderThanDays < 1) {
     apiError('INVALID_PARAMS', 'older_than_days must be at least 1', 400);
@@ -48,6 +52,52 @@ $missingFromDisk = 0;
 $byType = [];
 $largestFile = null;
 $byUser = [];
+$excludedBySaved = 0;
+$excludedByPlaylist = 0;
+$exclusionCache = [];
+
+$isExcludedByRules = static function (string $fileName, string $col, string $messageType) use (
+    $pdo,
+    $includeSavedMessages,
+    $includePlaylists,
+    &$exclusionCache,
+    &$excludedBySaved,
+    &$excludedByPlaylist
+): bool {
+    $cacheKey = $col . ':' . $fileName;
+    if (isset($exclusionCache[$cacheKey])) {
+        return $exclusionCache[$cacheKey];
+    }
+
+    $excluded = false;
+
+    if (!$includeSavedMessages) {
+        $savedStmt = $pdo->prepare("SELECT 1 FROM messages WHERE group_id IS NULL AND sender_id = receiver_id AND `$col` = ? LIMIT 1");
+        $savedStmt->execute([$fileName]);
+        if ((bool) $savedStmt->fetchColumn()) {
+            $excluded = true;
+            $excludedBySaved++;
+        }
+    }
+
+    if (!$excluded && !$includePlaylists && $messageType === 'file') {
+        $playlistStmt = $pdo->prepare(
+            "SELECT 1
+             FROM messages pm
+             INNER JOIN playlist_tracks pt ON pt.message_id = pm.id
+             WHERE pm.message_type = 'file' AND pm.any_file_path = ?
+             LIMIT 1"
+        );
+        $playlistStmt->execute([$fileName]);
+        if ((bool) $playlistStmt->fetchColumn()) {
+            $excluded = true;
+            $excludedByPlaylist++;
+        }
+    }
+
+    $exclusionCache[$cacheKey] = $excluded;
+    return $excluded;
+};
 
 foreach ($mediaTypes as $type) {
     $byType[$type] = ['count' => 0, 'size' => 0];
@@ -55,7 +105,6 @@ foreach ($mediaTypes as $type) {
 
 foreach ($rows as $row) {
     $type = $row['message_type'];
-    $dbSize = (int) ($row['file_size'] ?? 0);
 
     if ($row['file_purged_at']) {
         $alreadyPurged++;
@@ -85,8 +134,17 @@ foreach ($rows as $row) {
         'voice' => $baseDir ? realpath($baseDir . '/uploads/voice_messages') : false,
         default => $baseDir ? realpath($baseDir . '/uploads/files') : false,
     };
+    $col = match ($type) {
+        'image' => 'image_file_path',
+        'voice' => 'voice_file_path',
+        default => 'any_file_path',
+    };
     $fileName = basename((string) $filePath);
     if (!$uploadsDir || $fileName === '' || $fileName === '.' || $fileName === '..') {
+        continue;
+    }
+
+    if ($isExcludedByRules($fileName, $col, (string) $type)) {
         continue;
     }
 
@@ -146,6 +204,10 @@ apiSuccess([
     'total_size' => $totalSize,
     'already_purged' => $alreadyPurged,
     'missing_from_disk' => $missingFromDisk,
+    'excluded_saved_count' => $excludedBySaved,
+    'excluded_playlist_count' => $excludedByPlaylist,
+    'include_saved_messages' => $includeSavedMessages,
+    'include_playlists' => $includePlaylists,
     'by_type' => $byType,
     'largest_file' => $largestFile,
     'top_users' => $topUsersArr,

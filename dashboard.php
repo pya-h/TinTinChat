@@ -841,6 +841,14 @@ $csrfToken = generateCsrfToken();
                                         <span>Larger than (MB)</span>
                                         <input type="number" id="mediaCleanupMaxSize" class="form-control form-control-sm" min="1" value="5" step="0.5" style="max-width:120px">
                                     </label>
+                                    <label class="form-check form-switch media-cleanup-switch" for="mediaCleanupIncludeSaved">
+                                        <input class="form-check-input" type="checkbox" id="mediaCleanupIncludeSaved">
+                                        <span class="form-check-label">Include Saved Messages</span>
+                                    </label>
+                                    <label class="form-check form-switch media-cleanup-switch" for="mediaCleanupIncludePlaylists">
+                                        <input class="form-check-input" type="checkbox" id="mediaCleanupIncludePlaylists">
+                                        <span class="form-check-label">Include Playlists</span>
+                                    </label>
                                     <button type="button" id="mediaAnalyzeBtn" class="btn btn-sm btn-polished btn-polished-info">
                                         <i class="fas fa-chart-bar me-1"></i>Analyze
                                     </button>
