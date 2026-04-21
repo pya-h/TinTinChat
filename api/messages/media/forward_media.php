@@ -67,18 +67,23 @@ if ($groupId > 0) {
     blockEnforceSenderAllowed($pdo, $userId, $receiverId);
 }
 
+$groupMemberColumns = apiGetTableColumns($pdo, 'group_members');
+$activeMemberClause = array_key_exists('left_at', $groupMemberColumns)
+        ? 'AND left_at IS NULL'
+        : '';
+
 $srcStmt = $pdo->prepare(
-    "SELECT id, message_type, image_file_path, voice_file_path, any_file_path, file_size
-     FROM messages
-     WHERE id = ?
-       AND (
-         sender_id = ?
-         OR receiver_id = ?
-         OR group_id IN (
-             SELECT group_id FROM group_members WHERE user_id = ? AND left_at IS NULL
-         )
-       )
-     LIMIT 1"
+        "SELECT id, message_type, image_file_path, voice_file_path, any_file_path, file_size
+         FROM messages
+         WHERE id = ?
+             AND (
+                 sender_id = ?
+                 OR receiver_id = ?
+                 OR group_id IN (
+                         SELECT group_id FROM group_members WHERE user_id = ? {$activeMemberClause}
+                 )
+             )
+         LIMIT 1"
 );
 $srcStmt->execute([$sourceMessageId, $userId, $userId, $userId]);
 $srcRow = $srcStmt->fetch(PDO::FETCH_ASSOC);

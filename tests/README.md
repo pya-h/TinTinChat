@@ -124,6 +124,7 @@ tests/
   unit/
     run.php                 # Unit test runner
     api_helpers_test.php    # Upload error messages, username validation
+    api_helpers_core_test.php # Core helper behaviors (media redaction, superuser config)
     constants_test.php      # Constants integrity checks
     env_loader_test.php     # envGet() and loadEnv() behavior
     group_crypto_helpers_test.php  # RSA encryption roundtrips
@@ -131,7 +132,9 @@ tests/
   e2e/
     api_guard_smoke.sh              # Auth guard on protected endpoints
     authenticated_chat_smoke.sh     # Full DM + reaction + delete + sticker flow
+    forwarded_delete_safety_smoke.sh # Forwarded-media delete must be DB-row-only (no physical unlink)
     admin_sticker_visibility_smoke.sh  # Admin-only sticker access control
+    admin_media_cleanup_smoke.sh    # Superuser media analyze/cleanup + forwarded-file dedupe cleanup behavior
     profile_settings_smoke.sh       # Username/password update
     profile_settings_edge_smoke.sh  # Error codes for invalid profile updates
     group_chat_smoke.sh             # Group create/join/message/leave
