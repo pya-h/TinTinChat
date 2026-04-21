@@ -24,7 +24,7 @@ if (!$messageEncryptedForRecipient || !$messageEncryptedForSender) {
 	apiError('MISSING_PARAMETERS', 'Missing parameters', 400);
 }
 
-$maxMessageBytes = 256 * 1024;
+$maxMessageBytes = TTC_MESSAGE_MAX_BYTES;
 if (strlen($messageEncryptedForRecipient) > $maxMessageBytes || strlen($messageEncryptedForSender) > $maxMessageBytes) {
 	apiError('MESSAGE_TOO_LARGE', 'Message payload exceeds maximum allowed size', 400);
 }

@@ -75,7 +75,6 @@ if ($replyToMessageId) {
 	}
 }
 
-// Validate grouped_with references an image message in the same conversation sent by this user
 if ($groupedWith !== null) {
 	if ($groupId > 0) {
 		$gwStmt = $pdo->prepare("SELECT id FROM messages WHERE id = ? AND group_id = ? AND sender_id = ? AND message_type = 'image' LIMIT 1");

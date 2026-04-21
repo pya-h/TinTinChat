@@ -53,7 +53,6 @@ $groupedWith       = (!$groupedWithSelf && $rawGroupedWith !== '' && is_numeric(
     ? (int) $rawGroupedWith
     : null;
 
-// --- Resolve destination ---
 $receiverId = null;
 if ($groupId > 0) {
     groupRequireMembership($pdo, $groupId, $userId);
@@ -68,8 +67,6 @@ if ($groupId > 0) {
     blockEnforceSenderAllowed($pdo, $userId, $receiverId);
 }
 
-// --- Load source message (must be accessible to this user) ---
-// The forwarder only needs to have been able to read it (sender or receiver/group member).
 $srcStmt = $pdo->prepare(
     "SELECT id, message_type, image_file_path, voice_file_path, any_file_path, file_size
      FROM messages
@@ -95,7 +92,6 @@ if (!in_array($messageType, $allowedTypes, true)) {
     apiError('UNSUPPORTED_TYPE', 'Source message type cannot be forwarded via this endpoint', 400);
 }
 
-// Pick the correct file-path column
 $filePath = '';
 switch ($messageType) {
     case 'image': $filePath = (string) ($srcRow['image_file_path'] ?? ''); break;
@@ -108,7 +104,6 @@ if ($filePath === '') {
 
 $fileSize = (int) ($srcRow['file_size'] ?? 0);
 
-// --- Validate grouped_with if provided (images only) ---
 if ($groupedWith !== null) {
     if ($messageType !== 'image') {
         apiError('INVALID_GROUPED_WITH', 'grouped_with is only valid for image messages', 400);
@@ -125,7 +120,6 @@ if ($groupedWith !== null) {
     }
 }
 
-// --- Insert new message row ---
 try {
     $pdo->beginTransaction();
 

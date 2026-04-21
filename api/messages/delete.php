@@ -5,7 +5,6 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 
 apiRequireMethod('DELETE');
 $userId = apiRequireAuth();
-apiRequireBanCheck($pdo, $userId);
 apiRequireCsrf();
 session_write_close();
 

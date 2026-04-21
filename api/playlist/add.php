@@ -28,7 +28,6 @@ if (strlen($ext) > 16) {
     $ext = substr($ext, 0, 16);
 }
 
-// Verify message exists and is a file type
 $msgStmt = $pdo->prepare(
     'SELECT id, sender_id, receiver_id, group_id, message_type FROM messages WHERE id = ? LIMIT 1'
 );
@@ -43,7 +42,6 @@ if ($msg['message_type'] !== 'file') {
     apiError('NOT_A_FILE', 'Only file messages can be added to playlist', 400);
 }
 
-// Verify user is a participant
 $groupId = (int) ($msg['group_id'] ?? 0);
 $senderId = (int) ($msg['sender_id'] ?? 0);
 $receiverId = (int) ($msg['receiver_id'] ?? 0);
@@ -71,7 +69,6 @@ if ((int) $countStmt->fetchColumn() >= 200) {
     apiError('PLAYLIST_FULL', 'Playlist full (200 tracks max)', 409);
 }
 
-// Insert (ignore duplicate)
 $insStmt = $pdo->prepare(
     'INSERT IGNORE INTO playlist_tracks (user_id, message_id, title, ext) VALUES (?, ?, ?, ?)'
 );

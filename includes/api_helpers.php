@@ -302,3 +302,20 @@ function apiRequireSuperuserAdmin(PDO $pdo, int $userId): void
         apiError('FORBIDDEN', 'Superuser privileges required', 403);
     }
 }
+
+/**
+ * Replace raw file-path columns in message rows with presence flags (1 or null).
+ * Prevents server-side paths from leaking in API responses while still letting
+ * clients know whether a media attachment exists.
+ */
+function apiRedactMessageMediaPaths(array &$messages): void
+{
+    foreach ($messages as &$row) {
+        $type = (string) ($row['message_type'] ?? '');
+        $row['image_file_path'] = ($type === 'image' && !empty($row['image_file_path'])) ? 1 : null;
+        $row['voice_file_path'] = ($type === 'voice' && !empty($row['voice_file_path'])) ? 1 : null;
+        $row['any_file_path']   = (($type === 'file' || $type === 'video') && !empty($row['any_file_path'])) ? 1 : null;
+    }
+    unset($row);
+}
+

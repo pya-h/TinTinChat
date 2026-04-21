@@ -29,7 +29,6 @@ function groupGenerateUniqueJoinToken(PDO $pdo, int $maxAttempts = 5): string
     }
 
     apiError('GROUP_JOIN_TOKEN_EXHAUSTED', 'Unable to generate unique group join token', 500);
-    throw new RuntimeException('Unable to generate unique group join token');
 }
 
 function groupBuildJoinLink(string $token): string

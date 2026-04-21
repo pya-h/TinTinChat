@@ -63,3 +63,57 @@ function ttcReactionEmojiFromStorage(string $storedReaction): string
 
     return '';
 }
+
+/**
+ * Fetch and attach per-message reaction counts to a message array in place.
+ * Each message row gains a 'reactions' key: [{emoji, count, reacted_by_me}, ...]
+ */
+function ttcAttachReactionsToMessages(PDO $pdo, array &$messages, int $viewerUserId): void
+{
+    if (empty($messages)) {
+        return;
+    }
+
+    $messageIds = array_values(array_filter(array_map(static function ($row) {
+        return isset($row['id']) ? (int) $row['id'] : 0;
+    }, $messages), static function ($id) {
+        return $id > 0;
+    }));
+
+    if (empty($messageIds)) {
+        return;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($messageIds), '?'));
+    $stmt = $pdo->prepare(
+        "SELECT message_id, reaction, user_id
+         FROM message_reactions
+         WHERE message_id IN ($placeholders)"
+    );
+    $stmt->execute($messageIds);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $byMessage = [];
+    foreach ($rows as $row) {
+        $messageId = (int) ($row['message_id'] ?? 0);
+        $emoji = ttcReactionEmojiFromStorage((string) ($row['reaction'] ?? ''));
+        if ($messageId <= 0 || $emoji === '') {
+            continue;
+        }
+        if (!isset($byMessage[$messageId][$emoji])) {
+            $byMessage[$messageId][$emoji] = ['emoji' => $emoji, 'count' => 0, 'reacted_by_me' => false];
+        }
+        $byMessage[$messageId][$emoji]['count']++;
+        if ((int) ($row['user_id'] ?? 0) === $viewerUserId) {
+            $byMessage[$messageId][$emoji]['reacted_by_me'] = true;
+        }
+    }
+
+    foreach ($messages as &$messageRow) {
+        $mid = (int) ($messageRow['id'] ?? 0);
+        $messageRow['reactions'] = $mid > 0 && isset($byMessage[$mid])
+            ? array_values($byMessage[$mid])
+            : [];
+    }
+    unset($messageRow);
+}

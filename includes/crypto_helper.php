@@ -1,5 +1,4 @@
 <?php
-// generates 2048-bit RSA keypair and returns base64 PEM strings for public and private keys
 function generate_rsa_keypair()
 {
     $config = [
@@ -26,7 +25,6 @@ function generate_rsa_keypair()
     return [$publicKeyBase64, $privateKeyBase64];
 }
 
-// decrypts base64 ciphertext with base64 private key PEM
 function decrypt_message($ciphertextBase64, $privateKeyBase64)
 {
     $privateKeyPem = base64_decode($privateKeyBase64);
