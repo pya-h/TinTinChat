@@ -29,7 +29,7 @@ if (count($messages) > TTC_SEEN_STATUS_MAX_IDS) {
 $placeholders = implode(',', array_fill(0, count($messages), '?'));
 
 $accessStmt = $pdo->prepare(
-	"SELECT id, message_type, voice_file_path, image_file_path, any_file_path
+	"SELECT id, message_type, voice_file_path, image_file_path, any_file_path, forwarded_from_message_id
 	 FROM messages
 	 WHERE id IN ($placeholders)
 	   AND (
@@ -66,17 +66,22 @@ if (!$deleteStmt->execute($deletableIds)) {
 $filesToDelete = [];
 foreach ($rows as $row) {
 	$messageType = isset($row['message_type']) ? (string) $row['message_type'] : '';
+	$isForwarded = !empty($row['forwarded_from_message_id']);
 	if ($messageType === 'voice' && !empty($row['voice_file_path'])) {
-		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/voice_messages', 'name' => (string) $row['voice_file_path'], 'col' => 'voice_file_path'];
+		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/voice_messages', 'name' => (string) $row['voice_file_path'], 'col' => 'voice_file_path', 'is_forwarded' => $isForwarded];
 	} elseif ($messageType === 'image' && !empty($row['image_file_path'])) {
-		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/images', 'name' => (string) $row['image_file_path'], 'col' => 'image_file_path'];
+		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/images', 'name' => (string) $row['image_file_path'], 'col' => 'image_file_path', 'is_forwarded' => $isForwarded];
 	} elseif (($messageType === 'file' || $messageType === 'video') && !empty($row['any_file_path'])) {
-		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/files', 'name' => (string) $row['any_file_path'], 'col' => 'any_file_path'];
+		$filesToDelete[] = ['dir' => __DIR__ . '/../../uploads/files', 'name' => (string) $row['any_file_path'], 'col' => 'any_file_path', 'is_forwarded' => $isForwarded];
 	}
 }
 
 $filesDeleted = 0;
 foreach ($filesToDelete as $entry) {
+	if (!empty($entry['is_forwarded'])) {
+		continue;
+	}
+
 	$baseDir = realpath($entry['dir']);
 	if (!$baseDir) {
 		continue;
@@ -90,12 +95,8 @@ foreach ($filesToDelete as $entry) {
 		continue;
 	}
 
-	// Delete the physical file unconditionally.
-	// Forwarded copies (created by forward_media.php) share the same filename,
-	// but forwarding is considered re-sharing by the user's own choice.
-	// When the original sender deletes their message they intend to remove the
-	// file; forwarded copies will display "The original file has been deleted"
-	// instead of trying (and failing) to fetch it.
+	// Only original media deletions are allowed to unlink physical files.
+	// Forwarded copies are DB-row-only deletes and never remove shared blobs.
 	if (@unlink($fullPath)) {
 		$filesDeleted++;
 	}
