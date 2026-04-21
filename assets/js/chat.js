@@ -1445,6 +1445,12 @@ function getMediaEnvelopePayloadForMessage(msg) {
         : String(msg?.message || "");
 }
 
+function getMissingMediaUserMessage(msg) {
+    return Number(msg?.forwarded_from_message_id || 0) > 0
+        ? "The original file has been removed"
+        : "File expired";
+}
+
 async function resolveMediaAesKey(msg, wrappedKeyPayload) {
     const isGroupMessage = Number(msg?.group_id || 0) > 0;
     if (isGroupMessage) {
@@ -1659,9 +1665,7 @@ async function hydrateImageMessageElement(messageElement, msg) {
         if (loadingElem) {
             loadingElem.textContent =
                 error?.message === "FILE_UNAVAILABLE"
-                    ? (msg.forwarded_from_message_id
-                        ? "The original file has been deleted"
-                        : "File no longer available")
+                    ? getMissingMediaUserMessage(msg)
                     : "Unable to decrypt image";
         }
     }
@@ -1695,9 +1699,7 @@ async function hydrateVideoMessageElement(messageElement, msg) {
         if (loadingElem) {
             loadingElem.textContent =
                 error?.message === "FILE_UNAVAILABLE"
-                    ? (msg.forwarded_from_message_id
-                        ? "The original file has been deleted"
-                        : "File no longer available")
+                    ? getMissingMediaUserMessage(msg)
                     : "Unable to decrypt video";
         }
     }
@@ -2468,8 +2470,10 @@ async function playPlaylistTrack(track, btnEl) {
     } catch (error) {
         btnEl.innerHTML = '<i class="fas fa-play"></i>';
         if (error?.message === "FILE_UNAVAILABLE") {
+            const messageMeta =
+                (track && typeof track === "object" && track.meta) || null;
             setComposerStatus(
-                `"${track.title || "Track"}" — file expired, skipping...`,
+                `"${track.title || "Track"}" — ${getMissingMediaUserMessage(messageMeta)}, skipping...`,
                 "warning",
             );
             autoPlayNextTrack(track);
@@ -3841,8 +3845,10 @@ async function playSavedPanelTrack(idx) {
         const isPurged = error?.message === "FILE_UNAVAILABLE";
         if (isPurged) {
             // Auto-skip to next track instead of blocking
+            const messageMeta =
+                (track && typeof track === "object" && track.meta) || null;
             setComposerStatus(
-                `Skipped "${track.title || "track"}" — file expired`,
+                `Skipped "${track.title || "track"}" — ${getMissingMediaUserMessage(messageMeta)}`,
                 "warning",
             );
             stopSavedPanelAudio();
@@ -11798,13 +11804,10 @@ async function downloadAndOpenFile(messageId) {
     } catch (error) {
         const isUnavailable = error?.message === "FILE_UNAVAILABLE";
         const msg = isUnavailable ? messageMetaById.get(Number(messageId)) : null;
-        const isForwarded = isUnavailable && Number(msg?.forwarded_from_message_id || 0) > 0;
         showModal(
             isUnavailable ? "File Unavailable" : I18N_TEXT.downloadErrorTitle,
             isUnavailable
-                ? (isForwarded
-                    ? "The original file has been deleted by its sender."
-                    : "This file is no longer available on the server.")
+                ? getMissingMediaUserMessage(msg)
                 : formatI18nText(I18N_TEXT.downloadErrorBody, {
                       error: error.message || "Unknown",
                   }),

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../includes/api_helpers.php';
 
 apiRequireMethod('DELETE');
 $userId = apiRequireAuth();
+apiRequireBanCheck($pdo, $userId);
 apiRequireCsrf();
 session_write_close();
 
@@ -33,8 +34,7 @@ $accessStmt = $pdo->prepare(
 	 FROM messages
 	 WHERE id IN ($placeholders)
 	   AND (
-	     receiver_id = ?
-	     OR sender_id = ?
+	     (group_id IS NULL AND (receiver_id = ? OR sender_id = ?))
 	     OR (
 	       group_id IS NOT NULL
 	       AND sender_id = ?
