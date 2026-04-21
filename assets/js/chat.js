@@ -368,6 +368,7 @@ let isLoadingMessages = false;
 let isBatchRendering = false; // Skip per-message rebuildMessageDaySeparators during batch loads
 let hasLoadedMoreMessages = false; // Track if user has clicked Load More at least once
 let historyModeNewMsgCount = 0;    // New messages received while in history-reading mode
+let lastKnownMessageId = 0;        // High-water mark of highest msg id seen; never reduced on delete
 const MESSAGES_PER_PAGE = Number(appConstants.messagesPerPage) || 50;
 
 let searchTimeout = null;
@@ -959,6 +960,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                     hasMoreMessages = true;
                     hasLoadedMoreMessages = false;
                     historyModeNewMsgCount = 0;
+                    lastKnownMessageId = 0;
                     pendingSeenMessageIds.clear();
                     messageMetaById.clear();
                     clearDecryptedMediaCache();
@@ -986,6 +988,7 @@ async function openUserProfileModal({ userId = 0, username = "" } = {}) {
                                 hasMoreMessages = true;
                                 hasLoadedMoreMessages = false;
                                 historyModeNewMsgCount = 0;
+                                lastKnownMessageId = 0;
                                 await loadMessages(currentChatUser, true, true);
                             }
                         }, 250);
@@ -2533,6 +2536,7 @@ function setupPrivateChatActions(profile) {
                         hasMoreMessages = true;
                         hasLoadedMoreMessages = false;
                         historyModeNewMsgCount = 0;
+                        lastKnownMessageId = 0;
                         pendingSeenMessageIds.clear();
                         messageMetaById.clear();
                         clearDecryptedMediaCache();
@@ -9372,6 +9376,7 @@ async function selectChatTarget(target) {
     isLoadingMessages = false;
     hasLoadedMoreMessages = false; // Reset when selecting a new chat
     historyModeNewMsgCount = 0;
+    lastKnownMessageId = 0;
 
     const isGroup = isGroupToken(currentChatUser);
     groupInfoBtn.hidden = !isGroup;
@@ -9522,7 +9527,14 @@ async function loadMessages(
             }
             chatMessagesElem.innerHTML = "";
             messageOffset = 0;
+            lastKnownMessageId = 0;
             currentChatRecentMessages = data?.messages ?? [];
+            if (currentChatRecentMessages.length) {
+                const lastInitId = Number(
+                    currentChatRecentMessages[currentChatRecentMessages.length - 1].id || 0
+                );
+                if (lastInitId > lastKnownMessageId) lastKnownMessageId = lastInitId;
+            }
         }
         messageOffset += data.messages?.length ?? 0;
         hasMoreMessages = data.hasMore;
@@ -9682,15 +9694,7 @@ async function loadCurrentChatsRecentMessages() {
 
     try {
         isLoadingMessages = true;
-        const offsetMsgId =
-            Array.isArray(currentChatRecentMessages) &&
-            currentChatRecentMessages.length
-                ? Number(
-                      currentChatRecentMessages[
-                          currentChatRecentMessages.length - 1
-                      ].id || 0,
-                  )
-                : 0;
+        const offsetMsgId = lastKnownMessageId;
         const query = buildChatQueryParams(currentChatUser, {
             offsetMsgId,
             editedSince: lastRecentPollTime || undefined,
@@ -9740,6 +9744,8 @@ async function loadCurrentChatsRecentMessages() {
         if (newMessages.length) {
             currentChatRecentMessages = newMessages;
             messageOffset += newMessages.length;
+            const lastNewId = Number(newMessages[newMessages.length - 1].id || 0);
+            if (lastNewId > lastKnownMessageId) lastKnownMessageId = lastNewId;
         }
 
         const editedMessages = data.messages.filter(
@@ -13650,6 +13656,7 @@ groupLeaveBtn?.addEventListener("click", async () => {
         currentChatUser = null;
         currentChatRecentMessages = null;
         lastRecentPollTime = "";
+        lastKnownMessageId = 0;
         chatMessagesElem.innerHTML = "";
         clearDecryptedMediaCache();
         chatWithElem.textContent = "Select a chat";
