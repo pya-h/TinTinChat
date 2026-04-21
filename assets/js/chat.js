@@ -79,6 +79,9 @@ const settingClassicDesign = document.getElementById("settingClassicDesign");
 const settingInteractiveMessageSearch = document.getElementById(
     "settingInteractiveMessageSearch",
 );
+const settingSearchWildcards = document.getElementById(
+    "settingSearchWildcards",
+);
 const chatUiSettingsOverlay = document.getElementById("chatUiSettingsOverlay");
 const chatUiSettingsClose = document.getElementById("chatUiSettingsClose");
 const chatUiSettingsTabGeneral = document.getElementById(
@@ -451,6 +454,7 @@ const appSettings = {
     iosLagFix: false,
     classicDesign: false,
     interactiveMessageSearch: false,
+    searchSqlWildcards: false,
     browserNotificationsEnabled: false,
     sendByEnter: true,
     showSavedMessages: true,
@@ -1695,6 +1699,10 @@ function loadAppSettings() {
         appSettings.iosLagFix = parseStoredBoolean(parsed.iosLagFix, false);
         appSettings.interactiveMessageSearch = parseStoredBoolean(
             parsed.interactiveMessageSearch,
+            false,
+        );
+        appSettings.searchSqlWildcards = parseStoredBoolean(
+            parsed.searchSqlWildcards,
             false,
         );
         appSettings.browserNotificationsEnabled = parseStoredBoolean(
@@ -4657,6 +4665,9 @@ function applySettingsUi() {
         settingInteractiveMessageSearch.checked =
             appSettings.interactiveMessageSearch;
     }
+    if (settingSearchWildcards) {
+        settingSearchWildcards.checked = appSettings.searchSqlWildcards;
+    }
     if (settingNotificationSound) {
         settingNotificationSound.checked = appSettings.notificationSoundEnabled;
     }
@@ -4823,6 +4834,18 @@ function bindSettingsUiEvents() {
             setComposerStatus("Interactive message search enabled", "success");
             runConversationSearch(true);
         }
+    });
+
+    settingSearchWildcards?.addEventListener("change", (event) => {
+        appSettings.searchSqlWildcards = Boolean(event.target.checked);
+        persistAppSettings();
+        cancelConversationSearch();
+        setComposerStatus(
+            appSettings.searchSqlWildcards
+                ? "Search placeholders enabled (% = any text, _ = any character)"
+                : "Search placeholders disabled",
+            "success",
+        );
     });
 
     if (settingNotificationSound) {

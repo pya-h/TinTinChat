@@ -572,6 +572,16 @@ $csrfToken = generateCsrfToken();
                             </label>
 
                             <label class="chat-ui-settings-item chat-ui-settings-item-check">
+                                <span>
+                                    <span>Search placeholders</span>
+                                    <small class="chat-ui-settings-hint">Enables <code>%</code> (any text) and <code>_</code> (any single character) wildcards in message search.</small>
+                                </span>
+                                <span class="chat-ui-settings-control">
+                                    <input type="checkbox" id="settingSearchWildcards">
+                                </span>
+                            </label>
+
+                            <label class="chat-ui-settings-item chat-ui-settings-item-check">
                                 <span>Notification sound</span>
                                 <span class="chat-ui-settings-control">
                                     <input type="checkbox" id="settingNotificationSound" checked>
