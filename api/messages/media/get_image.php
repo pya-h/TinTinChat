@@ -32,11 +32,21 @@ if ($groupId > 0) {
 	exit('Access Denied: You do not have permission to view this image.');
 }
 
-$file_path = __DIR__ . '/../../../' . $message['image_file_path'];
-$fullPath = realpath($file_path);
 $uploadsDir = realpath(__DIR__ . '/../../../uploads/images/');
+$fileName = basename((string) ($message['image_file_path'] ?? ''));
+$fullPath = $uploadsDir
+	? realpath($uploadsDir . DIRECTORY_SEPARATOR . $fileName)
+	: false;
 
-if (!$fullPath || !$uploadsDir || strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) !== 0 || !file_exists($fullPath)) {
+if (
+	!$uploadsDir ||
+	$fileName === '' ||
+	$fileName === '.' ||
+	$fileName === '..' ||
+	!$fullPath ||
+	strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) !== 0 ||
+	!is_file($fullPath)
+) {
 	http_response_code(404);
 	exit('Not Found: The image file is missing from the server.');
 }

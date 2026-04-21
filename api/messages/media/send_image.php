@@ -122,7 +122,7 @@ try {
 			$groupId > 0 ? $groupId : null,
 			$message_for_recipient,
 			$message_for_sender,
-			'uploads/images/' . $unique_filename,
+			$unique_filename,
 			(int) $image_file['size'],
 			$replyToMessageId,
 			$forwardedFromMessageId,

@@ -64,24 +64,32 @@ foreach ($rows as $row) {
         continue;
     }
 
-    $fullPath = realpath($baseDir . '/' . $filePath);
-    $uploadsBase = realpath($baseDir . '/uploads');
-    if (!$fullPath || !$uploadsBase || strpos($fullPath, $uploadsBase . DIRECTORY_SEPARATOR) !== 0) {
+    $uploadsDir = match ($row['message_type']) {
+        'image' => realpath($baseDir . '/uploads/images'),
+        'voice' => realpath($baseDir . '/uploads/voice_messages'),
+        default => realpath($baseDir . '/uploads/files'),
+    };
+    $fileName = basename((string) $filePath);
+    if (!$uploadsDir || $fileName === '' || $fileName === '.' || $fileName === '..') {
         continue;
     }
+    $fullPath = realpath($uploadsDir . DIRECTORY_SEPARATOR . $fileName);
+    if ($fullPath && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) !== 0) {
+        continue;
+    }
+    $pathForIo = $fullPath ?: ($uploadsDir . DIRECTORY_SEPARATOR . $fileName);
 
     $col = match ($row['message_type']) {
         'image' => 'image_file_path',
         'voice' => 'voice_file_path',
         default => 'any_file_path',
     };
-    $fileName = basename($filePath);
 
-    $fileSize = file_exists($fullPath) ? (int) filesize($fullPath) : 0;
+    $fileSize = file_exists($pathForIo) ? (int) filesize($pathForIo) : 0;
     $fileDeleted = false;
 
-    if (file_exists($fullPath)) {
-        $fileDeleted = @unlink($fullPath);
+    if (file_exists($pathForIo)) {
+        $fileDeleted = @unlink($pathForIo);
     } else {
         $fileDeleted = true; // already gone, still mark rows purged
     }

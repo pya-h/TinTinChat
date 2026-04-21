@@ -40,7 +40,6 @@ $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $baseDir = realpath(__DIR__ . '/../../');
-$uploadsBase = realpath($baseDir . '/uploads');
 
 $totalFiles = 0;
 $totalSize = 0;
@@ -81,13 +80,24 @@ foreach ($rows as $row) {
         continue;
     }
 
-    $fullPath = $baseDir ? realpath($baseDir . '/' . $filePath) : false;
-    if (!$fullPath || !$uploadsBase || strpos($fullPath, $uploadsBase . DIRECTORY_SEPARATOR) !== 0) {
+    $uploadsDir = match ($type) {
+        'image' => $baseDir ? realpath($baseDir . '/uploads/images') : false,
+        'voice' => $baseDir ? realpath($baseDir . '/uploads/voice_messages') : false,
+        default => $baseDir ? realpath($baseDir . '/uploads/files') : false,
+    };
+    $fileName = basename((string) $filePath);
+    if (!$uploadsDir || $fileName === '' || $fileName === '.' || $fileName === '..') {
         continue;
     }
 
-    $actualSize = file_exists($fullPath) ? (int) filesize($fullPath) : 0;
-    if (!file_exists($fullPath)) {
+    $fullPath = realpath($uploadsDir . DIRECTORY_SEPARATOR . $fileName);
+    if ($fullPath && strpos($fullPath, $uploadsDir . DIRECTORY_SEPARATOR) !== 0) {
+        continue;
+    }
+    $pathForIo = $fullPath ?: ($uploadsDir . DIRECTORY_SEPARATOR . $fileName);
+
+    $actualSize = file_exists($pathForIo) ? (int) filesize($pathForIo) : 0;
+    if (!file_exists($pathForIo)) {
         $missingFromDisk++;
         continue;
     }
