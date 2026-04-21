@@ -62,6 +62,11 @@ $listStmt = $pdo->prepare(
 $listStmt->execute($params);
 $items = $listStmt->fetchAll(PDO::FETCH_ASSOC);
 
+foreach ($items as &$item) {
+    $item['any_file_path'] = !empty($item['any_file_path']) ? 1 : null;
+}
+unset($item);
+
 $nextOffset = $offset + count($items);
 $hasMore = $nextOffset < $total;
 

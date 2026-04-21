@@ -122,6 +122,17 @@ if (!empty($messages)) {
 		unset($messageRow);
 	}
 }
+
+foreach ($messages as &$messageRow) {
+	$messageType = (string) ($messageRow['message_type'] ?? '');
+	$hasImage = $messageType === 'image' && !empty($messageRow['image_file_path']);
+	$hasVoice = $messageType === 'voice' && !empty($messageRow['voice_file_path']);
+	$hasAnyFile = ($messageType === 'file' || $messageType === 'video') && !empty($messageRow['any_file_path']);
+	$messageRow['image_file_path'] = $hasImage ? 1 : null;
+	$messageRow['voice_file_path'] = $hasVoice ? 1 : null;
+	$messageRow['any_file_path'] = $hasAnyFile ? 1 : null;
+}
+unset($messageRow);
 // ── Inline typing status (saves a separate /typing/fetch.php round-trip) ──
 $typingData = ['is_typing' => false, 'typers' => []];
 try {
