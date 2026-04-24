@@ -121,6 +121,7 @@ const settingSendByEnter = document.getElementById("settingSendByEnter");
 const settingShowSavedMessages = document.getElementById(
     "settingShowSavedMessages",
 );
+const settingCompressImages = document.getElementById("settingCompressImages");
 const settingsGroupKeyHealthBtn = document.getElementById(
     "settingsGroupKeyHealthBtn",
 );
@@ -458,6 +459,7 @@ const appSettings = {
     browserNotificationsEnabled: false,
     sendByEnter: true,
     showSavedMessages: true,
+    compressImages: true,
 };
 
 const UI_BACK_LAYER_KEYS = {
@@ -1716,6 +1718,10 @@ function loadAppSettings() {
         appSettings.sendByEnter = parseStoredBoolean(parsed.sendByEnter, true);
         appSettings.showSavedMessages = parseStoredBoolean(
             parsed.showSavedMessages,
+            true,
+        );
+        appSettings.compressImages = parseStoredBoolean(
+            parsed.compressImages,
             true,
         );
     } catch (error) {}
@@ -4688,6 +4694,9 @@ function applySettingsUi() {
     if (settingShowSavedMessages) {
         settingShowSavedMessages.checked = appSettings.showSavedMessages;
     }
+    if (settingCompressImages) {
+        settingCompressImages.checked = appSettings.compressImages;
+    }
     syncMobileComposerActions();
 }
 
@@ -5079,6 +5088,17 @@ function bindSettingsUiEvents() {
             );
         });
     }
+
+    settingCompressImages?.addEventListener("change", (event) => {
+        appSettings.compressImages = Boolean(event.target.checked);
+        persistAppSettings();
+        setComposerStatus(
+            appSettings.compressImages
+                ? "Image compression enabled"
+                : "Image compression disabled",
+            "success",
+        );
+    });
 
     settingsGroupKeyHealthBtn?.addEventListener("click", async () => {
         await runGroupKeyHealthCheck();
@@ -14204,8 +14224,11 @@ async function handleSelectedImageFile(e) {
     e.target.value = null;
 
     // Compress images (WebP 75% quality) before encryption/upload
-    for (let i = 0; i < validFiles.length; i++) {
-        validFiles[i] = await compressImageForMessage(validFiles[i]);
+    // Admin users can disable via Settings > General > Compress images
+    if (!CURRENT_USER_IS_ADMIN || appSettings.compressImages) {
+        for (let i = 0; i < validFiles.length; i++) {
+            validFiles[i] = await compressImageForMessage(validFiles[i]);
+        }
     }
 
     if (validFiles.length === 1) {

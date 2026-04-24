@@ -616,6 +616,18 @@ $csrfToken = generateCsrfToken();
                                 </span>
                             </label>
 
+                            <?php if ($is_admin): ?>
+                            <label class="chat-ui-settings-item chat-ui-settings-item-check">
+                                <span>
+                                    <span>Compress images</span>
+                                    <small class="chat-ui-settings-hint">Compresses photo messages before upload to reduce file size.</small>
+                                </span>
+                                <span class="chat-ui-settings-control">
+                                    <input type="checkbox" id="settingCompressImages" checked>
+                                </span>
+                            </label>
+                            <?php endif; ?>
+
                             <div class="chat-ui-settings-item chat-ui-settings-item-action">
                                 <span>
                                     <span>Media cache</span>
