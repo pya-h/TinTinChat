@@ -14104,6 +14104,38 @@ stickerUploadInput?.addEventListener("change", async (event) => {
     await uploadSticker(standaloneFile);
 });
 
+function compressImageForMessage(file) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob || blob.size >= file.size) {
+                        resolve(file);
+                        return;
+                    }
+                    const ext = file.name.replace(/\.[^.]+$/, "") + ".webp";
+                    resolve(new File([blob], ext, { type: "image/webp" }));
+                },
+                "image/webp",
+                0.75,
+            );
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(file);
+        };
+        img.src = url;
+    });
+}
+
 async function handleSelectedImageFile(e) {
     if (!ensureEditModeAllowsTextOnly("send image")) {
         e.target.value = null;
@@ -14170,6 +14202,11 @@ async function handleSelectedImageFile(e) {
     }
 
     e.target.value = null;
+
+    // Compress images (WebP 75% quality) before encryption/upload
+    for (let i = 0; i < validFiles.length; i++) {
+        validFiles[i] = await compressImageForMessage(validFiles[i]);
+    }
 
     if (validFiles.length === 1) {
         void sendImageMessage(validFiles[0]);
