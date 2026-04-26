@@ -11857,7 +11857,11 @@ async function sendClipboardImage({ requireConfirm = true } = {}) {
         return;
     }
 
-    await sendImageMessage(pendingClipboardImageFile);
+    let fileToSend = pendingClipboardImageFile;
+    if (!CURRENT_USER_IS_ADMIN || appSettings.compressImages) {
+        fileToSend = await compressImageForMessage(fileToSend);
+    }
+    await sendImageMessage(fileToSend);
     pendingClipboardImageFile = null;
     setClipboardImageButtonVisibility(false);
 }
@@ -14125,32 +14129,66 @@ stickerUploadInput?.addEventListener("change", async (event) => {
 });
 
 function compressImageForMessage(file) {
+    // GIF: canvas only captures the first frame (animation lost).
+    // SVG: canvas rasterisation is inconsistent across browsers.
+    // WebP: already in the target format, no gain from re-encoding.
+    const skipTypes = ["image/gif", "image/svg+xml", "image/webp"];
+    if (skipTypes.includes(String(file.type || "").toLowerCase())) {
+        return Promise.resolve(file);
+    }
+
     return new Promise((resolve) => {
+        let settled = false;
+        const done = (result) => {
+            if (settled) return;
+            settled = true;
+            resolve(result);
+        };
+
+        // Safety net: if canvas.toBlob() never fires (common on low-memory
+        // Android/iOS), fall back to the original file after 6 seconds.
+        const fallbackTimer = setTimeout(() => done(file), 6000);
+
         const img = new Image();
         const url = URL.createObjectURL(file);
+
         img.onload = () => {
             URL.revokeObjectURL(url);
-            const canvas = document.createElement("canvas");
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob(
-                (blob) => {
-                    if (!blob || blob.size >= file.size) {
-                        resolve(file);
-                        return;
-                    }
-                    const ext = file.name.replace(/\.[^.]+$/, "") + ".webp";
-                    resolve(new File([blob], ext, { type: "image/webp" }));
-                },
-                "image/webp",
-                0.75,
-            );
+            try {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) {
+                    // Canvas 2D context unavailable (device memory pressure, etc.)
+                    clearTimeout(fallbackTimer);
+                    done(file);
+                    return;
+                }
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(
+                    (blob) => {
+                        clearTimeout(fallbackTimer);
+                        if (!blob || blob.size >= file.size) {
+                            done(file);
+                            return;
+                        }
+                        const ext = file.name.replace(/\.[^.]+$/, "") + ".webp";
+                        done(new File([blob], ext, { type: "image/webp" }));
+                    },
+                    "image/webp",
+                    0.75,
+                );
+            } catch (_compressErr) {
+                // Any unexpected canvas error → fall back to original file
+                clearTimeout(fallbackTimer);
+                done(file);
+            }
         };
         img.onerror = () => {
             URL.revokeObjectURL(url);
-            resolve(file);
+            clearTimeout(fallbackTimer);
+            done(file);
         };
         img.src = url;
     });
