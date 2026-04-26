@@ -4413,16 +4413,22 @@ async function openVideoCaptureOverlay() {
     }
 
     try {
-        const preferRear = {
-            video: { facingMode: { ideal: "environment" } },
-            audio: true,
+        // Cap resolution and frame-rate to prevent OOM crashes on devices
+        // whose back cameras default to 4K/1080p60 (front cameras are fine).
+        const videoConstraints = {
+            facingMode: { ideal: "environment" },
+            width:     { ideal: 1280, max: 1280 },
+            height:    { ideal: 720,  max: 720  },
+            frameRate: { ideal: 30,   max: 30   },
         };
+        const preferRear = { video: videoConstraints, audio: true };
         let stream;
         try {
             stream = await navigator.mediaDevices.getUserMedia(preferRear);
         } catch (initialError) {
+            // Fallback: drop resolution caps but keep audio
             stream = await navigator.mediaDevices.getUserMedia({
-                video: true,
+                video: { facingMode: { ideal: "environment" } },
                 audio: true,
             });
         }
@@ -4464,9 +4470,13 @@ function startVideoCaptureRecording() {
         const recordingType = pickVideoRecordingMimeType();
         videoCaptureChunks = [];
         shouldSendVideoCapture = false;
-        const recorder = recordingType
-            ? new MediaRecorder(videoCaptureStream, { mimeType: recordingType })
-            : new MediaRecorder(videoCaptureStream);
+        // 2.5 Mbps cap — keeps quality acceptable while preventing OOM on
+        // high-resolution back cameras that would otherwise buffer huge blobs.
+        const recorderOptions = { videoBitsPerSecond: 2_500_000 };
+        if (recordingType) {
+            recorderOptions.mimeType = recordingType;
+        }
+        const recorder = new MediaRecorder(videoCaptureStream, recorderOptions);
 
         recorder.ondataavailable = (event) => {
             if (event?.data?.size) {
@@ -4482,11 +4492,16 @@ function startVideoCaptureRecording() {
             closeVideoCaptureOverlay();
 
             if (!shouldSend || !capturedChunks.length) {
+                videoCaptureChunks = [];
                 return;
             }
 
             const extension = mimeType.includes("mp4") ? "mp4" : "webm";
             const videoBlob = new Blob(capturedChunks, { type: mimeType });
+            // Free the raw chunks from memory before the upload begins —
+            // the merged Blob is all we need from here on.
+            videoCaptureChunks = [];
+            capturedChunks.length = 0;
             const videoFile = new File(
                 [videoBlob],
                 `video_${Date.now()}.${extension}`,
