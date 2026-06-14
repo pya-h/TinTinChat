@@ -1,0 +1,20 @@
+<?php
+session_start();
+require_once __DIR__ . '/../../../tintin-core/includes/db.php';
+require_once __DIR__ . '/../../../tintin-core/includes/api_helpers.php';
+
+apiRequireMethod('GET');
+apiRequireAuth();
+session_write_close();
+
+$username = apiNormalizeUsername($_GET['username'] ?? '', 'INVALID_USERNAME');
+
+$stmt = $pdo->prepare('SELECT public_key FROM users WHERE username = ?');
+$stmt->execute([$username]);
+$user = $stmt->fetch();
+
+if (!$user) {
+	apiError('USER_NOT_FOUND', 'User not found', 404);
+}
+
+apiSuccess(['publicKey' => $user['public_key']]);

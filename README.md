@@ -100,29 +100,62 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 
 ## Repository Structure
 
-- `api/` — organized endpoints by domain:
-  - `auth/`, `chats/`, `groups/`, `ideas/`, `keys/`, `messages/`, `system/`, `typing/`, `users/`, `admin/`
-- `includes/` — shared backend helpers (db, auth, session, api_helpers, group_helpers, crypto, constants, block, admin, modal)
-- `assets/js/` — frontend logic (`chat.js`, `api-service.js`, `pwa.js`, `ui-enhancements.js`, `crypto.js`)
-- `assets/css/` — UI styling (`dashboard.css`, `style.css`, `modal.css`)
-- `migrations/` — SQL migration history (00–25 + final schema)
-- `docs/` — product, API, encryption, technical design, security, PWA docs
-- `tests/` — unit + E2E smoke + orchestration scripts
-- `uploads/` — runtime storage for avatars/media/files/stickers
+The project is split into two top-level deployment folders so that only public
+assets are exposed by the web server (see **Deployment / Hosting** below):
+
+- `public/` — the web document root (everything browser-reachable):
+  - `index.php`, `dashboard.php` — entry pages
+  - `manifest.webmanifest`, `service-worker.js`, `offline.html` — PWA shell
+  - `api/` — organized endpoints by domain:
+    - `auth/`, `chats/`, `groups/`, `ideas/`, `keys/`, `messages/`, `opinions/`, `playlist/`, `system/`, `typing/`, `users/`, `admin/`
+  - `assets/js/` — frontend logic (`chat.js`, `api-service.js`, `pwa.js`, `crypto.js`, …)
+  - `assets/css/` — UI styling (`dashboard.css`, `style.css`, `modal.css`)
+  - `.htaccess` — disables directory browsing, blocks dotfiles
+- `tintin-core/` — backend + secrets, kept OUTSIDE the web root:
+  - `includes/` — shared backend helpers (db, auth, session, api_helpers, group_helpers, crypto, constants, block, admin, modal)
+  - `migrations/` — SQL migration history (00–32 + final schema)
+  - `tests/` — unit + E2E smoke + orchestration scripts
+  - `uploads/` — runtime storage for avatars/media/files/stickers (created by code)
+  - `.env`, `.env.test`, `.prod.env` — environment/secret files
+  - `.htaccess` — deny-all (defense-in-depth if ever served)
+- `docs/` — product, API, encryption, technical design, security, PWA docs (repo root, not deployed)
+
+Public PHP files reach the backend via relative requires such as
+`__DIR__ . '/../../../tintin-core/includes/db.php'`. The two folders are
+deployed as siblings (see below), so this `../tintin-core` relationship is
+preserved on the server.
+
+## Deployment / Hosting
+
+On cPanel (or any Apache shared host):
+
+1. Upload the **contents of `public/`** into your domain's `public_html`
+   (the web document root).
+2. Upload the **`tintin-core/`** folder to your home directory, as a sibling of
+   `public_html` (e.g. `~/tintin-core`), so it is NOT served by the web server.
+3. The relative path from a public PHP file to `tintin-core` must remain
+   `../../../tintin-core` (3 levels up from `public_html/api/<domain>/`), which
+   matches the default `public_html` + sibling `tintin-core` layout.
+
+This keeps all backend code, secrets (`.env`), database migrations, and — most
+importantly — the `uploads/` directory completely outside the browsable web
+root, so users can no longer list or download other users' media by guessing
+folder URLs. Encrypted media is still served file-by-file through the
+authenticated `api/messages/media/*` and `api/users/get_avatar.php` endpoints.
 
 ## Quick Start
 
-1. Configure database credentials in `includes/db.php` for your environment.
-2. Apply migrations in order from `migrations/`.
-3. Ensure writable upload directories:
-   - `uploads/avatars`
-   - `uploads/images`
-   - `uploads/voice_messages`
-   - `uploads/files`
-   - `uploads/stickers`
-4. Start local server (example):
-   - `php -d upload_max_filesize=110M -d post_max_size=120M -S localhost:8080`
-5. Open `index.php`.
+1. Configure database credentials via `tintin-core/.env` (copied from `tintin-core/.env.example`).
+2. Apply migrations in order from `tintin-core/migrations/`.
+3. Ensure writable upload directories (created automatically on first use, under `tintin-core/`):
+   - `tintin-core/uploads/avatars`
+   - `tintin-core/uploads/images`
+   - `tintin-core/uploads/voice_messages`
+   - `tintin-core/uploads/files`
+   - `tintin-core/uploads/stickers`
+4. Start local server from the `public/` document root (example):
+   - `php -d upload_max_filesize=110M -d post_max_size=120M -S localhost:8080 -t public`
+5. Open `index.php` (served at the docroot, i.e. `public/index.php`).
 
 ## Upload Limits
 
@@ -136,26 +169,29 @@ TinTinChat is a lightweight, self-hostable web chat app built with native PHP an
 
 ## Testing
 
+All test scripts now live under `tintin-core/tests/`. The runner auto-starts a
+PHP server with `public/` as its document root.
+
 ### Full suite
 ```bash
-bash tests/run_all_tests.sh
+bash tintin-core/tests/run_all_tests.sh
 ```
 
 ### Individual scripts
-- Environment/setup check: `bash tests/setup_test_env.sh http://localhost:8080`
-- Unit tests: `php tests/unit/run.php`
+- Environment/setup check: `bash tintin-core/tests/setup_test_env.sh http://localhost:8080`
+- Unit tests: `php tintin-core/tests/unit/run.php`
 - E2E smoke tests:
-  - `bash tests/e2e/api_guard_smoke.sh http://localhost:8080`
-  - `bash tests/e2e/authenticated_chat_smoke.sh http://localhost:8080`
-  - `bash tests/e2e/profile_settings_smoke.sh http://localhost:8080`
-  - `bash tests/e2e/profile_settings_edge_smoke.sh http://localhost:8080`
-  - `bash tests/e2e/group_chat_smoke.sh http://localhost:8080`
-  - `bash tests/e2e/group_authorization_smoke.sh http://localhost:8080`
-  - `bash tests/e2e/block_user_smoke.sh http://localhost:8080`
+  - `bash tintin-core/tests/e2e/api_guard_smoke.sh http://localhost:8080`
+  - `bash tintin-core/tests/e2e/authenticated_chat_smoke.sh http://localhost:8080`
+  - `bash tintin-core/tests/e2e/profile_settings_smoke.sh http://localhost:8080`
+  - `bash tintin-core/tests/e2e/profile_settings_edge_smoke.sh http://localhost:8080`
+  - `bash tintin-core/tests/e2e/group_chat_smoke.sh http://localhost:8080`
+  - `bash tintin-core/tests/e2e/group_authorization_smoke.sh http://localhost:8080`
+  - `bash tintin-core/tests/e2e/block_user_smoke.sh http://localhost:8080`
 
 ### Test server lifecycle
-- Stop managed/orphan test server: `bash tests/stop_test_server.sh`
-- Optional overrides: `bash tests/stop_test_server.sh --pid-file /tmp/tintin_test_server.pid --port 8080`
+- Stop managed/orphan test server: `bash tintin-core/tests/stop_test_server.sh`
+- Optional overrides: `bash tintin-core/tests/stop_test_server.sh --pid-file /tmp/tintin_test_server.pid --port 8080`
 
 ## Documentation Index
 
@@ -176,4 +212,4 @@ bash tests/run_all_tests.sh
 - All phases A through M.4 completed and stable.
 - Phase N (E2E Encryption Upgrade) planned — private key protection via password-derived KEK.
 - Organized endpoint architecture enforced (no legacy flat `api/*.php` wrappers).
-- Full automated suite passes (`bash tests/run_all_tests.sh`).
+- Full automated suite passes (`bash tintin-core/tests/run_all_tests.sh`).

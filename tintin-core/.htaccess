@@ -1,0 +1,19 @@
+# tintin-core holds all backend code, secrets (.env), migrations, tests and
+# runtime uploads. It is meant to live OUTSIDE the web document root (sibling of
+# public/). This file is defense-in-depth: if tintin-core ever ends up inside a
+# served path due to a deployment/docroot misconfiguration, deny every request
+# so source, secrets and uploaded media can never be browsed or downloaded.
+
+# Apache 2.4+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Apache 2.2 and earlier
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+
+# Never list directory contents, regardless of the above.
+Options -Indexes

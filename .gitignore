@@ -1,10 +1,12 @@
 .env
 .env.test
+.prod.env
 uploads/
 test_*.html
-.prod.env
 .vscode
 *.fux
 *.
-CONTEXT.md
 *.zip
+CONTEXT.md
+emergency.log
+*.log
